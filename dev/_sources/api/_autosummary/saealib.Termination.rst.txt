@@ -18,6 +18,7 @@
    ~Termination.__init__
    ~Termination.all_of
    ~Termination.any_of
+   ~Termination.contract
    ~Termination.is_terminated
    ~Termination.not_
 
@@ -36,6 +37,9 @@
 
 
 .. automethod:: saealib.Termination.any_of
+
+
+.. automethod:: saealib.Termination.contract
 
 
 .. automethod:: saealib.Termination.is_terminated

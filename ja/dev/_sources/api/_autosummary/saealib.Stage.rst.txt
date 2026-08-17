@@ -16,8 +16,10 @@
 
 
    ~Stage.__init__
+   ~Stage.contract
    ~Stage.execute
    ~Stage.to_pseudocode
+   ~Stage.to_text
 
 
 
@@ -30,10 +32,16 @@
 .. automethod:: saealib.Stage.__init__
 
 
+.. automethod:: saealib.Stage.contract
+
+
 .. automethod:: saealib.Stage.execute
 
 
 .. automethod:: saealib.Stage.to_pseudocode
+
+
+.. automethod:: saealib.Stage.to_text
 
 
 

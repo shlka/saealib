@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SPEA2 (Strength Pareto Evolutionary Algorithm 2) &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>SPEA2 (Strength Pareto Evolutionary Algorithm 2) &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -596,7 +596,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -609,8 +609,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -631,7 +638,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -771,7 +778,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -784,8 +791,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -806,7 +820,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -977,7 +991,7 @@ window.runMermaid = runMermaid;</script>
                   
   <section class="tex2jax_ignore mathjax_ignore" id="spea2-strength-pareto-evolutionary-algorithm-2">
 <h1>SPEA2 (Strength Pareto Evolutionary Algorithm 2)<a class="headerlink" href="#spea2-strength-pareto-evolutionary-algorithm-2" title="Link to this heading">#</a></h1>
-<p>SPEA2 is a multi-objective evolutionary algorithm that improves the fitness assignment and archive management of the original SPEA (Strength Pareto Evolutionary Algorithm).
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>SPEA2 is a multi-objective evolutionary algorithm that improves the fitness assignment and archive management of the original SPEA (Strength Pareto Evolutionary Algorithm).
 It ranks individuals by combining a dominance-based fitness with <span class="math notranslate nohighlight">\(k\)</span>-th-nearest-neighbor density, and maintains a fixed-size external archive using a truncation procedure that avoids losing boundary solutions.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
@@ -1020,21 +1034,16 @@ Because this procedure breaks ties between individuals with equal distance using
     INIT[&quot;Initializer&lt;br/&gt;Generate initial population P0&lt;br/&gt;(L1)&quot;] --&gt; GEN
     subgraph GEN[&quot;One generation (DirectStrategy.step)&quot;]
         direction TB
-        ASK[&quot;GA.ask()&lt;br/&gt;Binary tournament selection →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate offspring&lt;br/&gt;(L5, 6)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved)&quot;]
+        ASK[&quot;GA.ask()&lt;br/&gt;Binary tournament selection →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate offspring&lt;br/&gt;(L5, L6)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved)&quot;]
         EVAL --&gt; COMB[&quot;GA.tell()&lt;br/&gt;Combine population and offspring&lt;br/&gt;into a single pool&lt;br/&gt;(L3)&quot;]
         COMB --&gt; FIT[&quot;SPEA2Comparator._fitness()&lt;br/&gt;spea2_fitness computes&lt;br/&gt;S(i) → R(i) → D(i) → F(i)&lt;br/&gt;(L2)&quot;]
-        FIT --&gt; SORT[&quot;SPEA2Comparator.sort_population()&lt;br/&gt;Sort ascending by F(i) (environmental selection)&lt;br/&gt;(L3)&quot;]
+        FIT --&gt; SORT[&quot;SPEA2Comparator.sort_population()&lt;br/&gt;F(i)&amp;lt;1: spea2_truncation_order&lt;br/&gt;F(i)≥1: ascending F(i)&lt;br/&gt;Infeasible solutions: ascending cv&lt;br/&gt;(L3)&quot;]
         SORT --&gt; TRUNC[&quot;TruncationSelection&lt;br/&gt;Take top N individuals as Pt+1&quot;]
     end
     GEN --&gt; TERM{&quot;Termination condition&lt;br/&gt;reached?&quot;}
     TERM -- &quot;Not yet (L4)&quot; --&gt; GEN
     TERM -- &quot;Reached&quot; --&gt; RESULT([&quot;Non-dominated solution set A&quot;])
     </pre></section>
-<section id="complexity">
-<h2>Complexity<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h2>
-<p>Fitness computation (<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>) is <span class="math notranslate nohighlight">\(O(M^2)\)</span> (<span class="math notranslate nohighlight">\(M=N+\bar N\)</span>), or <span class="math notranslate nohighlight">\(O(M^2\log M)\)</span> including the distance sort needed for density estimation.
-The truncation operator is <span class="math notranslate nohighlight">\(O(M^3)\)</span> in the worst case and <span class="math notranslate nohighlight">\(O(M^2\log M)\)</span> on average <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>.</p>
-</section>
 <section id="configuration-in-saealib">
 <h2>Configuration in saealib<a class="headerlink" href="#configuration-in-saealib" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -1047,7 +1056,7 @@ The truncation operator is <span class="math notranslate nohighlight">\(O(M^3)\)
 <tbody>
 <tr class="row-even"><td><p>Search algorithm</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code> (<code class="docutils literal notranslate"><span class="pre">ask()</span></code> performs crossover and mutation; <code class="docutils literal notranslate"><span class="pre">tell()</span></code> combines the population and offspring into a single pool and performs survivor selection)</p></td>
-<td><p>L1, 6</p></td>
+<td><p>L1, L6</p></td>
 </tr>
 <tr class="row-odd"><td><p>Parent selection</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=2)</span></code> (binary tournament; the winner is decided via <code class="docutils literal notranslate"><span class="pre">compare_population</span></code>)</p></td>
@@ -1066,7 +1075,7 @@ The truncation operator is <span class="math notranslate nohighlight">\(O(M^3)\)
 <td><p>L2</p></td>
 </tr>
 <tr class="row-odd"><td><p>Environmental selection</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator.sort_population()</span></code> + <code class="docutils literal notranslate"><span class="pre">TruncationSelection()</span></code> (takes the top <span class="math notranslate nohighlight">\(N\)</span> individuals after sorting ascending by <span class="math notranslate nohighlight">\(F(i)\)</span>)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator.sort_population()</span></code> + <code class="docutils literal notranslate"><span class="pre">TruncationSelection()</span></code> (uses <code class="docutils literal notranslate"><span class="pre">spea2_truncation_order</span></code> for the non-dominated <span class="math notranslate nohighlight">\(F(i)&lt;1\)</span> block, ascending <span class="math notranslate nohighlight">\(F(i)\)</span> for the dominated <span class="math notranslate nohighlight">\(F(i)\geq1\)</span> block, and ascending <code class="docutils literal notranslate"><span class="pre">cv</span></code> for infeasible solutions)</p></td>
 <td><p>L3</p></td>
 </tr>
 <tr class="row-even"><td><p>Evaluation strategy</p></td>
@@ -1108,24 +1117,31 @@ The truncation operator is <span class="math notranslate nohighlight">\(O(M^3)\)
 <p>The <code class="docutils literal notranslate"><span class="pre">problem.comparator</span> <span class="pre">=</span> <span class="pre">SPEA2Comparator()</span></code> line cannot be omitted.
 In NSGA-II, <code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code> is the default for <code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>, so the same line could be omitted, but this is not the case for SPEA2.</p>
 </section>
+<section id="differences-from-the-source">
+<h2>Differences from the source<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<p>The original SPEA2 specifies population size <span class="math notranslate nohighlight">\(N\)</span> and archive size <span class="math notranslate nohighlight">\(\bar N\)</span> independently, but saealib’s <code class="docutils literal notranslate"><span class="pre">GA.tell()</span></code> combines the population and offspring into one pool, so the same value is used for both.</p>
+</section>
 <section id="parameters-and-variants">
 <h2>Parameters and variants<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong>Archive size <span class="math notranslate nohighlight">\(\bar N\)</span> and population size <span class="math notranslate nohighlight">\(N\)</span></strong>: The paper defines these two as independently configurable, in general form <span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>.
-Because saealib’s <code class="docutils literal notranslate"><span class="pre">GA.tell()</span></code> combines the population and offspring into a single pool, <span class="math notranslate nohighlight">\(\bar N\)</span> uses the same value as <span class="math notranslate nohighlight">\(N\)</span>.</p>
-<p><strong>Swapping the dominator (dominance predicate)</strong>: <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator(dominator=...)</span></code> lets you inject a <a class="reference internal" href="../components/dominance.html"><span class="std std-doc">Dominator</span></a> other than the default <code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>.
+<section id="complexity">
+<h3>Complexity<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h3>
+<p>Fitness computation (<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>) is <span class="math notranslate nohighlight">\(O(M^2)\)</span> (<span class="math notranslate nohighlight">\(M=N+\bar N\)</span>), or <span class="math notranslate nohighlight">\(O(M^2\log M)\)</span> including the distance sort needed for density estimation.
+The truncation operator is <span class="math notranslate nohighlight">\(O(M^3)\)</span> in the worst case and <span class="math notranslate nohighlight">\(O(M^2\log M)\)</span> on average <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>.</p>
+<p><strong>Swapping the dominator (dominance predicate)</strong>: <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator(dominator=...)</span></code> lets you inject a <a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a> other than the default <code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>.
 Since the computation of <span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span> depends on this dominance predicate, swapping it changes SPEA2’s fitness itself.</p>
+</section>
 </section>
 <section id="related">
 <h2>Related<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">References</span></a>: Full bibliographic details for the source</p></li>
-<li><p><a class="reference internal" href="../components/comparators.html"><span class="std std-doc">Comparator</span></a>: Detailed specification of <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code></p></li>
-<li><p><a class="reference internal" href="../components/crossover.html"><span class="std std-doc">Crossover</span></a>: List of crossover operators including <code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code></p></li>
-<li><p><a class="reference internal" href="../components/mutation.html"><span class="std std-doc">Mutation</span></a>: List of mutation operators including <code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code></p></li>
-<li><p><a class="reference internal" href="../components/parent_selection.html"><span class="std std-doc">ParentSelection</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code></p></li>
-<li><p><a class="reference internal" href="../components/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code></p></li>
-<li><p><a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: List of strategies including <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code></p></li>
-<li><p><a class="reference internal" href="../components/dominance.html"><span class="std std-doc">Dominator</span></a>: List of dominance predicates that can be swapped in via the <code class="docutils literal notranslate"><span class="pre">dominator</span></code> argument</p></li>
+<li><p><a class="reference internal" href="../concepts/problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>: Detailed specification of <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/crossover.html"><span class="std std-doc">Crossover</span></a>: List of crossover operators including <code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/mutation.html"><span class="std std-doc">Mutation</span></a>: List of mutation operators including <code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/parent_selection.html"><span class="std std-doc">ParentSelection</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: List of strategies including <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a>: List of dominance predicates that can be swapped in via the <code class="docutils literal notranslate"><span class="pre">dominator</span></code> argument</p></li>
 </ul>
 </section>
 </section>
@@ -1180,9 +1196,12 @@ Since the computation of <span class="math notranslate nohighlight">\(S(i)\)</sp
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">Pseudocode</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">Flowchart</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">Complexity</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">Configuration in saealib</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">Parameters and variants</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">Differences from the source</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">Parameters and variants</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">Complexity</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">Related</a></li>
 </ul>
   </nav></div>

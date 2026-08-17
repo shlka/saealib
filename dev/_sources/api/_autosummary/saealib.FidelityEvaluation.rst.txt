@@ -16,6 +16,7 @@
 
 
    ~FidelityEvaluation.__init__
+   ~FidelityEvaluation.contract
    ~FidelityEvaluation.plan
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.FidelityEvaluation.__init__
+
+
+.. automethod:: saealib.FidelityEvaluation.contract
 
 
 .. automethod:: saealib.FidelityEvaluation.plan

@@ -1,0 +1,47 @@
+﻿saealib.EvaluationSubmitStage
+=============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationSubmitStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationSubmitStage.__init__
+   ~EvaluationSubmitStage.contract
+   ~EvaluationSubmitStage.execute
+   ~EvaluationSubmitStage.to_pseudocode
+   ~EvaluationSubmitStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationSubmitStage.__init__
+
+
+.. automethod:: saealib.EvaluationSubmitStage.contract
+
+
+.. automethod:: saealib.EvaluationSubmitStage.execute
+
+
+.. automethod:: saealib.EvaluationSubmitStage.to_pseudocode
+
+
+.. automethod:: saealib.EvaluationSubmitStage.to_text
+
+
+

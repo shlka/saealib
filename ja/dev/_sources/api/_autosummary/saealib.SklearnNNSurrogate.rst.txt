@@ -16,6 +16,7 @@
 
 
    ~SklearnNNSurrogate.__init__
+   ~SklearnNNSurrogate.contract
    ~SklearnNNSurrogate.fit
    ~SklearnNNSurrogate.post_fit
    ~SklearnNNSurrogate.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.SklearnNNSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnNNSurrogate.contract
 
 
 .. automethod:: saealib.SklearnNNSurrogate.fit

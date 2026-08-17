@@ -16,8 +16,10 @@
 
 
    ~InitializationStage.__init__
+   ~InitializationStage.contract
    ~InitializationStage.execute
    ~InitializationStage.to_pseudocode
+   ~InitializationStage.to_text
 
 
 
@@ -30,10 +32,16 @@
 .. automethod:: saealib.InitializationStage.__init__
 
 
+.. automethod:: saealib.InitializationStage.contract
+
+
 .. automethod:: saealib.InitializationStage.execute
 
 
 .. automethod:: saealib.InitializationStage.to_pseudocode
+
+
+.. automethod:: saealib.InitializationStage.to_text
 
 
 

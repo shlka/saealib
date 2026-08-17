@@ -17,6 +17,7 @@
 
    ~PBIDecomposition.__init__
    ~PBIDecomposition.aggregate
+   ~PBIDecomposition.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.PBIDecomposition.aggregate
+
+
+.. automethod:: saealib.PBIDecomposition.contract
 
 
 

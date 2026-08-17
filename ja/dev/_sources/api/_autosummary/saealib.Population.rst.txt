@@ -26,7 +26,6 @@
    ~Population.get
    ~Population.get_array
    ~Population.get_cache
-   ~Population.get_readonly_array
    ~Population.mod_structure
    ~Population.mod_value
    ~Population.reorder
@@ -74,9 +73,6 @@
 
 
 .. automethod:: saealib.Population.get_cache
-
-
-.. automethod:: saealib.Population.get_readonly_array
 
 
 .. automethod:: saealib.Population.mod_structure

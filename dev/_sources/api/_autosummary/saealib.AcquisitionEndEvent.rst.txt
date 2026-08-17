@@ -1,0 +1,31 @@
+﻿saealib.AcquisitionEndEvent
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: AcquisitionEndEvent
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~AcquisitionEndEvent.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.AcquisitionEndEvent.__init__
+
+
+

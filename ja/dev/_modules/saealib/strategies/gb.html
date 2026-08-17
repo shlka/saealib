@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.strategies.gb &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>saealib.strategies.gb &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../../../_static/documentation_options.js?v=c8372973"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -605,8 +605,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -620,14 +627,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -778,8 +785,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -793,14 +807,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -954,7 +968,10 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">cast</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.compiler.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentGraph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.compiler.lowerer</span><span class="w"> </span><span class="kn">import</span> <span class="n">lower_pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts.observation</span><span class="w"> </span><span class="kn">import</span> <span class="n">SURROGATE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span><span class="p">,</span> <span class="n">PipelineEntry</span><span class="p">,</span> <span class="n">Repeat</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.feedback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FeedbackBuilder</span><span class="p">,</span>
     <span class="n">MixedFeedback</span><span class="p">,</span>
@@ -963,9 +980,9 @@ window.runMermaid = runMermaid;</script>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.stages</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AcquisitionStage</span><span class="p">,</span>
     <span class="n">ArchiveUpdateStage</span><span class="p">,</span>
     <span class="n">AskStage</span><span class="p">,</span>
-    <span class="n">AsyncEvaluationSubmitStage</span><span class="p">,</span>
     <span class="n">CountGenerationStage</span><span class="p">,</span>
     <span class="n">EvaluationAcknowledgeStage</span><span class="p">,</span>
     <span class="n">EvaluationApplyStage</span><span class="p">,</span>
@@ -973,17 +990,18 @@ window.runMermaid = runMermaid;</script>
     <span class="n">EvaluationPlanStage</span><span class="p">,</span>
     <span class="n">EvaluationSubmitStage</span><span class="p">,</span>
     <span class="n">FeedbackStage</span><span class="p">,</span>
-    <span class="n">PendingEvaluationContextStage</span><span class="p">,</span>
-    <span class="n">SurrogateOnlyLoopStage</span><span class="p">,</span>
+    <span class="n">SurrogateFitStage</span><span class="p">,</span>
+    <span class="n">SurrogatePredictStage</span><span class="p">,</span>
     <span class="n">TellStage</span><span class="p">,</span>
+    <span class="n">stage_component</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OptimizationStrategy</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentProvider</span>
-
-<span class="n">_MISSING</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="GenerationBasedStrategy">
@@ -1010,15 +1028,7 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="p">:</span> <span class="n">Pipeline</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="GenerationBasedStrategy.build_pipeline">
-<a class="viewcode-back" href="../../../api/_autosummary/saealib.GenerationBasedStrategy.html#saealib.GenerationBasedStrategy.build_pipeline">[ドキュメント]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pipeline</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the current generation-based pipeline.&quot;&quot;&quot;</span>
-        <span class="n">cbmanager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;cbmanager&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">scheduler</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;async_evaluation_scheduler&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">evaluation_planner</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;evaluation_planner&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span>
-        <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_feedback_builder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FeedbackBuilder</span><span class="p">:</span>
         <span class="n">builder_explicit</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;feedback_builder_explicit&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">configured_builder</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;feedback_builder&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">feedback_builder</span><span class="p">:</span> <span class="n">FeedbackBuilder</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1026,47 +1036,78 @@ window.runMermaid = runMermaid;</script>
             <span class="n">feedback_builder</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">FeedbackBuilder</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">configured_builder</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">feedback_builder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">feedback_builder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">true_feedback_builder</span>
-        <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">evaluation_tail</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">AsyncEvaluationSubmitStage</span><span class="p">(</span>
-                    <span class="n">scheduler</span><span class="p">,</span>
-                    <span class="n">evaluation_planner</span><span class="p">,</span>
-                    <span class="n">feedback_builder</span><span class="p">,</span>
-                    <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span>
-                    <span class="n">cbmanager</span><span class="p">,</span>
+        <span class="k">return</span> <span class="n">feedback_builder</span>
+
+<div class="viewcode-block" id="GenerationBasedStrategy.build_pipeline">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GenerationBasedStrategy.html#saealib.GenerationBasedStrategy.build_pipeline">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pipeline</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Describe the strategy as a structured Pipeline DSL.&quot;&quot;&quot;</span>
+        <span class="n">cbmanager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;cbmanager&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">evaluation_planner</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;evaluation_planner&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span>
+        <span class="p">)</span>
+        <span class="n">feedback_builder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_feedback_builder</span><span class="p">(</span><span class="n">provider</span><span class="p">)</span>
+
+        <span class="n">surrogate_generation</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;surrogate_generation&quot;</span><span class="p">,</span>
+            <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">CountGenerationStage</span><span class="p">()),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">AskStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">)),</span>
+                <span class="n">stage_component</span><span class="p">(</span>
+                    <span class="n">SurrogatePredictStage</span><span class="p">(</span>
+                        <span class="n">provider</span><span class="o">.</span><span class="n">surrogate_manager</span><span class="p">,</span>
+                        <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">,</span>
+                        <span class="n">refit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">AcquisitionStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">acquisition</span><span class="p">,</span> <span class="n">cbmanager</span><span class="p">)),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">FeedbackStage</span><span class="p">(</span><span class="n">PredictedFeedback</span><span class="p">())),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">TellStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">SURROGATE</span><span class="p">)),</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">true_generation</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;true_generation&quot;</span><span class="p">,</span>
+            <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">CountGenerationStage</span><span class="p">()),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">AskStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">)),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">EvaluationPlanStage</span><span class="p">(</span><span class="n">evaluation_planner</span><span class="p">)),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">EvaluationSubmitStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">)),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">EvaluationCollectStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">)),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">EvaluationApplyStage</span><span class="p">()),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">ArchiveUpdateStage</span><span class="p">()),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">FeedbackStage</span><span class="p">(</span><span class="n">feedback_builder</span><span class="p">)),</span>
+                <span class="n">stage_component</span><span class="p">(</span><span class="n">TellStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">)),</span>
+                <span class="n">stage_component</span><span class="p">(</span>
+                    <span class="n">EvaluationAcknowledgeStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">cbmanager</span><span class="p">)</span>
+                <span class="p">),</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PipelineEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gen_ctrl</span><span class="p">:</span>
+            <span class="n">steps</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">stage_component</span><span class="p">(</span>
+                        <span class="n">SurrogateFitStage</span><span class="p">(</span>
+                            <span class="n">provider</span><span class="o">.</span><span class="n">surrogate_manager</span><span class="p">,</span>
+                            <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">),</span>
+                    <span class="n">Repeat</span><span class="p">(</span>
+                        <span class="n">surrogate_generation</span><span class="p">,</span>
+                        <span class="n">count</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gen_ctrl</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;surrogate_generations&quot;</span><span class="p">,</span>
+                    <span class="p">),</span>
                 <span class="p">)</span>
-            <span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">evaluation_tail</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">EvaluationPlanStage</span><span class="p">(</span><span class="n">evaluation_planner</span><span class="p">),</span>
-                <span class="n">EvaluationSubmitStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">),</span>
-                <span class="n">EvaluationCollectStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">),</span>
-                <span class="n">EvaluationApplyStage</span><span class="p">(),</span>
-                <span class="n">ArchiveUpdateStage</span><span class="p">(),</span>
-                <span class="n">FeedbackStage</span><span class="p">(</span><span class="n">feedback_builder</span><span class="p">),</span>
-                <span class="n">TellStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">),</span>
-                <span class="n">EvaluationAcknowledgeStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">cbmanager</span><span class="p">),</span>
-            <span class="p">]</span>
-        <span class="k">return</span> <span class="n">Pipeline</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">SurrogateOnlyLoopStage</span><span class="p">(</span>
-                    <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span>
-                    <span class="n">provider</span><span class="o">.</span><span class="n">surrogate_manager</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">gen_ctrl</span><span class="p">,</span>
-                    <span class="n">cbmanager</span><span class="p">,</span>
-                    <span class="n">acquisition</span><span class="o">=</span><span class="n">provider</span><span class="o">.</span><span class="n">acquisition</span><span class="p">,</span>
-                    <span class="n">feedback_builder</span><span class="o">=</span><span class="n">PredictedFeedback</span><span class="p">(),</span>
-                <span class="p">),</span>
-                <span class="n">CountGenerationStage</span><span class="p">(),</span>
-                <span class="o">*</span><span class="p">(</span>
-                    <span class="p">[</span><span class="n">PendingEvaluationContextStage</span><span class="p">(</span><span class="n">scheduler</span><span class="p">)]</span>
-                    <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                    <span class="k">else</span> <span class="p">[]</span>
-                <span class="p">),</span>
-                <span class="n">AskStage</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">cbmanager</span><span class="o">=</span><span class="n">cbmanager</span><span class="p">),</span>
-                <span class="o">*</span><span class="n">evaluation_tail</span><span class="p">,</span>
-            <span class="p">]</span>
-        <span class="p">)</span></div>
+            <span class="p">)</span>
+        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">true_generation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Pipeline</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;generation_based&quot;</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenerationBasedStrategy.build_graph">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GenerationBasedStrategy.html#saealib.GenerationBasedStrategy.build_graph">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentGraph</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Lower the structured generation-based Pipeline to its graph.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">lower_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">build_pipeline</span><span class="p">(</span><span class="n">provider</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="GenerationBasedStrategy.step">
@@ -1086,15 +1127,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        provider : ComponentProvider</span>
 <span class="sd">            Component provider.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">scheduler</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;async_evaluation_scheduler&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pending_evaluations</span><span class="p">:</span>
-            <span class="n">ctx</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pending_evaluations</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">ctx</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">pending_evaluations</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">max_pending</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">ctx</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_pipeline</span><span class="p">(</span><span class="n">provider</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">provider</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

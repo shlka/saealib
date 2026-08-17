@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.algorithms.pso &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>saealib.algorithms.pso &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../../../_static/documentation_options.js?v=c8372973"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -605,8 +605,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -620,14 +627,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -778,8 +785,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -793,14 +807,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -947,25 +961,53 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Algorithm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AskTellAlgorithm</span><span class="p">,</span>
+    <span class="n">ProposalRequest</span><span class="p">,</span>
+    <span class="n">algorithm_context</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostAskEvent</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Comparator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ComponentContract</span><span class="p">,</span>
+    <span class="n">FeedbackBatch</span><span class="p">,</span>
+    <span class="n">FeedbackRequirement</span><span class="p">,</span>
+    <span class="n">ProposalBatch</span><span class="p">,</span>
+    <span class="n">ProposalRelations</span><span class="p">,</span>
+    <span class="n">ServiceRequirement</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">POPULATIONS_MAIN</span><span class="p">,</span> <span class="n">StatePatch</span><span class="p">,</span> <span class="n">StateView</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">Population</span><span class="p">,</span> <span class="n">PopulationAttribute</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.space</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoundsService</span>
 
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatchable</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_LeaderContext</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Capabilities required to construct and rank PSO personal bests.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">population</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Population</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">problem</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Problem</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comparator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Comparator</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dim</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>
 
 
 <div class="viewcode-block" id="PSO">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.PSO.html#saealib.PSO">[ドキュメント]</a>
 <span class="nd">@register</span><span class="p">()</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">PSO</span><span class="p">(</span><span class="n">Algorithm</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PSO</span><span class="p">(</span><span class="n">AskTellAlgorithm</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Particle Swarm Optimization (PSO) for single-objective problems.</span>
 
@@ -999,6 +1041,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    the inertia weight ``w`` used here.)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="c1"># PSO&#39;s tell operation updates particle state row-for-row.  A</span>
+    <span class="c1"># pre-selection strategy may evaluate only a subset, but shrinking the</span>
+    <span class="c1"># particle population to that subset would silently change the algorithm&#39;s</span>
+    <span class="c1"># state dimension.  The canonical tell view therefore retains the full</span>
+    <span class="c1"># proposal for this built-in algorithm.</span>
+    <span class="n">tell_requires_full_proposal</span> <span class="o">=</span> <span class="kc">True</span>
+
 <div class="viewcode-block" id="PSO.__init__">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.PSO.html#saealib.PSO.__init__">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1027,6 +1076,25 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">c1</span> <span class="o">=</span> <span class="n">c1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">c2</span> <span class="o">=</span> <span class="n">c2</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">v_max</span> <span class="o">=</span> <span class="n">v_max</span></div>
+
+
+<div class="viewcode-block" id="PSO.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.PSO.html#saealib.PSO.contract">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the PSO contract with comparator-backed feedback.&quot;&quot;&quot;</span>
+        <span class="n">family</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">feedback</span> <span class="o">=</span> <span class="n">family</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;feedback_consumer&quot;</span><span class="p">]</span>
+        <span class="n">offspring</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">feedback</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">required_services</span><span class="o">=</span><span class="p">(</span><span class="n">ServiceRequirement</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;ComparisonService&quot;</span><span class="p">),),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">family</span><span class="p">,</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="o">**</span><span class="n">family</span><span class="o">.</span><span class="n">ports</span><span class="p">,</span>
+                <span class="s2">&quot;feedback_consumer&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span><span class="n">feedback</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">offspring</span><span class="p">,)),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PSO.get_required_attrs">
@@ -1093,31 +1161,30 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.PSO.html#saealib.PSO.ask">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">ask</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
-        <span class="n">provider</span><span class="p">:</span> <span class="n">Dispatchable</span><span class="p">,</span>
-        <span class="n">n_offspring</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Population</span><span class="p">:</span>
+        <span class="n">request</span><span class="p">:</span> <span class="n">ProposalRequest</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">StateView</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProposalBatch</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update particle velocities and positions.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
-<span class="sd">            Current optimization context.</span>
-<span class="sd">        provider : Dispatchable</span>
-<span class="sd">            Component provider.</span>
-<span class="sd">        n_offspring : int or None, optional</span>
-<span class="sd">            Ignored; output count equals population size.</span>
+<span class="sd">        request : ProposalRequest</span>
+<span class="sd">            Request-specific offspring count; PSO uses its population size.</span>
+<span class="sd">        state : StateView</span>
+<span class="sd">            Read-only algorithm state view.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        Population</span>
+<span class="sd">        ProposalBatch</span>
 <span class="sd">            Candidates with updated ``x`` and ``velocity``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">request</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="n">algorithm_context</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
         <span class="n">pop</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span>
         <span class="n">popsize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pop</span><span class="p">)</span>
-        <span class="n">lb</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">lb</span>
-        <span class="n">ub</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">ub</span>
+        <span class="n">bounds_srv</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">BoundsService</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">compiled_service</span><span class="p">(</span><span class="s2">&quot;BoundsService&quot;</span><span class="p">))</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">bounds_srv</span><span class="o">.</span><span class="n">bounds</span>
 
         <span class="n">x</span> <span class="o">=</span> <span class="n">pop</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">pop</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -1164,31 +1231,38 @@ window.runMermaid = runMermaid;</script>
             <span class="p">}</span>
         <span class="p">)</span>
 
-        <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">PostAskEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="n">x_new</span><span class="p">))</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">PostAskEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="n">x_new</span><span class="p">))</span>
 
-        <span class="k">return</span> <span class="n">cand_pop</span></div>
+        <span class="k">return</span> <span class="n">ProposalBatch</span><span class="o">.</span><span class="n">from_allocator</span><span class="p">(</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">proposal_id_allocator</span><span class="p">,</span>
+            <span class="n">candidates</span><span class="o">=</span><span class="n">cand_pop</span><span class="p">,</span>
+            <span class="n">relations</span><span class="o">=</span><span class="n">ProposalRelations</span><span class="p">(</span><span class="n">row_count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">cand_pop</span><span class="p">)),</span>
+            <span class="n">requirements</span><span class="o">=</span><span class="n">FeedbackRequirement</span><span class="p">(</span><span class="n">quantities</span><span class="o">=</span><span class="p">()),</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PSO.tell">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.PSO.html#saealib.PSO.tell">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">tell</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
-        <span class="n">provider</span><span class="p">:</span> <span class="n">Dispatchable</span><span class="p">,</span>
-        <span class="n">offspring</span><span class="p">:</span> <span class="n">Population</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">feedback</span><span class="p">:</span> <span class="n">FeedbackBatch</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">StateView</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StatePatch</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update the population and personal bests from evaluated offspring.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
-<span class="sd">            Current optimization context.</span>
-<span class="sd">        provider : Dispatchable</span>
-<span class="sd">            Component provider.</span>
-<span class="sd">        offspring : Population</span>
-<span class="sd">            Evaluated offspring population.</span>
+<span class="sd">        feedback : FeedbackBatch</span>
+<span class="sd">            Feedback delivered for the current proposal.</span>
+<span class="sd">        state : StateView</span>
+<span class="sd">            Read-only algorithm state view.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">feedback</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="n">algorithm_context</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">offspring</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">offspring</span>
+        <span class="k">if</span> <span class="n">offspring</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;PSO.tell() requires an offspring population&quot;</span><span class="p">)</span>
         <span class="n">x_new</span> <span class="o">=</span> <span class="n">offspring</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
         <span class="n">f_new</span> <span class="o">=</span> <span class="n">offspring</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
         <span class="n">g_new</span> <span class="o">=</span> <span class="n">offspring</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
@@ -1202,6 +1276,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">id_new</span> <span class="o">=</span> <span class="n">offspring</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
 
         <span class="n">popsize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">offspring</span><span class="p">)</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span>
         <span class="n">cmp</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">comparator</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">popsize</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">f_new</span><span class="p">[</span><span class="n">i</span><span class="p">])):</span>
@@ -1227,8 +1302,9 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="n">has_id</span><span class="p">:</span>
             <span class="n">new_pop_data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">id_new</span>
 
-        <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span><span class="n">new_pop_data</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+        <span class="n">population</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span><span class="n">new_pop_data</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">StatePatch</span><span class="p">(</span><span class="n">writes</span><span class="o">=</span><span class="p">{</span><span class="n">POPULATIONS_MAIN</span><span class="p">:</span> <span class="n">population</span><span class="p">})</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -1237,7 +1313,7 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_select_leader</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">_LeaderContext</span><span class="p">,</span>
         <span class="n">pbest_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">pbest_f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">pbest_cv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
@@ -1250,7 +1326,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">        ctx : _LeaderContext</span>
 <span class="sd">            Optimization context.</span>
 <span class="sd">        pbest_x : np.ndarray</span>
 <span class="sd">            Personal best positions, shape (popsize, dim).</span>

@@ -1,0 +1,83 @@
+﻿saealib.AsyncEvaluator
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: AsyncEvaluator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~AsyncEvaluator.__init__
+   ~AsyncEvaluator.acknowledge
+   ~AsyncEvaluator.can_reattach
+   ~AsyncEvaluator.cancel
+   ~AsyncEvaluator.close
+   ~AsyncEvaluator.collect
+   ~AsyncEvaluator.contract
+   ~AsyncEvaluator.detach
+   ~AsyncEvaluator.evaluate_batch
+   ~AsyncEvaluator.evaluate_request
+   ~AsyncEvaluator.has_partial_lifecycle_override
+   ~AsyncEvaluator.reattach
+   ~AsyncEvaluator.submit
+   ~AsyncEvaluator.supports_batch_rollback
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.AsyncEvaluator.__init__
+
+
+.. automethod:: saealib.AsyncEvaluator.acknowledge
+
+
+.. automethod:: saealib.AsyncEvaluator.can_reattach
+
+
+.. automethod:: saealib.AsyncEvaluator.cancel
+
+
+.. automethod:: saealib.AsyncEvaluator.close
+
+
+.. automethod:: saealib.AsyncEvaluator.collect
+
+
+.. automethod:: saealib.AsyncEvaluator.contract
+
+
+.. automethod:: saealib.AsyncEvaluator.detach
+
+
+.. automethod:: saealib.AsyncEvaluator.evaluate_batch
+
+
+.. automethod:: saealib.AsyncEvaluator.evaluate_request
+
+
+.. automethod:: saealib.AsyncEvaluator.has_partial_lifecycle_override
+
+
+.. automethod:: saealib.AsyncEvaluator.reattach
+
+
+.. automethod:: saealib.AsyncEvaluator.submit
+
+
+.. automethod:: saealib.AsyncEvaluator.supports_batch_rollback
+
+
+

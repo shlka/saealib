@@ -16,6 +16,7 @@
 
 
    ~StrategySwitcher.__init__
+   ~StrategySwitcher.contract
    ~StrategySwitcher.switch
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.StrategySwitcher.__init__
+
+
+.. automethod:: saealib.StrategySwitcher.contract
 
 
 .. automethod:: saealib.StrategySwitcher.switch

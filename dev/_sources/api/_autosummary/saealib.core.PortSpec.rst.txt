@@ -1,0 +1,31 @@
+﻿saealib.core.PortSpec
+=====================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: PortSpec
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PortSpec.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.PortSpec.__init__
+
+
+

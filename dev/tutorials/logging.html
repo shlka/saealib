@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Logging Progress &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>Logging Progress &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -158,7 +158,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -171,8 +171,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -193,7 +200,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -333,7 +340,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -346,8 +353,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -368,7 +382,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -478,6 +492,13 @@
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Logging Progress</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external_libraries.html">Integrating External Libraries</a></li>
 </ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="component_swap.html">Choose and swap built-in components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lowlevel_api.html">Assembling an Optimizer with the Low-Level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interface_hooks.html">Choose a Hook, Stage, or Callback</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel_api.html">Run an optimization with the high-level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_components.html">Add a custom component to an existing contract</a></li>
+</ul>
 </div>
 </nav></div>
     </div>
@@ -539,9 +560,15 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="logging-progress">
 <h1>Logging Progress<a class="headerlink" href="#logging-progress" title="Link to this heading">#</a></h1>
-<p>Record optimization progress with the standard <code class="docutils literal notranslate"><span class="pre">logging</span></code> module.</p>
-<section id="default-behavior">
-<h2>Default behavior<a class="headerlink" href="#default-behavior" title="Link to this heading">#</a></h2>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>Record optimization progress with the standard <code class="docutils literal notranslate"><span class="pre">logging</span></code> module.</p>
+<div class="tip admonition">
+<p class="admonition-title">What you’ll be able to do</p>
+<p>By the end of this page, you’ll be able to record progress, warnings, and custom events with Python’s standard <code class="docutils literal notranslate"><span class="pre">logging</span></code> module.</p>
+</div>
+<p>Use the <a class="reference internal" href="highlevel_api.html"><span class="std std-doc">High-level API</span></a> for a basic optimization, and see the <a class="reference internal" href="lowlevel_api.html"><span class="std std-doc">Low-Level API</span></a> when you need to tune generation-level configuration.
+This page shows how to configure the destination and level for standard logging and record built-in or custom events.</p>
+<section id="use-the-default-logging-behavior">
+<h2>Use the default logging behavior<a class="headerlink" href="#use-the-default-logging-behavior" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> registers a handler (<code class="docutils literal notranslate"><span class="pre">logging_generation</span></code>) that records progress at the start of every generation, but only when <code class="docutils literal notranslate"><span class="pre">minimize</span></code>/<code class="docutils literal notranslate"><span class="pre">maximize</span></code>’s <code class="docutils literal notranslate"><span class="pre">verbose=True</span></code> (the default).</p>
 <p>However, this handler only calls <code class="docutils literal notranslate"><span class="pre">logging.getLogger(__name__).info(...)</span></code>, so nothing is displayed unless INFO-level output is enabled on Python’s <code class="docutils literal notranslate"><span class="pre">logging</span></code> module.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -587,8 +614,8 @@
 </pre></div>
 </div>
 </section>
-<section id="writing-to-a-file">
-<h2>Writing to a file<a class="headerlink" href="#writing-to-a-file" title="Link to this heading">#</a></h2>
+<section id="write-progress-to-a-file">
+<h2>Write progress to a file<a class="headerlink" href="#write-progress-to-a-file" title="Link to this heading">#</a></h2>
 <p>Adding a <code class="docutils literal notranslate"><span class="pre">FileHandler</span></code> to the <code class="docutils literal notranslate"><span class="pre">saealib.callback.handlers</span></code> logger writes progress out to a file.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
@@ -605,8 +632,8 @@
 </pre></div>
 </div>
 </section>
-<section id="hypervolume-logging-for-multi-objective-problems">
-<h2>Hypervolume logging for multi-objective problems<a class="headerlink" href="#hypervolume-logging-for-multi-objective-problems" title="Link to this heading">#</a></h2>
+<section id="log-hypervolume-for-multi-objective-problems">
+<h2>Log hypervolume for multi-objective problems<a class="headerlink" href="#log-hypervolume-for-multi-objective-problems" title="Link to this heading">#</a></h2>
 <p>For multi-objective problems, registering the handler returned by <code class="docutils literal notranslate"><span class="pre">logging_generation_hv(reference_point)</span></code> records the hypervolume for each generation.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -635,20 +662,20 @@
 </div>
 <p>By minimization convention, <code class="docutils literal notranslate"><span class="pre">reference_point</span></code> should be a value larger than the best achievable value for each objective.</p>
 </section>
-<section id="warning-level-logging">
-<h2>Warning-level logging<a class="headerlink" href="#warning-level-logging" title="Link to this heading">#</a></h2>
+<section id="handle-warning-level-logs">
+<h2>Handle warning-level logs<a class="headerlink" href="#handle-warning-level-logs" title="Link to this heading">#</a></h2>
 <p>Some components record numerical issues via <code class="docutils literal notranslate"><span class="pre">logger.warning(...)</span></code>.</p>
 <p>For example, <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code> issues a warning when the kernel matrix becomes ill-conditioned.</p>
 <p>Even without calling <code class="docutils literal notranslate"><span class="pre">logging.basicConfig</span></code>, WARNING-level and above logs are shown on standard error via Python’s “handler of last resort”.</p>
 <p>Note that, unlike INFO-level progress logs, this kind of warning is visible even without any configuration.</p>
 </section>
-<section id="custom-logging">
-<h2>Custom logging<a class="headerlink" href="#custom-logging" title="Link to this heading">#</a></h2>
+<section id="add-custom-logging">
+<h2>Add custom logging<a class="headerlink" href="#add-custom-logging" title="Link to this heading">#</a></h2>
 <p>If you want to log something other than what <code class="docutils literal notranslate"><span class="pre">logging_generation</span></code>/<code class="docutils literal notranslate"><span class="pre">logging_generation_hv</span></code> record, register your own handler on <code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code>.</p>
-<p>See <a class="reference internal" href="../components/callbacks.html"><span class="std std-doc">CallbackManager</span></a> for the underlying mechanism.</p>
+<p>See <a class="reference internal" href="../concepts/observation_and_state/callbacks.html"><span class="std std-doc">CallbackManager</span></a> for the underlying mechanism.</p>
 </section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="related-concepts-and-reference">
+<h2>Related concepts and reference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/callbacks.html#saealib.logging_generation" title="saealib.logging_generation"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.logging_generation()</span></code></a> / <a class="reference internal" href="../api/callbacks.html#saealib.logging_generation_hv" title="saealib.logging_generation_hv"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.logging_generation_hv()</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CallbackManager.html#saealib.CallbackManager" title="saealib.CallbackManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CallbackManager</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.GenerationStartEvent.html#saealib.GenerationStartEvent" title="saealib.GenerationStartEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GenerationStartEvent</span></code></a></p></li>
@@ -704,12 +731,12 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#default-behavior">Default behavior</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#writing-to-a-file">Writing to a file</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hypervolume-logging-for-multi-objective-problems">Hypervolume logging for multi-objective problems</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#warning-level-logging">Warning-level logging</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-logging">Custom logging</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-the-default-logging-behavior">Use the default logging behavior</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#write-progress-to-a-file">Write progress to a file</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#log-hypervolume-for-multi-objective-problems">Log hypervolume for multi-objective problems</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#handle-warning-level-logs">Handle warning-level logs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#add-custom-logging">Add custom logging</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">Related concepts and reference</a></li>
 </ul>
   </nav></div>
 

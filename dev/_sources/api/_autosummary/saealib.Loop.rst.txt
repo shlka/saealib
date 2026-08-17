@@ -1,0 +1,39 @@
+﻿saealib.Loop
+============
+
+.. currentmodule:: saealib
+
+.. autoclass:: Loop
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Loop.__init__
+   ~Loop.to_pseudocode
+   ~Loop.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.Loop.__init__
+
+
+.. automethod:: saealib.Loop.to_pseudocode
+
+
+.. automethod:: saealib.Loop.to_text
+
+
+

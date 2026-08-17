@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.algorithms.pymoo_algorithm &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>saealib.algorithms.pymoo_algorithm &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../../../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -591,7 +591,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -604,8 +604,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -626,7 +633,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -764,7 +771,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -777,8 +784,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -799,7 +813,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -946,27 +960,47 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Protocol</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Algorithm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AskTellAlgorithm</span><span class="p">,</span>
+    <span class="n">ProposalRequest</span><span class="p">,</span>
+    <span class="n">algorithm_context</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostAskEvent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PARTIAL_ALLOWED</span><span class="p">,</span>
+    <span class="n">REPEATED_ALLOWED</span><span class="p">,</span>
+    <span class="n">ComponentContract</span><span class="p">,</span>
+    <span class="n">ExecutionContract</span><span class="p">,</span>
+    <span class="n">FeedbackBatch</span><span class="p">,</span>
+    <span class="n">FeedbackRequirement</span><span class="p">,</span>
+    <span class="n">ProposalBatch</span><span class="p">,</span>
+    <span class="n">ProposalRelations</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">POPULATIONS_MAIN</span><span class="p">,</span>
+    <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">,</span>
+    <span class="n">StatePatch</span><span class="p">,</span>
+    <span class="n">StateView</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigurationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">IDAllocator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">Population</span><span class="p">,</span> <span class="n">PopulationAttribute</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem.constraint</span><span class="w"> </span><span class="kn">import</span> <span class="n">EqualityConstraint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.space</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoundsService</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pymoo.core.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span> <span class="k">as</span> <span class="n">PymooCoreProblem</span>
 
-    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatchable</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_PymooPopulationLike</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structural interface of a ``pymoo.core.population.Population`` instance.&quot;&quot;&quot;</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Read one or more fields (e.g. &quot;X&quot;, &quot;F&quot;, &quot;G&quot;, &quot;H&quot;, &quot;CV&quot;).&quot;&quot;&quot;</span>
         <span class="o">...</span>
@@ -975,14 +1009,31 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write one or more fields (e.g. &quot;X&quot;, &quot;F&quot;, &quot;G&quot;, &quot;H&quot;).&quot;&quot;&quot;</span>
         <span class="o">...</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the number of individuals.&quot;&quot;&quot;</span>
-        <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_PymooContext</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Capabilities used by the pymoo adapter&#39;s synchronization helpers.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">problem</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Problem</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">population</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Population</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rng</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">candidate_id_allocator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IDAllocator</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">proposal_id_allocator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IDAllocator</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compiled_service</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span> <span class="o">...</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_PymooAlgorithmLike</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structural interface of a ``pymoo.core.algorithm.Algorithm`` instance.&quot;&quot;&quot;</span>
-
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_PymooPopulationLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Internal population; None before setup(). Read-only from here.&quot;&quot;&quot;</span>
@@ -1003,7 +1054,7 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="PymooAlgorithm">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.PymooAlgorithm.html#saealib.PymooAlgorithm">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">PymooAlgorithm</span><span class="p">(</span><span class="n">Algorithm</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PymooAlgorithm</span><span class="p">(</span><span class="n">AskTellAlgorithm</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Adapter wrapping a pymoo Algorithm (e.g. ``NSGA2()``) as saealib&#39;s ``Algorithm``.</span>
 
@@ -1075,6 +1126,39 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_infills</span><span class="p">:</span> <span class="n">_PymooPopulationLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
+<div class="viewcode-block" id="PymooAlgorithm.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.PymooAlgorithm.html#saealib.PymooAlgorithm.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the family contract with optional partial-feedback capability.&quot;&quot;&quot;</span>
+        <span class="n">family</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">family</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">family</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span>
+                <span class="n">family</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">reads</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">family</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">reads</span><span class="p">,</span> <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">),</span>
+                <span class="n">writes</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">family</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">writes</span><span class="p">,</span> <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_partial_tell</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">family</span>
+        <span class="n">feedback</span> <span class="o">=</span> <span class="n">family</span><span class="o">.</span><span class="n">lifecycle</span><span class="o">.</span><span class="n">feedback</span>
+        <span class="k">assert</span> <span class="n">feedback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">family</span><span class="p">,</span>
+            <span class="n">lifecycle</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span>
+                <span class="n">family</span><span class="o">.</span><span class="n">lifecycle</span><span class="p">,</span>
+                <span class="n">feedback</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="n">feedback</span><span class="p">,</span>
+                    <span class="n">completion</span><span class="o">=</span><span class="n">PARTIAL_ALLOWED</span><span class="p">,</span>
+                    <span class="n">multiplicity</span><span class="o">=</span><span class="n">REPEATED_ALLOWED</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">execution</span><span class="o">=</span><span class="n">ExecutionContract</span><span class="p">(</span>
+                <span class="n">required_runtime_capabilities</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;partial_feedback&quot;</span><span class="p">,),</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
+
+
     <span class="n">_candidate_id_attr</span> <span class="o">=</span> <span class="s2">&quot;saealib_candidate_id&quot;</span>
 
 <div class="viewcode-block" id="PymooAlgorithm.get_required_attrs">
@@ -1107,9 +1191,10 @@ window.runMermaid = runMermaid;</script>
             <span class="sa">r</span><span class="s2">&quot;$P \leftarrow \text{pymoo\_algorithm.pop}$&quot;</span><span class="p">,</span>
         <span class="p">]</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_pymoo_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PymooCoreProblem</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Synthesize a minimal pymoo Problem shim; never evaluated by pymoo itself.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_pymoo_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">_PymooContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PymooCoreProblem</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">pymoo.core.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span> <span class="k">as</span> <span class="n">PymooProblem</span>
+
+        <span class="n">problem</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span>
 
         <span class="n">eq_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
             <span class="p">[</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">EqualityConstraint</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span>
@@ -1118,13 +1203,16 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ieq_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">eq_mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_eq_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">eq_mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
+        <span class="n">bounds_srv</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">BoundsService</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">compiled_service</span><span class="p">(</span><span class="s2">&quot;BoundsService&quot;</span><span class="p">))</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">bounds_srv</span><span class="o">.</span><span class="n">bounds</span>
+
         <span class="k">return</span> <span class="n">PymooProblem</span><span class="p">(</span>
             <span class="n">n_var</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
             <span class="n">n_obj</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span><span class="p">,</span>
             <span class="n">n_ieq_constr</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ieq_idx</span><span class="p">),</span>
             <span class="n">n_eq_constr</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_eq_idx</span><span class="p">),</span>
-            <span class="n">xl</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">lb</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
-            <span class="n">xu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">ub</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+            <span class="n">xl</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+            <span class="n">xu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_assign_objectives</span><span class="p">(</span>
@@ -1190,13 +1278,12 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_eq_idx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">pymoo_pop</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="n">g</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eq_idx</span><span class="p">])</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_initialized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bind the wrapped algorithm to the problem and seed it with saealib&#39;s DoE.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_initialized</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">_PymooContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">pymoo.core.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoTermination</span>
 
-        <span class="n">pymoo_problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_pymoo_problem</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+        <span class="n">pymoo_problem</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_pymoo_problem</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pymoo_algorithm</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span>
             <span class="n">pymoo_problem</span><span class="p">,</span>
             <span class="n">termination</span><span class="o">=</span><span class="n">NoTermination</span><span class="p">(),</span>
@@ -1223,16 +1310,15 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.PymooAlgorithm.html#saealib.PymooAlgorithm.ask">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">ask</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
-        <span class="n">provider</span><span class="p">:</span> <span class="n">Dispatchable</span><span class="p">,</span>
-        <span class="n">n_offspring</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Population</span><span class="p">:</span>
+        <span class="n">request</span><span class="p">:</span> <span class="n">ProposalRequest</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">StateView</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProposalBatch</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate offspring via the wrapped pymoo algorithm&#39;s own ``ask()``.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">        ctx : ExecutionContext</span>
 <span class="sd">            Current optimization context.</span>
 <span class="sd">        provider : Dispatchable</span>
 <span class="sd">            Component provider.</span>
@@ -1245,6 +1331,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Population</span>
 <span class="sd">            Candidates with ``x`` and ``pymoo_idx`` set.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">request</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="n">algorithm_context</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_initialized</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
         <span class="n">infills</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pymoo_algorithm</span><span class="o">.</span><span class="n">ask</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">infills</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1262,32 +1350,37 @@ window.runMermaid = runMermaid;</script>
             <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
             <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
 
-        <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">PostAskEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">PostAskEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="n">x</span><span class="p">))</span>
 
-        <span class="n">cand</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">capacity</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span>
+        <span class="n">cand</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">capacity</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s2">&quot;pymoo_idx&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)}</span>
-        <span class="k">if</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="n">population</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
             <span class="n">candidate_ids</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">candidate_id_allocator</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_set_pymoo_candidate_ids</span><span class="p">(</span><span class="n">infills</span><span class="p">,</span> <span class="n">candidate_ids</span><span class="p">)</span>
             <span class="n">data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidate_ids</span>
         <span class="n">cand</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">cand</span></div>
+        <span class="k">return</span> <span class="n">ProposalBatch</span><span class="o">.</span><span class="n">from_allocator</span><span class="p">(</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">proposal_id_allocator</span><span class="p">,</span>
+            <span class="n">candidates</span><span class="o">=</span><span class="n">cand</span><span class="p">,</span>
+            <span class="n">relations</span><span class="o">=</span><span class="n">ProposalRelations</span><span class="p">(</span><span class="n">row_count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">cand</span><span class="p">)),</span>
+            <span class="n">requirements</span><span class="o">=</span><span class="n">FeedbackRequirement</span><span class="p">(</span><span class="n">quantities</span><span class="o">=</span><span class="p">()),</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PymooAlgorithm.tell">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.PymooAlgorithm.html#saealib.PymooAlgorithm.tell">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">tell</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
-        <span class="n">provider</span><span class="p">:</span> <span class="n">Dispatchable</span><span class="p">,</span>
-        <span class="n">offspring</span><span class="p">:</span> <span class="n">Population</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">feedback</span><span class="p">:</span> <span class="n">FeedbackBatch</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">StateView</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StatePatch</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update the wrapped pymoo algorithm, then mirror its population into ``ctx``.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">        ctx : ExecutionContext</span>
 <span class="sd">            Current optimization context.</span>
 <span class="sd">        provider : Dispatchable</span>
 <span class="sd">            Component provider.</span>
@@ -1295,6 +1388,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            Offspring population, possibly reordered or truncated relative</span>
 <span class="sd">            to what :meth:`ask` produced.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">feedback</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="n">algorithm_context</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">offspring</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">offspring</span>
+        <span class="k">if</span> <span class="n">offspring</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
+                <span class="s2">&quot;PymooAlgorithm.tell() requires an offspring population&quot;</span>
+            <span class="p">)</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_infills</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">offspring</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;pymoo_idx&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">idx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_infills</span><span class="p">)):</span>
@@ -1347,14 +1447,14 @@ window.runMermaid = runMermaid;</script>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_set_pymoo_candidate_ids</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_infills</span><span class="p">,</span> <span class="n">full_ids</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">pymoo_algorithm</span><span class="o">.</span><span class="n">tell</span><span class="p">(</span><span class="n">infills</span><span class="o">=</span><span class="n">infills</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_population</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_population</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">StatePatch</span><span class="p">(</span><span class="n">writes</span><span class="o">=</span><span class="p">{</span><span class="n">POPULATIONS_MAIN</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="p">})</span></div>
 
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_pymoo_candidate_ids</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">pymoo_pop</span><span class="p">:</span> <span class="n">_PymooPopulationLike</span><span class="p">,</span> <span class="n">candidate_ids</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach stable saealib candidate IDs to pymoo individuals.&quot;&quot;&quot;</span>
         <span class="n">candidate_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidate_ids</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">candidate_ids</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidate_ids</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pymoo_pop</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span><span class="s2">&quot;pymoo candidate provenance has invalid shape&quot;</span><span class="p">)</span>
@@ -1365,7 +1465,6 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_pymoo_candidate_ids</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">pymoo_pop</span><span class="p">:</span> <span class="n">_PymooPopulationLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read survivor provenance retained by pymoo&#39;s population objects.&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="n">pymoo_pop</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_candidate_id_attr</span><span class="p">)</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
@@ -1385,14 +1484,14 @@ window.runMermaid = runMermaid;</script>
             <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span><span class="s2">&quot;pymoo survivor candidate IDs are not unique&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_sync_population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rebuild ctx.population in-place from the wrapped algorithm&#39;s own .pop.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sync_population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">_PymooContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">alg_pop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pymoo_algorithm</span><span class="o">.</span><span class="n">pop</span>
         <span class="k">assert</span> <span class="n">alg_pop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># setup()/tell() already ran by this point</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alg_pop</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="p">):</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alg_pop</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">population</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Wrapped pymoo algorithm&#39;s internal population size (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">alg_pop</span><span class="p">)</span><span class="si">}</span><span class="s2">) &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;no longer matches saealib&#39;s population size (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="p">)</span><span class="si">}</span><span class="s2">). &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;no longer matches saealib&#39;s population size (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">population</span><span class="p">)</span><span class="si">}</span><span class="s2">). &quot;</span>
                 <span class="s2">&quot;This can happen with archive-growing pymoo algorithms that are not &quot;</span>
                 <span class="s2">&quot;supported by this adapter.&quot;</span>
             <span class="p">)</span>
@@ -1415,7 +1514,7 @@ window.runMermaid = runMermaid;</script>
             <span class="s2">&quot;cv&quot;</span><span class="p">:</span> <span class="n">cv</span><span class="p">,</span>
             <span class="s2">&quot;pymoo_idx&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
         <span class="p">}</span>
-        <span class="k">if</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="n">population</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">survivor_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
                     <span class="s2">&quot;pymoo survivor candidate provenance is missing; &quot;</span>
@@ -1423,8 +1522,8 @@ window.runMermaid = runMermaid;</script>
                 <span class="p">)</span>
             <span class="n">new_pop_data</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">survivor_ids</span>
 
-        <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="n">ctx</span><span class="o">.</span><span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span><span class="n">new_pop_data</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+        <span class="n">population</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span><span class="n">new_pop_data</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 </pre></div>
 

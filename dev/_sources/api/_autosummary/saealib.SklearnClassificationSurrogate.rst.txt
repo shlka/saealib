@@ -16,6 +16,7 @@
 
 
    ~SklearnClassificationSurrogate.__init__
+   ~SklearnClassificationSurrogate.contract
    ~SklearnClassificationSurrogate.fit
    ~SklearnClassificationSurrogate.post_fit
    ~SklearnClassificationSurrogate.predict
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.SklearnClassificationSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnClassificationSurrogate.contract
 
 
 .. automethod:: saealib.SklearnClassificationSurrogate.fit

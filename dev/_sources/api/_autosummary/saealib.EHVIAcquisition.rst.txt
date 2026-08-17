@@ -17,6 +17,7 @@
 
    ~EHVIAcquisition.__init__
    ~EHVIAcquisition.compute_reference
+   ~EHVIAcquisition.contract
    ~EHVIAcquisition.evaluate
    ~EHVIAcquisition.prepare
    ~EHVIAcquisition.score
@@ -33,6 +34,9 @@
 
 
 .. automethod:: saealib.EHVIAcquisition.compute_reference
+
+
+.. automethod:: saealib.EHVIAcquisition.contract
 
 
 .. automethod:: saealib.EHVIAcquisition.evaluate

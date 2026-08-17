@@ -16,6 +16,7 @@
 
 
    ~CrossoverOnePoint.__init__
+   ~CrossoverOnePoint.contract
    ~CrossoverOnePoint.crossover
    ~CrossoverOnePoint.crossover_batch
    ~CrossoverOnePoint.post_crossover
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.CrossoverOnePoint.__init__
+
+
+.. automethod:: saealib.CrossoverOnePoint.contract
 
 
 .. automethod:: saealib.CrossoverOnePoint.crossover

@@ -16,6 +16,7 @@
 
 
    ~SklearnSVMSurrogate.__init__
+   ~SklearnSVMSurrogate.contract
    ~SklearnSVMSurrogate.fit
    ~SklearnSVMSurrogate.post_fit
    ~SklearnSVMSurrogate.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.SklearnSVMSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnSVMSurrogate.contract
 
 
 .. automethod:: saealib.SklearnSVMSurrogate.fit

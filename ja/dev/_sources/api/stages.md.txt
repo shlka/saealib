@@ -1,6 +1,14 @@
+---
+primary_layer: layer2
+related_layers: [layer3]
+page_type: reference
+---
+
 # Stages
 
-Concrete `Stage` implementations that make up the default generation-loop pipeline (see [Pipeline](pipeline.md)).
+These public Stages compose the default generation loop.
+`Stage` is a compatibility execution surface that receives `OptimizationState`, distinct from a graph-native Component's contract.
+Use `stage_component(stage)` to connect a Stage to a structured Pipeline.
 
 ```{eval-rst}
 .. autosummary::
@@ -12,8 +20,14 @@ Concrete `Stage` implementations that make up the default generation-loop pipeli
    saealib.AcquisitionStage
    saealib.SurrogatePredictStage
    saealib.EvaluationPlanStage
+   saealib.AsyncEvaluationSubmitStage
+   saealib.EvaluationSubmitStage
+   saealib.EvaluationCollectStage
+   saealib.EvaluationApplyStage
+   saealib.EvaluationAcknowledgeStage
    saealib.SurrogateFitStage
    saealib.ArchiveUpdateStage
+   saealib.FeedbackStage
    saealib.TellStage
    saealib.SurrogateOnlyLoopStage
    saealib.InitializationStage

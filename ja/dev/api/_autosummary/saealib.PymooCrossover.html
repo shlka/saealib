@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.PymooCrossover &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>saealib.PymooCrossover &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../../_static/documentation_options.js?v=c8372973"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -172,8 +172,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -187,14 +194,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="../index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -347,8 +354,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -362,14 +376,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="../index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -470,21 +484,89 @@
      aria-label="セクションナビゲーション">
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="../highlevel.html">High-Level API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1"><a class="reference internal" href="../imports.html">標準インポート</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core.html">コアAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.Component.html">saealib.core.Component</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ComponentContract.html">saealib.core.ComponentContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.PartSpec.html">saealib.core.PartSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.AssumptionSet.html">saealib.core.AssumptionSet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.DataSpec.html">saealib.core.DataSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.PortContract.html">saealib.core.PortContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.PortSpec.html">saealib.core.PortSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StateContract.html">saealib.core.StateContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.LifecycleContract.html">saealib.core.LifecycleContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ExecutionContract.html">saealib.core.ExecutionContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ComponentGraph.html">saealib.core.ComponentGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StructuredGraph.html">saealib.core.StructuredGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StructuredRegion.html">saealib.core.StructuredRegion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.CompilationRule.html">saealib.core.CompilationRule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StateStore.html">saealib.core.StateStore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StateView.html">saealib.core.StateView</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StatePatch.html">saealib.core.StatePatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ExecutablePlan.html">saealib.core.ExecutablePlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ExecutionRuntime.html">saealib.core.ExecutionRuntime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.ComponentNode.html">saealib.core.compiler.ComponentNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.NodeRef.html">saealib.core.compiler.NodeRef</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.DataEdge.html">saealib.core.compiler.DataEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.ControlEdge.html">saealib.core.compiler.ControlEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.StateBinding.html">saealib.core.compiler.StateBinding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.Diagnostic.html">saealib.core.compiler.Diagnostic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.ContractPath.html">saealib.core.compiler.ContractPath</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../execution.html">実行API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.AsyncEvaluationScheduler.html">saealib.execution.AsyncEvaluationScheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.PollResult.html">saealib.execution.PollResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.RuntimeFactory.html">saealib.execution.RuntimeFactory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.RuntimeRegistration.html">saealib.execution.RuntimeRegistration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.RuntimeRegistry.html">saealib.execution.RuntimeRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.create_runtime.html">saealib.execution.create_runtime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.default_runtime_registry.html">saealib.execution.default_runtime_registry</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../space.html">探索空間API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.SearchSpace.html">saealib.space.SearchSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ServiceRegistry.html">saealib.space.ServiceRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ValidationResult.html">saealib.space.ValidationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.RepresentationSpec.html">saealib.core.contracts.RepresentationSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.VectorSpace.html">saealib.space.VectorSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ObjectSpace.html">saealib.space.ObjectSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.SequenceSpace.html">saealib.space.SequenceSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.PermutationSpace.html">saealib.space.PermutationSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.GenomeCodec.html">saealib.space.GenomeCodec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.SamplingService.html">saealib.space.SamplingService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ValidationService.html">saealib.space.ValidationService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.FeatureEncoder.html">saealib.space.FeatureEncoder</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../feedback.html">フィードバックAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.ProposalBatch.html">saealib.core.contracts.ProposalBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.ObservationBatch.html">saealib.core.contracts.ObservationBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.FeedbackBatch.html">saealib.core.contracts.FeedbackBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.FeedbackContract.html">saealib.core.contracts.FeedbackContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FeedbackBuilder.html">saealib.FeedbackBuilder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.TrueOnlyFeedback.html">saealib.TrueOnlyFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.PredictedFeedback.html">saealib.PredictedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.MixedFeedback.html">saealib.MixedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.NoFeedback.html">saealib.NoFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FeedbackResult.html">saealib.FeedbackResult</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../highlevel.html">高レベルAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Result.html">saealib.Result</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../optimizer.html">Optimizer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../optimizer.html">オプティマイザー</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Optimizer.html">saealib.Optimizer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../exceptions.html">Exceptions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../exceptions.html">例外</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SaealibError.html">saealib.SaealibError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ValidationError.html">saealib.ValidationError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ConfigurationError.html">saealib.ConfigurationError</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../registry.html">Registry</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../registry.html">レジストリ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.register.html">saealib.register</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.registry.build.html">saealib.registry.build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.registry.get.html">saealib.registry.get</a></li>
@@ -502,14 +584,14 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.GradientRepairHandler.html">saealib.GradientRepairHandler</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../variables.html">Variables</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../variables.html">変数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Variable.html">saealib.Variable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ContinuousVariable.html">saealib.ContinuousVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.IntegerVariable.html">saealib.IntegerVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CategoricalVariable.html">saealib.CategoricalVariable</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../comparators.html">Comparators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../comparators.html">比較器</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Comparator.html">saealib.Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SingleObjectiveComparator.html">saealib.SingleObjectiveComparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.WeightedSumComparator.html">saealib.WeightedSumComparator</a></li>
@@ -544,14 +626,15 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PopulationAttribute.html">saealib.PopulationAttribute</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../algorithms.html">Algorithms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../algorithms.html">アルゴリズム</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Algorithm.html">saealib.Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GA.html">saealib.GA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.GenomeGA.html">saealib.GenomeGA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PSO.html">saealib.PSO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PymooAlgorithm.html">saealib.PymooAlgorithm</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../operators.html">Operators</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../operators.html">演算子</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="saealib.Crossover.html">saealib.Crossover</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CrossoverBLXAlpha.html">saealib.CrossoverBLXAlpha</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CrossoverSBX.html">saealib.CrossoverSBX</a></li>
@@ -577,7 +660,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PymooMutation.html">saealib.PymooMutation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../surrogate.html">Surrogate Models</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../surrogate.html">サロゲートモデル</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Surrogate.html">saealib.Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RegressionSurrogate.html">saealib.RegressionSurrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ComparisonSurrogate.html">saealib.ComparisonSurrogate</a></li>
@@ -628,7 +711,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SpearmanCorrelation.html">saealib.SpearmanCorrelation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">獲得関数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
@@ -642,7 +725,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SMSEGOAcquisition.html">saealib.SMSEGOAcquisition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../strategies.html">Optimization Strategies</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../strategies.html">最適化戦略</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.OptimizationStrategy.html">saealib.OptimizationStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenerationBasedStrategy.html">saealib.GenerationBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
@@ -652,18 +735,26 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">初期化</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Initializer.html">saealib.Initializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.GenomeInitializer.html">saealib.GenomeInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.LHSInitializer.html">saealib.LHSInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RandomInitializer.html">saealib.RandomInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SobolInitializer.html">saealib.SobolInitializer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../evaluation.html">Evaluation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../evaluation.html">評価</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Evaluator.html">saealib.Evaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ThreadPoolEvaluator.html">saealib.ThreadPoolEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AsyncEvaluator.html">saealib.AsyncEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationAdapter.html">saealib.EvaluationAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationRequest.html">saealib.EvaluationRequest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationHandle.html">saealib.EvaluationHandle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationQuery.html">saealib.EvaluationQuery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationUpdate.html">saealib.EvaluationUpdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.PendingEvaluation.html">saealib.PendingEvaluation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
@@ -674,6 +765,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -681,7 +773,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.TerminationCondition.html">saealib.TerminationCondition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../callbacks.html">Callbacks</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../callbacks.html">コールバック</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Event.html">saealib.Event</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RunStartEvent.html">saealib.RunStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RunEndEvent.html">saealib.RunEndEvent</a></li>
@@ -691,6 +783,8 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenerationEndEvent.html">saealib.GenerationEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateStartEvent.html">saealib.SurrogateStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateEndEvent.html">saealib.SurrogateEndEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStartEvent.html">saealib.AcquisitionStartEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionEndEvent.html">saealib.AcquisitionEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PostCrossoverEvent.html">saealib.PostCrossoverEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PostMutationEvent.html">saealib.PostMutationEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PostAskEvent.html">saealib.PostAskEvent</a></li>
@@ -700,25 +794,35 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.CheckpointCallback.html">saealib.CheckpointCallback</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../pipeline.html">Pipeline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../pipeline.html">パイプライン</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Stage.html">saealib.Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Pipeline.html">saealib.Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.Repeat.html">saealib.Repeat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.Loop.html">saealib.Loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.Branch.html">saealib.Branch</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">ステージ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AskStage.html">saealib.AskStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AsyncEvaluationSubmitStage.html">saealib.AsyncEvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationSubmitStage.html">saealib.EvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationCollectStage.html">saealib.EvaluationCollectStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationApplyStage.html">saealib.EvaluationApplyStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationAcknowledgeStage.html">saealib.EvaluationAcknowledgeStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FeedbackStage.html">saealib.FeedbackStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.InitializationStage.html">saealib.InitializationStage</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">ユーティリティ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">参照</a></li>
 </ul>
 </div>
 </nav></div>
@@ -760,10 +864,10 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">API Reference</a></li>
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">APIリファレンス</a></li>
     
     
-    <li class="breadcrumb-item"><a href="../operators.html" class="nav-link">Operators</a></li>
+    <li class="breadcrumb-item"><a href="../operators.html" class="nav-link">演算子</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">saealib.PymooCrossover</span></li>
   </ul>
@@ -826,19 +930,22 @@ parameter, so results are reproducible under saealib's seeding.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooCrossover.__init__" title="saealib.PymooCrossover.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooCrossover.crossover" title="saealib.PymooCrossover.crossover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crossover</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooCrossover.contract" title="saealib.PymooCrossover.contract"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contract</span></code></a></p></td>
+<td><p>Return the wrapped crossover contract.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooCrossover.crossover" title="saealib.PymooCrossover.crossover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crossover</span></code></a></p></td>
 <td><p>Execute crossover for one parent group.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooCrossover.crossover_batch" title="saealib.PymooCrossover.crossover_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crossover_batch</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooCrossover.crossover_batch" title="saealib.PymooCrossover.crossover_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">crossover_batch</span></code></a></p></td>
 <td><p>Execute crossover on a batch of parent pairs via a single pymoo call.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooCrossover.post_crossover" title="saealib.PymooCrossover.post_crossover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_crossover</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooCrossover.post_crossover" title="saealib.PymooCrossover.post_crossover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_crossover</span></code></a></p></td>
 <td><p>Post-crossover lifecycle hook; override to inject custom processing.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooCrossover.post_crossover_batch" title="saealib.PymooCrossover.post_crossover_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_crossover_batch</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooCrossover.post_crossover_batch" title="saealib.PymooCrossover.post_crossover_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_crossover_batch</span></code></a></p></td>
 <td><p>Run the post-crossover lifecycle hook for a batch.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.PymooCrossover.with_post" title="saealib.PymooCrossover.with_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_post</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.PymooCrossover.with_post" title="saealib.PymooCrossover.with_post"><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_post</span></code></a></p></td>
 <td><p>Return a copy of this operator with <code class="docutils literal notranslate"><span class="pre">fn</span></code> appended to the hook.</p></td>
 </tr>
 </tbody>
@@ -864,8 +971,19 @@ parameter, so results are reproducible under saealib's seeding.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="saealib.PymooCrossover.contract">
+<span class="sig-prename descclassname"><span class="pre">PymooCrossover.</span></span><span class="sig-name descname"><span class="pre">contract</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/pymoo_crossover.html#PymooCrossover.contract"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.PymooCrossover.contract" title="Link to this definition">#</a></dt>
+<dd><p>Return the wrapped crossover contract.</p>
+<dl class="field-list simple">
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="saealib.core.ComponentContract.html#saealib.core.ComponentContract" title="saealib.core.contracts.contract.ComponentContract"><em>ComponentContract</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="saealib.PymooCrossover.crossover">
-<span class="sig-prename descclassname"><span class="pre">PymooCrossover.</span></span><span class="sig-name descname"><span class="pre">crossover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7F96EAF53920</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.PymooCrossover.crossover" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">PymooCrossover.</span></span><span class="sig-name descname"><span class="pre">crossover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FD2F723D000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.PymooCrossover.crossover" title="Link to this definition">#</a></dt>
 <dd><p>Execute crossover for one parent group.</p>
 <p>This method is derived from <a class="reference internal" href="#saealib.PymooCrossover.crossover_batch" title="saealib.PymooCrossover.crossover_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">crossover_batch()</span></code></a> by passing a
 single-pair batch.</p>
@@ -895,7 +1013,7 @@ both modes, override <a class="reference internal" href="#saealib.PymooCrossover
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.PymooCrossover.crossover_batch">
-<span class="sig-prename descclassname"><span class="pre">PymooCrossover.</span></span><span class="sig-name descname"><span class="pre">crossover_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parents_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7F96EAFB3680</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/pymoo_crossover.html#PymooCrossover.crossover_batch"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.PymooCrossover.crossover_batch" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">PymooCrossover.</span></span><span class="sig-name descname"><span class="pre">crossover_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parents_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FD2F727CD60</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/pymoo_crossover.html#PymooCrossover.crossover_batch"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.PymooCrossover.crossover_batch" title="Link to this definition">#</a></dt>
 <dd><p>Execute crossover on a batch of parent pairs via a single pymoo call.</p>
 <p>This is the adapter's primary crossover implementation and calls the
 wrapped operator's <code class="docutils literal notranslate"><span class="pre">_do()</span></code> exactly once for the whole batch.</p>
@@ -933,7 +1051,7 @@ interleave phases per row.</p>
 <li><p><strong>offspring</strong> (<em>np.ndarray</em>) -- Offspring produced by crossover. shape = (n_children, dim)</p></li>
 <li><p><strong>parents</strong> (<em>np.ndarray</em>) -- Parent individuals. shape = (n_parents, dim)</p></li>
 <li><p><strong>rng</strong> (<em>np.random.Generator</em>) -- Random number generator.</p></li>
-<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Current optimization context.</p></li>
+<li><p><strong>ctx</strong> (<em>ExecutionContext</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Current optimization context.</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
@@ -959,7 +1077,7 @@ vectorized post-processing.</p>
 shape = (n_pair, n_children, dim)</p></li>
 <li><p><strong>parents_batch</strong> (<em>np.ndarray</em>) -- Batch of parent groups. shape = (n_pair, n_parents, dim)</p></li>
 <li><p><strong>rng</strong> (<em>np.random.Generator</em>) -- Random number generator.</p></li>
-<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Current optimization context.</p></li>
+<li><p><strong>ctx</strong> (<em>ExecutionContext</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Current optimization context.</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
@@ -1046,6 +1164,7 @@ which calls <a class="reference internal" href="#saealib.PymooCrossover.post_cro
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooCrossover"><code class="docutils literal notranslate"><span class="pre">PymooCrossover</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooCrossover.__init__"><code class="docutils literal notranslate"><span class="pre">PymooCrossover.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooCrossover.contract"><code class="docutils literal notranslate"><span class="pre">PymooCrossover.contract()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooCrossover.crossover"><code class="docutils literal notranslate"><span class="pre">PymooCrossover.crossover()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooCrossover.crossover_batch"><code class="docutils literal notranslate"><span class="pre">PymooCrossover.crossover_batch()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.PymooCrossover.post_crossover"><code class="docutils literal notranslate"><span class="pre">PymooCrossover.post_crossover()</span></code></a></li>

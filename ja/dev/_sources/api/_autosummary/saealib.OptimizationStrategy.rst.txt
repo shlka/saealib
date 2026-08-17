@@ -16,7 +16,9 @@
 
 
    ~OptimizationStrategy.__init__
+   ~OptimizationStrategy.build_graph
    ~OptimizationStrategy.build_pipeline
+   ~OptimizationStrategy.contract
    ~OptimizationStrategy.step
 
 
@@ -30,7 +32,13 @@
 .. automethod:: saealib.OptimizationStrategy.__init__
 
 
+.. automethod:: saealib.OptimizationStrategy.build_graph
+
+
 .. automethod:: saealib.OptimizationStrategy.build_pipeline
+
+
+.. automethod:: saealib.OptimizationStrategy.contract
 
 
 .. automethod:: saealib.OptimizationStrategy.step

@@ -1,0 +1,75 @@
+﻿saealib.execution.AsyncEvaluationScheduler
+==========================================
+
+.. currentmodule:: saealib.execution
+
+.. autoclass:: AsyncEvaluationScheduler
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~AsyncEvaluationScheduler.__init__
+   ~AsyncEvaluationScheduler.cancel
+   ~AsyncEvaluationScheduler.checkpoint
+   ~AsyncEvaluationScheduler.contract
+   ~AsyncEvaluationScheduler.enable_feedback_accumulator
+   ~AsyncEvaluationScheduler.pending_candidate_ids
+   ~AsyncEvaluationScheduler.poll
+   ~AsyncEvaluationScheduler.poll_result
+   ~AsyncEvaluationScheduler.reattach
+   ~AsyncEvaluationScheduler.reserved_cost
+   ~AsyncEvaluationScheduler.reserved_fe
+   ~AsyncEvaluationScheduler.submit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.__init__
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.cancel
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.checkpoint
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.contract
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.enable_feedback_accumulator
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.pending_candidate_ids
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.poll
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.poll_result
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.reattach
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.reserved_cost
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.reserved_fe
+
+
+.. automethod:: saealib.execution.AsyncEvaluationScheduler.submit
+
+
+

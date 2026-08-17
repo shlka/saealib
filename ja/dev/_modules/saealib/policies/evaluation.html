@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.policies.evaluation &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>saealib.policies.evaluation &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../../../_static/documentation_options.js?v=c8372973"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -605,8 +605,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -620,14 +627,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -778,8 +785,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -793,14 +807,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -954,6 +968,14 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionResult</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MANY</span><span class="p">,</span>
+    <span class="n">ComponentContract</span><span class="p">,</span>
+    <span class="n">DataSpec</span><span class="p">,</span>
+    <span class="n">PortContract</span><span class="p">,</span>
+    <span class="n">PortDirection</span><span class="p">,</span>
+    <span class="n">PortSpec</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">EvaluationRequest</span><span class="p">,</span>
@@ -961,6 +983,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">EvaluationStatus</span><span class="p">,</span>
     <span class="n">EvaluationUpdate</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population.genome</span><span class="w"> </span><span class="kn">import</span> <span class="n">DenseVectorBatch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -1002,6 +1025,41 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.EvaluationPlanner.html#saealib.EvaluationPlanner">[ドキュメント]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationPlanner</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Public contract for planners that may produce multiple requests.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EvaluationPlanner.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.EvaluationPlanner.html#saealib.EvaluationPlanner.contract">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the evaluation-planner family contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ComponentContract</span><span class="p">(</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;evaluation_planner&quot;</span><span class="p">:</span> <span class="n">PortContract</span><span class="p">(</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;candidates&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">INPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;Population&quot;</span><span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;acquisition&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">INPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;RowPredicate&quot;</span><span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                            <span class="n">optional</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;evaluation_requests&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;EvaluationRequestBatch&quot;</span><span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="EvaluationPlanner.plan">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.EvaluationPlanner.html#saealib.EvaluationPlanner.plan">[ドキュメント]</a>
@@ -1079,10 +1137,24 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ids</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;candidate IDs must be unique and assigned&quot;</span><span class="p">)</span>
         <span class="n">request_id</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">request_id_allocator</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">indices</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">x</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">genomes</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="s2">&quot;genomes&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">genomes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">genomes</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Keep compatibility with candidate fixtures that provide ``x``</span>
+            <span class="c1"># instead of a GenomeBatch.</span>
+            <span class="c1"># while ensuring the public request payload remains a GenomeBatch.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">payload</span> <span class="o">=</span> <span class="n">DenseVectorBatch</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">x</span><span class="p">)[</span><span class="n">indices</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="s2">&quot;candidates must provide genomes or a legacy x array&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
         <span class="k">return</span> <span class="n">EvaluationRequest</span><span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="n">request_id</span><span class="p">),</span> <span class="n">ids</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;row_indices&quot;</span><span class="p">:</span> <span class="n">indices</span><span class="o">.</span><span class="n">tolist</span><span class="p">()}</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="n">request_id</span><span class="p">),</span>
+            <span class="n">ids</span><span class="p">,</span>
+            <span class="n">payload</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;row_indices&quot;</span><span class="p">:</span> <span class="n">indices</span><span class="o">.</span><span class="n">tolist</span><span class="p">()},</span>
         <span class="p">)</span>
 
 
@@ -1188,7 +1260,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">EvaluationRequest</span><span class="p">(</span>
                 <span class="n">request</span><span class="o">.</span><span class="n">request_id</span><span class="p">,</span>
                 <span class="n">request</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">,</span>
-                <span class="n">request</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span>
                 <span class="n">request</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span>
                 <span class="p">{</span><span class="o">**</span><span class="n">request</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="s2">&quot;plan_id&quot;</span><span class="p">:</span> <span class="n">plan_id</span><span class="p">},</span>
             <span class="p">)</span>
@@ -1215,7 +1287,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">EvaluationRequest</span><span class="p">(</span>
                     <span class="n">request_id</span><span class="p">,</span>
                     <span class="n">first</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">,</span>
-                    <span class="n">first</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="n">first</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span>
                     <span class="n">first</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span>
                     <span class="p">{</span><span class="o">**</span><span class="n">first</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="s2">&quot;replicate&quot;</span><span class="p">:</span> <span class="n">replicate</span><span class="p">},</span>
                 <span class="p">)</span>
@@ -1417,7 +1489,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">high_request</span> <span class="o">=</span> <span class="n">EvaluationRequest</span><span class="p">(</span>
         <span class="n">request_id</span><span class="p">,</span>
         <span class="n">selected_ids</span><span class="p">,</span>
-        <span class="n">low_request</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">low_rows</span><span class="p">],</span>
+        <span class="n">low_request</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">low_rows</span><span class="p">),</span>
         <span class="n">low_request</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span>
         <span class="p">{</span>
             <span class="o">**</span><span class="n">low_request</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
@@ -1463,7 +1535,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">EvaluationRequest</span><span class="p">(</span>
                     <span class="n">request</span><span class="o">.</span><span class="n">request_id</span><span class="p">,</span>
                     <span class="n">request</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">,</span>
-                    <span class="n">request</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                    <span class="n">request</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span>
                     <span class="n">request</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span>
                     <span class="n">metadata</span><span class="p">,</span>
                 <span class="p">),</span>

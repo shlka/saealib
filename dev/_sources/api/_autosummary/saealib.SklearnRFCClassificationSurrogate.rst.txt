@@ -16,6 +16,7 @@
 
 
    ~SklearnRFCClassificationSurrogate.__init__
+   ~SklearnRFCClassificationSurrogate.contract
    ~SklearnRFCClassificationSurrogate.fit
    ~SklearnRFCClassificationSurrogate.post_fit
    ~SklearnRFCClassificationSurrogate.predict
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.SklearnRFCClassificationSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnRFCClassificationSurrogate.contract
 
 
 .. automethod:: saealib.SklearnRFCClassificationSurrogate.fit

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Surrogate Models &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>サロゲートモデル &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -172,8 +172,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -187,14 +194,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -347,8 +354,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -362,14 +376,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -470,21 +484,89 @@
      aria-label="セクションナビゲーション">
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="highlevel.html">High-Level API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1"><a class="reference internal" href="imports.html">標準インポート</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="core.html">コアAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.Component.html">saealib.core.Component</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ComponentContract.html">saealib.core.ComponentContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.PartSpec.html">saealib.core.PartSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.AssumptionSet.html">saealib.core.AssumptionSet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.DataSpec.html">saealib.core.DataSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.PortContract.html">saealib.core.PortContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.PortSpec.html">saealib.core.PortSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StateContract.html">saealib.core.StateContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.LifecycleContract.html">saealib.core.LifecycleContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ExecutionContract.html">saealib.core.ExecutionContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ComponentGraph.html">saealib.core.ComponentGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StructuredGraph.html">saealib.core.StructuredGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StructuredRegion.html">saealib.core.StructuredRegion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.CompilationRule.html">saealib.core.CompilationRule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StateStore.html">saealib.core.StateStore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StateView.html">saealib.core.StateView</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StatePatch.html">saealib.core.StatePatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ExecutablePlan.html">saealib.core.ExecutablePlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ExecutionRuntime.html">saealib.core.ExecutionRuntime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.ComponentNode.html">saealib.core.compiler.ComponentNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.NodeRef.html">saealib.core.compiler.NodeRef</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.DataEdge.html">saealib.core.compiler.DataEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.ControlEdge.html">saealib.core.compiler.ControlEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.StateBinding.html">saealib.core.compiler.StateBinding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.Diagnostic.html">saealib.core.compiler.Diagnostic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.ContractPath.html">saealib.core.compiler.ContractPath</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="execution.html">実行API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.AsyncEvaluationScheduler.html">saealib.execution.AsyncEvaluationScheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.PollResult.html">saealib.execution.PollResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.RuntimeFactory.html">saealib.execution.RuntimeFactory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.RuntimeRegistration.html">saealib.execution.RuntimeRegistration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.RuntimeRegistry.html">saealib.execution.RuntimeRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.create_runtime.html">saealib.execution.create_runtime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.default_runtime_registry.html">saealib.execution.default_runtime_registry</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="space.html">探索空間API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.SearchSpace.html">saealib.space.SearchSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ServiceRegistry.html">saealib.space.ServiceRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ValidationResult.html">saealib.space.ValidationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.RepresentationSpec.html">saealib.core.contracts.RepresentationSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.VectorSpace.html">saealib.space.VectorSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ObjectSpace.html">saealib.space.ObjectSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.SequenceSpace.html">saealib.space.SequenceSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.PermutationSpace.html">saealib.space.PermutationSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.GenomeCodec.html">saealib.space.GenomeCodec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.SamplingService.html">saealib.space.SamplingService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ValidationService.html">saealib.space.ValidationService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.FeatureEncoder.html">saealib.space.FeatureEncoder</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="feedback.html">フィードバックAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.ProposalBatch.html">saealib.core.contracts.ProposalBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.ObservationBatch.html">saealib.core.contracts.ObservationBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.FeedbackBatch.html">saealib.core.contracts.FeedbackBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.FeedbackContract.html">saealib.core.contracts.FeedbackContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FeedbackBuilder.html">saealib.FeedbackBuilder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TrueOnlyFeedback.html">saealib.TrueOnlyFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PredictedFeedback.html">saealib.PredictedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.MixedFeedback.html">saealib.MixedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.NoFeedback.html">saealib.NoFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FeedbackResult.html">saealib.FeedbackResult</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="highlevel.html">高レベルAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Result.html">saealib.Result</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="optimizer.html">Optimizer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="optimizer.html">オプティマイザー</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Optimizer.html">saealib.Optimizer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="exceptions.html">Exceptions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="exceptions.html">例外</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SaealibError.html">saealib.SaealibError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ValidationError.html">saealib.ValidationError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ConfigurationError.html">saealib.ConfigurationError</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="registry.html">Registry</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="registry.html">レジストリ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.register.html">saealib.register</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.registry.build.html">saealib.registry.build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.registry.get.html">saealib.registry.get</a></li>
@@ -502,14 +584,14 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GradientRepairHandler.html">saealib.GradientRepairHandler</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="variables.html">Variables</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="variables.html">変数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Variable.html">saealib.Variable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ContinuousVariable.html">saealib.ContinuousVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IntegerVariable.html">saealib.IntegerVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CategoricalVariable.html">saealib.CategoricalVariable</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="comparators.html">Comparators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="comparators.html">比較器</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Comparator.html">saealib.Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SingleObjectiveComparator.html">saealib.SingleObjectiveComparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.WeightedSumComparator.html">saealib.WeightedSumComparator</a></li>
@@ -544,14 +626,15 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PopulationAttribute.html">saealib.PopulationAttribute</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="algorithms.html">Algorithms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="algorithms.html">アルゴリズム</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Algorithm.html">saealib.Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GA.html">saealib.GA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenomeGA.html">saealib.GenomeGA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PSO.html">saealib.PSO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PymooAlgorithm.html">saealib.PymooAlgorithm</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="operators.html">Operators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="operators.html">演算子</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Crossover.html">saealib.Crossover</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CrossoverBLXAlpha.html">saealib.CrossoverBLXAlpha</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CrossoverSBX.html">saealib.CrossoverSBX</a></li>
@@ -577,7 +660,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PymooMutation.html">saealib.PymooMutation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Surrogate Models</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">サロゲートモデル</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Surrogate.html">saealib.Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RegressionSurrogate.html">saealib.RegressionSurrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ComparisonSurrogate.html">saealib.ComparisonSurrogate</a></li>
@@ -628,7 +711,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SpearmanCorrelation.html">saealib.SpearmanCorrelation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="acquisition.html">獲得関数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
@@ -642,7 +725,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SMSEGOAcquisition.html">saealib.SMSEGOAcquisition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="strategies.html">Optimization Strategies</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="strategies.html">最適化戦略</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html">saealib.OptimizationStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenerationBasedStrategy.html">saealib.GenerationBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
@@ -652,18 +735,26 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="initialization.html">初期化</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Initializer.html">saealib.Initializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenomeInitializer.html">saealib.GenomeInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.LHSInitializer.html">saealib.LHSInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RandomInitializer.html">saealib.RandomInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SobolInitializer.html">saealib.SobolInitializer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="evaluation.html">Evaluation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="evaluation.html">評価</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Evaluator.html">saealib.Evaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ThreadPoolEvaluator.html">saealib.ThreadPoolEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AsyncEvaluator.html">saealib.AsyncEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationAdapter.html">saealib.EvaluationAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationRequest.html">saealib.EvaluationRequest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationHandle.html">saealib.EvaluationHandle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationQuery.html">saealib.EvaluationQuery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationUpdate.html">saealib.EvaluationUpdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PendingEvaluation.html">saealib.PendingEvaluation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
@@ -674,6 +765,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -681,7 +773,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TerminationCondition.html">saealib.TerminationCondition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="callbacks.html">Callbacks</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="callbacks.html">コールバック</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Event.html">saealib.Event</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RunStartEvent.html">saealib.RunStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RunEndEvent.html">saealib.RunEndEvent</a></li>
@@ -691,6 +783,8 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenerationEndEvent.html">saealib.GenerationEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateStartEvent.html">saealib.SurrogateStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateEndEvent.html">saealib.SurrogateEndEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionStartEvent.html">saealib.AcquisitionStartEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionEndEvent.html">saealib.AcquisitionEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PostCrossoverEvent.html">saealib.PostCrossoverEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PostMutationEvent.html">saealib.PostMutationEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PostAskEvent.html">saealib.PostAskEvent</a></li>
@@ -700,25 +794,35 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CheckpointCallback.html">saealib.CheckpointCallback</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="pipeline.html">Pipeline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="pipeline.html">パイプライン</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Stage.html">saealib.Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Pipeline.html">saealib.Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Repeat.html">saealib.Repeat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Loop.html">saealib.Loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Branch.html">saealib.Branch</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="stages.html">ステージ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AskStage.html">saealib.AskStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AsyncEvaluationSubmitStage.html">saealib.AsyncEvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationSubmitStage.html">saealib.EvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationCollectStage.html">saealib.EvaluationCollectStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationApplyStage.html">saealib.EvaluationApplyStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationAcknowledgeStage.html">saealib.EvaluationAcknowledgeStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FeedbackStage.html">saealib.FeedbackStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.InitializationStage.html">saealib.InitializationStage</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">ユーティリティ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">参照</a></li>
 </ul>
 </div>
 </nav></div>
@@ -760,9 +864,9 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="index.html" class="nav-link">API Reference</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">APIリファレンス</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Surrogate Models</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">サロゲートモデル</span></li>
   </ul>
 </nav>
 </div>
@@ -780,62 +884,62 @@
                 <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="surrogate-models">
-<h1>Surrogate Models<a class="headerlink" href="#surrogate-models" title="Link to this heading">#</a></h1>
-<section id="base">
-<h2>Base<a class="headerlink" href="#base" title="Link to this heading">#</a></h2>
+<h1>サロゲートモデル<a class="headerlink" href="#surrogate-models" title="Link to this heading">#</a></h1>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><section id="base">
+<h2>基底<a class="headerlink" href="#base" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.Surrogate</span></code></a></p></td>
-<td><p>Base class for surrogate models.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.Surrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>サロゲートモデルの基底クラスです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.RegressionSurrogate.html#saealib.RegressionSurrogate" title="saealib.RegressionSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.RegressionSurrogate</span></code></a></p></td>
-<td><p>Marker base class for absolute-fitness (regression) surrogates.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.RegressionSurrogate.html#saealib.RegressionSurrogate" title="saealib.RegressionSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.RegressionSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>絶対適応度（回帰）サロゲートのマーカー基底クラスです。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ComparisonSurrogate.html#saealib.ComparisonSurrogate" title="saealib.ComparisonSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ComparisonSurrogate</span></code></a></p></td>
-<td><p>Base class for relative-fitness (comparison) surrogates.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ComparisonSurrogate.html#saealib.ComparisonSurrogate" title="saealib.ComparisonSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ComparisonSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>相対適応度（比較）サロゲートの基底クラスです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SurrogatePrediction</span></code></a></p></td>
-<td><p>Unified return type for surrogate model predictions.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SurrogatePrediction</span></code></a>・サロゲートモデル</p></td>
+<td><p>サロゲートモデル予測の統一戻り値型です。</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
 <section id="surrogate-managers">
-<h2>Surrogate Managers<a class="headerlink" href="#surrogate-managers" title="Link to this heading">#</a></h2>
+<h2>サロゲートマネージャー<a class="headerlink" href="#surrogate-managers" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SurrogateManager</span></code></a></p></td>
-<td><p>Abstract base class for surrogate managers.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SurrogateManager</span></code></a>・サロゲートモデル</p></td>
+<td><p>サロゲートマネージャーの抽象基底クラスです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager" title="saealib.GlobalSurrogateManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.GlobalSurrogateManager</span></code></a></p></td>
-<td><p>Surrogate manager that fits once on the full archive.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager" title="saealib.GlobalSurrogateManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.GlobalSurrogateManager</span></code></a>・サロゲートモデル</p></td>
+<td><p>全アーカイブに対して1回だけ適合するサロゲートマネージャーです。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager" title="saealib.LocalSurrogateManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.LocalSurrogateManager</span></code></a></p></td>
-<td><p>Surrogate manager that fits a local model per candidate (pre-selection).</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.LocalSurrogateManager.html#saealib.LocalSurrogateManager" title="saealib.LocalSurrogateManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.LocalSurrogateManager</span></code></a>・サロゲートモデル</p></td>
+<td><p>候補ごとにローカルモデルを適合するサロゲートマネージャーです（事前選択）。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager" title="saealib.CompositeSurrogateManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.CompositeSurrogateManager</span></code></a></p></td>
-<td><p>Surrogate manager that composes predictions from multiple named sub-managers.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.CompositeSurrogateManager.html#saealib.CompositeSurrogateManager" title="saealib.CompositeSurrogateManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.CompositeSurrogateManager</span></code></a>・サロゲートモデル</p></td>
+<td><p>複数の名前付きサブマネージャーの予測を合成するサロゲートマネージャーです。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager" title="saealib.PairwiseSurrogateManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.PairwiseSurrogateManager</span></code></a></p></td>
-<td><p>Surrogate manager for pairwise comparison surrogates.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.PairwiseSurrogateManager.html#saealib.PairwiseSurrogateManager" title="saealib.PairwiseSurrogateManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.PairwiseSurrogateManager</span></code></a>・サロゲートモデル</p></td>
+<td><p>ペアワイズ比較サロゲート用のサロゲートマネージャーです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.product_combine.html#saealib.product_combine" title="saealib.product_combine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.product_combine</span></code></a></p></td>
-<td><p>Combine scores by element-wise product.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.product_combine.html#saealib.product_combine" title="saealib.product_combine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.product_combine</span></code></a>・サロゲートモデル</p></td>
+<td><p>要素ごとの積でスコアを結合します。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.rank_weighted_combine.html#saealib.rank_weighted_combine" title="saealib.rank_weighted_combine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.rank_weighted_combine</span></code></a></p></td>
-<td><p>Return a combine function that rank-normalises then takes a weighted average.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.rank_weighted_combine.html#saealib.rank_weighted_combine" title="saealib.rank_weighted_combine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.rank_weighted_combine</span></code></a>・サロゲートモデル</p></td>
+<td><p>順位を正規化してから加重平均を取る結合関数を返します。</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
 <section id="rbf-surrogate">
-<h2>RBF Surrogate<a class="headerlink" href="#rbf-surrogate" title="Link to this heading">#</a></h2>
+<h2>RBFサロゲート<a class="headerlink" href="#rbf-surrogate" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate" title="saealib.RBFSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.RBFSurrogate</span></code></a></p></td>
-<td><p>Radial Basis Function (RBF) Interpolation surrogate model.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate" title="saealib.RBFSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.RBFSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>動径基底関数補間サロゲートモデルです。</p></td>
 </tr>
 </tbody>
 </table>
@@ -843,17 +947,17 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="saealib.gaussian_kernel">
 <span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">gaussian_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saealib/surrogate/rbf.html#gaussian_kernel"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.gaussian_kernel" title="Link to this definition">#</a></dt>
-<dd><p>Gaussian radial basis function kernel.</p>
+<dd><p>ガウス動径基底関数カーネルです。</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x1</strong> (<em>np.ndarray</em>) -- Input data 1.</p></li>
-<li><p><strong>x2</strong> (<em>np.ndarray</em>) -- Input data 2.</p></li>
-<li><p><strong>sigma</strong> (<em>float</em>) -- Kernel width parameter.</p></li>
+<li><p><strong>x1</strong> (<em>np.ndarray</em>) -- 入力データ1です。</p></li>
+<li><p><strong>x2</strong> (<em>np.ndarray</em>) -- 入力データ2です。</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) -- カーネル幅のパラメータです。</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p>Matrix of kernel evaluations between x1 and x2. shape: (len(x1), len(x2))</p>
+<dd class="field-even"><p>x1とx2の間のカーネル評価行列です。形状: (len(x1), len(x2))</p>
 </dd>
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
@@ -863,148 +967,148 @@
 
 </section>
 <section id="scikit-learn-external-library-adapters">
-<h2>Scikit-learn / External Library Adapters<a class="headerlink" href="#scikit-learn-external-library-adapters" title="Link to this heading">#</a></h2>
+<h2>scikit-learn / 外部ライブラリアダプター<a class="headerlink" href="#scikit-learn-external-library-adapters" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnSurrogate.html#saealib.SklearnSurrogate" title="saealib.SklearnSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnSurrogate</span></code></a></p></td>
-<td><p>Surrogate adapter for scikit-learn compatible estimators.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnSurrogate.html#saealib.SklearnSurrogate" title="saealib.SklearnSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>scikit-learn互換推定器用のサロゲートアダプターです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate" title="saealib.SklearnGPRSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnGPRSurrogate</span></code></a></p></td>
-<td><p>Gaussian Process Regressor surrogate.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate" title="saealib.SklearnGPRSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnGPRSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>ガウス過程回帰サロゲートです。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate" title="saealib.SklearnRFRSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnRFRSurrogate</span></code></a></p></td>
-<td><p>Random Forest Regressor surrogate.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate" title="saealib.SklearnRFRSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnRFRSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>ランダムフォレスト回帰サロゲートです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnSVMSurrogate.html#saealib.SklearnSVMSurrogate" title="saealib.SklearnSVMSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnSVMSurrogate</span></code></a></p></td>
-<td><p>Support Vector Regression surrogate.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnSVMSurrogate.html#saealib.SklearnSVMSurrogate" title="saealib.SklearnSVMSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnSVMSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>サポートベクター回帰サロゲートです。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnNNSurrogate.html#saealib.SklearnNNSurrogate" title="saealib.SklearnNNSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnNNSurrogate</span></code></a></p></td>
-<td><p>Multi-layer Perceptron surrogate.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnNNSurrogate.html#saealib.SklearnNNSurrogate" title="saealib.SklearnNNSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnNNSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>多層パーセプトロンサロゲートです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnXGBSurrogate.html#saealib.SklearnXGBSurrogate" title="saealib.SklearnXGBSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnXGBSurrogate</span></code></a></p></td>
-<td><p>XGBoost surrogate.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnXGBSurrogate.html#saealib.SklearnXGBSurrogate" title="saealib.SklearnXGBSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnXGBSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>XGBoostサロゲートです。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnLGBMSurrogate.html#saealib.SklearnLGBMSurrogate" title="saealib.SklearnLGBMSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnLGBMSurrogate</span></code></a></p></td>
-<td><p>LightGBM surrogate.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnLGBMSurrogate.html#saealib.SklearnLGBMSurrogate" title="saealib.SklearnLGBMSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnLGBMSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>LightGBMサロゲートです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnClassificationSurrogate.html#saealib.SklearnClassificationSurrogate" title="saealib.SklearnClassificationSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnClassificationSurrogate</span></code></a></p></td>
-<td><p>Surrogate adapter for scikit-learn compatible binary classifiers.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnClassificationSurrogate.html#saealib.SklearnClassificationSurrogate" title="saealib.SklearnClassificationSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnClassificationSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>scikit-learn互換二値分類器用のサロゲートアダプターです。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnRFCClassificationSurrogate.html#saealib.SklearnRFCClassificationSurrogate" title="saealib.SklearnRFCClassificationSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnRFCClassificationSurrogate</span></code></a></p></td>
-<td><p>Random Forest Classification surrogate.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnRFCClassificationSurrogate.html#saealib.SklearnRFCClassificationSurrogate" title="saealib.SklearnRFCClassificationSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnRFCClassificationSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>ランダムフォレスト分類サロゲートです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnSVCClassificationSurrogate.html#saealib.SklearnSVCClassificationSurrogate" title="saealib.SklearnSVCClassificationSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnSVCClassificationSurrogate</span></code></a></p></td>
-<td><p>Support Vector Classification surrogate.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SklearnSVCClassificationSurrogate.html#saealib.SklearnSVCClassificationSurrogate" title="saealib.SklearnSVCClassificationSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SklearnSVCClassificationSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>サポートベクター分類サロゲートです。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.TorchSurrogate.html#saealib.TorchSurrogate" title="saealib.TorchSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.TorchSurrogate</span></code></a></p></td>
-<td><p>Surrogate adapter for PyTorch <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code> models.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.TorchSurrogate.html#saealib.TorchSurrogate" title="saealib.TorchSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.TorchSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>PyTorchの<code class="docutils literal notranslate"><span class="pre">nn.Module</span></code>モデル用サロゲートアダプターです。</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
 <section id="per-objective-surrogate">
-<h2>Per-Objective Surrogate<a class="headerlink" href="#per-objective-surrogate" title="Link to this heading">#</a></h2>
+<h2>目的ごとのサロゲート<a class="headerlink" href="#per-objective-surrogate" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.PerObjectiveSurrogate.html#saealib.PerObjectiveSurrogate" title="saealib.PerObjectiveSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.PerObjectiveSurrogate</span></code></a></p></td>
-<td><p>Assigns a different surrogate model to each objective function.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.PerObjectiveSurrogate.html#saealib.PerObjectiveSurrogate" title="saealib.PerObjectiveSurrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.PerObjectiveSurrogate</span></code></a>・サロゲートモデル</p></td>
+<td><p>目的関数ごとに異なるサロゲートモデルを割り当てます。</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
 <section id="training-sets">
-<h2>Training Sets<a class="headerlink" href="#training-sets" title="Link to this heading">#</a></h2>
+<h2>訓練セット<a class="headerlink" href="#training-sets" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.TrainingData.html#saealib.TrainingData" title="saealib.TrainingData"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.TrainingData</span></code></a></p></td>
-<td><p>Immutable container for the training data passed to <code class="docutils literal notranslate"><span class="pre">Surrogate.fit</span></code>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.TrainingData.html#saealib.TrainingData" title="saealib.TrainingData"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.TrainingData</span></code></a>・サロゲートモデル</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Surrogate.fit</span></code>に渡す訓練データの不変コンテナです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.TrainingSet.html#saealib.TrainingSet" title="saealib.TrainingSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.TrainingSet</span></code></a></p></td>
-<td><p>Strategy object that builds <code class="docutils literal notranslate"><span class="pre">(train_x,</span> <span class="pre">train_y)</span></code> for a surrogate.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.TrainingSet.html#saealib.TrainingSet" title="saealib.TrainingSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.TrainingSet</span></code></a>・サロゲートモデル</p></td>
+<td><p>サロゲート用の<code class="docutils literal notranslate"><span class="pre">(train_x,</span> <span class="pre">train_y)</span></code>を構築する戦略オブジェクトです。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ArchiveObjectiveSet.html#saealib.ArchiveObjectiveSet" title="saealib.ArchiveObjectiveSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ArchiveObjectiveSet</span></code></a></p></td>
-<td><p>Use the entire archive as training data with raw objective values.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ArchiveObjectiveSet.html#saealib.ArchiveObjectiveSet" title="saealib.ArchiveObjectiveSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ArchiveObjectiveSet</span></code></a>・サロゲートモデル</p></td>
+<td><p>全アーカイブを生の目的値による訓練データとして使います。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ConstraintObjectiveSet.html#saealib.ConstraintObjectiveSet" title="saealib.ConstraintObjectiveSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ConstraintObjectiveSet</span></code></a></p></td>
-<td><p>Use the entire archive as training data with raw constraint values.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ConstraintObjectiveSet.html#saealib.ConstraintObjectiveSet" title="saealib.ConstraintObjectiveSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ConstraintObjectiveSet</span></code></a>・サロゲートモデル</p></td>
+<td><p>全アーカイブを生の制約値による訓練データとして使います。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.FeasibilityClassificationSet.html#saealib.FeasibilityClassificationSet" title="saealib.FeasibilityClassificationSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.FeasibilityClassificationSet</span></code></a></p></td>
-<td><p>Binary labels derived from constraint violation: 1 if feasible, 0 otherwise.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.FeasibilityClassificationSet.html#saealib.FeasibilityClassificationSet" title="saealib.FeasibilityClassificationSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.FeasibilityClassificationSet</span></code></a>・サロゲートモデル</p></td>
+<td><p>制約違反から導出される二値ラベルです。実行可能なら1、それ以外は0です。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.KNNObjectiveSet.html#saealib.KNNObjectiveSet" title="saealib.KNNObjectiveSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.KNNObjectiveSet</span></code></a></p></td>
-<td><p>Retrieve the <em>k</em> nearest archive neighbours of <code class="docutils literal notranslate"><span class="pre">candidate_x</span></code>.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.KNNObjectiveSet.html#saealib.KNNObjectiveSet" title="saealib.KNNObjectiveSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.KNNObjectiveSet</span></code></a>・サロゲートモデル</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">candidate_x</span></code>に最も近いアーカイブ近傍を<em>k</em>個取得します。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.KNNConstraintObjectiveSet.html#saealib.KNNConstraintObjectiveSet" title="saealib.KNNConstraintObjectiveSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.KNNConstraintObjectiveSet</span></code></a></p></td>
-<td><p>Retrieve the <em>k</em> nearest archive neighbours of <code class="docutils literal notranslate"><span class="pre">candidate_x</span></code>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.KNNConstraintObjectiveSet.html#saealib.KNNConstraintObjectiveSet" title="saealib.KNNConstraintObjectiveSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.KNNConstraintObjectiveSet</span></code></a>・サロゲートモデル</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">candidate_x</span></code>に最も近いアーカイブ近傍を<em>k</em>個取得します。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.LevelBasedSet.html#saealib.LevelBasedSet" title="saealib.LevelBasedSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.LevelBasedSet</span></code></a></p></td>
-<td><p>Multi-class labels from equal-division of a sorted population (CA-LLSO, P1).</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.LevelBasedSet.html#saealib.LevelBasedSet" title="saealib.LevelBasedSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.LevelBasedSet</span></code></a>・サロゲートモデル</p></td>
+<td><p>ソート済みの個体群を等分して作る多クラスラベルです（CA-LLSO、P1）。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.PairwiseComparisonSet.html#saealib.PairwiseComparisonSet" title="saealib.PairwiseComparisonSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.PairwiseComparisonSet</span></code></a></p></td>
-<td><p>Pairwise labels: <code class="docutils literal notranslate"><span class="pre">train_x</span></code> is <code class="docutils literal notranslate"><span class="pre">[x_a,</span> <span class="pre">x_b]</span></code>, label is 1 if <em>a</em> beats <em>b</em>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.PairwiseComparisonSet.html#saealib.PairwiseComparisonSet" title="saealib.PairwiseComparisonSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.PairwiseComparisonSet</span></code></a>・サロゲートモデル</p></td>
+<td><p>ペアワイズラベルです。<code class="docutils literal notranslate"><span class="pre">train_x</span></code>は<code class="docutils literal notranslate"><span class="pre">[x_a,</span> <span class="pre">x_b]</span></code>で、<em>a</em>が<em>b</em>に勝つ場合のラベルは1です。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ReferencePointComparisonSet.html#saealib.ReferencePointComparisonSet" title="saealib.ReferencePointComparisonSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ReferencePointComparisonSet</span></code></a></p></td>
-<td><p>Binary labels: 1 if archive point dominates the reference point, 0 otherwise.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ReferencePointComparisonSet.html#saealib.ReferencePointComparisonSet" title="saealib.ReferencePointComparisonSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ReferencePointComparisonSet</span></code></a>・サロゲートモデル</p></td>
+<td><p>二値ラベルです。アーカイブ点が参照点を支配する場合は1、それ以外は0です。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.TopKBipartitionSet.html#saealib.TopKBipartitionSet" title="saealib.TopKBipartitionSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.TopKBipartitionSet</span></code></a></p></td>
-<td><p>Binary labels from a sorted bipartition: 1 for top-<em>k</em>, 0 for the rest.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.TopKBipartitionSet.html#saealib.TopKBipartitionSet" title="saealib.TopKBipartitionSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.TopKBipartitionSet</span></code></a>・サロゲートモデル</p></td>
+<td><p>ソート済みの二分割による二値ラベルです。上位-<em>k</em>は1、それ以外は0です。</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
 <section id="surrogate-switching">
-<h2>Surrogate Switching<a class="headerlink" href="#surrogate-switching" title="Link to this heading">#</a></h2>
+<h2>サロゲート切り替え<a class="headerlink" href="#surrogate-switching" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.AccuracyBasedSurrogateSwitcher.html#saealib.AccuracyBasedSurrogateSwitcher" title="saealib.AccuracyBasedSurrogateSwitcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.AccuracyBasedSurrogateSwitcher</span></code></a></p></td>
-<td><p>Abstract base for accuracy-driven module and parameter switching.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.AccuracyBasedSurrogateSwitcher.html#saealib.AccuracyBasedSurrogateSwitcher" title="saealib.AccuracyBasedSurrogateSwitcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.AccuracyBasedSurrogateSwitcher</span></code></a>・サロゲートモデル</p></td>
+<td><p>精度に基づくモジュールとパラメータの切り替えの抽象基底です。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.GenCtrlSwitcher.html#saealib.GenCtrlSwitcher" title="saealib.GenCtrlSwitcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.GenCtrlSwitcher</span></code></a></p></td>
-<td><p>Adjust gen_ctrl via exponential smoothing (Repický et al., 2017).</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.GenCtrlSwitcher.html#saealib.GenCtrlSwitcher" title="saealib.GenCtrlSwitcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.GenCtrlSwitcher</span></code></a>・サロゲートモデル</p></td>
+<td><p>指数平滑法でgen_ctrlを調整します（Repický et al., 2017）。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ManagerSwitcher.html#saealib.ManagerSwitcher" title="saealib.ManagerSwitcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ManagerSwitcher</span></code></a></p></td>
-<td><p>Switch between two surrogate managers based on an accuracy threshold.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ManagerSwitcher.html#saealib.ManagerSwitcher" title="saealib.ManagerSwitcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ManagerSwitcher</span></code></a>・サロゲートモデル</p></td>
+<td><p>精度の閾値に基づいて2つのサロゲートマネージャーを切り替えます。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.StrategySwitcher.html#saealib.StrategySwitcher" title="saealib.StrategySwitcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.StrategySwitcher</span></code></a></p></td>
-<td><p>Switch between optimization strategies based on an accuracy threshold.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.StrategySwitcher.html#saealib.StrategySwitcher" title="saealib.StrategySwitcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.StrategySwitcher</span></code></a>・サロゲートモデル</p></td>
+<td><p>精度の閾値に基づいて最適化戦略を切り替えます。</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </section>
 <section id="accuracy-evaluation">
-<h2>Accuracy Evaluation<a class="headerlink" href="#accuracy-evaluation" title="Link to this heading">#</a></h2>
+<h2>精度評価<a class="headerlink" href="#accuracy-evaluation" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.AccuracyEvaluator.html#saealib.AccuracyEvaluator" title="saealib.AccuracyEvaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.AccuracyEvaluator</span></code></a></p></td>
-<td><p>Abstract base for surrogate accuracy evaluators.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.AccuracyEvaluator.html#saealib.AccuracyEvaluator" title="saealib.AccuracyEvaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.AccuracyEvaluator</span></code></a>・サロゲートモデル</p></td>
+<td><p>サロゲート精度評価器の抽象基底です。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.HeldOutAccuracyEvaluator.html#saealib.HeldOutAccuracyEvaluator" title="saealib.HeldOutAccuracyEvaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.HeldOutAccuracyEvaluator</span></code></a></p></td>
-<td><p>Evaluates accuracy against pre-specified held-out data.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.HeldOutAccuracyEvaluator.html#saealib.HeldOutAccuracyEvaluator" title="saealib.HeldOutAccuracyEvaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.HeldOutAccuracyEvaluator</span></code></a>・サロゲートモデル</p></td>
+<td><p>あらかじめ分離したデータに対する精度を評価します。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.KFoldAccuracyEvaluator.html#saealib.KFoldAccuracyEvaluator" title="saealib.KFoldAccuracyEvaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.KFoldAccuracyEvaluator</span></code></a></p></td>
-<td><p>Evaluates surrogate accuracy via k-fold cross-validation.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.KFoldAccuracyEvaluator.html#saealib.KFoldAccuracyEvaluator" title="saealib.KFoldAccuracyEvaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.KFoldAccuracyEvaluator</span></code></a>・サロゲートモデル</p></td>
+<td><p>k分割交差検証でサロゲート精度を評価します。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.LOOAccuracyEvaluator.html#saealib.LOOAccuracyEvaluator" title="saealib.LOOAccuracyEvaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.LOOAccuracyEvaluator</span></code></a></p></td>
-<td><p>Evaluates surrogate accuracy via leave-one-out cross-validation.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.LOOAccuracyEvaluator.html#saealib.LOOAccuracyEvaluator" title="saealib.LOOAccuracyEvaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.LOOAccuracyEvaluator</span></code></a>・サロゲートモデル</p></td>
+<td><p>1個抜き交差検証でサロゲート精度を評価します。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SurrogateAccuracy.html#saealib.SurrogateAccuracy" title="saealib.SurrogateAccuracy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SurrogateAccuracy</span></code></a></p></td>
-<td><p>Container for surrogate accuracy metrics computed after a fit.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SurrogateAccuracy.html#saealib.SurrogateAccuracy" title="saealib.SurrogateAccuracy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SurrogateAccuracy</span></code></a>・サロゲートモデル</p></td>
+<td><p>適合後に計算したサロゲート精度指標のコンテナです。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SurrogateAccuracyMetric.html#saealib.SurrogateAccuracyMetric" title="saealib.SurrogateAccuracyMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SurrogateAccuracyMetric</span></code></a></p></td>
-<td><p>Abstract base for a scalar accuracy metric.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SurrogateAccuracyMetric.html#saealib.SurrogateAccuracyMetric" title="saealib.SurrogateAccuracyMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SurrogateAccuracyMetric</span></code></a>・サロゲートモデル</p></td>
+<td><p>スカラー精度指標の抽象基底です。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.RMSE.html#saealib.RMSE" title="saealib.RMSE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.RMSE</span></code></a></p></td>
-<td><p>Root mean squared error.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.RMSE.html#saealib.RMSE" title="saealib.RMSE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.RMSE</span></code></a>・サロゲートモデル</p></td>
+<td><p>二乗平均平方根誤差です。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.R2Score.html#saealib.R2Score" title="saealib.R2Score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.R2Score</span></code></a></p></td>
-<td><p>Coefficient of determination (R²).</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.R2Score.html#saealib.R2Score" title="saealib.R2Score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.R2Score</span></code></a>・サロゲートモデル</p></td>
+<td><p>決定係数（R²）です。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SpearmanCorrelation.html#saealib.SpearmanCorrelation" title="saealib.SpearmanCorrelation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SpearmanCorrelation</span></code></a></p></td>
-<td><p>Spearman rank correlation averaged over objectives.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SpearmanCorrelation.html#saealib.SpearmanCorrelation" title="saealib.SpearmanCorrelation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SpearmanCorrelation</span></code></a>・サロゲートモデル</p></td>
+<td><p>目的ごとのスピアマン順位相関の平均です。</p></td>
 </tr>
 </tbody>
 </table>
@@ -1059,17 +1163,17 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#base">Base</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogate-managers">Surrogate Managers</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rbf-surrogate">RBF Surrogate</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#base">基底</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogate-managers">サロゲートマネージャー</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rbf-surrogate">RBFサロゲート</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.gaussian_kernel"><code class="docutils literal notranslate"><span class="pre">gaussian_kernel()</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scikit-learn-external-library-adapters">Scikit-learn / External Library Adapters</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#per-objective-surrogate">Per-Objective Surrogate</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-sets">Training Sets</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogate-switching">Surrogate Switching</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#accuracy-evaluation">Accuracy Evaluation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scikit-learn-external-library-adapters">scikit-learn / 外部ライブラリアダプター</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#per-objective-surrogate">目的ごとのサロゲート</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#training-sets">訓練セット</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogate-switching">サロゲート切り替え</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#accuracy-evaluation">精度評価</a></li>
 </ul>
   </nav></div>
 

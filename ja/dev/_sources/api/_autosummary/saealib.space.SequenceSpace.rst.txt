@@ -1,0 +1,39 @@
+﻿saealib.space.SequenceSpace
+===========================
+
+.. currentmodule:: saealib.space
+
+.. autoclass:: SequenceSpace
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SequenceSpace.__init__
+   ~SequenceSpace.sample
+   ~SequenceSpace.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.space.SequenceSpace.__init__
+
+
+.. automethod:: saealib.space.SequenceSpace.sample
+
+
+.. automethod:: saealib.space.SequenceSpace.validate
+
+
+

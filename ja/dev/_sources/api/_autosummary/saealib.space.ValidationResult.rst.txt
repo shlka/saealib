@@ -1,0 +1,31 @@
+﻿saealib.space.ValidationResult
+==============================
+
+.. currentmodule:: saealib.space
+
+.. autoclass:: ValidationResult
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ValidationResult.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.space.ValidationResult.__init__
+
+
+

@@ -17,6 +17,7 @@
 
    ~ExpectedImprovement.__init__
    ~ExpectedImprovement.compute_reference
+   ~ExpectedImprovement.contract
    ~ExpectedImprovement.evaluate
    ~ExpectedImprovement.prepare
    ~ExpectedImprovement.score
@@ -33,6 +34,9 @@
 
 
 .. automethod:: saealib.ExpectedImprovement.compute_reference
+
+
+.. automethod:: saealib.ExpectedImprovement.contract
 
 
 .. automethod:: saealib.ExpectedImprovement.evaluate

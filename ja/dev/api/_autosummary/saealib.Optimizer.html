@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.Optimizer &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>saealib.Optimizer &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../../_static/documentation_options.js?v=c8372973"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,8 +65,8 @@
     <link rel="icon" href="../../_static/icon.svg"/>
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="検索" href="../../search.html" />
-    <link rel="next" title="Exceptions" href="../exceptions.html" />
-    <link rel="prev" title="Optimizer" href="../optimizer.html" />
+    <link rel="next" title="例外" href="../exceptions.html" />
+    <link rel="prev" title="オプティマイザー" href="../optimizer.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
   <meta name="docsearch:version" content="" />
@@ -172,8 +172,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -187,14 +194,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="../index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -347,8 +354,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -362,14 +376,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="../index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -470,21 +484,89 @@
      aria-label="セクションナビゲーション">
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="../highlevel.html">High-Level API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1"><a class="reference internal" href="../imports.html">標準インポート</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core.html">コアAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.Component.html">saealib.core.Component</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ComponentContract.html">saealib.core.ComponentContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.PartSpec.html">saealib.core.PartSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.AssumptionSet.html">saealib.core.AssumptionSet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.DataSpec.html">saealib.core.DataSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.PortContract.html">saealib.core.PortContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.PortSpec.html">saealib.core.PortSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StateContract.html">saealib.core.StateContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.LifecycleContract.html">saealib.core.LifecycleContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ExecutionContract.html">saealib.core.ExecutionContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ComponentGraph.html">saealib.core.ComponentGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StructuredGraph.html">saealib.core.StructuredGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StructuredRegion.html">saealib.core.StructuredRegion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.CompilationRule.html">saealib.core.CompilationRule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StateStore.html">saealib.core.StateStore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StateView.html">saealib.core.StateView</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StatePatch.html">saealib.core.StatePatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ExecutablePlan.html">saealib.core.ExecutablePlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ExecutionRuntime.html">saealib.core.ExecutionRuntime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.ComponentNode.html">saealib.core.compiler.ComponentNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.NodeRef.html">saealib.core.compiler.NodeRef</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.DataEdge.html">saealib.core.compiler.DataEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.ControlEdge.html">saealib.core.compiler.ControlEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.StateBinding.html">saealib.core.compiler.StateBinding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.Diagnostic.html">saealib.core.compiler.Diagnostic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.ContractPath.html">saealib.core.compiler.ContractPath</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../execution.html">実行API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.AsyncEvaluationScheduler.html">saealib.execution.AsyncEvaluationScheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.PollResult.html">saealib.execution.PollResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.RuntimeFactory.html">saealib.execution.RuntimeFactory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.RuntimeRegistration.html">saealib.execution.RuntimeRegistration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.RuntimeRegistry.html">saealib.execution.RuntimeRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.create_runtime.html">saealib.execution.create_runtime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.default_runtime_registry.html">saealib.execution.default_runtime_registry</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../space.html">探索空間API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.SearchSpace.html">saealib.space.SearchSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ServiceRegistry.html">saealib.space.ServiceRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ValidationResult.html">saealib.space.ValidationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.RepresentationSpec.html">saealib.core.contracts.RepresentationSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.VectorSpace.html">saealib.space.VectorSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ObjectSpace.html">saealib.space.ObjectSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.SequenceSpace.html">saealib.space.SequenceSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.PermutationSpace.html">saealib.space.PermutationSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.GenomeCodec.html">saealib.space.GenomeCodec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.SamplingService.html">saealib.space.SamplingService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ValidationService.html">saealib.space.ValidationService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.FeatureEncoder.html">saealib.space.FeatureEncoder</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../feedback.html">フィードバックAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.ProposalBatch.html">saealib.core.contracts.ProposalBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.ObservationBatch.html">saealib.core.contracts.ObservationBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.FeedbackBatch.html">saealib.core.contracts.FeedbackBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.FeedbackContract.html">saealib.core.contracts.FeedbackContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FeedbackBuilder.html">saealib.FeedbackBuilder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.TrueOnlyFeedback.html">saealib.TrueOnlyFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.PredictedFeedback.html">saealib.PredictedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.MixedFeedback.html">saealib.MixedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.NoFeedback.html">saealib.NoFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FeedbackResult.html">saealib.FeedbackResult</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../highlevel.html">高レベルAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Result.html">saealib.Result</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../optimizer.html">Optimizer</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../optimizer.html">オプティマイザー</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">saealib.Optimizer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../exceptions.html">Exceptions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../exceptions.html">例外</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SaealibError.html">saealib.SaealibError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ValidationError.html">saealib.ValidationError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ConfigurationError.html">saealib.ConfigurationError</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../registry.html">Registry</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../registry.html">レジストリ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.register.html">saealib.register</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.registry.build.html">saealib.registry.build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.registry.get.html">saealib.registry.get</a></li>
@@ -502,14 +584,14 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.GradientRepairHandler.html">saealib.GradientRepairHandler</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../variables.html">Variables</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../variables.html">変数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Variable.html">saealib.Variable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ContinuousVariable.html">saealib.ContinuousVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.IntegerVariable.html">saealib.IntegerVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CategoricalVariable.html">saealib.CategoricalVariable</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../comparators.html">Comparators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../comparators.html">比較器</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Comparator.html">saealib.Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SingleObjectiveComparator.html">saealib.SingleObjectiveComparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.WeightedSumComparator.html">saealib.WeightedSumComparator</a></li>
@@ -544,14 +626,15 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PopulationAttribute.html">saealib.PopulationAttribute</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../algorithms.html">Algorithms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../algorithms.html">アルゴリズム</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Algorithm.html">saealib.Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GA.html">saealib.GA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.GenomeGA.html">saealib.GenomeGA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PSO.html">saealib.PSO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PymooAlgorithm.html">saealib.PymooAlgorithm</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../operators.html">Operators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../operators.html">演算子</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Crossover.html">saealib.Crossover</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CrossoverBLXAlpha.html">saealib.CrossoverBLXAlpha</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CrossoverSBX.html">saealib.CrossoverSBX</a></li>
@@ -577,7 +660,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PymooMutation.html">saealib.PymooMutation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../surrogate.html">Surrogate Models</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../surrogate.html">サロゲートモデル</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Surrogate.html">saealib.Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RegressionSurrogate.html">saealib.RegressionSurrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ComparisonSurrogate.html">saealib.ComparisonSurrogate</a></li>
@@ -628,7 +711,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SpearmanCorrelation.html">saealib.SpearmanCorrelation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">獲得関数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
@@ -642,7 +725,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SMSEGOAcquisition.html">saealib.SMSEGOAcquisition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../strategies.html">Optimization Strategies</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../strategies.html">最適化戦略</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.OptimizationStrategy.html">saealib.OptimizationStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenerationBasedStrategy.html">saealib.GenerationBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
@@ -652,18 +735,26 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">初期化</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Initializer.html">saealib.Initializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.GenomeInitializer.html">saealib.GenomeInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.LHSInitializer.html">saealib.LHSInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RandomInitializer.html">saealib.RandomInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SobolInitializer.html">saealib.SobolInitializer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../evaluation.html">Evaluation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../evaluation.html">評価</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Evaluator.html">saealib.Evaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ThreadPoolEvaluator.html">saealib.ThreadPoolEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AsyncEvaluator.html">saealib.AsyncEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationAdapter.html">saealib.EvaluationAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationRequest.html">saealib.EvaluationRequest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationHandle.html">saealib.EvaluationHandle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationQuery.html">saealib.EvaluationQuery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationUpdate.html">saealib.EvaluationUpdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.PendingEvaluation.html">saealib.PendingEvaluation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
@@ -674,6 +765,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -681,7 +773,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.TerminationCondition.html">saealib.TerminationCondition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../callbacks.html">Callbacks</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../callbacks.html">コールバック</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Event.html">saealib.Event</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RunStartEvent.html">saealib.RunStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RunEndEvent.html">saealib.RunEndEvent</a></li>
@@ -691,6 +783,8 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenerationEndEvent.html">saealib.GenerationEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateStartEvent.html">saealib.SurrogateStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateEndEvent.html">saealib.SurrogateEndEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStartEvent.html">saealib.AcquisitionStartEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionEndEvent.html">saealib.AcquisitionEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PostCrossoverEvent.html">saealib.PostCrossoverEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PostMutationEvent.html">saealib.PostMutationEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PostAskEvent.html">saealib.PostAskEvent</a></li>
@@ -700,25 +794,35 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.CheckpointCallback.html">saealib.CheckpointCallback</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../pipeline.html">Pipeline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../pipeline.html">パイプライン</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Stage.html">saealib.Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Pipeline.html">saealib.Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.Repeat.html">saealib.Repeat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.Loop.html">saealib.Loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.Branch.html">saealib.Branch</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">ステージ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AskStage.html">saealib.AskStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AsyncEvaluationSubmitStage.html">saealib.AsyncEvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationSubmitStage.html">saealib.EvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationCollectStage.html">saealib.EvaluationCollectStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationApplyStage.html">saealib.EvaluationApplyStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationAcknowledgeStage.html">saealib.EvaluationAcknowledgeStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FeedbackStage.html">saealib.FeedbackStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.InitializationStage.html">saealib.InitializationStage</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">ユーティリティ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">参照</a></li>
 </ul>
 </div>
 </nav></div>
@@ -760,10 +864,10 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">API Reference</a></li>
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">APIリファレンス</a></li>
     
     
-    <li class="breadcrumb-item"><a href="../optimizer.html" class="nav-link">Optimizer</a></li>
+    <li class="breadcrumb-item"><a href="../optimizer.html" class="nav-link">オプティマイザー</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">saealib.Optimizer</span></li>
   </ul>
@@ -939,6 +1043,12 @@ model manager, and termination condition, and manages the optimization process.<
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.__init__" title="saealib.Optimizer.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a></p></td>
 <td><p>Initialize the Optimizer.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.contract_diagnostics" title="saealib.Optimizer.contract_diagnostics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contract_diagnostics</span></code></a></p></td>
+<td><p>Return diagnostics for the currently configured component graph.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.describe" title="saealib.Optimizer.describe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">describe</span></code></a></p></td>
+<td><p>Describe the most recently compiled plan, if one exists.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.dispatch" title="saealib.Optimizer.dispatch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dispatch</span></code></a></p></td>
 <td><p>Dispatch an event to the callback manager.</p></td>
 </tr>
@@ -954,61 +1064,64 @@ model manager, and termination condition, and manages the optimization process.<
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.load_pickle" title="saealib.Optimizer.load_pickle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_pickle</span></code></a></p></td>
 <td><p>Load an optimizer and context from a pickle checkpoint.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.run" title="saealib.Optimizer.run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.resolve_defaults" title="saealib.Optimizer.resolve_defaults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_defaults</span></code></a></p></td>
+<td><p>Fill unset components with library defaults (Registry + presets file).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.run" title="saealib.Optimizer.run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code></a></p></td>
 <td><p>Run the optimization process.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.run_from" title="saealib.Optimizer.run_from"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_from</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.run_from" title="saealib.Optimizer.run_from"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_from</span></code></a></p></td>
 <td><p>Resume and run to completion from an existing context.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.save_pickle" title="saealib.Optimizer.save_pickle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_pickle</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.save_pickle" title="saealib.Optimizer.save_pickle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_pickle</span></code></a></p></td>
 <td><p>Save the optimizer and context together as a pickle checkpoint.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.save_preset" title="saealib.Optimizer.save_preset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_preset</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.save_preset" title="saealib.Optimizer.save_preset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_preset</span></code></a></p></td>
 <td><p>Save the currently configured components as a reusable preset file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_acquisition" title="saealib.Optimizer.set_acquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_acquisition</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_acquisition" title="saealib.Optimizer.set_acquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_acquisition</span></code></a></p></td>
 <td><p>Set the independent acquisition component.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_algorithm" title="saealib.Optimizer.set_algorithm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_algorithm</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_algorithm" title="saealib.Optimizer.set_algorithm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_algorithm</span></code></a></p></td>
 <td><p>Set the evolutionary algorithm.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_async_evaluation_scheduler" title="saealib.Optimizer.set_async_evaluation_scheduler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_async_evaluation_scheduler</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_async_evaluation_scheduler" title="saealib.Optimizer.set_async_evaluation_scheduler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_async_evaluation_scheduler</span></code></a></p></td>
 <td><p>Configure asynchronous evaluation for built-in strategies.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_evaluation_planner" title="saealib.Optimizer.set_evaluation_planner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_evaluation_planner</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_evaluation_planner" title="saealib.Optimizer.set_evaluation_planner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_evaluation_planner</span></code></a></p></td>
 <td><p>Set the evaluation planner.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_evaluator" title="saealib.Optimizer.set_evaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_evaluator</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_evaluator" title="saealib.Optimizer.set_evaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_evaluator</span></code></a></p></td>
 <td><p>Set the evaluator.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_feedback_builder" title="saealib.Optimizer.set_feedback_builder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_feedback_builder</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_feedback_builder" title="saealib.Optimizer.set_feedback_builder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_feedback_builder</span></code></a></p></td>
 <td><p>Set the feedback builder.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_initializer" title="saealib.Optimizer.set_initializer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_initializer</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_initializer" title="saealib.Optimizer.set_initializer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_initializer</span></code></a></p></td>
 <td><p>Set the initializer.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_instance_name" title="saealib.Optimizer.set_instance_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_instance_name</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_instance_name" title="saealib.Optimizer.set_instance_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_instance_name</span></code></a></p></td>
 <td><p>Set the instance name.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_preset" title="saealib.Optimizer.set_preset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_preset</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_preset" title="saealib.Optimizer.set_preset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_preset</span></code></a></p></td>
 <td><p>Set a user-defined preset.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_seed" title="saealib.Optimizer.set_seed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_seed</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_seed" title="saealib.Optimizer.set_seed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_seed</span></code></a></p></td>
 <td><p>Set the master random seed.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_strategy" title="saealib.Optimizer.set_strategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_strategy</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_strategy" title="saealib.Optimizer.set_strategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_strategy</span></code></a></p></td>
 <td><p>Set the optimization strategy.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_surrogate" title="saealib.Optimizer.set_surrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_surrogate</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_surrogate" title="saealib.Optimizer.set_surrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_surrogate</span></code></a></p></td>
 <td><p>Wrap a raw Surrogate in a LocalSurrogateManager.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_surrogate_manager" title="saealib.Optimizer.set_surrogate_manager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_surrogate_manager</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_surrogate_manager" title="saealib.Optimizer.set_surrogate_manager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_surrogate_manager</span></code></a></p></td>
 <td><p>Set the surrogate manager.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.set_termination" title="saealib.Optimizer.set_termination"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_termination</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.set_termination" title="saealib.Optimizer.set_termination"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_termination</span></code></a></p></td>
 <td><p>Set the termination condition.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Optimizer.validate" title="saealib.Optimizer.validate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Optimizer.validate" title="saealib.Optimizer.validate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate</span></code></a></p></td>
 <td><p>Check configuration consistency.</p></td>
 </tr>
 </tbody>
@@ -1026,6 +1139,28 @@ model manager, and termination condition, and manages the optimization process.<
 <li><p><strong>seed</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Master random seed propagated to the initializer.  <code class="docutils literal notranslate"><span class="pre">None</span></code> (default)
 means non-deterministic.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.Optimizer.contract_diagnostics">
+<span class="sig-prename descclassname"><span class="pre">Optimizer.</span></span><span class="sig-name descname"><span class="pre">contract_diagnostics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/optimizer.html#Optimizer.contract_diagnostics"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.Optimizer.contract_diagnostics" title="Link to this definition">#</a></dt>
+<dd><p>Return diagnostics for the currently configured component graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>DiagnosticBag</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.Optimizer.describe">
+<span class="sig-prename descclassname"><span class="pre">Optimizer.</span></span><span class="sig-name descname"><span class="pre">describe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/optimizer.html#Optimizer.describe"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.Optimizer.describe" title="Link to this definition">#</a></dt>
+<dd><p>Describe the most recently compiled plan, if one exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1154,6 +1289,25 @@ to continue the optimization.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="saealib.Optimizer.resolve_defaults">
+<span class="sig-prename descclassname"><span class="pre">Optimizer.</span></span><span class="sig-name descname"><span class="pre">resolve_defaults</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/optimizer.html#Optimizer.resolve_defaults"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.Optimizer.resolve_defaults" title="Link to this definition">#</a></dt>
+<dd><p>Fill unset components with library defaults (Registry + presets file).</p>
+<p>Components already set via <code class="docutils literal notranslate"><span class="pre">set_*()</span></code> are never overwritten. Gaps
+are filled first from a user preset (<code class="docutils literal notranslate"><span class="pre">set_preset()</span></code>), if any, then
+from a bundled preset selected by (1) the algorithm's registered
+name if <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> is set, else (2) a Problem-shape rule, else
+(3) the universal fallback preset. <code class="docutils literal notranslate"><span class="pre">initializer</span></code> is computed
+directly from <code class="docutils literal notranslate"><span class="pre">problem.dim</span></code> and is not part of any preset;
+<code class="docutils literal notranslate"><span class="pre">termination</span></code> falls back to <code class="docutils literal notranslate"><span class="pre">200</span> <span class="pre">*</span> <span class="pre">problem.dim</span></code> function
+evaluations only if neither <code class="docutils literal notranslate"><span class="pre">set_*()</span></code> nor a preset supplies one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="saealib.Optimizer.run">
 <span class="sig-prename descclassname"><span class="pre">Optimizer.</span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'npz'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_delete_on_success</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/optimizer.html#Optimizer.run"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.Optimizer.run" title="Link to this definition">#</a></dt>
 <dd><p>Run the optimization process.</p>
@@ -1274,7 +1428,7 @@ problems of different dimensionality.</p>
 <dd><p>Configure asynchronous evaluation for built-in strategies.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>scheduler</strong> (<em>AsyncEvaluationScheduler</em><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><p><strong>scheduler</strong> (<a class="reference internal" href="saealib.execution.AsyncEvaluationScheduler.html#saealib.execution.AsyncEvaluationScheduler" title="saealib.execution.scheduler.AsyncEvaluationScheduler"><em>AsyncEvaluationScheduler</em></a><em> | </em><em>None</em>)</p>
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Self</em></p>
@@ -1316,7 +1470,7 @@ problems of different dimensionality.</p>
 <dd><p>Set the feedback builder.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>builder</strong> (<em>FeedbackBuilder</em>)</p>
+<dd class="field-odd"><p><strong>builder</strong> (<a class="reference internal" href="saealib.FeedbackBuilder.html#saealib.FeedbackBuilder" title="saealib.policies.feedback.FeedbackBuilder"><em>FeedbackBuilder</em></a>)</p>
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>Self</em></p>
@@ -1356,9 +1510,8 @@ problems of different dimensionality.</p>
 <dt class="sig sig-object py" id="saealib.Optimizer.set_preset">
 <span class="sig-prename descclassname"><span class="pre">Optimizer.</span></span><span class="sig-name descname"><span class="pre">set_preset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/optimizer.html#Optimizer.set_preset"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.Optimizer.set_preset" title="Link to this definition">#</a></dt>
 <dd><p>Set a user-defined preset. Returns self.</p>
-<p>The preset is only used to fill components not already configured
-via <code class="docutils literal notranslate"><span class="pre">set_*()</span></code> (see <code class="docutils literal notranslate"><span class="pre">_resolve_defaults()</span></code>); explicitly set
-components always take precedence over the preset.</p>
+<p>The preset fills components that are not already configured via
+<code class="docutils literal notranslate"><span class="pre">set_*()</span></code>; explicitly set components take precedence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>preset</strong> (<em>str</em><em> | </em><em>Path</em><em> | </em><em>dict</em>)</p>
@@ -1447,6 +1600,8 @@ components always take precedence over the preset.</p>
 <dt class="sig sig-object py" id="saealib.Optimizer.validate">
 <span class="sig-prename descclassname"><span class="pre">Optimizer.</span></span><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_initializer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/optimizer.html#Optimizer.validate"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.Optimizer.validate" title="Link to this definition">#</a></dt>
 <dd><p>Check configuration consistency. Returns list of issues.</p>
+<p>Call <a class="reference internal" href="#saealib.Optimizer.resolve_defaults" title="saealib.Optimizer.resolve_defaults"><code class="xref py py-meth docutils literal notranslate"><span class="pre">resolve_defaults()</span></code></a> first when validation results should
+reflect the components that will be used for execution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>require_initializer</strong> (<em>bool</em><em>, </em><em>optional</em>) -- When False, skip the initializer presence check.  Use this when
@@ -1476,7 +1631,7 @@ resuming from a checkpoint where initialization is not needed.</p>
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">前へ</p>
-        <p class="prev-next-title">Optimizer</p>
+        <p class="prev-next-title">オプティマイザー</p>
       </div>
     </a>
     <a class="right-next"
@@ -1484,7 +1639,7 @@ resuming from a checkpoint where initialization is not needed.</p>
        title="次ページ">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">次へ</p>
-        <p class="prev-next-title">Exceptions</p>
+        <p class="prev-next-title">例外</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -1523,11 +1678,14 @@ resuming from a checkpoint where initialization is not needed.</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.__init__"><code class="docutils literal notranslate"><span class="pre">Optimizer.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.contract_diagnostics"><code class="docutils literal notranslate"><span class="pre">Optimizer.contract_diagnostics()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.describe"><code class="docutils literal notranslate"><span class="pre">Optimizer.describe()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.dispatch"><code class="docutils literal notranslate"><span class="pre">Optimizer.dispatch()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.from_problem_file"><code class="docutils literal notranslate"><span class="pre">Optimizer.from_problem_file()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.iterate"><code class="docutils literal notranslate"><span class="pre">Optimizer.iterate()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.iterate_from"><code class="docutils literal notranslate"><span class="pre">Optimizer.iterate_from()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.load_pickle"><code class="docutils literal notranslate"><span class="pre">Optimizer.load_pickle()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.resolve_defaults"><code class="docutils literal notranslate"><span class="pre">Optimizer.resolve_defaults()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.run"><code class="docutils literal notranslate"><span class="pre">Optimizer.run()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.run_from"><code class="docutils literal notranslate"><span class="pre">Optimizer.run_from()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Optimizer.save_pickle"><code class="docutils literal notranslate"><span class="pre">Optimizer.save_pickle()</span></code></a></li>

@@ -1,0 +1,31 @@
+﻿saealib.core.StateContract
+==========================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: StateContract
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~StateContract.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.StateContract.__init__
+
+
+

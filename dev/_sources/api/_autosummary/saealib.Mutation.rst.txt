@@ -16,6 +16,7 @@
 
 
    ~Mutation.__init__
+   ~Mutation.contract
    ~Mutation.mutate
    ~Mutation.mutate_batch
    ~Mutation.post_mutation
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.Mutation.__init__
+
+
+.. automethod:: saealib.Mutation.contract
 
 
 .. automethod:: saealib.Mutation.mutate

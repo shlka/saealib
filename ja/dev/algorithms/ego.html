@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>EGO（Efficient Global Optimization） &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>EGO（Efficient Global Optimization） &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -503,7 +503,7 @@ window.runMermaid = runMermaid;</script>
     <link rel="icon" href="../_static/icon.svg"/>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="検索" href="../search.html" />
-    <link rel="next" title="GP-UCB（Gaussian Process Upper Confidence Bound）" href="gp_ucb.html" />
+    <link rel="next" title="GP-UCB（ガウス過程上側信頼限界）" href="gp_ucb.html" />
     <link rel="prev" title="アルゴリズム" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
@@ -610,8 +610,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -625,14 +632,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -785,8 +792,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -800,14 +814,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -909,12 +923,12 @@ window.runMermaid = runMermaid;</script>
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">EGO（Efficient Global Optimization）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（Gaussian Process Upper Confidence Bound）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（ガウス過程上側信頼限界）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maxunc.html">MaxUnc（不確実性サンプリング）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rbf_cors.html">CORS-RBF（Constrained Optimization using Response Surfaces）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nsga2.html">NSGA-II（Nondominated Sorting Genetic Algorithm II）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2（Strength Pareto Evolutionary Algorithm 2）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="nsga3.html">NSGA-III</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsga3.html">式: NSGA-III</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sms_emoa.html">SMS-EMOA（S metric selection EMOA）</a></li>
 </ul>
 </div>
@@ -978,16 +992,16 @@ window.runMermaid = runMermaid;</script>
                   
   <section class="tex2jax_ignore mathjax_ignore" id="ego-efficient-global-optimization">
 <h1>EGO（Efficient Global Optimization）<a class="headerlink" href="#ego-efficient-global-optimization" title="Link to this heading">#</a></h1>
-<section id="overview">
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><section id="overview">
 <h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>EGOは、評価コストの高い目的関数を対象に、Gaussian Process回帰(GP)によるサロゲートモデルと<strong>期待改善量</strong>(Expected Improvement, EI)という獲得関数を組み合わせた逐次最適化の手法です。</p>
-<p>GPの予測分散は学習データから離れた領域ほど大きくなります。 EIはこの予測平均と予測分散の両方から計算されるスカラー値であるため、「予測値が良さそうな領域」と「予測の不確実性が高い領域」を自然に両方カバーし、探索(exploration)と活用(exploitation)のバランスを取ります。</p>
+<p>GPの予測分散は学習データから離れた領域ほど大きくなります。 EIはこの予測平均と予測分散の両方から計算されるスカラー値であるため、「予測値が良さそうな領域」と「予測の不確実性が高い領域」を自然に両方カバーし、探索と活用のバランスを取ります。</p>
 <p>出典は<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id8" title="Donald R. Jones, Matthias Schonlau, and William J. Welch. Efficient global optimization of expensive black-box functions. Journal of Global Optimization, 13(4):455–492, 1998. doi:10.1023/A:1008306431147.">24</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
 </section>
 <section id="pseudocode">
 <h2>擬似コード<a class="headerlink" href="#pseudocode" title="Link to this heading">#</a></h2>
 <div class="proof algorithm admonition" id="alg-ego">
-<p class="admonition-title"><span class="caption-number">アルゴリズム 1 </span> (EGO)</p>
+<p class="admonition-title"><span class="caption-number">アルゴリズム 1 </span>EGO法</p>
 <section class="algorithm-content" id="proof-content">
 <p><strong>Inputs</strong> 目的関数 <span class="math notranslate nohighlight">\(f\)</span>、探索範囲、初期サンプル数 <span class="math notranslate nohighlight">\(n_0\)</span>、評価予算 <span class="math notranslate nohighlight">\(N\)</span> <strong>Output</strong> 最良解 <span class="math notranslate nohighlight">\(x^*\)</span></p>
 <ol class="arabic simple">
@@ -1027,7 +1041,7 @@ window.runMermaid = runMermaid;</script>
 <tbody>
 <tr class="row-even"><td><p>探索アルゴリズム本体</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code>（交叉、突然変異、選択の組み合わせ自体はEGOの定義に含まれない）</p></td>
-<td><p>候補解の生成（argmax EIの探索）</p></td>
+<td><p>L3</p></td>
 </tr>
 <tr class="row-odd"><td><p>サロゲートモデル</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code>（GP回帰。<code class="docutils literal notranslate"><span class="pre">sklearn</span></code> extraが必要）</p></td>
@@ -1090,21 +1104,23 @@ window.runMermaid = runMermaid;</script>
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>交叉、突然変異、選択の具体的な演算子はEGO自体の定義に含まれないため、上記は一例であり任意の<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">SurvivorSelection</span></code>に差し替えられます。</p>
+</section>
+<section id="differences-from-the-source">
+<h2>原法との差分<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<p>EGOの原法は獲得関数の最大化点を一度に1点ずつ求めます。一方、saealibは<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成した候補プールからEIが最大の候補を選び、<code class="docutils literal notranslate"><span class="pre">argmax</span> <span class="pre">EI</span></code>を近似します。<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code>により、選択した複数の候補をまとめて真の評価に回すこともできます。例の交叉、突然変異、親選択、環境選択の組み合わせはsaealibの構成上の選択であり、EGOの定義の一部ではありません。</p>
 </section>
 <section id="parameters-and-variants">
 <h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong>ξ（exploration–exploitation trade-off）</strong>：<code class="docutils literal notranslate"><span class="pre">ExpectedImprovement(xi=...)</span></code>で調整します。 既定値の<code class="docutils literal notranslate"><span class="pre">0.01</span></code>は、EGOの原提案で規定された値ではなく、実用上のheuristicです。 Brochu et al. (2010)は、この値が先行実験で使われたことを紹介しています<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id9" title="Eric Brochu, Vlad M. Cora, and Nando de Freitas. A tutorial on Bayesian optimization of expensive cost functions, with application to active user modeling and hierarchical reinforcement learning. 2010. arXiv:1012.2599.">36</a>]</span>。 <span class="math notranslate nohighlight">\(\xi=0\)</span>ではexploitation寄りになり、大きくするとexploration寄りになります。</p>
-<p><strong>evaluation_ratio（逐次評価とバッチ評価の切り替え）</strong>：文献のEGOは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。 saealibの<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>は、GAが生成した子個体群のうちEIスコア上位<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>の割合をまとめて真評価するバッチ拡張になっています。 <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。</p>
+<p><strong>ξ（探索と活用のトレードオフ）</strong>：<code class="docutils literal notranslate"><span class="pre">ExpectedImprovement(xi=...)</span></code>で調整します。既定値の<code class="docutils literal notranslate"><span class="pre">0.01</span></code>は、EGOの原提案で規定された値ではなく、実用上のヒューリスティックです。Brochu et al. (2010)は、この値が先行実験で使われたことを紹介しています<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id9" title="Eric Brochu, Vlad M. Cora, and Nando de Freitas. A tutorial on Bayesian optimization of expensive cost functions, with application to active user modeling and hierarchical reinforcement learning. 2010. arXiv:1012.2599.">36</a>]</span>。<span class="math notranslate nohighlight">\(\xi=0\)</span>では活用寄りになり、大きくすると探索寄りになります。</p>
 </section>
 <section id="related">
 <h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>：出典の完全な書誌情報と、EI以外の獲得関数の出典一覧</p></li>
-<li><p><a class="reference internal" href="../components/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>の詳しい使い方</p></li>
-<li><p><a class="reference internal" href="../components/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>：<code class="docutils literal notranslate"><span class="pre">ExpectedImprovement</span></code>を含む獲得関数一覧</p></li>
-<li><p><a class="reference internal" href="../components/surrogate.html"><span class="std std-doc">Surrogate</span></a>：<code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code>を含むサロゲートモデル一覧と<code class="docutils literal notranslate"><span class="pre">sklearn</span></code> extraの説明</p></li>
-<li><p><a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>：<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>の<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>を含む戦略一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>の詳しい使い方</p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>：<code class="docutils literal notranslate"><span class="pre">ExpectedImprovement</span></code>を含む獲得関数一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>: <code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code>を含むサロゲートモデルの一覧と、<code class="docutils literal notranslate"><span class="pre">sklearn</span></code> extraの説明</p></li>
+<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>の<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>を含む戦略の一覧</p></li>
 </ul>
 </section>
 </section>
@@ -1133,7 +1149,7 @@ window.runMermaid = runMermaid;</script>
        title="次ページ">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">次へ</p>
-        <p class="prev-next-title">GP-UCB（Gaussian Process Upper Confidence Bound）</p>
+        <p class="prev-next-title">GP-UCB（ガウス過程上側信頼限界）</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -1160,6 +1176,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">擬似コード</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">フローチャート</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">saealibでの構成</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">原法との差分</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">関連</a></li>
 </ul>

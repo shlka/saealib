@@ -17,6 +17,7 @@
 
    ~PSO.__init__
    ~PSO.ask
+   ~PSO.contract
    ~PSO.create_pareto_archive
    ~PSO.get_required_attrs
    ~PSO.tell
@@ -33,6 +34,9 @@
 
 
 .. automethod:: saealib.PSO.ask
+
+
+.. automethod:: saealib.PSO.contract
 
 
 .. automethod:: saealib.PSO.create_pareto_archive

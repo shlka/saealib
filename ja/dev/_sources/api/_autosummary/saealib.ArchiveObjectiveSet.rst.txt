@@ -17,6 +17,7 @@
 
    ~ArchiveObjectiveSet.__init__
    ~ArchiveObjectiveSet.build
+   ~ArchiveObjectiveSet.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.ArchiveObjectiveSet.build
+
+
+.. automethod:: saealib.ArchiveObjectiveSet.contract
 
 
 

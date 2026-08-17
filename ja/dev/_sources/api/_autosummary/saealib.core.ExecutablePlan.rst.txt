@@ -1,0 +1,35 @@
+﻿saealib.core.ExecutablePlan
+===========================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: ExecutablePlan
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ExecutablePlan.__init__
+   ~ExecutablePlan.describe
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.ExecutablePlan.__init__
+
+
+.. automethod:: saealib.core.ExecutablePlan.describe
+
+
+

@@ -17,6 +17,7 @@
 
    ~KNNObjectiveSet.__init__
    ~KNNObjectiveSet.build
+   ~KNNObjectiveSet.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.KNNObjectiveSet.build
+
+
+.. automethod:: saealib.KNNObjectiveSet.contract
 
 
 

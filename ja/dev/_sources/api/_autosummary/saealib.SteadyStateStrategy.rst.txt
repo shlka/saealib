@@ -16,7 +16,9 @@
 
 
    ~SteadyStateStrategy.__init__
+   ~SteadyStateStrategy.build_graph
    ~SteadyStateStrategy.build_pipeline
+   ~SteadyStateStrategy.contract
    ~SteadyStateStrategy.step
 
 
@@ -30,7 +32,13 @@
 .. automethod:: saealib.SteadyStateStrategy.__init__
 
 
+.. automethod:: saealib.SteadyStateStrategy.build_graph
+
+
 .. automethod:: saealib.SteadyStateStrategy.build_pipeline
+
+
+.. automethod:: saealib.SteadyStateStrategy.contract
 
 
 .. automethod:: saealib.SteadyStateStrategy.step

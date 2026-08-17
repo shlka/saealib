@@ -16,8 +16,10 @@
 
 
    ~TellStage.__init__
+   ~TellStage.contract
    ~TellStage.execute
    ~TellStage.to_pseudocode
+   ~TellStage.to_text
 
 
 
@@ -30,10 +32,16 @@
 .. automethod:: saealib.TellStage.__init__
 
 
+.. automethod:: saealib.TellStage.contract
+
+
 .. automethod:: saealib.TellStage.execute
 
 
 .. automethod:: saealib.TellStage.to_pseudocode
+
+
+.. automethod:: saealib.TellStage.to_text
 
 
 

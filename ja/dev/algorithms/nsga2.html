@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>NSGA-II（Nondominated Sorting Genetic Algorithm II） &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>NSGA-II（Nondominated Sorting Genetic Algorithm II） &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -610,8 +610,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -625,14 +632,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -785,8 +792,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -800,14 +814,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -909,12 +923,12 @@ window.runMermaid = runMermaid;</script>
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="ego.html">EGO（Efficient Global Optimization）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（Gaussian Process Upper Confidence Bound）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（ガウス過程上側信頼限界）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maxunc.html">MaxUnc（不確実性サンプリング）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rbf_cors.html">CORS-RBF（Constrained Optimization using Response Surfaces）</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">NSGA-II（Nondominated Sorting Genetic Algorithm II）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2（Strength Pareto Evolutionary Algorithm 2）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="nsga3.html">NSGA-III</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsga3.html">式: NSGA-III</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sms_emoa.html">SMS-EMOA（S metric selection EMOA）</a></li>
 </ul>
 </div>
@@ -978,12 +992,12 @@ window.runMermaid = runMermaid;</script>
                   
   <section class="tex2jax_ignore mathjax_ignore" id="nsga-ii-nondominated-sorting-genetic-algorithm-ii">
 <h1>NSGA-II（Nondominated Sorting Genetic Algorithm II）<a class="headerlink" href="#nsga-ii-nondominated-sorting-genetic-algorithm-ii" title="Link to this heading">#</a></h1>
-<p>NSGA-IIは、多目的最適化における選択機構として最も広く使われる遺伝アルゴリズムです。 非優越ソートと混雑度距離を組み合わせ、パレートフロントへの収束と解集合の多様性維持を同時に達成します。</p>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>NSGA-IIは、多目的最適化の選択機構として広く使われている遺伝的アルゴリズムです。非優越ソートと混雑度距離を組み合わせ、パレートフロントへの収束と解集合の多様性維持を同時に達成します。</p>
 <section id="overview">
 <h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>多目的最適化には、パレートフロントへの収束と、解集合内の多様性維持という、独立した2つの目標があります。</p>
-<p>従来のNSGA（非優越ソート遺伝アルゴリズム）は、この2つを非優越ソートと共有関数(sharing function)で達成していましたが、共有関数は分散パラメータ <span class="math notranslate nohighlight">\(\sigma_{\mathrm{share}}\)</span> の手動調整を要し、計算量も <span class="math notranslate nohighlight">\(O(N^2)\)</span> でした。</p>
-<p>NSGA-IIは、この共有関数を<strong>混雑度距離</strong>(crowding distance)に基づく<strong>混雑比較演算子</strong>(<span class="math notranslate nohighlight">\(\prec_n\)</span>)に置き換え、パラメータ不要な多様性維持を実現します。</p>
+<p>従来のNSGA（Nondominated Sorting Genetic Algorithm）は、非劣ソートと共有関数によってその両方を実現していました。しかし共有関数には分散パラメータ<span class="math notranslate nohighlight">\(\sigma_{\mathrm{share}}\)</span>の手動調整が必要で、計算量は<span class="math notranslate nohighlight">\(O(N^2)\)</span>でした。</p>
+<p>NSGA-IIは、この共有関数を<strong>混雑度距離</strong>に基づく<strong>混雑比較演算子</strong>に置き換え、パラメータ不要な多様性維持を実現します。</p>
 <p>各個体は非優越ランク <span class="math notranslate nohighlight">\(i_{\mathrm{rank}}\)</span> と混雑度距離 <span class="math notranslate nohighlight">\(i_{\mathrm{distance}}\)</span> の2つの属性を持ちます。 <span class="math notranslate nohighlight">\(\prec_n\)</span> はランクが低い（良い）個体を優先し、同ランク内では混雑度距離が大きい（周囲が疎な）個体を優先します。</p>
 <p>さらにNSGA-IIは、親個体群 <span class="math notranslate nohighlight">\(P_t\)</span> と子個体群 <span class="math notranslate nohighlight">\(Q_t\)</span> を結合した <span class="math notranslate nohighlight">\(2N\)</span> 個体からエリート選択を行い、優れた解が世代を跨いで失われないようにします(elitism)。</p>
 <p>出典は<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id22" title="Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan. A fast and elitist multiobjective genetic algorithm: nsga-ii. IEEE Transactions on Evolutionary Computation, 6(2):182–197, 2002. doi:10.1109/4235.996017.">3</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
@@ -991,7 +1005,7 @@ window.runMermaid = runMermaid;</script>
 <section id="pseudocode">
 <h2>擬似コード<a class="headerlink" href="#pseudocode" title="Link to this heading">#</a></h2>
 <div class="proof algorithm admonition" id="alg-nsga2">
-<p class="admonition-title"><span class="caption-number">アルゴリズム 5 </span> (NSGA-II)</p>
+<p class="admonition-title"><span class="caption-number">アルゴリズム 5 </span>NSGA-II法</p>
 <section class="algorithm-content" id="proof-content">
 <p><strong>Inputs</strong> 目的関数群、個体数 <span class="math notranslate nohighlight">\(N\)</span>、初期個体群 <span class="math notranslate nohighlight">\(P_0\)</span> <strong>Output</strong> 最終世代のパレートフロント</p>
 <ol class="arabic simple">
@@ -1013,7 +1027,7 @@ window.runMermaid = runMermaid;</script>
     INIT[&quot;Initializer&lt;br/&gt;Generate initial population P0&lt;br/&gt;(L1)&quot;] --&gt; GEN
     subgraph GEN[&quot;One generation (DirectStrategy.step)&quot;]
         direction TB
-        ASK[&quot;GA.ask()&lt;br/&gt;Binary tournament selection →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate Qt&lt;br/&gt;(L1, 7)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved)&quot;]
+        ASK[&quot;GA.ask()&lt;br/&gt;Binary tournament selection →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate Qt&lt;br/&gt;(L1, L7)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved)&quot;]
         EVAL --&gt; COMB[&quot;GA.tell()&lt;br/&gt;Combine Rt = Pt ∪ Qt&lt;br/&gt;(L2)&quot;]
         COMB --&gt; SORT[&quot;NSGA2Comparator.sort_population()&lt;br/&gt;Non-dominated sorting →&lt;br/&gt;crowding distance&lt;br/&gt;(L3-6)&quot;]
         SORT --&gt; TRUNC[&quot;TruncationSelection&lt;br/&gt;Take top N individuals as Pt+1&lt;br/&gt;(L4-6)&quot;]
@@ -1022,11 +1036,6 @@ window.runMermaid = runMermaid;</script>
     TERM -- &quot;Not yet (L8)&quot; --&gt; GEN
     TERM -- &quot;Reached&quot; --&gt; RESULT([&quot;Pareto front&quot;])
     </pre></section>
-<section id="complexity">
-<h2>計算量<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h2>
-<p>非優越ソートは <span class="math notranslate nohighlight">\(O(MN^2)\)</span>（<span class="math notranslate nohighlight">\(M\)</span>は目的数、<span class="math notranslate nohighlight">\(N\)</span>は個体数）、混雑度距離の計算は <span class="math notranslate nohighlight">\(O(MN\log N)\)</span>、<span class="math notranslate nohighlight">\(\prec_n\)</span>によるソートは <span class="math notranslate nohighlight">\(O(N\log N)\)</span> です。</p>
-<p>1世代あたりの支配的なコストは非優越ソートであり、全体の計算量は <span class="math notranslate nohighlight">\(O(MN^2)\)</span> になります<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id22" title="Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan. A fast and elitist multiobjective genetic algorithm: nsga-ii. IEEE Transactions on Evolutionary Computation, 6(2):182–197, 2002. doi:10.1109/4235.996017.">3</a>]</span>。</p>
-</section>
 <section id="configuration-in-saealib">
 <h2>saealibでの構成<a class="headerlink" href="#configuration-in-saealib" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -1039,19 +1048,19 @@ window.runMermaid = runMermaid;</script>
 <tbody>
 <tr class="row-even"><td><p>探索アルゴリズム本体</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code>（<code class="docutils literal notranslate"><span class="pre">ask()</span></code>で交叉と突然変異、<code class="docutils literal notranslate"><span class="pre">tell()</span></code>で <span class="math notranslate nohighlight">\(R_t=P_t\cup Q_t\)</span> の結合と生存選択を実行）</p></td>
-<td><p>L1-2, 7</p></td>
+<td><p>L1-2, L7</p></td>
 </tr>
 <tr class="row-odd"><td><p>親選択</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=2)</span></code>（<code class="docutils literal notranslate"><span class="pre">ctx.comparator.compare_population</span></code>で勝者を決定）</p></td>
-<td><p>L1, 7</p></td>
+<td><p>L1, L7</p></td>
 </tr>
-<tr class="row-even"><td><p>交叉</p></td>
+<tr class="row-even"><td><p>Crossover</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">CrossoverSBX(prob=0.9,</span> <span class="pre">eta=20.0)</span></code></p></td>
-<td><p>L1, 7</p></td>
+<td><p>L1, L7</p></td>
 </tr>
-<tr class="row-odd"><td><p>突然変異</p></td>
+<tr class="row-odd"><td><p>Mutation</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">MutationPolynomial(eta=20.0)</span></code></p></td>
-<td><p>L1, 7</p></td>
+<td><p>L1, L7</p></td>
 </tr>
 <tr class="row-even"><td><p>非優越ソート＋混雑度距離</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>（<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>が内部で<code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code>と<code class="docutils literal notranslate"><span class="pre">crowding_distance_all_fronts</span></code>を呼ぶ）</p></td>
@@ -1099,23 +1108,31 @@ window.runMermaid = runMermaid;</script>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">problem.comparator</span> <span class="pre">=</span> <span class="pre">NSGA2Comparator()</span></code>の行は、<code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>のときの既定値と同じであるため省略できます。 サロゲートを一切使わないため、<code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>に<code class="docutils literal notranslate"><span class="pre">set_surrogate_manager()</span></code>を呼ぶ必要がありません。</p>
 </section>
+<section id="differences-from-the-source">
+<h2>原法との差分<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<p>NSGA-IIの原法と比べると、例では<code class="docutils literal notranslate"><span class="pre">GA</span></code>、SBX、Polynomial mutation、二者トーナメント選択、<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code>を組み合わせています。この具体的な組み合わせはsaealibの構成例であり、原法が定義する選択機構そのものではありません。同じ混雑距離の個体が打ち切り境界に達した場合、既定の<code class="docutils literal notranslate"><span class="pre">TruncationSelection(randomize_ties=False)</span></code>は<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>による決定論的な順序を保持します。その境界で同順位の個体をシャッフルするのは<code class="docutils literal notranslate"><span class="pre">randomize_ties=True</span></code>の場合だけです。</p>
+</section>
 <section id="parameters-and-variants">
 <h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong><span class="math notranslate nohighlight">\(\eta_c\)</span>と<span class="math notranslate nohighlight">\(\eta_m\)</span>（分布指数）</strong>：<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(eta=...)</span></code>と<code class="docutils literal notranslate"><span class="pre">MutationPolynomial(eta=...)</span></code>で調整します。 値が大きいほど親に近い子個体を生成します（探索が保守的になる）。 論文の実数値実験では両方とも<span class="math notranslate nohighlight">\(20\)</span>が使われており、これがsaealib側のコード例の既定値でもあります<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id22" title="Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan. A fast and elitist multiobjective genetic algorithm: nsga-ii. IEEE Transactions on Evolutionary Computation, 6(2):182–197, 2002. doi:10.1109/4235.996017.">3</a>]</span>。</p>
-<p><strong><span class="math notranslate nohighlight">\(p_m\)</span>（変数単位の突然変異確率）</strong>：論文は <span class="math notranslate nohighlight">\(p_m = 1/n\)</span>（<span class="math notranslate nohighlight">\(n\)</span>は決定変数の数）を使います。 これは個体レベルの<code class="docutils literal notranslate"><span class="pre">prob</span></code>ではなく、変数ごとの適用確率<code class="docutils literal notranslate"><span class="pre">prob_var</span></code>に対応します。 <code class="docutils literal notranslate"><span class="pre">MutationPolynomial(prob_var=None)</span></code>（既定値）では<span class="math notranslate nohighlight">\(\min(0.5,\, 1/\mathrm{dim})\)</span>が自動設定され、次元数が大きいほど論文の設定に近づきます。</p>
-<p><strong>タイブレークの扱い</strong>：論文の擬似コードは、<span class="math notranslate nohighlight">\(\mathcal{F}_l\)</span>を<span class="math notranslate nohighlight">\(\prec_n\)</span>で降順ソートするとしか述べておらず、混雑度距離が同値な個体同士の順序は規定していません。 <code class="docutils literal notranslate"><span class="pre">TruncationSelection(randomize_ties=False)</span></code>（既定値）は<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>が返す決定的な順序をそのまま使い、この記述に対応します。 <code class="docutils literal notranslate"><span class="pre">randomize_ties=True</span></code>にすると、打ち切り境界で同値な個体をシャッフルしてから切り詰めます。</p>
+<section id="complexity">
+<h3>計算量<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h3>
+<p>非優越ソートは <span class="math notranslate nohighlight">\(O(MN^2)\)</span>（<span class="math notranslate nohighlight">\(M\)</span>は目的数、<span class="math notranslate nohighlight">\(N\)</span>は個体数）、混雑度距離の計算は <span class="math notranslate nohighlight">\(O(MN\log N)\)</span>、<span class="math notranslate nohighlight">\(\prec_n\)</span>によるソートは <span class="math notranslate nohighlight">\(O(N\log N)\)</span> です。</p>
+<p>1世代あたりの支配的なコストは非優越ソートであり、全体の計算量は <span class="math notranslate nohighlight">\(O(MN^2)\)</span> になります<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id22" title="Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan. A fast and elitist multiobjective genetic algorithm: nsga-ii. IEEE Transactions on Evolutionary Computation, 6(2):182–197, 2002. doi:10.1109/4235.996017.">3</a>]</span>。</p>
+<p><strong><span class="math notranslate nohighlight">\(\eta_c\)</span>と<span class="math notranslate nohighlight">\(\eta_m\)</span>（分布指数）</strong>：<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(eta=...)</span></code>と<code class="docutils literal notranslate"><span class="pre">MutationPolynomial(eta=...)</span></code>で調整します。値が大きいほど親に近い子個体を生成します（探索が保守的になります）。論文の実数値実験では両方に<span class="math notranslate nohighlight">\(20\)</span>を使い、コード例でも同じ分布指数を明示的に設定しています<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id22" title="Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan. A fast and elitist multiobjective genetic algorithm: nsga-ii. IEEE Transactions on Evolutionary Computation, 6(2):182–197, 2002. doi:10.1109/4235.996017.">3</a>]</span>。</p>
+<p><strong><span class="math notranslate nohighlight">\(p_m\)</span>（変数単位の突然変異確率）</strong>：論文は<span class="math notranslate nohighlight">\(p_m = 1/n\)</span>（<span class="math notranslate nohighlight">\(n\)</span>は決定変数の数）を使います。これは個体レベルの<code class="docutils literal notranslate"><span class="pre">prob</span></code>ではなく、変数ごとの適用確率<code class="docutils literal notranslate"><span class="pre">prob_var</span></code>に対応します。<code class="docutils literal notranslate"><span class="pre">MutationPolynomial(prob_var=None)</span></code>では、saealibの既定値として<span class="math notranslate nohighlight">\(\min(0.5,\, 1/\mathrm{dim})\)</span>が自動設定されます。したがって、論文の<span class="math notranslate nohighlight">\(p_m=1/n\)</span>は論文側の設定であり、ライブラリのすべての構成がこの値を使うという意味ではありません。</p>
+</section>
 </section>
 <section id="related">
 <h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>：出典の完全な書誌情報</p></li>
-<li><p><a class="reference internal" href="../components/comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>の詳しい仕様</p></li>
-<li><p><a class="reference internal" href="../components/crossover.html"><span class="std std-doc">Crossover</span></a>：<code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code>を含む交叉演算子一覧</p></li>
-<li><p><a class="reference internal" href="../components/mutation.html"><span class="std std-doc">Mutation</span></a>：<code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code>を含む突然変異演算子一覧</p></li>
-<li><p><a class="reference internal" href="../components/parent_selection.html"><span class="std std-doc">ParentSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>の詳しい使い方</p></li>
-<li><p><a class="reference internal" href="../components/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code>の詳しい使い方</p></li>
-<li><p><a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>：<code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>を含む戦略一覧</p></li>
-<li><p><a class="reference internal" href="../components/nondominated_sorting.html"><span class="std std-doc">NonDominatedSorting</span></a>：非優越ソートの実装詳細</p></li>
+<li><p><a class="reference internal" href="../concepts/problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>の詳しい仕様</p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/crossover.html"><span class="std std-doc">Crossover</span></a>: <code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code>を含む交叉演算子の一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/mutation.html"><span class="std std-doc">Mutation</span></a>: <code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code>を含む突然変異演算子の一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/parent_selection.html"><span class="std std-doc">ParentSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>の詳しい使い方</p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code>の詳しい使い方</p></li>
+<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>を含む戦略の一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/problem_and_ranking/nondominated_sorting.html"><span class="std std-doc">NonDominatedSorting</span></a>：非優越ソートの実装詳細</p></li>
 </ul>
 </section>
 </section>
@@ -1170,9 +1187,12 @@ window.runMermaid = runMermaid;</script>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">概要</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">擬似コード</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">フローチャート</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">計算量</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">saealibでの構成</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">原法との差分</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">計算量</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">関連</a></li>
 </ul>
   </nav></div>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>saealib &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="_static/documentation_options.js?v=2243f322"></script>
+    <script src="_static/documentation_options.js?v=512d92dd"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -64,7 +64,7 @@
     <link rel="icon" href="_static/icon.svg"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Getting Started" href="getting_started/index.html" />
+    <link rel="next" title="Getting started" href="getting_started/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -157,7 +157,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -170,8 +170,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -192,7 +199,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -334,7 +341,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -347,8 +354,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -369,7 +383,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -486,49 +500,10 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="saealib">
 <h1>saealib<a class="headerlink" href="#saealib" title="Link to this heading">#</a></h1>
-<p>A comprehensive library for <strong>surrogate-assisted evolutionary algorithms (SAEA)</strong>, implemented in Python.</p>
-<p>Designed for optimization problems where the objective function is expensive to evaluate, <code class="docutils literal notranslate"><span class="pre">saealib</span></code> provides a modular framework that combines evolutionary algorithms, surrogate models, and model management strategies.</p>
-<p><a class="sd-sphinx-override sd-btn sd-text-wrap sd-btn-primary sd-shadow-sm sd-mr-2 reference internal" href="getting_started/quickstart.html"><span class="doc">Quickstart →</span></a></p>
+<p>saealib is a Python optimization library for objective functions whose evaluations take substantial time or cost.
+It combines a model that approximates the objective from past evaluations with direct evaluation to reduce the number of expensive evaluations.</p>
+<p><a class="sd-sphinx-override sd-btn sd-text-wrap sd-btn-primary sd-shadow-sm sd-mr-2 reference internal" href="getting_started/quickstart.html"><span class="doc">Quickstart</span></a></p>
 <p><a class="sd-sphinx-override sd-btn sd-text-wrap sd-btn-outline-secondary reference internal" href="getting_started/what_is_saealib.html"><span class="doc">What is saealib?</span></a></p>
-<hr class="docutils" />
-<div class="sd-container-fluid sd-sphinx-override sd-mt-4 sd-mb-4 sd-ml-0 sd-mr-0 docutils">
-<div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-3 sd-g-3 sd-g-xs-3 sd-g-sm-3 sd-g-md-3 sd-g-lg-3 docutils">
-<div class="sd-col sd-d-flex-row docutils">
-<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
-<div class="sd-card-body docutils">
-<div class="sd-card-title sd-font-weight-bold docutils">
-<span class="fa fa-bolt sd-mr-1"></span> High-level API</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
-
-<span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">lb</span><span class="o">=-</span><span class="mi">5</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sd-card-text">A boilerplate-free high-level API via <code class="docutils literal notranslate"><span class="pre">minimize()</span></code> / <code class="docutils literal notranslate"><span class="pre">maximize()</span></code>.</p>
-</div>
-<a class="sd-stretched-link sd-hide-link-text reference internal" href="getting_started/quickstart.html"><span class="doc">Quickstart</span></a></div>
-</div>
-<div class="sd-col sd-d-flex-row docutils">
-<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
-<div class="sd-card-body docutils">
-<div class="sd-card-title sd-font-weight-bold docutils">
-<span class="fa fa-sliders sd-mr-1"></span> Low-level API</div>
-<p class="sd-card-text">The <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> builder and <code class="docutils literal notranslate"><span class="pre">iterate()</span></code> generator enable per-generation inspection and custom loop control for research use.</p>
-</div>
-<a class="sd-stretched-link sd-hide-link-text reference internal" href="components/index.html"><span class="doc">Components</span></a></div>
-</div>
-<div class="sd-col sd-d-flex-row docutils">
-<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
-<div class="sd-card-body docutils">
-<div class="sd-card-title sd-font-weight-bold docutils">
-<span class="fa fa-puzzle-piece sd-mr-1"></span> Extensibility</div>
-<p class="sd-card-text">Every concept has an abstract base class and can be swapped at construction time.
-This makes it possible to express any SAEA variant without forking the library.</p>
-</div>
-<a class="sd-stretched-link sd-hide-link-text reference internal" href="components/index.html"><span class="doc">Components</span></a></div>
-</div>
-</div>
-</div>
-<hr class="docutils" />
 <section id="documentation">
 <h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">#</a></h2>
 <div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
@@ -537,17 +512,17 @@ This makes it possible to express any SAEA variant without forking the library.<
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-<span class="fa fa-flag sd-mr-1"></span> Getting Started</div>
-<p class="sd-card-text">For first-time saealib users. Covers installation, basic usage, and core concepts.</p>
+<span class="fa fa-flag sd-mr-1"></span> Getting started</div>
+<p class="sd-card-text">Learn the common ways to get started.</p>
 </div>
-<a class="sd-stretched-link sd-hide-link-text reference internal" href="getting_started/index.html"><span class="doc">Getting Started</span></a></div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="getting_started/index.html"><span class="doc">Getting started</span></a></div>
 </div>
 <div class="sd-col sd-d-flex-row docutils">
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
 <span class="fa fa-book-open sd-mr-1"></span> Tutorials</div>
-<p class="sd-card-text">Setup guides for specific scenarios: single-/multi-objective optimization, constraints, checkpointing.</p>
+<p class="sd-card-text">Follow task-oriented procedures.</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="tutorials/index.html"><span class="doc">Tutorials</span></a></div>
 </div>
@@ -555,17 +530,26 @@ This makes it possible to express any SAEA variant without forking the library.<
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-<span class="fa fa-cubes sd-mr-1"></span> Components</div>
-<p class="sd-card-text">Detailed usage of each component and guidelines for extending it.</p>
+<span class="fa fa-cubes sd-mr-1"></span> Optimization components</div>
+<p class="sd-card-text">Explore the pieces that make up an optimization.</p>
 </div>
-<a class="sd-stretched-link sd-hide-link-text reference internal" href="components/index.html"><span class="doc">Components</span></a></div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="concepts/index.html"><span class="doc">Optimization components</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="fa fa-sitemap sd-mr-1"></span> Framework</div>
+<p class="sd-card-text">Explore contracts, ComponentGraph, Compiler, and Runtime.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="framework/index.html"><span class="doc">Framework</span></a></div>
 </div>
 <div class="sd-col sd-d-flex-row docutils">
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
 <span class="fa fa-diagram-project sd-mr-1"></span> Algorithms</div>
-<p class="sd-card-text">How named algorithms from the literature are reproduced as combinations of saealib components.</p>
+<p class="sd-card-text">Review algorithm configurations and sources.</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="algorithms/index.html"><span class="doc">Algorithms</span></a></div>
 </div>
@@ -573,22 +557,27 @@ This makes it possible to express any SAEA variant without forking the library.<
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-<span class="fa fa-bookmark sd-mr-1"></span> References</div>
-<p class="sd-card-text">A bibliography of the theoretical sources for the implemented algorithms, operators, and comparison methods.</p>
+<span class="fa fa-code sd-mr-1"></span> API reference</div>
+<p class="sd-card-text">Browse the public API.</p>
 </div>
-<a class="sd-stretched-link sd-hide-link-text reference internal" href="references.html"><span class="doc">References</span></a></div>
-</div>
-<div class="sd-col sd-d-flex-row docutils">
-<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
-<div class="sd-card-body docutils">
-<div class="sd-card-title sd-font-weight-bold docutils">
-<span class="fa fa-code sd-mr-1"></span> API Reference</div>
-<p class="sd-card-text">The complete specification of every class and function.</p>
-</div>
-<a class="sd-stretched-link sd-hide-link-text reference internal" href="api/index.html"><span class="doc">API Reference</span></a></div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="api/index.html"><span class="doc">API reference</span></a></div>
 </div>
 </div>
 </div>
+</section>
+<section id="minimal-example">
+<h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.benchmarks</span><span class="w"> </span><span class="kn">import</span> <span class="n">rastrigin</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">rastrigin</span><span class="p">(</span><span class="n">n_var</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span> <span class="n">max_fe</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">f</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Configure which components to use and how to combine them.
+Configuration conflicts are validated before optimization starts.
+See <a class="reference internal" href="getting_started/what_is_saealib.html"><span class="std std-doc">What is saealib?</span></a> and <a class="reference internal" href="concepts/index.html"><span class="std std-doc">Optimization components</span></a> for details.</p>
+<p>Installation instructions are in <a class="reference internal" href="getting_started/installation.html"><span class="std std-doc">Installation</span></a>, and implementation sources are listed in <a class="reference internal" href="references.html"><span class="std std-doc">References</span></a>.</p>
 <div class="toctree-wrapper compound">
 </div>
 </section>
@@ -609,7 +598,7 @@ This makes it possible to express any SAEA variant without forking the library.<
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Getting Started</p>
+        <p class="prev-next-title">Getting started</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -633,6 +622,7 @@ This makes it possible to express any SAEA variant without forking the library.<
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#minimal-example">Minimal example</a></li>
 </ul>
   </nav></div>
 

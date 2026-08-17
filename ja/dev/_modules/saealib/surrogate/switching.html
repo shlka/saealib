@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.surrogate.switching &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>saealib.surrogate.switching &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../../../_static/documentation_options.js?v=c8372973"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -605,8 +605,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -620,14 +627,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -778,8 +785,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -793,14 +807,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -963,6 +977,8 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentContract</span><span class="p">,</span> <span class="n">PartSpec</span>
+
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationStrategy</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.accuracy</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogateAccuracy</span>
@@ -984,7 +1000,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        for ctx in optimizer.iterate():</span>
 <span class="sd">            optimizer.set_strategy(</span>
 <span class="sd">                switcher.switch(optimizer.surrogate_manager.last_accuracy)</span>
-<span class="sd">            )</span>
+<span class="sd">        )</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="AccuracyBasedSurrogateSwitcher.switch">
@@ -1045,6 +1061,18 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span> <span class="o">=</span> <span class="n">fallback</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">metric</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span></div>
+
+
+<div class="viewcode-block" id="ManagerSwitcher.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ManagerSwitcher.html#saealib.ManagerSwitcher.contract">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the manager-switcher contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ComponentContract</span><span class="p">(</span>
+            <span class="n">parts</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">PartSpec</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="p">,</span> <span class="n">contract</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">primary</span><span class="o">.</span><span class="n">contract</span><span class="p">()),</span>
+                <span class="n">PartSpec</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;fallback&quot;</span><span class="p">,</span> <span class="n">contract</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fallback</span><span class="o">.</span><span class="n">contract</span><span class="p">()),</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ManagerSwitcher.switch">
@@ -1160,6 +1188,21 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="n">threshold</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mid</span> <span class="o">=</span> <span class="n">mid</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mid_threshold</span> <span class="o">=</span> <span class="n">mid_threshold</span></div>
+
+
+<div class="viewcode-block" id="StrategySwitcher.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.StrategySwitcher.html#saealib.StrategySwitcher.contract">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the strategy-switcher contract.&quot;&quot;&quot;</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">PartSpec</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="p">,</span> <span class="n">contract</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">primary</span><span class="o">.</span><span class="n">contract</span><span class="p">()),</span>
+            <span class="n">PartSpec</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;fallback&quot;</span><span class="p">,</span> <span class="n">contract</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fallback</span><span class="o">.</span><span class="n">contract</span><span class="p">()),</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">PartSpec</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;mid&quot;</span><span class="p">,</span> <span class="n">contract</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mid</span><span class="o">.</span><span class="n">contract</span><span class="p">(),</span> <span class="n">optional</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ComponentContract</span><span class="p">(</span><span class="n">parts</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">parts</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="StrategySwitcher.switch">

@@ -16,6 +16,7 @@
 
 
    ~MutationPolynomial.__init__
+   ~MutationPolynomial.contract
    ~MutationPolynomial.mutate
    ~MutationPolynomial.mutate_batch
    ~MutationPolynomial.post_mutation
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.MutationPolynomial.__init__
+
+
+.. automethod:: saealib.MutationPolynomial.contract
 
 
 .. automethod:: saealib.MutationPolynomial.mutate

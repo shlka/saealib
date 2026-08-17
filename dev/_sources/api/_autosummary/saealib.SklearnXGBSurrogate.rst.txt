@@ -16,6 +16,7 @@
 
 
    ~SklearnXGBSurrogate.__init__
+   ~SklearnXGBSurrogate.contract
    ~SklearnXGBSurrogate.fit
    ~SklearnXGBSurrogate.post_fit
    ~SklearnXGBSurrogate.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.SklearnXGBSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnXGBSurrogate.contract
 
 
 .. automethod:: saealib.SklearnXGBSurrogate.fit

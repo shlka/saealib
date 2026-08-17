@@ -16,6 +16,7 @@
 
 
    ~CrossoverUniform.__init__
+   ~CrossoverUniform.contract
    ~CrossoverUniform.crossover
    ~CrossoverUniform.crossover_batch
    ~CrossoverUniform.post_crossover
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.CrossoverUniform.__init__
+
+
+.. automethod:: saealib.CrossoverUniform.contract
 
 
 .. automethod:: saealib.CrossoverUniform.crossover

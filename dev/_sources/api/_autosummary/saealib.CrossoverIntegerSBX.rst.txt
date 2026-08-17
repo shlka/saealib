@@ -16,6 +16,7 @@
 
 
    ~CrossoverIntegerSBX.__init__
+   ~CrossoverIntegerSBX.contract
    ~CrossoverIntegerSBX.crossover
    ~CrossoverIntegerSBX.crossover_batch
    ~CrossoverIntegerSBX.post_crossover
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.CrossoverIntegerSBX.__init__
+
+
+.. automethod:: saealib.CrossoverIntegerSBX.contract
 
 
 .. automethod:: saealib.CrossoverIntegerSBX.crossover

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Dynamic Switching Based on Surrogate Accuracy &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>Dynamic Switching Based on Surrogate Accuracy &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -158,7 +158,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -171,8 +171,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -193,7 +200,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -333,7 +340,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -346,8 +353,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -368,7 +382,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -478,6 +492,13 @@
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Progress</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external_libraries.html">Integrating External Libraries</a></li>
 </ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="component_swap.html">Choose and swap built-in components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lowlevel_api.html">Assembling an Optimizer with the Low-Level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interface_hooks.html">Choose a Hook, Stage, or Callback</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel_api.html">Run an optimization with the high-level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_components.html">Add a custom component to an existing contract</a></li>
+</ul>
 </div>
 </nav></div>
     </div>
@@ -539,12 +560,18 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="dynamic-switching-based-on-surrogate-accuracy">
 <h1>Dynamic Switching Based on Surrogate Accuracy<a class="headerlink" href="#dynamic-switching-based-on-surrogate-accuracy" title="Link to this heading">#</a></h1>
-<p>The prediction accuracy of a surrogate model changes as generations progress.</p>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>The prediction accuracy of a surrogate model changes as generations progress.</p>
 <p>Early on, when training data is scarce, accuracy is low; as the archive fills in, accuracy rises; and once the search converges and the gap between objective values narrows, accuracy can drop again.</p>
 <p>This page covers how to switch the evaluation strategy or the <code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code> at runtime in response to these changes.</p>
-<section id="problem-setup">
-<h2>Problem setup<a class="headerlink" href="#problem-setup" title="Link to this heading">#</a></h2>
-<p>We use the same Sphere function as in the single-objective optimization tutorial.</p>
+<div class="tip admonition">
+<p class="admonition-title">What you’ll be able to do</p>
+<p>By the end of this page, you’ll be able to track Surrogate accuracy by generation and switch Strategy or SurrogateManager during a run based on that value.</p>
+</div>
+<p>For a fixed evaluation strategy, use the <a class="reference internal" href="lowlevel_api.html"><span class="std std-doc">low-level API</span></a>; to implement custom switching conditions, see <a class="reference internal" href="custom_components.html"><span class="std std-doc">Custom components</span></a>.
+This page shows how to switch the run configuration during <code class="docutils literal notranslate"><span class="pre">iterate()</span></code> while reading Surrogate accuracy.</p>
+<section id="set-up-the-problem">
+<h2>Set up the problem<a class="headerlink" href="#set-up-the-problem" title="Link to this heading">#</a></h2>
+<p>The example uses the simple Sphere function.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 
@@ -557,10 +584,12 @@
 </pre></div>
 </div>
 </section>
-<section id="tracking-surrogate-accuracy">
-<h2>Tracking surrogate accuracy<a class="headerlink" href="#tracking-surrogate-accuracy" title="Link to this heading">#</a></h2>
+<section id="track-surrogate-accuracy">
+<h2>Track surrogate accuracy<a class="headerlink" href="#track-surrogate-accuracy" title="Link to this heading">#</a></h2>
 <p>Passing an <code class="docutils literal notranslate"><span class="pre">accuracy_evaluator</span></code> to <code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code> computes accuracy on every fit and records it in <code class="docutils literal notranslate"><span class="pre">surrogate_manager.last_accuracy</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">LOOAccuracyEvaluator</span></code> computes accuracy via leave-one-out cross-validation on the current training data, without preparing any additional held-out data.</p>
+<p>Pass the Surrogate and accuracy evaluator to the <code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code> constructor.
+Configure AcquisitionFunction separately with <code class="docutils literal notranslate"><span class="pre">Optimizer.set_acquisition()</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Problem</span><span class="p">,</span>
     <span class="n">Optimizer</span><span class="p">,</span>
@@ -597,7 +626,6 @@
 
 <span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">LocalSurrogateManager</span><span class="p">(</span>
     <span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">),</span>
-    <span class="n">MeanPrediction</span><span class="p">(),</span>
     <span class="n">accuracy_evaluator</span><span class="o">=</span><span class="n">LOOAccuracyEvaluator</span><span class="p">(),</span>
 <span class="p">)</span>
 
@@ -609,10 +637,11 @@
 <p><code class="docutils literal notranslate"><span class="pre">last_accuracy</span></code> is a <code class="docutils literal notranslate"><span class="pre">SurrogateAccuracy</span></code> instance, from which you can retrieve a value by specifying a metric name, e.g. <code class="docutils literal notranslate"><span class="pre">.get(&quot;spearman&quot;)</span></code>.</p>
 <p>Note that <code class="docutils literal notranslate"><span class="pre">last_accuracy</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> in the first generation.</p>
 </section>
-<section id="switching-the-evaluation-strategy-with-strategyswitcher">
-<h2>Switching the evaluation strategy with StrategySwitcher<a class="headerlink" href="#switching-the-evaluation-strategy-with-strategyswitcher" title="Link to this heading">#</a></h2>
+<section id="switch-the-evaluation-strategy-with-strategyswitcher">
+<h2>Switch the evaluation strategy with StrategySwitcher<a class="headerlink" href="#switch-the-evaluation-strategy-with-strategyswitcher" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">StrategySwitcher(primary,</span> <span class="pre">fallback,</span> <span class="pre">metric=&quot;spearman&quot;,</span> <span class="pre">threshold=0.56)</span></code> returns <code class="docutils literal notranslate"><span class="pre">primary</span></code> if accuracy is at or above the threshold, and <code class="docutils literal notranslate"><span class="pre">fallback</span></code> otherwise.</p>
-<p>The strategy returned by <code class="docutils literal notranslate"><span class="pre">switch()</span></code> takes effect from the next generation onward by passing it to <code class="docutils literal notranslate"><span class="pre">optimizer.set_strategy(...)</span></code> inside the <code class="docutils literal notranslate"><span class="pre">iterate()</span></code> loop.</p>
+<p>The following example changes the configuration by calling <code class="docutils literal notranslate"><span class="pre">set_strategy()</span></code> at each <code class="docutils literal notranslate"><span class="pre">iterate()</span></code> step. The runtime detects the change and recompiles the plan, so the Strategy returned by <code class="docutils literal notranslate"><span class="pre">switch()</span></code> takes effect from the next generation.
+This procedure works on both the Stage compatibility path and the graph-native path.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreSelectionStrategy</span><span class="p">,</span> <span class="n">IndividualBasedStrategy</span><span class="p">,</span> <span class="n">StrategySwitcher</span>
 
 <span class="n">ps_strategy</span> <span class="o">=</span> <span class="n">PreSelectionStrategy</span><span class="p">(</span><span class="n">n_candidates</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">n_select</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
@@ -624,6 +653,7 @@
     <span class="o">.</span><span class="n">set_initializer</span><span class="p">(</span><span class="n">initializer</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span><span class="n">surrogate_manager</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_acquisition</span><span class="p">(</span><span class="n">MeanPrediction</span><span class="p">())</span>
     <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">ib_strategy</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">600</span><span class="p">)))</span>
 <span class="p">)</span>
@@ -637,9 +667,10 @@
 </div>
 <p>Running this, the search stays on <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code> early on while accuracy is low, and switches to <code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code> once accuracy exceeds the threshold.</p>
 <p>If the search progresses, the gap between objective values narrows, and accuracy drops again, it switches back to <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>.</p>
+<p>For the path where a Component requests recompilation, see <a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>, “Behavior of runtime swapping.”</p>
 </section>
-<section id="other-switchers">
-<h2>Other switchers<a class="headerlink" href="#other-switchers" title="Link to this heading">#</a></h2>
+<section id="choose-another-switcher">
+<h2>Choose another switcher<a class="headerlink" href="#choose-another-switcher" title="Link to this heading">#</a></h2>
 <p>Switchers with the same <code class="docutils literal notranslate"><span class="pre">switch()</span></code> interface are available besides <code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -660,7 +691,8 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher</span></code> returns a number, so assign it directly to the <code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code> attribute of a <code class="docutils literal notranslate"><span class="pre">GenerationBasedStrategy</span></code> instance.</p>
+<p><code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher</span></code> returns a number, so assign it directly to the <code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code> attribute of a <code class="docutils literal notranslate"><span class="pre">GenerationBasedStrategy</span></code> instance.
+The next example also updates the configuration during <code class="docutils literal notranslate"><span class="pre">iterate()</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerationBasedStrategy</span><span class="p">,</span> <span class="n">GenCtrlSwitcher</span>
 
 <span class="n">gen_ctrl_switcher</span> <span class="o">=</span> <span class="n">GenCtrlSwitcher</span><span class="p">(</span><span class="n">gm_max</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">gm_min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -673,8 +705,8 @@
 </pre></div>
 </div>
 </section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="related-concepts-and-reference">
+<h2>Related concepts and reference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.StrategySwitcher.html#saealib.StrategySwitcher" title="saealib.StrategySwitcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.StrategySwitcher</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.ManagerSwitcher.html#saealib.ManagerSwitcher" title="saealib.ManagerSwitcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ManagerSwitcher</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.GenCtrlSwitcher.html#saealib.GenCtrlSwitcher" title="saealib.GenCtrlSwitcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GenCtrlSwitcher</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.LOOAccuracyEvaluator.html#saealib.LOOAccuracyEvaluator" title="saealib.LOOAccuracyEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.LOOAccuracyEvaluator</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.HeldOutAccuracyEvaluator.html#saealib.HeldOutAccuracyEvaluator" title="saealib.HeldOutAccuracyEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.HeldOutAccuracyEvaluator</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.KFoldAccuracyEvaluator.html#saealib.KFoldAccuracyEvaluator" title="saealib.KFoldAccuracyEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.KFoldAccuracyEvaluator</span></code></a></p></li>
@@ -731,11 +763,11 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-setup">Problem setup</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tracking-surrogate-accuracy">Tracking surrogate accuracy</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#switching-the-evaluation-strategy-with-strategyswitcher">Switching the evaluation strategy with StrategySwitcher</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#other-switchers">Other switchers</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-the-problem">Set up the problem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#track-surrogate-accuracy">Track surrogate accuracy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#switch-the-evaluation-strategy-with-strategyswitcher">Switch the evaluation strategy with StrategySwitcher</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#choose-another-switcher">Choose another switcher</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">Related concepts and reference</a></li>
 </ul>
   </nav></div>
 

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Mixed-Variable Optimization &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>Mixed-Variable Optimization &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -158,7 +158,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -171,8 +171,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -193,7 +200,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -333,7 +340,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -346,8 +353,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -368,7 +382,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -478,6 +492,13 @@
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Progress</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external_libraries.html">Integrating External Libraries</a></li>
 </ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="component_swap.html">Choose and swap built-in components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lowlevel_api.html">Assembling an Optimizer with the Low-Level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interface_hooks.html">Choose a Hook, Stage, or Callback</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel_api.html">Run an optimization with the high-level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_components.html">Add a custom component to an existing contract</a></li>
+</ul>
 </div>
 </nav></div>
     </div>
@@ -539,10 +560,17 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="mixed-variable-optimization">
 <h1>Mixed-Variable Optimization<a class="headerlink" href="#mixed-variable-optimization" title="Link to this heading">#</a></h1>
-<p>Solve problems that include not only continuous variables but also integer and categorical variables, using <code class="docutils literal notranslate"><span class="pre">saealib</span></code>.</p>
-<p>Switching algorithms, surrogates, and the evaluation strategy works the same as in “Switching components” in <a class="reference internal" href="single_objective.html"><span class="std std-doc">Single-Objective Optimization</span></a>.</p>
-<section id="problem-setup">
-<h2>Problem setup<a class="headerlink" href="#problem-setup" title="Link to this heading">#</a></h2>
+<div class="layer-badges"><span class="layer-badge">Layer 1: Use</span></div><p>Solve problems that include not only continuous variables but also integer and categorical variables, using <code class="docutils literal notranslate"><span class="pre">saealib</span></code>.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">minimize()</span></code>, you can specify strings or instances for the algorithm, surrogate model, and evaluation strategy.
+The examples on this page add only problem-specific settings and use defaults for everything else.</p>
+<div class="tip admonition">
+<p class="admonition-title">What you’ll be able to do</p>
+<p>By the end of this page, you’ll be able to define continuous, integer, and categorical variables in a <code class="docutils literal notranslate"><span class="pre">Problem</span></code> and run type-aware search.</p>
+</div>
+<p>For ordinary continuous variables, use the <a class="reference internal" href="highlevel_api.html"><span class="std std-doc">high-level API</span></a>; to add custom variables or operators, see <a class="reference internal" href="custom_components.html"><span class="std std-doc">Custom components</span></a>.
+This page defines variable types in a <code class="docutils literal notranslate"><span class="pre">Problem</span></code> and runs search with type-aware built-in operators.</p>
+<section id="set-up-the-problem">
+<h2>Set up the problem<a class="headerlink" href="#set-up-the-problem" title="Link to this heading">#</a></h2>
 <p>Assume an objective function where each design variable is one of three types: continuous, integer, or categorical.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">func</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="c1"># x[0]: continuous, x[1]: integer, x[2]: categorical index</span>
@@ -551,8 +579,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">x[2]</span></code> represents one of three categories (<code class="docutils literal notranslate"><span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code>), and no penalty is applied only when <code class="docutils literal notranslate"><span class="pre">1</span></code> is chosen.</p>
 </section>
-<section id="defining-variables">
-<h2>Defining variables<a class="headerlink" href="#defining-variables" title="Link to this heading">#</a></h2>
+<section id="define-variables">
+<h2>Define variables<a class="headerlink" href="#define-variables" title="Link to this heading">#</a></h2>
 <p>Each dimension’s type is specified with a subclass of <code class="docutils literal notranslate"><span class="pre">Variable</span></code>, passed to <code class="docutils literal notranslate"><span class="pre">Problem</span></code>’s <code class="docutils literal notranslate"><span class="pre">variables</span></code> argument.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -593,8 +621,8 @@
 </div>
 <p>Passing <code class="docutils literal notranslate"><span class="pre">variables</span></code> automatically derives <code class="docutils literal notranslate"><span class="pre">Problem.lb</span></code>/<code class="docutils literal notranslate"><span class="pre">Problem.ub</span></code> from each element’s <code class="docutils literal notranslate"><span class="pre">lb</span></code>/<code class="docutils literal notranslate"><span class="pre">ub</span></code>, so you don’t specify the <code class="docutils literal notranslate"><span class="pre">lb</span></code>/<code class="docutils literal notranslate"><span class="pre">ub</span></code> arguments.</p>
 </section>
-<section id="high-level-api-minimize">
-<h2>High-level API: minimize<a class="headerlink" href="#high-level-api-minimize" title="Link to this heading">#</a></h2>
+<section id="run-minimize">
+<h2>Run minimize<a class="headerlink" href="#run-minimize" title="Link to this heading">#</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">max_fe</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -605,8 +633,8 @@
 <p><code class="docutils literal notranslate"><span class="pre">PSO</span></code> is a velocity-based update scheme and cannot correctly handle integer and categorical variables.</p>
 <p>For mixed-variable problems, stick with <code class="docutils literal notranslate"><span class="pre">algorithm='GA'</span></code> (the default).</p>
 </section>
-<section id="customizing-operators">
-<h2>Customizing operators<a class="headerlink" href="#customizing-operators" title="Link to this heading">#</a></h2>
+<section id="customize-operators">
+<h2>Customize operators<a class="headerlink" href="#customize-operators" title="Link to this heading">#</a></h2>
 <p>The operators for integer and categorical variables can also be specified individually via <code class="docutils literal notranslate"><span class="pre">GA</span></code>’s keyword arguments.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GA</span><span class="p">,</span>
@@ -634,10 +662,10 @@
 <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">ga</span><span class="p">,</span> <span class="n">max_fe</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>See <a class="reference internal" href="../components/algorithm.html"><span class="std std-doc">Algorithm</span></a> for details on each operator.</p>
+<p>See <a class="reference internal" href="../concepts/search_algorithms/algorithm.html"><span class="std std-doc">Algorithm</span></a> for details on each operator.</p>
 </section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="related-concepts-and-reference">
+<h2>Related concepts and reference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Problem</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.ContinuousVariable.html#saealib.ContinuousVariable" title="saealib.ContinuousVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ContinuousVariable</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.IntegerVariable.html#saealib.IntegerVariable" title="saealib.IntegerVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.IntegerVariable</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.CategoricalVariable.html#saealib.CategoricalVariable" title="saealib.CategoricalVariable"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CategoricalVariable</span></code></a></p></li>
@@ -694,11 +722,11 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-setup">Problem setup</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#defining-variables">Defining variables</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#high-level-api-minimize">High-level API: minimize</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customizing-operators">Customizing operators</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-the-problem">Set up the problem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#define-variables">Define variables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#run-minimize">Run minimize</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customize-operators">Customize operators</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">Related concepts and reference</a></li>
 </ul>
   </nav></div>
 

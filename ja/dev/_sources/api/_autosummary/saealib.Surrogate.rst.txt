@@ -16,6 +16,7 @@
 
 
    ~Surrogate.__init__
+   ~Surrogate.contract
    ~Surrogate.fit
    ~Surrogate.post_fit
    ~Surrogate.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.Surrogate.__init__
+
+
+.. automethod:: saealib.Surrogate.contract
 
 
 .. automethod:: saealib.Surrogate.fit

@@ -16,6 +16,7 @@
 
 
    ~RatioEvaluation.__init__
+   ~RatioEvaluation.contract
    ~RatioEvaluation.plan
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.RatioEvaluation.__init__
+
+
+.. automethod:: saealib.RatioEvaluation.contract
 
 
 .. automethod:: saealib.RatioEvaluation.plan

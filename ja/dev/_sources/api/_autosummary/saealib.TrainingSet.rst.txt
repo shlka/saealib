@@ -17,6 +17,7 @@
 
    ~TrainingSet.__init__
    ~TrainingSet.build
+   ~TrainingSet.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.TrainingSet.build
+
+
+.. automethod:: saealib.TrainingSet.contract
 
 
 

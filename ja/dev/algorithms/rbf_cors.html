@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>CORS-RBF（Constrained Optimization using Response Surfaces） &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>CORS-RBF（Constrained Optimization using Response Surfaces） &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -610,8 +610,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -625,14 +632,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -785,8 +792,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -800,14 +814,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -909,12 +923,12 @@ window.runMermaid = runMermaid;</script>
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="ego.html">EGO（Efficient Global Optimization）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（Gaussian Process Upper Confidence Bound）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（ガウス過程上側信頼限界）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maxunc.html">MaxUnc（不確実性サンプリング）</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">CORS-RBF（Constrained Optimization using Response Surfaces）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nsga2.html">NSGA-II（Nondominated Sorting Genetic Algorithm II）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2（Strength Pareto Evolutionary Algorithm 2）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="nsga3.html">NSGA-III</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsga3.html">式: NSGA-III</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sms_emoa.html">SMS-EMOA（S metric selection EMOA）</a></li>
 </ul>
 </div>
@@ -978,18 +992,18 @@ window.runMermaid = runMermaid;</script>
                   
   <section class="tex2jax_ignore mathjax_ignore" id="cors-rbf-constrained-optimization-using-response-surfaces">
 <h1>CORS-RBF（Constrained Optimization using Response Surfaces）<a class="headerlink" href="#cors-rbf-constrained-optimization-using-response-surfaces" title="Link to this heading">#</a></h1>
-<p>CORS-RBFは、評価コストの高い目的関数を対象に、RBF(Radial Basis Function)補間によるサロゲートモデルを使って次の評価点を1点ずつ選ぶ逐次最適化の手法です。 Regis &amp; Shoemaker (2005)が提案した枠組みCORS(Constrained Optimization using Response Surfaces)を、RBFサロゲートモデルで具体化した実装がCORS-RBFです。</p>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>CORS-RBFは、評価コストの高い目的関数を対象に、RBF(Radial Basis Function)補間によるサロゲートモデルを使って次の評価点を1点ずつ選ぶ逐次最適化の手法です。 Regis &amp; Shoemaker (2005)が提案した枠組みCORS(Constrained Optimization using Response Surfaces)を、RBFサロゲートモデルで具体化した実装がCORS-RBFです。</p>
 <section id="overview">
 <h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>RBF補間は、学習点を通る滑らかな曲面を再構成するだけで、GP回帰のような予測分散を持ちません。 そのため、サロゲートモデルの予測値をそのまま最小化して次の評価点を選ぶ素朴な方法は、既に良い値が観測された点の周辺だけを繰り返し探索してしまい、真の関数の局所最小値ですらない点に収束しかねません。</p>
-<p>CORSはこの問題を、候補点選択そのものに<strong>距離制約</strong>を組み込むことで回避します。 各反復で解く補助問題は、サロゲートモデル <span class="math notranslate nohighlight">\(\hat f_i(x)\)</span> の最小化に加えて、次の候補点が既存の評価済み点すべてから距離 <span class="math notranslate nohighlight">\(\beta_i \Delta_i\)</span> 以上離れていることを要求する制約付き最適化になります（<span class="math notranslate nohighlight">\(\Delta_i\)</span>は既存点集合からの最大最小距離）。 <span class="math notranslate nohighlight">\(\beta_i\)</span>は反復ごとに、1に近い値（大域探索寄り）から0（局所探索寄り、つまりサロゲートモデルの単純な最小化）まで周期的に変化する数列(<strong>search pattern</strong>)として与えられ、GPの予測分散が担っていた探索(exploration)の役割をこの距離制約が肩代わりします。</p>
+<p>CORSは、候補点の選択そのものに<strong>距離制約</strong>を組み込むことでこの問題を回避します。各反復で解く補助問題は制約付き最適化であり、サロゲートモデル<span class="math notranslate nohighlight">\(\hat f_i(x)\)</span>を最小化するだけでなく、次の候補点が既存の評価済み点すべてから少なくとも<span class="math notranslate nohighlight">\(\beta_i \Delta_i\)</span>離れていることを要求します（<span class="math notranslate nohighlight">\(\Delta_i\)</span>は既存点集合からの最小距離の最大値です）。<span class="math notranslate nohighlight">\(\beta_i\)</span>は反復ごとに数列（<strong>探索パターン</strong>）として与えられ、1に近い値（大域探索寄り）から0（局所探索寄り、つまりサロゲートモデルの単純な最小化）まで循環します。この距離制約が、GPの予測分散が担うはずの探索の役割を引き受けます。</p>
 <p>この距離制約は副産物ではなく、CORSの核心です。 search patternに0でない値が1つでも含まれていれば、サロゲートモデルの種類や初期評価点の選び方によらず、任意の連続関数の大域最小値に収束することが証明されています。</p>
 <p>出典は<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id38" title="Rommel G. Regis and Christine A. Shoemaker. Constrained global optimization of expensive black box functions using radial basis functions. Journal of Global Optimization, 31(1):153–171, 2005. doi:10.1007/s10898-004-0570-0.">17</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
 </section>
 <section id="pseudocode">
 <h2>擬似コード<a class="headerlink" href="#pseudocode" title="Link to this heading">#</a></h2>
 <div class="proof algorithm admonition" id="alg-rbf-cors">
-<p class="admonition-title"><span class="caption-number">アルゴリズム 4 </span> (CORS-RBF)</p>
+<p class="admonition-title"><span class="caption-number">アルゴリズム 4 </span>式: (CORS-RBF)</p>
 <section class="algorithm-content" id="proof-content">
 <p><strong>Inputs</strong> 目的関数 <span class="math notranslate nohighlight">\(f\)</span>、探索領域 <span class="math notranslate nohighlight">\(\mathcal{D}\)</span>、初期評価点集合 <span class="math notranslate nohighlight">\(S_1 = \{x_1, \ldots, x_k\}\)</span>、距離パラメータの周期列(search pattern) <span class="math notranslate nohighlight">\(\langle \beta_1, \ldots, \beta_{N+1}=0 \rangle\)</span> <strong>Output</strong> 最良解 <span class="math notranslate nohighlight">\(x^*\)</span></p>
 <ol class="arabic simple">
@@ -1008,8 +1022,8 @@ window.runMermaid = runMermaid;</script>
     INIT[&quot;Initializer&lt;br/&gt;Sample initial population&lt;br/&gt;→ true evaluation&lt;br/&gt;(L1)&quot;] --&gt; ASK
     subgraph GEN[&quot;One generation (IndividualBasedStrategy.step)&quot;]
         direction TB
-        ASK[&quot;GA.ask()&lt;br/&gt;Generate candidate points&quot;] --&gt; SCORE[&quot;SurrogateManager&lt;br/&gt;Fit RBF (L2)&lt;br/&gt;→ Score with predictive mean&lt;br/&gt;(L3)&quot;]
-        SCORE --&gt; SORT[&quot;Select top&lt;br/&gt;evaluation_ratio fraction by predictive mean&quot;]
+        ASK[&quot;GA.ask()&lt;br/&gt;Generate candidate points&quot;] --&gt; SCORE[&quot;SurrogateManager&lt;br/&gt;Fit RBF (L2)&lt;br/&gt;→ Score with CORSDistance&lt;br/&gt;Apply βᵢΔᵢ distance constraint&lt;br/&gt;(L3)&quot;]
+        SCORE --&gt; SORT[&quot;Select the evaluation_ratio&lt;br/&gt;fraction by CORSDistance score&quot;]
         SORT --&gt; EVAL[&quot;True evaluation →&lt;br/&gt;add to archive&lt;br/&gt;(L4)&quot;]
         EVAL --&gt; TELL[&quot;GA.tell()&lt;br/&gt;Update population&quot;]
     end
@@ -1029,23 +1043,23 @@ window.runMermaid = runMermaid;</script>
 <tbody>
 <tr class="row-even"><td><p>探索アルゴリズム本体</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code>（交叉、突然変異、選択の組み合わせ自体はCORSの定義に含まれない）</p></td>
-<td><p>候補点の生成</p></td>
+<td><p>手順 L3</p></td>
 </tr>
 <tr class="row-odd"><td><p>サロゲートモデル</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>（RBF補間。既定は<code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code>だが、任意のカーネル関数を注入できる）</p></td>
-<td><p>L2</p></td>
+<td><p>手順 L2</p></td>
 </tr>
 <tr class="row-even"><td><p>獲得関数</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">MeanPrediction</span></code>（予測平均をそのままスコア化する）</p></td>
-<td><p>L3</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code>（予測平均に<span class="math notranslate nohighlight">\(\beta_i\Delta_i\)</span>の距離制約を適用）</p></td>
+<td><p>手順 L3</p></td>
 </tr>
 <tr class="row-odd"><td><p>サロゲート管理</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>（アーカイブ全体でRBFをフィットする）</p></td>
-<td><p>L2-3</p></td>
+<td><p>「L2-3」</p></td>
 </tr>
 <tr class="row-even"><td><p>評価戦略</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>（予測平均上位の個体だけを真に評価する）</p></td>
-<td><p>L3-4</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>（<code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code>スコア上位の個体だけを真に評価する）</p></td>
+<td><p>「L3-4」</p></td>
 </tr>
 </tbody>
 </table>
@@ -1058,8 +1072,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">IndividualBasedStrategy</span><span class="p">,</span>
     <span class="n">RBFSurrogate</span><span class="p">,</span>
     <span class="n">gaussian_kernel</span><span class="p">,</span>
-    <span class="n">MeanPrediction</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSDistance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverBLXAlpha</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationUniform</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">SequentialSelection</span><span class="p">,</span> <span class="n">TruncationSelection</span>
@@ -1071,7 +1085,9 @@ window.runMermaid = runMermaid;</script>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
 
 
-<span class="n">problem</span> <span class="o">=</span> <span class="n">Problem</span><span class="p">(</span><span class="n">sphere</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span> <span class="n">n_obj</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">lb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="o">-</span><span class="mf">5.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">ub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="mf">5.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">Problem</span><span class="p">(</span><span class="n">sphere</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">,</span> <span class="n">n_obj</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
 <span class="n">algorithm</span> <span class="o">=</span> <span class="n">GA</span><span class="p">(</span>
     <span class="n">CrossoverBLXAlpha</span><span class="p">(</span><span class="n">prob</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">),</span>
@@ -1079,36 +1095,40 @@ window.runMermaid = runMermaid;</script>
     <span class="n">SequentialSelection</span><span class="p">(),</span>
     <span class="n">TruncationSelection</span><span class="p">(),</span>
 <span class="p">)</span>
-<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span>
-    <span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span> <span class="n">MeanPrediction</span><span class="p">()</span>
-<span class="p">)</span>
+<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">delta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">))</span>
+<span class="n">acquisition</span> <span class="o">=</span> <span class="n">CORSDistance</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 
 <span class="n">opt</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span><span class="n">surrogate_manager</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_acquisition</span><span class="p">(</span><span class="n">acquisition</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">200</span><span class="p">)))</span>
 <span class="p">)</span>
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>交叉、突然変異、選択の具体的な演算子はCORS自体の定義に含まれないため、上記は一例であり任意の<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">SurvivorSelection</span></code>に差し替えられます。</p>
+</section>
+<section id="differences-from-the-source">
+<h2>原法との差分<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<p>CORSの原法は制約付き予測を最小化して候補点を逐次選びますが、saealibでは<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成した候補プールから<code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code>が最大の候補を選ぶことでこの最小化を近似します。<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code>により、選択した候補をまとめて真の評価に回すこともできます。例における交叉、突然変異、親選択、環境選択の組み合わせはsaealibの構成上の選択であり、CORSの定義の一部ではありません。論文の数値実験では、一次多項式項<span class="math notranslate nohighlight">\(p(x)\)</span>を持つ薄板スプラインカーネル（<span class="math notranslate nohighlight">\(\phi(r) = r^2 \log r\)</span>）を使います。saealibの<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>は多項式項を持たない純粋なRBF補間器で、学習データの平均を差し引いた残差を適合させます。そのため、カーネルだけを差し替えても論文の構成を完全には再現できません。</p>
 </section>
 <section id="parameters-and-variants">
 <h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong>kernel（RBFカーネルの選択）</strong>：<code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel=...)</span></code>で任意のカーネル関数を注入できます。 既定値は<code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code>ですが、文献の数値実験ではthin plate spline（<span class="math notranslate nohighlight">\(\phi(r) = r^2 \log r\)</span>）と1次多項式の付加項<span class="math notranslate nohighlight">\(p(x)\)</span>を組み合わせたモデルが使われています。 saealibの<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>は多項式項<span class="math notranslate nohighlight">\(p(x)\)</span>を持たない純粋なRBF補間（学習データの平均を差し引いた残差にフィットする）であるため、文献の設定を厳密に再現するにはカーネルの差し替えだけでは不十分です。</p>
-<p><strong>evaluation_ratio（逐次評価とバッチ評価の切り替え）</strong>：文献のCORSは、擬似コードのステップ3-4を1回のループにつき1点だけ実行する逐次アルゴリズムです。 saealibの<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>は、GAが生成した子個体群のうち予測平均上位<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>の割合をまとめて真評価するバッチ拡張になっています。 <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>を個体数の逆数程度まで小さくすれば、1点ずつの逐次評価に近づきます。</p>
+<p><strong>kernel（RBFカーネルの選択）</strong>：<code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel=...)</span></code>で任意のカーネル関数を注入できます。既定値は<code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code>です。</p>
+<p><strong>delta</strong>：<code class="docutils literal notranslate"><span class="pre">CORSDistance(delta=...)</span></code>には設計空間のbox boundsの対角長を渡します。この例では<span class="math notranslate nohighlight">\(\mathrm{norm}(ub-lb)\)</span>を使い、既評価点からの距離しきい値を<span class="math notranslate nohighlight">\(\beta_i\Delta_i\)</span>として適用します。</p>
 </section>
 <section id="related">
 <h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>：出典の完全な書誌情報</p></li>
-<li><p><a class="reference internal" href="../components/surrogate.html"><span class="std std-doc">Surrogate</span></a>：<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>/<code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code>を含むサロゲートモデル一覧</p></li>
-<li><p><a class="reference internal" href="../components/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>：<code class="docutils literal notranslate"><span class="pre">MeanPrediction</span></code>を含む獲得関数一覧</p></li>
-<li><p><a class="reference internal" href="../components/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>の詳しい使い方</p></li>
-<li><p><a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>：<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>の<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>を含む戦略一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>：<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>/<code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code>を含むサロゲートモデル一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>：CORSの距離制約付き<code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code>を含む獲得関数一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>の詳しい使い方</p></li>
+<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>の<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>を含む戦略の一覧</p></li>
 </ul>
 </section>
 </section>
@@ -1164,6 +1184,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">擬似コード</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">フローチャート</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">saealibでの構成</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">原法との差分</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">関連</a></li>
 </ul>

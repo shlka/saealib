@@ -16,6 +16,7 @@
 
 
    ~TopKEvaluation.__init__
+   ~TopKEvaluation.contract
    ~TopKEvaluation.plan
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.TopKEvaluation.__init__
+
+
+.. automethod:: saealib.TopKEvaluation.contract
 
 
 .. automethod:: saealib.TopKEvaluation.plan

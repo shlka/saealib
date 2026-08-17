@@ -1,0 +1,39 @@
+﻿saealib.core.contracts.ProposalBatch
+====================================
+
+.. currentmodule:: saealib.core.contracts
+
+.. autoclass:: ProposalBatch
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ProposalBatch.__init__
+   ~ProposalBatch.from_allocator
+   ~ProposalBatch.take
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.contracts.ProposalBatch.__init__
+
+
+.. automethod:: saealib.core.contracts.ProposalBatch.from_allocator
+
+
+.. automethod:: saealib.core.contracts.ProposalBatch.take
+
+
+

@@ -16,6 +16,7 @@
 
 
    ~SurvivorSelection.__init__
+   ~SurvivorSelection.contract
    ~SurvivorSelection.select
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.SurvivorSelection.__init__
+
+
+.. automethod:: saealib.SurvivorSelection.contract
 
 
 .. automethod:: saealib.SurvivorSelection.select

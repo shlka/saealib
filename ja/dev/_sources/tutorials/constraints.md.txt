@@ -1,10 +1,26 @@
+---
+primary_layer: layer1
+related_layers: [layer2, layer3]
+page_type: tutorial
+---
+
 # Constrained Optimization
 
 Solve a problem with constraints on the design variables using `saealib`.
 
-Switching algorithms, surrogates, and the evaluation strategy works the same as in "Switching components" in [Single-Objective Optimization](single_objective.md).
+With `minimize()`, you can pass a string or instance for the algorithm, surrogate, and evaluation strategy.
+The examples on this page add only problem-specific settings and use defaults for everything else.
 
-## Problem setup
+:::{admonition} What you'll be able to do
+:class: tip
+
+By the end of this page, you'll be able to define constraints on a `Problem`, check feasibility, and choose a `ConstraintHandler`.
+:::
+
+For a simple objective-function optimization, use [Single-objective optimization](single_objective.md). To implement custom constraint handling, see [Custom components](custom_components.md).
+This page covers defining constraints on a `Problem`, checking feasibility, and choosing a `ConstraintHandler`.
+
+## Set up the problem
 
 Assume a problem that, in addition to the objective function, has an inequality constraint `g(x) <= 0` that the solution must satisfy.
 
@@ -28,7 +44,7 @@ UB = [5.0] * DIM
 
 Only solutions satisfying `g1(x) <= 0` are feasible.
 
-## Defining constraints
+## Define constraints
 
 A constraint is defined with `InequalityConstraint(func, threshold=0.0)` and passed to `Problem`'s `constraints` argument.
 
@@ -70,7 +86,7 @@ equality = EqualityConstraint(h1, tolerance=1e-6)
 
 `EqualityConstraint` treats solutions satisfying `|h(x)| <= tolerance` as feasible.
 
-## Checking feasibility
+## Check feasibility
 
 A solution is feasible if its constraint violation `cv` is at most `Problem`'s `eps_cv` (default `1e-6`).
 
@@ -80,7 +96,7 @@ feasible = archive_cv <= problem.eps_cv
 print(f"feasible: {feasible.sum()} / {len(archive_cv)}")
 ```
 
-## Customizing with ConstraintHandler
+## Customize constraint handling with ConstraintHandler
 
 How `cv` is aggregated from multiple constraints, and how feasibility is judged from that value, is decided by `ConstraintHandler`.
 
@@ -115,7 +131,7 @@ problem = Problem(
 result = minimize(problem, max_fe=1000, seed=0)
 ```
 
-## References
+## Related concepts and reference
 
 - {py:class}`saealib.InequalityConstraint` / {py:class}`saealib.EqualityConstraint`
 - {py:class}`saealib.Problem`

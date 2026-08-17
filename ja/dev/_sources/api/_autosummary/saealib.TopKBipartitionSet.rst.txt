@@ -17,6 +17,7 @@
 
    ~TopKBipartitionSet.__init__
    ~TopKBipartitionSet.build
+   ~TopKBipartitionSet.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.TopKBipartitionSet.build
+
+
+.. automethod:: saealib.TopKBipartitionSet.contract
 
 
 

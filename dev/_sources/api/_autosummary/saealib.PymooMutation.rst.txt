@@ -16,6 +16,7 @@
 
 
    ~PymooMutation.__init__
+   ~PymooMutation.contract
    ~PymooMutation.mutate
    ~PymooMutation.mutate_batch
    ~PymooMutation.post_mutation
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.PymooMutation.__init__
+
+
+.. automethod:: saealib.PymooMutation.contract
 
 
 .. automethod:: saealib.PymooMutation.mutate

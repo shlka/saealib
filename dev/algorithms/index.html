@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Algorithms &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>Algorithms &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="EGO (Efficient Global Optimization)" href="ego.html" />
-    <link rel="prev" title="Population" href="../components/population.html" />
+    <link rel="prev" title="Extend the framework" href="../framework/extensions.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -158,7 +158,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -171,8 +171,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -193,7 +200,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -333,7 +340,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -346,8 +353,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -368,7 +382,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -536,10 +550,10 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="algorithms">
 <h1>Algorithms<a class="headerlink" href="#algorithms" title="Link to this heading">#</a></h1>
-<p>Pages summarizing how named algorithms from the literature are reproduced as combinations of saealib components.
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>Pages summarizing how named algorithms from the literature are reproduced as combinations of saealib components.
 Each page has two parts: a theoretical overview of the algorithm (a general explanation independent of saealib), and how to configure it in saealib (the component combination and Python code).
 Full bibliographic details for the sources are collected in <a class="reference internal" href="../references.html"><span class="std std-doc">References</span></a>, and each page in this section links there.</p>
-<p>Where a configuration does not exactly match the theoretical definition (an approximation), this is noted explicitly on the page.</p>
+<p>When a configuration does not exactly match the theoretical definition, each page states the implementation differences, such as acquisition-function constraints, selection or archive handling, and evaluation order.</p>
 <div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
 <div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-3 sd-g-3 sd-g-xs-3 sd-g-sm-3 sd-g-md-3 sd-g-lg-3 docutils">
 <div class="sd-col sd-d-flex-row docutils">
@@ -601,7 +615,8 @@ SPEA2</div>
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
 NSGA-III</div>
-<p class="sd-card-text">Multi-objective genetic algorithm with reference-point-based niche preservation. Suited to many-objective optimization with four or more objectives.</p>
+<p class="sd-card-text">Multi-objective genetic algorithm that uses reference-direction niche preservation.
+Primarily targets many-objective optimization, while exposing reference-direction behavior with three objectives.</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="nsga3.html"><span class="doc">NSGA-III</span></a></div>
 </div>
@@ -631,12 +646,12 @@ SMS-EMOA</div>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../components/population.html"
+       href="../framework/extensions.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Population</p>
+        <p class="prev-next-title">Extend the framework</p>
       </div>
     </a>
     <a class="right-next"

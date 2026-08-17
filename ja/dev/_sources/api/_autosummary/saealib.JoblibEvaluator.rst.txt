@@ -20,6 +20,7 @@
    ~JoblibEvaluator.can_reattach
    ~JoblibEvaluator.cancel
    ~JoblibEvaluator.collect
+   ~JoblibEvaluator.contract
    ~JoblibEvaluator.detach
    ~JoblibEvaluator.evaluate_batch
    ~JoblibEvaluator.evaluate_request
@@ -49,6 +50,9 @@
 
 
 .. automethod:: saealib.JoblibEvaluator.collect
+
+
+.. automethod:: saealib.JoblibEvaluator.contract
 
 
 .. automethod:: saealib.JoblibEvaluator.detach

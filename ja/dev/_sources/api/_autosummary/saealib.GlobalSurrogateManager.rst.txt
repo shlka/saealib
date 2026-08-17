@@ -16,6 +16,7 @@
 
 
    ~GlobalSurrogateManager.__init__
+   ~GlobalSurrogateManager.contract
    ~GlobalSurrogateManager.fit
    ~GlobalSurrogateManager.on_generation_end
    ~GlobalSurrogateManager.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.GlobalSurrogateManager.__init__
+
+
+.. automethod:: saealib.GlobalSurrogateManager.contract
 
 
 .. automethod:: saealib.GlobalSurrogateManager.fit

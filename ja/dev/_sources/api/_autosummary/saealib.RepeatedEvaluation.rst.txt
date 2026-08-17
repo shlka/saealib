@@ -16,6 +16,7 @@
 
 
    ~RepeatedEvaluation.__init__
+   ~RepeatedEvaluation.contract
    ~RepeatedEvaluation.plan
    ~RepeatedEvaluation.plan_replicates
 
@@ -28,6 +29,9 @@
 
 
 .. automethod:: saealib.RepeatedEvaluation.__init__
+
+
+.. automethod:: saealib.RepeatedEvaluation.contract
 
 
 .. automethod:: saealib.RepeatedEvaluation.plan

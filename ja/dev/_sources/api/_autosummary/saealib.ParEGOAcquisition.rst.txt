@@ -17,6 +17,7 @@
 
    ~ParEGOAcquisition.__init__
    ~ParEGOAcquisition.compute_reference
+   ~ParEGOAcquisition.contract
    ~ParEGOAcquisition.evaluate
    ~ParEGOAcquisition.prepare
    ~ParEGOAcquisition.score
@@ -33,6 +34,9 @@
 
 
 .. automethod:: saealib.ParEGOAcquisition.compute_reference
+
+
+.. automethod:: saealib.ParEGOAcquisition.contract
 
 
 .. automethod:: saealib.ParEGOAcquisition.evaluate

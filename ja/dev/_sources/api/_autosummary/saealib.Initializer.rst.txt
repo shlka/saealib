@@ -16,6 +16,7 @@
 
 
    ~Initializer.__init__
+   ~Initializer.contract
    ~Initializer.initialize
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.Initializer.__init__
+
+
+.. automethod:: saealib.Initializer.contract
 
 
 .. automethod:: saealib.Initializer.initialize

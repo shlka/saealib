@@ -16,8 +16,10 @@
 
 
    ~SurrogateOnlyLoopStage.__init__
+   ~SurrogateOnlyLoopStage.contract
    ~SurrogateOnlyLoopStage.execute
    ~SurrogateOnlyLoopStage.to_pseudocode
+   ~SurrogateOnlyLoopStage.to_text
 
 
 
@@ -30,10 +32,16 @@
 .. automethod:: saealib.SurrogateOnlyLoopStage.__init__
 
 
+.. automethod:: saealib.SurrogateOnlyLoopStage.contract
+
+
 .. automethod:: saealib.SurrogateOnlyLoopStage.execute
 
 
 .. automethod:: saealib.SurrogateOnlyLoopStage.to_pseudocode
+
+
+.. automethod:: saealib.SurrogateOnlyLoopStage.to_text
 
 
 

@@ -1,0 +1,39 @@
+﻿saealib.core.contracts.FeedbackContract
+=======================================
+
+.. currentmodule:: saealib.core.contracts
+
+.. autoclass:: FeedbackContract
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~FeedbackContract.__init__
+   ~FeedbackContract.contains
+   ~FeedbackContract.contains_requirement
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.contracts.FeedbackContract.__init__
+
+
+.. automethod:: saealib.core.contracts.FeedbackContract.contains
+
+
+.. automethod:: saealib.core.contracts.FeedbackContract.contains_requirement
+
+
+

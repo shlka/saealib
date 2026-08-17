@@ -16,6 +16,7 @@
 
 
    ~PymooCrossover.__init__
+   ~PymooCrossover.contract
    ~PymooCrossover.crossover
    ~PymooCrossover.crossover_batch
    ~PymooCrossover.post_crossover
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.PymooCrossover.__init__
+
+
+.. automethod:: saealib.PymooCrossover.contract
 
 
 .. automethod:: saealib.PymooCrossover.crossover

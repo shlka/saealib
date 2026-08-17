@@ -27,7 +27,6 @@
    ~ParetoArchive.get
    ~ParetoArchive.get_array
    ~ParetoArchive.get_cache
-   ~ParetoArchive.get_readonly_array
    ~ParetoArchive.mod_structure
    ~ParetoArchive.mod_value
    ~ParetoArchive.reorder
@@ -78,9 +77,6 @@
 
 
 .. automethod:: saealib.ParetoArchive.get_cache
-
-
-.. automethod:: saealib.ParetoArchive.get_readonly_array
 
 
 .. automethod:: saealib.ParetoArchive.mod_structure

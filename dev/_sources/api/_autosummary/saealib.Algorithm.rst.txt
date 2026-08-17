@@ -17,6 +17,7 @@
 
    ~Algorithm.__init__
    ~Algorithm.ask
+   ~Algorithm.contract
    ~Algorithm.create_pareto_archive
    ~Algorithm.get_required_attrs
    ~Algorithm.tell
@@ -33,6 +34,9 @@
 
 
 .. automethod:: saealib.Algorithm.ask
+
+
+.. automethod:: saealib.Algorithm.contract
 
 
 .. automethod:: saealib.Algorithm.create_pareto_archive

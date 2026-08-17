@@ -16,6 +16,7 @@
 
 
    ~PairwiseSurrogateManager.__init__
+   ~PairwiseSurrogateManager.contract
    ~PairwiseSurrogateManager.fit
    ~PairwiseSurrogateManager.on_generation_end
    ~PairwiseSurrogateManager.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.PairwiseSurrogateManager.__init__
+
+
+.. automethod:: saealib.PairwiseSurrogateManager.contract
 
 
 .. automethod:: saealib.PairwiseSurrogateManager.fit

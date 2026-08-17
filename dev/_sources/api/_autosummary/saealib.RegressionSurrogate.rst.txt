@@ -16,6 +16,7 @@
 
 
    ~RegressionSurrogate.__init__
+   ~RegressionSurrogate.contract
    ~RegressionSurrogate.fit
    ~RegressionSurrogate.post_fit
    ~RegressionSurrogate.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.RegressionSurrogate.__init__
+
+
+.. automethod:: saealib.RegressionSurrogate.contract
 
 
 .. automethod:: saealib.RegressionSurrogate.fit

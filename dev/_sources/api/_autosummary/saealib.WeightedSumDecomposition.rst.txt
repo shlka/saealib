@@ -17,6 +17,7 @@
 
    ~WeightedSumDecomposition.__init__
    ~WeightedSumDecomposition.aggregate
+   ~WeightedSumDecomposition.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.WeightedSumDecomposition.aggregate
+
+
+.. automethod:: saealib.WeightedSumDecomposition.contract
 
 
 

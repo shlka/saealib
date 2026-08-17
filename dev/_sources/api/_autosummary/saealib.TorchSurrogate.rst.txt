@@ -16,6 +16,7 @@
 
 
    ~TorchSurrogate.__init__
+   ~TorchSurrogate.contract
    ~TorchSurrogate.fit
    ~TorchSurrogate.post_fit
    ~TorchSurrogate.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.TorchSurrogate.__init__
+
+
+.. automethod:: saealib.TorchSurrogate.contract
 
 
 .. automethod:: saealib.TorchSurrogate.fit

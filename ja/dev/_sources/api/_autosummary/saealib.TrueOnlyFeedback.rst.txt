@@ -1,0 +1,39 @@
+﻿saealib.TrueOnlyFeedback
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: TrueOnlyFeedback
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~TrueOnlyFeedback.__init__
+   ~TrueOnlyFeedback.build
+   ~TrueOnlyFeedback.contract
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.TrueOnlyFeedback.__init__
+
+
+.. automethod:: saealib.TrueOnlyFeedback.build
+
+
+.. automethod:: saealib.TrueOnlyFeedback.contract
+
+
+

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.Archive &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>saealib.Archive &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../../_static/documentation_options.js?v=c8372973"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -172,8 +172,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -187,14 +194,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="../index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -347,8 +354,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -362,14 +376,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="../index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -470,21 +484,89 @@
      aria-label="セクションナビゲーション">
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="../highlevel.html">High-Level API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1"><a class="reference internal" href="../imports.html">標準インポート</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../core.html">コアAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.Component.html">saealib.core.Component</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ComponentContract.html">saealib.core.ComponentContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.PartSpec.html">saealib.core.PartSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.AssumptionSet.html">saealib.core.AssumptionSet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.DataSpec.html">saealib.core.DataSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.PortContract.html">saealib.core.PortContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.PortSpec.html">saealib.core.PortSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StateContract.html">saealib.core.StateContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.LifecycleContract.html">saealib.core.LifecycleContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ExecutionContract.html">saealib.core.ExecutionContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ComponentGraph.html">saealib.core.ComponentGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StructuredGraph.html">saealib.core.StructuredGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StructuredRegion.html">saealib.core.StructuredRegion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.CompilationRule.html">saealib.core.CompilationRule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StateStore.html">saealib.core.StateStore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StateView.html">saealib.core.StateView</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.StatePatch.html">saealib.core.StatePatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ExecutablePlan.html">saealib.core.ExecutablePlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.ExecutionRuntime.html">saealib.core.ExecutionRuntime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.ComponentNode.html">saealib.core.compiler.ComponentNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.NodeRef.html">saealib.core.compiler.NodeRef</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.DataEdge.html">saealib.core.compiler.DataEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.ControlEdge.html">saealib.core.compiler.ControlEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.StateBinding.html">saealib.core.compiler.StateBinding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.Diagnostic.html">saealib.core.compiler.Diagnostic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.compiler.ContractPath.html">saealib.core.compiler.ContractPath</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../execution.html">実行API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.AsyncEvaluationScheduler.html">saealib.execution.AsyncEvaluationScheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.PollResult.html">saealib.execution.PollResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.RuntimeFactory.html">saealib.execution.RuntimeFactory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.RuntimeRegistration.html">saealib.execution.RuntimeRegistration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.RuntimeRegistry.html">saealib.execution.RuntimeRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.create_runtime.html">saealib.execution.create_runtime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.execution.default_runtime_registry.html">saealib.execution.default_runtime_registry</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../space.html">探索空間API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.SearchSpace.html">saealib.space.SearchSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ServiceRegistry.html">saealib.space.ServiceRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ValidationResult.html">saealib.space.ValidationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.RepresentationSpec.html">saealib.core.contracts.RepresentationSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.VectorSpace.html">saealib.space.VectorSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ObjectSpace.html">saealib.space.ObjectSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.SequenceSpace.html">saealib.space.SequenceSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.PermutationSpace.html">saealib.space.PermutationSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.GenomeCodec.html">saealib.space.GenomeCodec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.SamplingService.html">saealib.space.SamplingService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.ValidationService.html">saealib.space.ValidationService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.space.FeatureEncoder.html">saealib.space.FeatureEncoder</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../feedback.html">フィードバックAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.ProposalBatch.html">saealib.core.contracts.ProposalBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.ObservationBatch.html">saealib.core.contracts.ObservationBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.FeedbackBatch.html">saealib.core.contracts.FeedbackBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.core.contracts.FeedbackContract.html">saealib.core.contracts.FeedbackContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FeedbackBuilder.html">saealib.FeedbackBuilder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.TrueOnlyFeedback.html">saealib.TrueOnlyFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.PredictedFeedback.html">saealib.PredictedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.MixedFeedback.html">saealib.MixedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.NoFeedback.html">saealib.NoFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FeedbackResult.html">saealib.FeedbackResult</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../highlevel.html">高レベルAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Result.html">saealib.Result</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../optimizer.html">Optimizer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../optimizer.html">オプティマイザー</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Optimizer.html">saealib.Optimizer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../exceptions.html">Exceptions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../exceptions.html">例外</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SaealibError.html">saealib.SaealibError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ValidationError.html">saealib.ValidationError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ConfigurationError.html">saealib.ConfigurationError</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../registry.html">Registry</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../registry.html">レジストリ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.register.html">saealib.register</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.registry.build.html">saealib.registry.build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.registry.get.html">saealib.registry.get</a></li>
@@ -502,14 +584,14 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.GradientRepairHandler.html">saealib.GradientRepairHandler</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../variables.html">Variables</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../variables.html">変数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Variable.html">saealib.Variable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ContinuousVariable.html">saealib.ContinuousVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.IntegerVariable.html">saealib.IntegerVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CategoricalVariable.html">saealib.CategoricalVariable</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../comparators.html">Comparators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../comparators.html">比較器</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Comparator.html">saealib.Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SingleObjectiveComparator.html">saealib.SingleObjectiveComparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.WeightedSumComparator.html">saealib.WeightedSumComparator</a></li>
@@ -544,14 +626,15 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PopulationAttribute.html">saealib.PopulationAttribute</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../algorithms.html">Algorithms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../algorithms.html">アルゴリズム</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Algorithm.html">saealib.Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GA.html">saealib.GA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.GenomeGA.html">saealib.GenomeGA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PSO.html">saealib.PSO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PymooAlgorithm.html">saealib.PymooAlgorithm</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../operators.html">Operators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../operators.html">演算子</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Crossover.html">saealib.Crossover</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CrossoverBLXAlpha.html">saealib.CrossoverBLXAlpha</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CrossoverSBX.html">saealib.CrossoverSBX</a></li>
@@ -577,7 +660,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.PymooMutation.html">saealib.PymooMutation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../surrogate.html">Surrogate Models</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../surrogate.html">サロゲートモデル</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Surrogate.html">saealib.Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RegressionSurrogate.html">saealib.RegressionSurrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ComparisonSurrogate.html">saealib.ComparisonSurrogate</a></li>
@@ -628,7 +711,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SpearmanCorrelation.html">saealib.SpearmanCorrelation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../acquisition.html">獲得関数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
@@ -642,7 +725,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.SMSEGOAcquisition.html">saealib.SMSEGOAcquisition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../strategies.html">Optimization Strategies</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../strategies.html">最適化戦略</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.OptimizationStrategy.html">saealib.OptimizationStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenerationBasedStrategy.html">saealib.GenerationBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
@@ -652,18 +735,26 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../initialization.html">初期化</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Initializer.html">saealib.Initializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.GenomeInitializer.html">saealib.GenomeInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.LHSInitializer.html">saealib.LHSInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RandomInitializer.html">saealib.RandomInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SobolInitializer.html">saealib.SobolInitializer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../evaluation.html">Evaluation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../evaluation.html">評価</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Evaluator.html">saealib.Evaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
-<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ThreadPoolEvaluator.html">saealib.ThreadPoolEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AsyncEvaluator.html">saealib.AsyncEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationAdapter.html">saealib.EvaluationAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationRequest.html">saealib.EvaluationRequest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationHandle.html">saealib.EvaluationHandle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationQuery.html">saealib.EvaluationQuery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationUpdate.html">saealib.EvaluationUpdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.PendingEvaluation.html">saealib.PendingEvaluation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
@@ -674,6 +765,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -681,7 +773,7 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.TerminationCondition.html">saealib.TerminationCondition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../callbacks.html">Callbacks</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../callbacks.html">コールバック</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Event.html">saealib.Event</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RunStartEvent.html">saealib.RunStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RunEndEvent.html">saealib.RunEndEvent</a></li>
@@ -691,6 +783,8 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.GenerationEndEvent.html">saealib.GenerationEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateStartEvent.html">saealib.SurrogateStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateEndEvent.html">saealib.SurrogateEndEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStartEvent.html">saealib.AcquisitionStartEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionEndEvent.html">saealib.AcquisitionEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PostCrossoverEvent.html">saealib.PostCrossoverEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PostMutationEvent.html">saealib.PostMutationEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.PostAskEvent.html">saealib.PostAskEvent</a></li>
@@ -700,25 +794,35 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.CheckpointCallback.html">saealib.CheckpointCallback</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../pipeline.html">Pipeline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../pipeline.html">パイプライン</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Stage.html">saealib.Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.Pipeline.html">saealib.Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.Repeat.html">saealib.Repeat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.Loop.html">saealib.Loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.Branch.html">saealib.Branch</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../stages.html">ステージ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AskStage.html">saealib.AskStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.AsyncEvaluationSubmitStage.html">saealib.AsyncEvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationSubmitStage.html">saealib.EvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationCollectStage.html">saealib.EvaluationCollectStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationApplyStage.html">saealib.EvaluationApplyStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.EvaluationAcknowledgeStage.html">saealib.EvaluationAcknowledgeStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.FeedbackStage.html">saealib.FeedbackStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.InitializationStage.html">saealib.InitializationStage</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="../utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">ユーティリティ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">参照</a></li>
 </ul>
 </div>
 </nav></div>
@@ -760,7 +864,7 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">API Reference</a></li>
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">APIリファレンス</a></li>
     
     
     <li class="breadcrumb-item"><a href="../population.html" class="nav-link">Population</a></li>
@@ -786,18 +890,27 @@
 <h1>saealib.Archive<a class="headerlink" href="#saealib-archive" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.Archive">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">Archive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_policy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'keep_first'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#Archive"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.Archive" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">Archive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_attr='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol=&lt;object</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol=&lt;object</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_policy='keep_first'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genomes=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dense_numeric_view=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dense_view=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">services=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">space=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fingerprint_service=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equivalence_service=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_service=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/population/archive.html#Archive"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.Archive" title="Link to this definition">#</a></dt>
 <dd><p>ベースクラス: <a class="reference internal" href="saealib.ArchiveMixin.html#saealib.ArchiveMixin" title="saealib.population.archive.ArchiveMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">ArchiveMixin</span></code></a>, <a class="reference internal" href="saealib.Population.html#saealib.Population" title="saealib.population.population.Population"><code class="xref py py-class docutils literal notranslate"><span class="pre">Population</span></code></a></p>
-<p>Concrete archive: <code class="docutils literal notranslate"><span class="pre">ArchiveMixin</span></code> mixed into <code class="docutils literal notranslate"><span class="pre">Population</span></code>.</p>
+<p>Concrete archive combining <code class="docutils literal notranslate"><span class="pre">ArchiveMixin</span></code> with <code class="docutils literal notranslate"><span class="pre">Population</span></code>.</p>
+<p>Its constructor is inherited from <code class="docutils literal notranslate"><span class="pre">ArchiveMixin</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>attrs</strong> (<em>list</em><em>[</em><a class="reference internal" href="saealib.PopulationAttribute.html#saealib.PopulationAttribute" title="saealib.PopulationAttribute"><em>PopulationAttribute</em></a><em>]</em>)</p></li>
 <li><p><strong>init_capacity</strong> (<em>int</em>)</p></li>
 <li><p><strong>key_attr</strong> (<em>str</em>)</p></li>
-<li><p><strong>atol</strong> (<em>float</em>)</p></li>
-<li><p><strong>rtol</strong> (<em>float</em>)</p></li>
+<li><p><strong>atol</strong> (<em>float</em><em> | </em><em>object</em>)</p></li>
+<li><p><strong>rtol</strong> (<em>float</em><em> | </em><em>object</em>)</p></li>
 <li><p><strong>duplicate_policy</strong> (<em>str</em>)</p></li>
+<li><p><strong>genomes</strong> (<em>GenomeBatch</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dense_numeric_view</strong> (<em>DenseNumericView</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dense_view</strong> (<em>DenseNumericView</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>services</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>space</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>fingerprint_service</strong> (<em>FingerprintService</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>equivalence_service</strong> (<em>EquivalenceService</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>distance_service</strong> (<em>DistanceService</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -807,66 +920,63 @@
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.__init__" title="saealib.Archive.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a></p></td>
-<td><p>Initialize a Population.</p></td>
+<td><p>Initialize archive storage and duplicate-resolution services.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.add" title="saealib.Archive.add"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add</span></code></a></p></td>
-<td><p>Add a new solution to the archive.</p></td>
+<td><p>Add a solution according to the configured duplicate policy.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.append" title="saealib.Archive.append"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append</span></code></a></p></td>
-<td><p>Append a new individual to the population.</p></td>
+<td><p>Append one candidate.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.argsort" title="saealib.Archive.argsort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">argsort</span></code></a></p></td>
-<td><p>Get the indices that would sort the population by a specific attribute.</p></td>
+<td><p>Return row indices that order a named column.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.clear" title="saealib.Archive.clear"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear</span></code></a></p></td>
-<td><p>Clear the population.</p></td>
+<td><p>Clear rows and invalidate identity/neighbor caches.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.delete" title="saealib.Archive.delete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code></a></p></td>
-<td><p>Delete element(s) and invalidate the kNN cache.</p></td>
+<td><p>Delete candidates selected by <code class="docutils literal notranslate"><span class="pre">index</span></code> in place.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.empty_like" title="saealib.Archive.empty_like"><code class="xref py py-obj docutils literal notranslate"><span class="pre">empty_like</span></code></a></p></td>
-<td><p>Create an empty Population with the same schema.</p></td>
+<td><p>Create an empty archive while retaining resolved identity services.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.extend" title="saealib.Archive.extend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extend</span></code></a></p></td>
-<td><p>Extend this population with another population.</p></td>
+<td><p>Extend the archive with another candidate collection.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.extract" title="saealib.Archive.extract"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract</span></code></a></p></td>
-<td><p>Extract individuals with indices, and return new Population.</p></td>
+<td><p>Return a new population containing rows selected by <code class="docutils literal notranslate"><span class="pre">indices</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.get" title="saealib.Archive.get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code></a></p></td>
 <td><p>Get the array of a specific attribute.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.get_array" title="saealib.Archive.get_array"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_array</span></code></a></p></td>
-<td><p>Get the array of a specific attribute.</p></td>
+<td><p>Return a read-only view of the active rows in a named column.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.get_cache" title="saealib.Archive.get_cache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cache</span></code></a></p></td>
-<td><p>Get a cached value.</p></td>
+<td><p>Return a cached value without changing population state.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.get_knn" title="saealib.Archive.get_knn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_knn</span></code></a></p></td>
 <td><p>Get k-nearest neighbors of the given solution from the archive.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.get_readonly_array" title="saealib.Archive.get_readonly_array"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_readonly_array</span></code></a></p></td>
-<td><p>Return a read only view of the specified key.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.mod_structure" title="saealib.Archive.mod_structure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mod_structure</span></code></a></p></td>
+<td><p>Mark population structure as changed and invalidate cached results.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.mod_structure" title="saealib.Archive.mod_structure"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mod_structure</span></code></a></p></td>
-<td><p>Public method to call when the structure changes.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.mod_value" title="saealib.Archive.mod_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mod_value</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.mod_value" title="saealib.Archive.mod_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mod_value</span></code></a></p></td>
 <td><p>Invalidate the kNN cache on every value-only mutation, too.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.reorder" title="saealib.Archive.reorder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorder</span></code></a></p></td>
-<td><p>Reorder individuals in the population.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.reorder" title="saealib.Archive.reorder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorder</span></code></a></p></td>
+<td><p>Reorder rows according to a complete row permutation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.set_cache" title="saealib.Archive.set_cache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_cache</span></code></a></p></td>
-<td><p>Set a cache value.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.set_cache" title="saealib.Archive.set_cache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_cache</span></code></a></p></td>
+<td><p>Store a value in the population cache without changing its version.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.truncate" title="saealib.Archive.truncate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">truncate</span></code></a></p></td>
-<td><p>Cut the population to a new size.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.truncate" title="saealib.Archive.truncate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">truncate</span></code></a></p></td>
+<td><p>Keep the first <code class="docutils literal notranslate"><span class="pre">new_size</span></code> rows in place.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.update_array" title="saealib.Archive.update_array"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_array</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.update_array" title="saealib.Archive.update_array"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_array</span></code></a></p></td>
 <td><p>Update array in place and bump the value version.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.Archive.update_rows" title="saealib.Archive.update_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_rows</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.Archive.update_rows" title="saealib.Archive.update_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_rows</span></code></a></p></td>
 <td><p>Atomically update multiple columns for the given rows.</p></td>
 </tr>
 </tbody>
@@ -875,18 +985,52 @@
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.__init__">
-<span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_attr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_policy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'keep_first'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.__init__" title="Link to this definition">#</a></dt>
-<dd><p>Initialize a Population.</p>
+<span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_capacity=100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_attr='x'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol=&lt;object</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol=&lt;object</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_policy='keep_first'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genomes=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dense_numeric_view=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dense_view=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">services=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">space=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fingerprint_service=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equivalence_service=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance_service=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.__init__" title="Link to this definition">#</a></dt>
+<dd><p>Initialize archive storage and duplicate-resolution services.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>attrs</strong> (<em>List</em><em>[</em><a class="reference internal" href="saealib.PopulationAttribute.html#saealib.PopulationAttribute" title="saealib.PopulationAttribute"><em>PopulationAttribute</em></a><em>]</em>) -- List of population attributes.
-Each attribute defines a column in the population.</p></li>
-<li><p><strong>init_capacity</strong> (<em>int</em><em>, </em><em>optional</em>) -- Initial capacity of the population, by default 100.</p></li>
-<li><p><strong>key_attr</strong> (<em>str</em>)</p></li>
-<li><p><strong>atol</strong> (<em>float</em>)</p></li>
-<li><p><strong>rtol</strong> (<em>float</em>)</p></li>
-<li><p><strong>duplicate_policy</strong> (<em>str</em>)</p></li>
+<li><p><strong>attrs</strong> (<em>list</em><em> of </em><a class="reference internal" href="saealib.PopulationAttribute.html#saealib.PopulationAttribute" title="saealib.PopulationAttribute"><em>PopulationAttribute</em></a>) -- Column definitions for archive rows. With
+<code class="docutils literal notranslate"><span class="pre">duplicate_policy=&quot;append&quot;</span></code>, the schema must contain scalar
+<code class="docutils literal notranslate"><span class="pre">int64</span></code> columns named <code class="docutils literal notranslate"><span class="pre">id</span></code> and <code class="docutils literal notranslate"><span class="pre">request_id</span></code>.</p></li>
+<li><p><strong>init_capacity</strong> (<em>int</em><em>, </em><em>optional</em>) -- Initial row-storage capacity passed to <code class="docutils literal notranslate"><span class="pre">Population</span></code>.</p></li>
+<li><p><strong>key_attr</strong> (<em>str</em><em>, </em><em>optional</em>) -- Schema column used by compatibility duplicate detection. In a
+service-backed archive, <code class="docutils literal notranslate"><span class="pre">&quot;x&quot;</span></code> may also provide the dense genome
+used to resolve an incoming candidate.</p></li>
+<li><p><strong>atol</strong> (<em>float</em><em>, </em><em>optional</em>) -- Explicit absolute-tolerance override. When omitted, the archive
+uses the equivalence service's tolerance when applicable, or zero
+for exact matching.</p></li>
+<li><p><strong>rtol</strong> (<em>float</em><em>, </em><em>optional</em>) -- Explicit relative-tolerance override, with the same resolution
+rules as <code class="docutils literal notranslate"><span class="pre">atol</span></code>.</p></li>
+<li><p><strong>duplicate_policy</strong> (<em>{&quot;keep_first&quot;</em><em>, </em><em>&quot;replace&quot;</em><em>, </em><em>&quot;append&quot;}</em><em>, </em><em>optional</em>) -- Action for a duplicate candidate. <code class="docutils literal notranslate"><span class="pre">&quot;keep_first&quot;</span></code> leaves the
+existing row unchanged, <code class="docutils literal notranslate"><span class="pre">&quot;replace&quot;</span></code> updates the existing row,
+and <code class="docutils literal notranslate"><span class="pre">&quot;append&quot;</span></code> retains every observation while requiring the
+observation schema described for <code class="docutils literal notranslate"><span class="pre">attrs</span></code>.</p></li>
+<li><p><strong>genomes</strong> (<em>GenomeBatch</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Initial opaque genome batch passed to <code class="docutils literal notranslate"><span class="pre">Population</span></code>.</p></li>
+<li><p><strong>dense_numeric_view</strong> (<em>DenseNumericView</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Service used when archive operations need dense coordinates for a
+non-dense genome representation.</p></li>
+<li><p><strong>dense_view</strong> (<em>DenseNumericView</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Compatibility alias for <code class="docutils literal notranslate"><span class="pre">dense_numeric_view</span></code>.</p></li>
+<li><p><strong>services</strong> (<em>object</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Service provider or registry used when <code class="docutils literal notranslate"><span class="pre">space</span></code> is not supplied.
+Explicit service arguments take precedence over services resolved
+from this provider.</p></li>
+<li><p><strong>space</strong> (<em>object</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Search-space or service provider. When supplied, it takes
+precedence over <code class="docutils literal notranslate"><span class="pre">services</span></code> and its <code class="docutils literal notranslate"><span class="pre">services</span></code> registry is
+queried for omitted service arguments.</p></li>
+<li><p><strong>fingerprint_service</strong> (<em>FingerprintService</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Explicit service for exact identity lookup of opaque genomes.</p></li>
+<li><p><strong>equivalence_service</strong> (<em>EquivalenceService</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Explicit service for tolerance-based identity lookup of opaque
+genomes.</p></li>
+<li><p><strong>distance_service</strong> (<em>DistanceService</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Explicit service for nearest-neighbor queries on opaque genomes.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) -- Additional constructor keywords accepted for population
+compatibility.</p></li>
+</ul>
+</dd>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> -- If <code class="docutils literal notranslate"><span class="pre">duplicate_policy</span></code> is unknown or a compatibility
+    <code class="docutils literal notranslate"><span class="pre">key_attr</span></code> is absent from the schema.</p></li>
+<li><p><a class="reference internal" href="saealib.ValidationError.html#saealib.ValidationError" title="saealib.ValidationError"><strong>ValidationError</strong></a> -- If an append archive has an invalid observation schema, or if
+    service-backed duplicate detection lacks its required identity
+    service.</p></li>
 </ul>
 </dd>
 </dl>
@@ -895,7 +1039,7 @@ Each attribute defines a column in the population.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.add">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.add" title="Link to this definition">#</a></dt>
-<dd><p>Add a new solution to the archive. Duplicate solutions are ignored.</p>
+<dd><p>Add a solution according to the configured duplicate policy.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -906,12 +1050,16 @@ Alternatively, overwrite based on the element's value and add it.</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>idx</strong> -- Destination Index</p>
+<dd class="field-even"><p><strong>idx</strong> -- Index of the retained or newly added row.</p>
 </dd>
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
 </dd>
 </dl>
+<p class="rubric">メモ</p>
+<p><code class="docutils literal notranslate"><span class="pre">&quot;keep_first&quot;</span></code> returns the existing row for a duplicate,
+<code class="docutils literal notranslate"><span class="pre">&quot;replace&quot;</span></code> updates or replaces that row, and <code class="docutils literal notranslate"><span class="pre">&quot;append&quot;</span></code> retains
+every observation subject to its ID and request-ID constraints.</p>
 <p class="rubric">サンプル</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">arcv</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">arcv</span><span class="o">.</span><span class="n">add</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x_val</span><span class="p">})</span>
@@ -924,41 +1072,51 @@ Alternatively, overwrite based on the element's value and add it.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.append">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.append" title="Link to this definition">#</a></dt>
-<dd><p>Append a new individual to the population.</p>
+<dd><p>Append one candidate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>element</strong> (<a class="reference internal" href="saealib.Individual.html#saealib.Individual" title="saealib.Individual"><em>Individual</em></a><em> | </em><em>dict</em><em> | </em><em>None</em>) -- Data for the additional individual</p></li>
-<li><p><strong>**kwargs</strong> -- Set attribute values individually and add them.
-Alternatively, overwrite based on the element's value and add it.</p></li>
+<li><p><strong>element</strong> (<em>Individual-like object</em><em>, </em><em>dict</em><em>, or </em><em>None</em>) -- Candidate values read from an individual or mapping. Values passed
+through <code class="docutils literal notranslate"><span class="pre">kwargs</span></code> take precedence over values from <code class="docutils literal notranslate"><span class="pre">element</span></code>.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) -- Column values to assign. <code class="docutils literal notranslate"><span class="pre">genome</span></code> or <code class="docutils literal notranslate"><span class="pre">genomes</span></code> supplies the
+single genome required by a non-dense genome representation.</p></li>
 </ul>
 </dd>
-<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="saealib.ValidationError.html#saealib.ValidationError" title="saealib.ValidationError"><strong>ValidationError</strong></a> -- If an explicit candidate ID other than the unassigned <code class="docutils literal notranslate"><span class="pre">-1</span></code>
+    sentinel is supplied, or if a custom genome representation does
+    not receive exactly one genome.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
-<p class="rubric">サンプル</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pop</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pop</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x_val</span><span class="p">})</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pop</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_val</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pop</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ind</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-</pre></div>
-</div>
+<p class="rubric">メモ</p>
+<p>The population grows its storage as needed. Appending invalidates
+cached values and structure-dependent views.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.argsort">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">argsort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.argsort" title="Link to this definition">#</a></dt>
-<dd><p>Get the indices that would sort the population by a specific attribute.</p>
+<dd><p>Return row indices that order a named column.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<em>str</em>) -- The attribute name to sort by.</p></li>
-<li><p><strong>reverse</strong> (<em>bool</em><em>, </em><em>optional</em>) -- Whether to sort in descending order, by default False.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) -- Name of a column in the population schema.</p></li>
+<li><p><strong>reverse</strong> (<em>bool</em><em>, </em><em>optional</em>) -- If true, return the indices in descending rather than ascending
+column order.</p></li>
 </ul>
 </dd>
-<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>ndarray</em></p>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>Indices for the active rows in sorted order. The population is not
+mutated.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray of int</p>
+</dd>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>KeyError</strong> -- If <code class="docutils literal notranslate"><span class="pre">name</span></code> is not present in the population schema.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -966,7 +1124,7 @@ Alternatively, overwrite based on the element's value and add it.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.clear">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.clear" title="Link to this definition">#</a></dt>
-<dd><p>Clear the population.</p>
+<dd><p>Clear rows and invalidate identity/neighbor caches.</p>
 <dl class="field-list simple">
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -977,16 +1135,35 @@ Alternatively, overwrite based on the element's value and add it.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.delete">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.delete" title="Link to this definition">#</a></dt>
-<dd><p>Delete element(s) and invalidate the kNN cache.</p>
+<dd><p>Delete candidates selected by <code class="docutils literal notranslate"><span class="pre">index</span></code> in place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>index</strong> (<em>int</em><em>, </em><em>slice</em><em>, </em><em>list</em><em> of </em><em>int</em><em>, or </em><em>ndarray</em>) -- Row index or indices to remove from the active archive.</p>
+</dd>
+</dl>
+<p class="rubric">メモ</p>
+<p>Surviving rows retain their relative order. The operation invalidates
+the archive's identity and nearest-neighbor caches.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.empty_like">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">empty_like</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">capacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.empty_like" title="Link to this definition">#</a></dt>
-<dd><p>Create an empty Population with the same schema.</p>
+<dd><p>Create an empty archive while retaining resolved identity services.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>capacity</strong> (<em>int</em>) -- Initial capacity of the new Population. Defaults to <code class="docutils literal notranslate"><span class="pre">self._capacity</span></code>.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>capacity</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Storage capacity for the new archive. If omitted, the current
+capacity is reused.</p></li>
+<li><p><strong>self</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>An empty archive of the same concrete type and schema with
+independent row storage and the same identity services.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#saealib.Archive" title="saealib.Archive">Archive</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -994,27 +1171,37 @@ Alternatively, overwrite based on the element's value and add it.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.extend">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.extend" title="Link to this definition">#</a></dt>
-<dd><p>Extend this population with another population.</p>
+<dd><p>Extend the archive with another candidate collection.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="saealib.Population.html#saealib.Population" title="saealib.Population"><em>Population</em></a><em> | </em><em>dict</em>) -- The other population to extend from.</p>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="saealib.Population.html#saealib.Population" title="saealib.Population"><em>Population</em></a><em> or </em><em>dict</em>) -- Source population or column-data mapping accepted by
+<a class="reference internal" href="saealib.Population.html#saealib.Population.extend" title="saealib.Population.extend"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Population.extend()</span></code></a>.</p>
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
+<p class="rubric">メモ</p>
+<p>The operation invalidates the archive's identity and nearest-neighbor
+caches after copying the source rows.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.extract">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.extract" title="Link to this definition">#</a></dt>
-<dd><p>Extract individuals with indices, and return new Population.</p>
+<dd><p>Return a new population containing rows selected by <code class="docutils literal notranslate"><span class="pre">indices</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>indices</strong> (<em>np.ndarray</em><em> | </em><em>List</em><em>[</em><em>int</em><em>] </em><em>| </em><em>slice</em>) -- Indices to extract</p>
+<dd class="field-odd"><p><strong>indices</strong> (<em>ndarray</em><em>, </em><em>list</em><em> of </em><em>int</em><em>, or </em><em>slice</em>) -- Indices into the active rows. Rows appear in the requested order;
+a slice follows normal Python slicing semantics.</p>
 </dd>
-<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Self</em></p>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new population of the same concrete type, schema, and genome
+representation. Row and genome data have independent storage, and
+the source population is unchanged.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="saealib.Population.html#saealib.Population" title="saealib.Population">Population</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1042,36 +1229,58 @@ Alternatively, overwrite based on the element's value and add it.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.get_array">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">get_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.get_array" title="Link to this definition">#</a></dt>
-<dd><p>Get the array of a specific attribute.</p>
-<p>Returns a read-only view; mutating the returned array raises
-<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>. Use <code class="docutils literal notranslate"><span class="pre">update_array()</span></code> or <code class="docutils literal notranslate"><span class="pre">update_rows()</span></code> to
-mutate, so structure/value versions and caches stay in sync.</p>
+<dd><p>Return a read-only view of the active rows in a named column.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>key</strong> (<em>str</em>) -- The attribute name to get the array for.</p>
+<dd class="field-odd"><p><strong>key</strong> (<em>str</em>) -- Column name. For <code class="docutils literal notranslate"><span class="pre">&quot;x&quot;</span></code>, the value is obtained through the
+configured <code class="docutils literal notranslate"><span class="pre">DenseNumericView</span></code> unless this is a legacy scalar-x
+population.</p>
 </dd>
-<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>ndarray</em></p>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>A non-writeable view covering the active rows of the column. The
+returned array for stored columns shares backing storage rather
+than being an owned copy; <code class="docutils literal notranslate"><span class="pre">&quot;x&quot;</span></code> uses the service-provided view.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>KeyError</strong> -- If <code class="docutils literal notranslate"><span class="pre">key</span></code> is not a stored non-genome column.</p></li>
+<li><p><strong>AttributeError</strong> -- If <code class="docutils literal notranslate"><span class="pre">key</span></code> is <code class="docutils literal notranslate"><span class="pre">&quot;x&quot;</span></code> and the required <code class="docutils literal notranslate"><span class="pre">DenseNumericView</span></code> is
+    unavailable or reports that it cannot provide a view.</p></li>
+</ul>
 </dd>
 </dl>
+<p class="rubric">メモ</p>
+<p>The population is not modified by this method. Mutating the returned
+view raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>; use <code class="docutils literal notranslate"><span class="pre">update_array()</span></code> or <code class="docutils literal notranslate"><span class="pre">update_rows()</span></code>
+so value versions and caches remain synchronized.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.get_cache">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">get_cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.get_cache" title="Link to this definition">#</a></dt>
-<dd><p>Get a cached value.</p>
-<p>Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> if the key is not found.</p>
+<dd><p>Return a cached value without changing population state.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>key</strong> (<em>Hashable</em>) -- The key of the cache.</p>
+<dd class="field-odd"><p><strong>key</strong> (<em>Hashable</em>) -- Cache key to look up.</p>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p>The cached value, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if not found.</p>
+<dd class="field-even"><p>The cached value, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when no value is stored for
+<code class="docutils literal notranslate"><span class="pre">key</span></code>. A cached <code class="docutils literal notranslate"><span class="pre">None</span></code> is therefore indistinguishable from a
+missing key through this method.</p>
 </dd>
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Any | None</p>
+<dd class="field-odd"><p>Any or None</p>
+</dd>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> -- If <code class="docutils literal notranslate"><span class="pre">key</span></code> is not hashable.</p>
 </dd>
 </dl>
+<p class="rubric">メモ</p>
+<p>Cached values are removed when the population is modified through
+<code class="docutils literal notranslate"><span class="pre">mod_value()</span></code> or <code class="docutils literal notranslate"><span class="pre">mod_structure()</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1095,23 +1304,9 @@ mutate, so structure/value versions and caches stay in sync.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="saealib.Archive.get_readonly_array">
-<span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">get_readonly_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.get_readonly_array" title="Link to this definition">#</a></dt>
-<dd><p>Return a read only view of the specified key.</p>
-<dl class="field-list simple">
-<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>key</strong> (<em>str</em>)</p>
-</dd>
-<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>ndarray</em></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.mod_structure">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">mod_structure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.mod_structure" title="Link to this definition">#</a></dt>
-<dd><p>Public method to call when the structure changes.</p>
+<dd><p>Mark population structure as changed and invalidate cached results.</p>
 <dl class="field-list simple">
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
@@ -1133,48 +1328,66 @@ mutate, so structure/value versions and caches stay in sync.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.reorder">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">reorder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">order</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.reorder" title="Link to this definition">#</a></dt>
-<dd><p>Reorder individuals in the population.</p>
+<dd><p>Reorder rows according to a complete row permutation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>order</strong> (<em>np.ndarray</em>) -- The new order of individuals.</p>
+<dd class="field-odd"><p><strong>order</strong> (<em>ndarray</em><em> of </em><em>int</em>) -- Permutation containing one row index for every active candidate.</p>
 </dd>
-<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> -- If <code class="docutils literal notranslate"><span class="pre">order</span></code> does not contain one entry per active row.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
+<p class="rubric">メモ</p>
+<p>Reordering is in place and invalidates caches whose values are
+row-indexed.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.set_cache">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">set_cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.set_cache" title="Link to this definition">#</a></dt>
-<dd><p>Set a cache value.</p>
-<p>The cache is automatically cleared when the population is modified
-(via <code class="docutils literal notranslate"><span class="pre">mod_value</span></code> or <code class="docutils literal notranslate"><span class="pre">mod_structure</span></code>).</p>
+<dd><p>Store a value in the population cache without changing its version.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>key</strong> (<em>Hashable</em>) -- The key of the cache.</p></li>
-<li><p><strong>value</strong> (<em>Any</em>) -- The value to be cached.</p></li>
+<li><p><strong>key</strong> (<em>Hashable</em>) -- Cache key. An existing value for the key is replaced.</p></li>
+<li><p><strong>value</strong> (<em>Any</em>) -- Value to retain until the population is modified.</p></li>
 </ul>
 </dd>
-<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>TypeError</strong> -- If <code class="docutils literal notranslate"><span class="pre">key</span></code> is not hashable.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
+<p class="rubric">メモ</p>
+<p>The cache is cleared by <code class="docutils literal notranslate"><span class="pre">mod_value()</span></code> and <code class="docutils literal notranslate"><span class="pre">mod_structure()</span></code>.
+Storing a value replaces only the entry for <code class="docutils literal notranslate"><span class="pre">key</span></code>; it does not clear
+other cached entries or bump the population's value or structure
+version.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.truncate">
 <span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">truncate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.truncate" title="Link to this definition">#</a></dt>
-<dd><p>Cut the population to a new size.</p>
+<dd><p>Keep the first <code class="docutils literal notranslate"><span class="pre">new_size</span></code> rows in place.</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>new_size</strong> (<em>int</em>) -- The new size of the population.</p>
+<dd class="field-odd"><p><strong>new_size</strong> (<em>int</em>) -- Number of rows to retain.</p>
 </dd>
-<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> -- If <code class="docutils literal notranslate"><span class="pre">new_size</span></code> is negative.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
+<p class="rubric">メモ</p>
+<p>Truncation invalidates the archive's identity and nearest-neighbor
+caches.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1196,7 +1409,7 @@ mutate, so structure/value versions and caches stay in sync.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Archive.update_rows">
-<span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">update_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.update_rows" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">Archive.</span></span><span class="sig-name descname"><span class="pre">update_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genome</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Archive.update_rows" title="Link to this definition">#</a></dt>
 <dd><p>Atomically update multiple columns for the given rows.</p>
 <p>Validates every index and value before mutating any backing storage,
 so a validation failure never leaves a partial update applied. Bumps
@@ -1211,6 +1424,7 @@ NOT bump the version.</p>
 <li><p><strong>values</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em>) -- Mapping of column name to the new values for those rows. Each
 value array must match shape <code class="docutils literal notranslate"><span class="pre">(len(indices),</span> <span class="pre">*schema[key].shape)</span></code>
 and dtype <code class="docutils literal notranslate"><span class="pre">schema[key].dtype</span></code> exactly.</p></li>
+<li><p><strong>genome</strong> (<em>GenomeBatch</em><em> | </em><em>ndarray</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">例外<span class="colon">:</span></dt>
@@ -1288,7 +1502,6 @@ and dtype <code class="docutils literal notranslate"><span class="pre">schema[ke
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Archive.get_array"><code class="docutils literal notranslate"><span class="pre">Archive.get_array()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Archive.get_cache"><code class="docutils literal notranslate"><span class="pre">Archive.get_cache()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Archive.get_knn"><code class="docutils literal notranslate"><span class="pre">Archive.get_knn()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Archive.get_readonly_array"><code class="docutils literal notranslate"><span class="pre">Archive.get_readonly_array()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Archive.mod_structure"><code class="docutils literal notranslate"><span class="pre">Archive.mod_structure()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Archive.mod_value"><code class="docutils literal notranslate"><span class="pre">Archive.mod_value()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Archive.reorder"><code class="docutils literal notranslate"><span class="pre">Archive.reorder()</span></code></a></li>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>多目的最適化 &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>多目的最適化 &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -172,8 +172,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -187,14 +194,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -347,8 +354,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -362,14 +376,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -479,6 +493,13 @@
 <li class="toctree-l1"><a class="reference internal" href="logging.html">進捗のログ記録</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリとの連携</a></li>
 </ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="component_swap.html">ビルトインコンポーネントを選んで差し替える</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lowlevel_api.html">Optimizerを低レベルAPIで組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interface_hooks.html">Hook、Stage、Callbackを選ぶ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel_api.html">高レベルAPIで最適化を実行する</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_components.html">既存の契約に独自Componentを追加する</a></li>
+</ul>
 </div>
 </nav></div>
     </div>
@@ -540,24 +561,29 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="multi-objective-optimization">
 <h1>多目的最適化<a class="headerlink" href="#multi-objective-optimization" title="Link to this heading">#</a></h1>
-<p>目的間にトレードオフのある多目的最適化問題を、<code class="docutils literal notranslate"><span class="pre">saealib</span></code>で解きます。</p>
-<p>アルゴリズム、サロゲート、評価戦略の切り替え方は、目的数によらず<a class="reference internal" href="single_objective.html"><span class="std std-doc">単目的最適化</span></a>の「コンポーネントの切り替え」と共通です。</p>
-<p>このページでは、目的数が2以上のときに固有の設定である、比較演算子の選択とパレートフロントの抽出を扱います。</p>
-<section id="problem-setup">
-<h2>問題設定<a class="headerlink" href="#problem-setup" title="Link to this heading">#</a></h2>
-<p>複数の目的関数がトレードオフの関係にあるとき、一方を改善するともう一方が悪化する解が存在します。</p>
-<p>この関係の下で、他のどの解にも全目的で優越されない解の集合を<strong>パレートフロント</strong>と呼びます。</p>
-<p>ここでは例として、<code class="docutils literal notranslate"><span class="pre">saealib</span></code>に組み込まれたZDT1関数を最小化します。</p>
+<div class="layer-badges"><span class="layer-badge">Layer 1: Use</span></div><p><code class="docutils literal notranslate"><span class="pre">saealib</span></code> を使って、目的間のトレードオフがある多目的最適化問題を解きます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">minimize()</span></code>は目的関数の数に応じたデフォルトのコンポーネントを使います。 アルゴリズム、代理モデル、評価戦略を個別に設定する場合は <code class="docutils literal notranslate"><span class="pre">Optimizer.set_*()</span></code> を使います。</p>
+<p>このページでは、2つ以上の目的を持つ問題に固有の内容として、Comparatorの選択とParetoフロントの取得を扱います。</p>
+<div class="tip admonition">
+<p class="admonition-title">このページでできるようになること</p>
+<p>このページを終えると、多目的問題でComparatorを選び、得られたParetoフロントを取り出せます。</p>
+</div>
+<p>単目的問題の基本手順は <a class="reference internal" href="single_objective.html"><span class="std std-doc">単目的最適化</span></a> を使い、独自の Comparator が必要な場合は <a class="reference internal" href="custom_components.html"><span class="std std-doc">独自コンポーネント</span></a> を参照してください。このページでは、多目的 <code class="docutils literal notranslate"><span class="pre">Problem</span></code> を実行し、Comparatorを選択してParetoフロントを取得します。</p>
+<section id="set-up-the-problem">
+<h2>Problemを準備する<a class="headerlink" href="#set-up-the-problem" title="Link to this heading">#</a></h2>
+<p>複数の目的関数がトレードオフの関係にあると、一方を改善すると他方が悪化する解が存在します。</p>
+<p>この関係において、すべての目的で他の解に支配されない解の集合を <strong>Paretoフロント</strong> と呼びます。</p>
+<p>ここでは例として、<code class="docutils literal notranslate"><span class="pre">saealib</span></code> に組み込まれたZDT1関数を最小化します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.benchmarks</span><span class="w"> </span><span class="kn">import</span> <span class="n">zdt1</span>
 
 <span class="n">problem</span> <span class="o">=</span> <span class="n">zdt1</span><span class="p">(</span><span class="n">n_var</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">zdt1</span></code>は、凸形のパレートフロントを持つ2目的のベンチマーク問題を返す<code class="docutils literal notranslate"><span class="pre">Problem</span></code>インスタンスです。</p>
+<p><code class="docutils literal notranslate"><span class="pre">zdt1</span></code> は、凸型のParetoフロントを持つ2目的のベンチマーク問題を返す <code class="docutils literal notranslate"><span class="pre">Problem</span></code> インスタンスです。</p>
 </section>
-<section id="high-level-api-minimize">
-<h2>高レベルAPI：minimize<a class="headerlink" href="#high-level-api-minimize" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Problem</span></code>インスタンスを直接渡すと、目的数はそこから引き継がれます。</p>
+<section id="run-minimize">
+<h2>minimizeを実行する<a class="headerlink" href="#run-minimize" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Problem</span></code> インスタンスを直接渡すと、そこから目的数が引き継がれます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">max_fe</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -566,12 +592,24 @@
 <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (n_pareto, n_obj)</span>
 </pre></div>
 </div>
-<p>単目的では1点だった<code class="docutils literal notranslate"><span class="pre">result.x</span></code>/<code class="docutils literal notranslate"><span class="pre">result.f</span></code>は、多目的ではパレートフロントを構成する複数の解になります。</p>
+<p>単目的の場合に1点だった <code class="docutils literal notranslate"><span class="pre">result.x</span></code>/<code class="docutils literal notranslate"><span class="pre">result.f</span></code> は、多目的の場合にはParetoフロントを形成する複数の解になります。</p>
 </section>
-<section id="choosing-a-comparator">
-<h2>比較演算子の選択<a class="headerlink" href="#choosing-a-comparator" title="Link to this heading">#</a></h2>
-<p>多目的では、候補解同士の優劣を<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>が決めます。</p>
-<p><code class="docutils literal notranslate"><span class="pre">Problem</span></code>の<code class="docutils literal notranslate"><span class="pre">comparator</span></code>引数を省略すると、目的数に応じて自動選択されます（<code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">==</span> <span class="pre">1</span></code>なら<code class="docutils literal notranslate"><span class="pre">SingleObjectiveComparator</span></code>、<code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>なら<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>）。</p>
+<section id="configure-an-optimizer">
+<h2>Optimizerを構成する<a class="headerlink" href="#configure-an-optimizer" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Optimizer(problem)</span></code>では、各コンポーネントを独立して設定できます。 <code class="docutils literal notranslate"><span class="pre">set_*()</span></code>は連鎖呼び出しのために同じ <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> を返し、<code class="docutils literal notranslate"><span class="pre">run()</span></code>または <code class="docutils literal notranslate"><span class="pre">iterate()</span></code>で最適化を実行します。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
+
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">2000</span><span class="p">)))</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">pareto_f</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>未設定のコンポーネントはデフォルトに解決されます。 多目的の順位付けは、次のComparatorの選択で設定します。</p>
+</section>
+<section id="choose-a-comparator">
+<h2>Comparatorを選ぶ<a class="headerlink" href="#choose-a-comparator" title="Link to this heading">#</a></h2>
+<p>多目的最適化では、<code class="docutils literal notranslate"><span class="pre">Comparator</span></code> が候補解同士の相対的な優劣を決めます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">Problem</span></code> の <code class="docutils literal notranslate"><span class="pre">comparator</span></code> 引数を省略すると、目的数に基づいて自動選択されます（<code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">==</span> <span class="pre">1</span></code> では <code class="docutils literal notranslate"><span class="pre">SingleObjectiveComparator</span></code>、<code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code> では <code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>）。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>クラス</p></th>
@@ -580,27 +618,27 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code></p></td>
-<td><p>非優越ソートと混雑度による多様性維持（既定）</p></td>
+<td><p>非劣ソートと混雑度距離による多様性維持（既定）</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code></p></td>
-<td><p>優越関係の強さと近傍密度によるフィットネス</p></td>
+<td><p>支配の強さと近傍密度に基づく適応度</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code></p></td>
-<td><p>ハイパーボリューム貢献度による優劣判定</p></td>
+<td><p>ハイパーボリューム寄与で優劣を判定</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">EpsilonDominanceComparator</span></code></p></td>
-<td><p>εドミナンスによる優越判定</p></td>
+<td><p>ε支配で優劣を判定</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NSGA3Comparator</span></code></p></td>
-<td><p>参照点による多様性維持。<code class="docutils literal notranslate"><span class="pre">reference_points</span></code>が必須</p></td>
+<td><p>参照点による多様性維持。<code class="docutils literal notranslate"><span class="pre">reference_points</span></code> が必要です</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">RNSGA2Comparator</span></code></p></td>
-<td><p>指定した参照点の近傍へ解を集中させる。<code class="docutils literal notranslate"><span class="pre">reference_points</span></code>が必須</p></td>
+<td><p>指定した参照点の近くに解を集中させます。<code class="docutils literal notranslate"><span class="pre">reference_points</span></code> が必要です</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">comparator</span></code>は<code class="docutils literal notranslate"><span class="pre">Problem</span></code>インスタンスの属性として差し替えられます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">Problem</span></code> インスタンスの属性として <code class="docutils literal notranslate"><span class="pre">comparator</span></code> を交換できます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">HypervolumeComparator</span>
 
 <span class="n">problem</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="n">HypervolumeComparator</span><span class="p">()</span>
@@ -608,14 +646,14 @@
 </pre></div>
 </div>
 </section>
-<section id="extracting-the-pareto-front">
-<h2>パレートフロントの抽出<a class="headerlink" href="#extracting-the-pareto-front" title="Link to this heading">#</a></h2>
-<p>実行後、<code class="docutils literal notranslate"><span class="pre">result.ctx.pareto_archive</span></code>には最終的なパレートフロントが保持されています。</p>
+<section id="extract-the-pareto-front">
+<h2>Paretoフロントを取得する<a class="headerlink" href="#extract-the-pareto-front" title="Link to this heading">#</a></h2>
+<p>実行後、最終的なParetoフロントは <code class="docutils literal notranslate"><span class="pre">result.ctx.pareto_archive</span></code> に保持されます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pareto_x</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
 <span class="n">pareto_f</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>任意の目的値配列からパレートフロントを求めたい場合は、<code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code>を直接使えます。</p>
+<p>任意の目的値配列からParetoフロントを計算するには、<code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code> を直接使えます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">non_dominated_sort</span>
 
 <span class="n">archive_f</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
@@ -624,8 +662,8 @@
 </pre></div>
 </div>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="related-concepts-and-reference">
+<h2>関連するConceptとReference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/highlevel.html#saealib.minimize" title="saealib.minimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.minimize()</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Problem</span></code></a></p></li>
@@ -682,11 +720,12 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-setup">問題設定</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#high-level-api-minimize">高レベルAPI：minimize</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#choosing-a-comparator">比較演算子の選択</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-the-pareto-front">パレートフロントの抽出</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-the-problem">Problemを準備する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#run-minimize">minimizeを実行する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configure-an-optimizer">Optimizerを構成する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#choose-a-comparator">Comparatorを選ぶ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-the-pareto-front">Paretoフロントを取得する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">関連するConceptとReference</a></li>
 </ul>
   </nav></div>
 

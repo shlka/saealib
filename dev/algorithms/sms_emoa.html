@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SMS-EMOA (S Metric Selection EMOA) &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>SMS-EMOA (S Metric Selection EMOA) &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -596,7 +596,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -609,8 +609,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -631,7 +638,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -771,7 +778,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -784,8 +791,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -806,7 +820,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -977,7 +991,7 @@ window.runMermaid = runMermaid;</script>
                   
   <section class="tex2jax_ignore mathjax_ignore" id="sms-emoa-s-metric-selection-emoa">
 <h1>SMS-EMOA (S Metric Selection EMOA)<a class="headerlink" href="#sms-emoa-s-metric-selection-emoa" title="Link to this heading">#</a></h1>
-<p>SMS-EMOA is a steady-state multi-objective evolutionary algorithm that incorporates dominated hypervolume (the <span class="math notranslate nohighlight">\(\mathcal{S}\)</span> metric) directly into the selection criterion.
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>SMS-EMOA is a steady-state multi-objective evolutionary algorithm that incorporates dominated hypervolume (the <span class="math notranslate nohighlight">\(\mathcal{S}\)</span> metric) directly into the selection criterion.
 After splitting the population into fronts via non-dominated sorting, it culls one individual at a time — the one with the smallest hypervolume contribution within the lowest front — monotonically increasing the population’s overall dominated hypervolume with each generation.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
@@ -1025,14 +1039,6 @@ This avoids having to compare <span class="math notranslate nohighlight">\(\bino
     TERM -- &quot;Not yet (L7)&quot; --&gt; GEN
     TERM -- &quot;Reached&quot; --&gt; RESULT([&quot;Population of the final generation&quot;])
     </pre></section>
-<section id="complexity">
-<h2>Complexity<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h2>
-<p>Hypervolume computation itself is polynomial in the number of points but exponential in the number of objectives.
-saealib’s <code class="docutils literal notranslate"><span class="pre">hypervolume</span></code> (recursive slicing) is <span class="math notranslate nohighlight">\(O(n^{m-1} n \log n)\)</span> (<span class="math notranslate nohighlight">\(n\)</span> the number of points, <span class="math notranslate nohighlight">\(m\)</span> the number of objectives).</p>
-<p>The exclusive contribution requires <span class="math notranslate nohighlight">\(k\)</span> leave-one-out HV computations for a front of size <span class="math notranslate nohighlight">\(k\)</span>, so computing one front costs <span class="math notranslate nohighlight">\(O(k^{m} \log k)\)</span>.
-Because the paper’s reduction procedure applies this only to the lowest front (size at most <span class="math notranslate nohighlight">\(\mu+1\)</span>), it stays within <span class="math notranslate nohighlight">\(O(\mu^{m} \log \mu)\)</span> per generation <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id25" title="Nicola Beume, Boris Naujoks, and Michael Emmerich. Sms-emoa: multiobjective selection based on dominated hypervolume. European Journal of Operational Research, 181(3):1653–1669, 2007. doi:10.1016/j.ejor.2006.08.008.">5</a>]</span>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code> generalizes this by computing contributions across all fronts, but since the sum of front sizes never exceeds <span class="math notranslate nohighlight">\(\mu+1\)</span>, the asymptotic upper bound remains <span class="math notranslate nohighlight">\(O(\mu^{m} \log \mu)\)</span>.</p>
-</section>
 <section id="configuration-in-saealib">
 <h2>Configuration in saealib<a class="headerlink" href="#configuration-in-saealib" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -1045,7 +1051,7 @@ Because the paper’s reduction procedure applies this only to the lowest front 
 <tbody>
 <tr class="row-even"><td><p>Search algorithm</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code> (<code class="docutils literal notranslate"><span class="pre">ask(n_offspring=1)</span></code> generates only one new individual; <code class="docutils literal notranslate"><span class="pre">tell()</span></code> performs combining <span class="math notranslate nohighlight">\(Q=P_t\cup\{q_{t+1}\}\)</span> and survivor selection)</p></td>
-<td><p>L2-3, 6</p></td>
+<td><p>L2-3, L6</p></td>
 </tr>
 <tr class="row-odd"><td><p>Parent selection</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code> (uniform random selection with no comparison; the paper does not specify a parent-selection scheme)</p></td>
@@ -1068,18 +1074,14 @@ Because the paper’s reduction procedure applies this only to the lowest front 
 <td><p>L4-6</p></td>
 </tr>
 <tr class="row-even"><td><p>Evaluation strategy</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code> with <code class="docutils literal notranslate"><span class="pre">AsyncEvaluationScheduler</span></code> for steady-state completion</p></td>
-<td><p>2, 6-7 (in-generation evaluation)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code> with <code class="docutils literal notranslate"><span class="pre">SerialEvaluator</span></code> (sequential evaluation, equivalent to <code class="docutils literal notranslate"><span class="pre">max_workers=1</span></code>, <code class="docutils literal notranslate"><span class="pre">max_pending=1</span></code>)</p></td>
+<td><p>L2, L6-7 (in-generation evaluation)</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code> asks for one candidate per step and can be paired with
-<code class="docutils literal notranslate"><span class="pre">AsyncEvaluationScheduler</span></code> when evaluations have different completion times. The
-scheduler manages pending requests and applies each completed result serially.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code> requests one candidate per step. The faithful configuration below uses sequential evaluation; asynchronous evaluation is described as a separate extension.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AsyncEvaluator</span><span class="p">,</span>
-    <span class="n">AsyncEvaluationScheduler</span><span class="p">,</span>
     <span class="n">GA</span><span class="p">,</span>
     <span class="n">HypervolumeComparator</span><span class="p">,</span>
     <span class="n">Optimizer</span><span class="p">,</span>
@@ -1102,15 +1104,13 @@ scheduler manages pending requests and applies each completed result serially.</
     <span class="n">TournamentSelection</span><span class="p">(</span><span class="n">tournament_size</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
     <span class="n">TruncationSelection</span><span class="p">(),</span>
 <span class="p">)</span>
-<span class="n">evaluator</span> <span class="o">=</span> <span class="n">AsyncEvaluator</span><span class="p">(</span><span class="n">SerialEvaluator</span><span class="p">(),</span> <span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">schedule</span> <span class="o">=</span> <span class="n">AsyncEvaluationScheduler</span><span class="p">(</span><span class="n">evaluator</span><span class="p">,</span> <span class="n">max_pending</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">SerialEvaluator</span><span class="p">()</span>
 
 <span class="n">opt</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">SteadyStateStrategy</span><span class="p">())</span>
     <span class="o">.</span><span class="n">set_evaluator</span><span class="p">(</span><span class="n">evaluator</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_async_evaluation_scheduler</span><span class="p">(</span><span class="n">schedule</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">2000</span><span class="p">)))</span>
 <span class="p">)</span>
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
@@ -1119,34 +1119,58 @@ scheduler manages pending requests and applies each completed result serially.</
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">problem.comparator</span> <span class="pre">=</span> <span class="pre">HypervolumeComparator()</span></code> line cannot be omitted.
 In NSGA-II, <code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code> is the default for <code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>, so the same line could be omitted, but as with SPEA2 and NSGA-III, SMS-EMOA also requires an explicit assignment.</p>
+<p><strong>Asynchronous extension</strong>: When evaluation times vary, combine <code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code> with <code class="docutils literal notranslate"><span class="pre">AsyncEvaluator</span></code> and <code class="docutils literal notranslate"><span class="pre">AsyncEvaluationScheduler</span></code> (for example, <code class="docutils literal notranslate"><span class="pre">max_workers=2</span></code>, <code class="docutils literal notranslate"><span class="pre">max_pending=2</span></code>). This extension has a different evaluation order from the sequential configuration above.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncEvaluator</span><span class="p">,</span> <span class="n">AsyncEvaluationScheduler</span>
+
+<span class="n">async_evaluator</span> <span class="o">=</span> <span class="n">AsyncEvaluator</span><span class="p">(</span><span class="n">SerialEvaluator</span><span class="p">(),</span> <span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">async_schedule</span> <span class="o">=</span> <span class="n">AsyncEvaluationScheduler</span><span class="p">(</span><span class="n">async_evaluator</span><span class="p">,</span> <span class="n">max_pending</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">async_opt</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">SteadyStateStrategy</span><span class="p">())</span>
+    <span class="o">.</span><span class="n">set_evaluator</span><span class="p">(</span><span class="n">async_evaluator</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_async_evaluation_scheduler</span><span class="p">(</span><span class="n">async_schedule</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="differences-from-the-source">
+<h2>Differences from the source<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<p>The original SMS-EMOA uses a steady-state procedure that evaluates one individual at a time.
+This design limits hypervolume calculations for the lowest front to at most <span class="math notranslate nohighlight">\(\mu+1\)</span>.
+The configuration above generates one individual at a time with <code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code>. If <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code> generates several individuals per generation instead, <code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code> ranks hypervolume contributions across every front, so the configuration no longer follows the original procedure that targets only the lowest front.
+The original procedure does not specify parent selection, so the example uses <code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code>, which performs no comparison.
+<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code> also does not implement the SMS-EMOA dp variant described in the paper; it provides only the base hypervolume contribution.</p>
 </section>
 <section id="parameters-and-variants">
 <h2>Parameters and variants<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong>Steady-state vs. <span class="math notranslate nohighlight">\((\mu+\lambda)\)</span> generational replacement</strong>: The paper’s main procedure assumes a one-individual-per-generation steady-state design, a choice made to keep the expensive hypervolume evaluation to at most <span class="math notranslate nohighlight">\(\mu+1\)</span> calls within the lowest front <span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id25" title="Nicola Beume, Boris Naujoks, and Michael Emmerich. Sms-emoa: multiobjective selection based on dominated hypervolume. European Journal of Operational Research, 181(3):1653–1669, 2007. doi:10.1016/j.ejor.2006.08.008.">5</a>]</span>.
-The code example above follows this faithfully.
-A configuration using <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code> as-is, without specifying <code class="docutils literal notranslate"><span class="pre">AskStage</span></code>’s <code class="docutils literal notranslate"><span class="pre">n_offspring</span></code> (the same <span class="math notranslate nohighlight">\((\mu+\lambda)\)</span> pattern as NSGA-II/SPEA2/NSGA-III), also works, but note that in that case <code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>’s “generalization across all fronts” actually comes into play.
-Generating <span class="math notranslate nohighlight">\(\mu\)</span> new individuals in one generation means many individuals can be culled across multiple fronts after non-dominated sorting, departing from the paper’s definition of looking only at the lowest front, and switching to a generalized survivor selection that applies HV-contribution ranking across all fronts.</p>
-<p><strong>Handling the reference point</strong>: <code class="docutils literal notranslate"><span class="pre">HypervolumeComparator(reference_point=...)</span></code> lets you specify a fixed value; the default <code class="docutils literal notranslate"><span class="pre">None</span></code> computes it automatically per generation and per front, following the paper’s absolute offset, “worst objective value + 1.0”. The <code class="docutils literal notranslate"><span class="pre">margin</span></code> constructor parameter is unused by this default computation and is kept only so existing calls do not break; pass an explicit <code class="docutils literal notranslate"><span class="pre">reference_point</span></code> if a margin-scaled reference point is needed instead.
-Also, for the two-objective case, the paper unconditionally keeps the two extreme boundary solutions without a reference-point computation, but saealib has no such special case — it always evaluates uniformly via the contribution beyond the reference point.</p>
-<p><strong>Parent-selection scheme</strong>: The paper’s main procedure only states that “a new individual is generated by the variation operator,” without specifying how parents are chosen (there is no description of dominance-based tournament selection as in NSGA-II or SPEA2).
-<code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code> was adopted as a configuration expressing uniform random selection from the population, since no comparison is actually performed when the tournament size is 1.</p>
-<p><strong>Alternative reduce procedure (“SMS-EMOA dp”)</strong>: The paper also proposes a faster variant using the domination count <span class="math notranslate nohighlight">\(d(s, P(t))\)</span> instead of hypervolume contribution.
-<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code> does not implement this variant, providing only the base version using <span class="math notranslate nohighlight">\(\Delta_{\mathcal{S}}\)</span>.</p>
-<p><strong>Swapping the dominator (dominance predicate)</strong>: <code class="docutils literal notranslate"><span class="pre">HypervolumeComparator(reference_point=...,</span> <span class="pre">dominator=...)</span></code> lets you inject a <a class="reference internal" href="../components/dominance.html"><span class="std std-doc">Dominator</span></a> other than the default <code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>.
+<section id="complexity">
+<h3>Complexity<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h3>
+<p>Hypervolume computation itself is polynomial in the number of points but exponential in the number of objectives.
+saealib’s <code class="docutils literal notranslate"><span class="pre">hypervolume</span></code> (recursive slicing) is <span class="math notranslate nohighlight">\(O(n^{m-1} n \log n)\)</span> (<span class="math notranslate nohighlight">\(n\)</span> the number of points, <span class="math notranslate nohighlight">\(m\)</span> the number of objectives).</p>
+<p>The exclusive contribution requires <span class="math notranslate nohighlight">\(k\)</span> leave-one-out HV computations for a front of size <span class="math notranslate nohighlight">\(k\)</span>, so computing one front costs <span class="math notranslate nohighlight">\(O(k^{m} \log k)\)</span>.
+Because the paper’s reduction procedure applies this only to the lowest front (size at most <span class="math notranslate nohighlight">\(\mu+1\)</span>), it stays within <span class="math notranslate nohighlight">\(O(\mu^{m} \log \mu)\)</span> per generation <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id25" title="Nicola Beume, Boris Naujoks, and Michael Emmerich. Sms-emoa: multiobjective selection based on dominated hypervolume. European Journal of Operational Research, 181(3):1653–1669, 2007. doi:10.1016/j.ejor.2006.08.008.">5</a>]</span>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code> generalizes this by computing contributions across all fronts, but since the sum of front sizes never exceeds <span class="math notranslate nohighlight">\(\mu+1\)</span>, the asymptotic upper bound remains <span class="math notranslate nohighlight">\(O(\mu^{m} \log \mu)\)</span>.</p>
+<p><strong>Alternative reduce procedure (“SMS-EMOA dp”)</strong>: The paper also proposes a faster variant using the domination count <span class="math notranslate nohighlight">\(d(s, P(t))\)</span> instead of hypervolume contribution.</p>
+<p><strong>Handling the reference point</strong>: <code class="docutils literal notranslate"><span class="pre">HypervolumeComparator(reference_point=...)</span></code> accepts a fixed value.
+With <code class="docutils literal notranslate"><span class="pre">None</span></code>, it computes a reference point for each front in each generation according to the paper’s definition of adding 1.0 to the worst value of each objective.
+For two objectives, it follows the paper’s treatment of retaining the two boundary solutions without computing a reference point.</p>
+<p><strong>Swapping the dominator (dominance predicate)</strong>: <code class="docutils literal notranslate"><span class="pre">HypervolumeComparator(reference_point=...,</span> <span class="pre">dominator=...)</span></code> lets you inject a <a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a> other than the default <code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>.
 Since this changes the result of non-dominated sorting, the population subjected to front splitting and contribution computation also depends on this dominance predicate.</p>
+</section>
 </section>
 <section id="related">
 <h2>Related<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">References</span></a>: Full bibliographic details for the source</p></li>
-<li><p><a class="reference internal" href="../components/comparators.html"><span class="std std-doc">Comparator</span></a>: Detailed specification of <code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>, and how population-relative comparators are handled</p></li>
-<li><p><a class="reference internal" href="../components/crossover.html"><span class="std std-doc">Crossover</span></a>: List of crossover operators including <code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code></p></li>
-<li><p><a class="reference internal" href="../components/mutation.html"><span class="std std-doc">Mutation</span></a>: List of mutation operators including <code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code></p></li>
-<li><p><a class="reference internal" href="../components/parent_selection.html"><span class="std std-doc">ParentSelection</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code></p></li>
-<li><p><a class="reference internal" href="../components/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code></p></li>
-<li><p><a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: Implementing a custom Strategy, and <code class="docutils literal notranslate"><span class="pre">AskStage</span></code>’s <code class="docutils literal notranslate"><span class="pre">n_offspring</span></code></p></li>
-<li><p><a class="reference internal" href="../components/nondominated_sorting.html"><span class="std std-doc">NonDominatedSorting</span></a>: Implementation details of non-dominated sorting</p></li>
-<li><p><a class="reference internal" href="../components/dominance.html"><span class="std std-doc">Dominator</span></a>: List of dominance predicates that can be swapped in via the <code class="docutils literal notranslate"><span class="pre">dominator</span></code> argument</p></li>
+<li><p><a class="reference internal" href="../concepts/problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>: Detailed specification of <code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>, and how population-relative comparators are handled</p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/crossover.html"><span class="std std-doc">Crossover</span></a>: List of crossover operators including <code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/mutation.html"><span class="std std-doc">Mutation</span></a>: List of mutation operators including <code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/parent_selection.html"><span class="std std-doc">ParentSelection</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: Implementing a custom Strategy, and <code class="docutils literal notranslate"><span class="pre">AskStage</span></code>’s <code class="docutils literal notranslate"><span class="pre">n_offspring</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/problem_and_ranking/nondominated_sorting.html"><span class="std std-doc">NonDominatedSorting</span></a>: Implementation details of non-dominated sorting</p></li>
+<li><p><a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a>: List of dominance predicates that can be swapped in via the <code class="docutils literal notranslate"><span class="pre">dominator</span></code> argument</p></li>
 </ul>
 </section>
 </section>
@@ -1201,9 +1225,12 @@ Since this changes the result of non-dominated sorting, the population subjected
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">Pseudocode</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">Flowchart</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">Complexity</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">Configuration in saealib</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">Parameters and variants</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">Differences from the source</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">Parameters and variants</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">Complexity</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">Related</a></li>
 </ul>
   </nav></div>

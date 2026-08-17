@@ -16,6 +16,7 @@
 
 
    ~SklearnSVCClassificationSurrogate.__init__
+   ~SklearnSVCClassificationSurrogate.contract
    ~SklearnSVCClassificationSurrogate.fit
    ~SklearnSVCClassificationSurrogate.post_fit
    ~SklearnSVCClassificationSurrogate.predict
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.SklearnSVCClassificationSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnSVCClassificationSurrogate.contract
 
 
 .. automethod:: saealib.SklearnSVCClassificationSurrogate.fit

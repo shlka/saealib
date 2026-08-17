@@ -1,0 +1,31 @@
+﻿saealib.core.StatePatch
+=======================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: StatePatch
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~StatePatch.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.StatePatch.__init__
+
+
+

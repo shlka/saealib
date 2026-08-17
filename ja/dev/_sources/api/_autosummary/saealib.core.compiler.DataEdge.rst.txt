@@ -1,0 +1,31 @@
+﻿saealib.core.compiler.DataEdge
+==============================
+
+.. currentmodule:: saealib.core.compiler
+
+.. autoclass:: DataEdge
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~DataEdge.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.compiler.DataEdge.__init__
+
+
+

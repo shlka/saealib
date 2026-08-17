@@ -16,11 +16,14 @@
 
 
    ~Optimizer.__init__
+   ~Optimizer.contract_diagnostics
+   ~Optimizer.describe
    ~Optimizer.dispatch
    ~Optimizer.from_problem_file
    ~Optimizer.iterate
    ~Optimizer.iterate_from
    ~Optimizer.load_pickle
+   ~Optimizer.resolve_defaults
    ~Optimizer.run
    ~Optimizer.run_from
    ~Optimizer.save_pickle
@@ -52,6 +55,12 @@
 .. automethod:: saealib.Optimizer.__init__
 
 
+.. automethod:: saealib.Optimizer.contract_diagnostics
+
+
+.. automethod:: saealib.Optimizer.describe
+
+
 .. automethod:: saealib.Optimizer.dispatch
 
 
@@ -65,6 +74,9 @@
 
 
 .. automethod:: saealib.Optimizer.load_pickle
+
+
+.. automethod:: saealib.Optimizer.resolve_defaults
 
 
 .. automethod:: saealib.Optimizer.run

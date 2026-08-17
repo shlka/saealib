@@ -17,6 +17,7 @@
 
    ~ConstraintObjectiveSet.__init__
    ~ConstraintObjectiveSet.build
+   ~ConstraintObjectiveSet.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.ConstraintObjectiveSet.build
+
+
+.. automethod:: saealib.ConstraintObjectiveSet.contract
 
 
 

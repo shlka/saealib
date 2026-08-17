@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.population.archive &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>saealib.population.archive &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../../../_static/documentation_options.js?v=c8372973"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -605,8 +605,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -620,14 +627,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -778,8 +785,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -793,14 +807,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -947,14 +961,24 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">cKDTree</span>  <span class="c1"># type: ignore  # cKDTree has no bundled type stubs</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dominator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population.genome</span><span class="w"> </span><span class="kn">import</span> <span class="n">DenseVectorBatch</span><span class="p">,</span> <span class="n">GenomeBatch</span><span class="p">,</span> <span class="n">ObjectBatch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Individual</span><span class="p">,</span> <span class="n">Population</span><span class="p">,</span> <span class="n">PopulationAttribute</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.space.services</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DenseNumericView</span><span class="p">,</span>
+    <span class="n">DistanceService</span><span class="p">,</span>
+    <span class="n">EquivalenceService</span><span class="p">,</span>
+    <span class="n">FingerprintService</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">_UNSET</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_extract_id_value</span><span class="p">(</span>
@@ -1017,29 +1041,94 @@ window.runMermaid = runMermaid;</script>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;append archive </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be an int64 scalar&quot;</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_service_from_registry</span><span class="p">(</span><span class="n">registry</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a named service from either a registry or a search space.</span>
+
+<span class="sd">    ``Archive`` receives resolved services in the compiled/runtime design, but</span>
+<span class="sd">    the public constructor still needs a small compatibility seam while that</span>
+<span class="sd">    wiring is being introduced.  Accepting either ``space`` or its registry</span>
+<span class="sd">    keeps the seam independent of the concrete registry implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">registry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">provider</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">registry</span><span class="p">,</span> <span class="s2">&quot;services&quot;</span><span class="p">,</span> <span class="n">registry</span><span class="p">)</span>
+    <span class="n">get</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;get&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">get</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_service_tolerance</span><span class="p">(</span><span class="n">service</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a service-owned tolerance without copying it into the archive.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">service</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">_UNSET</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">_UNSET</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_single_genome_batch</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenomeBatch</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">array</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Archive.add() expects one genome&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DenseVectorBatch</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">DenseVectorBatch</span><span class="p">,</span> <span class="n">ObjectBatch</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Archive.add() expects one genome&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">GenomeBatch</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Archive.add() expects one genome&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="c1"># A raw Python object is a valid one-row object genome.  A custom batch</span>
+    <span class="c1"># still takes the branch above through the runtime-checkable protocol.</span>
+    <span class="k">return</span> <span class="n">ObjectBatch</span><span class="p">([</span><span class="n">value</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_genome</span><span class="p">(</span>
+    <span class="n">element</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenomeBatch</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">genome_value</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;genome&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;genomes&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">genome_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">genome_value</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;genome&quot;</span><span class="p">,</span> <span class="n">element</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;genomes&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">genome_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">Individual</span><span class="p">):</span>
+        <span class="c1"># Individual predates the opaque-genome API and exposes columns only;</span>
+        <span class="c1"># use its live population view for service-backed archive calls.</span>
+        <span class="n">genome_value</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">pop</span><span class="o">.</span><span class="n">genomes</span><span class="o">.</span><span class="n">take</span><span class="p">([</span><span class="n">element</span><span class="o">.</span><span class="n">_index</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">genome_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">element</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="s2">&quot;genome&quot;</span><span class="p">):</span>
+        <span class="n">genome_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="s2">&quot;genome&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">genome_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;x&quot;</span> <span class="ow">in</span> <span class="n">population</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
+        <span class="c1"># ``x`` is accepted only for dense compatibility. The service-backed</span>
+        <span class="c1"># path does not use it as an identity key after this row is formed.</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">_as_single_genome_batch</span><span class="p">(</span><span class="n">genome_value</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="ArchiveMixin">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin">[ドキュメント]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ArchiveMixin</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A mixin class for using Population as an Archive.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provide archive operations for a :class:`Population` subclass.</span>
 
-<span class="sd">    Must be subclassed via multiple inheritance as a subclass of the Population class.</span>
-<span class="sd">    Handle archive of evaluated solutions.</span>
-<span class="sd">    (self.data must have at least key_attr (default is &quot;x&quot;).)</span>
-<span class="sd">    Duplicate removal and range queries can be performed.</span>
+<span class="sd">    Duplicate identity is normally supplied by search-space services. The</span>
+<span class="sd">    ``key_attr``, ``atol``, and ``rtol`` arguments remain supported for direct</span>
+<span class="sd">    schema-backed construction without those services.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
-<span class="sd">    data : dict[str, np.ndarray]</span>
-<span class="sd">        Dictionary to store archive data.</span>
-<span class="sd">    duplicate_log : list[dict]</span>
-<span class="sd">        List to store duplicate solutions information.</span>
+<span class="sd">    duplicate_policy : str</span>
+<span class="sd">        Duplicate handling policy selected at construction.</span>
 <span class="sd">    key_attr : str</span>
-<span class="sd">        Key for duplicate checking</span>
+<span class="sd">        Schema column used by compatibility identity handling.</span>
 <span class="sd">    atol : float</span>
-<span class="sd">        Absolute tolerance for duplicate check.</span>
+<span class="sd">        Effective absolute tolerance, including any service-owned value.</span>
 <span class="sd">    rtol : float</span>
-<span class="sd">        Relative tolerance for duplicate check.</span>
+<span class="sd">        Effective relative tolerance, including any service-owned value.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ArchiveMixin.__init__">
@@ -1049,26 +1138,216 @@ window.runMermaid = runMermaid;</script>
         <span class="n">attrs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PopulationAttribute</span><span class="p">],</span>
         <span class="n">init_capacity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
         <span class="n">key_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span>
-        <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">object</span> <span class="o">=</span> <span class="n">_UNSET</span><span class="p">,</span>
+        <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">object</span> <span class="o">=</span> <span class="n">_UNSET</span><span class="p">,</span>
         <span class="n">duplicate_policy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;keep_first&quot;</span><span class="p">,</span>
+        <span class="n">genomes</span><span class="p">:</span> <span class="n">GenomeBatch</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dense_numeric_view</span><span class="p">:</span> <span class="n">DenseNumericView</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dense_view</span><span class="p">:</span> <span class="n">DenseNumericView</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">services</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">space</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">fingerprint_service</span><span class="p">:</span> <span class="n">FingerprintService</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">equivalence_service</span><span class="p">:</span> <span class="n">EquivalenceService</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">distance_service</span><span class="p">:</span> <span class="n">DistanceService</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize archive storage and duplicate-resolution services.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        attrs : list of PopulationAttribute</span>
+<span class="sd">            Column definitions for archive rows. With</span>
+<span class="sd">            ``duplicate_policy=&quot;append&quot;``, the schema must contain scalar</span>
+<span class="sd">            ``int64`` columns named ``id`` and ``request_id``.</span>
+<span class="sd">        init_capacity : int, optional</span>
+<span class="sd">            Initial row-storage capacity passed to ``Population``.</span>
+<span class="sd">        key_attr : str, optional</span>
+<span class="sd">            Schema column used by compatibility duplicate detection. In a</span>
+<span class="sd">            service-backed archive, ``&quot;x&quot;`` may also provide the dense genome</span>
+<span class="sd">            used to resolve an incoming candidate.</span>
+<span class="sd">        atol : float, optional</span>
+<span class="sd">            Explicit absolute-tolerance override. When omitted, the archive</span>
+<span class="sd">            uses the equivalence service&#39;s tolerance when applicable, or zero</span>
+<span class="sd">            for exact matching.</span>
+<span class="sd">        rtol : float, optional</span>
+<span class="sd">            Explicit relative-tolerance override, with the same resolution</span>
+<span class="sd">            rules as ``atol``.</span>
+<span class="sd">        duplicate_policy : {&quot;keep_first&quot;, &quot;replace&quot;, &quot;append&quot;}, optional</span>
+<span class="sd">            Action for a duplicate candidate. ``&quot;keep_first&quot;`` leaves the</span>
+<span class="sd">            existing row unchanged, ``&quot;replace&quot;`` updates the existing row,</span>
+<span class="sd">            and ``&quot;append&quot;`` retains every observation while requiring the</span>
+<span class="sd">            observation schema described for ``attrs``.</span>
+<span class="sd">        genomes : GenomeBatch or None, optional</span>
+<span class="sd">            Initial opaque genome batch passed to ``Population``.</span>
+<span class="sd">        dense_numeric_view : DenseNumericView or None, optional</span>
+<span class="sd">            Service used when archive operations need dense coordinates for a</span>
+<span class="sd">            non-dense genome representation.</span>
+<span class="sd">        dense_view : DenseNumericView or None, optional</span>
+<span class="sd">            Compatibility alias for ``dense_numeric_view``.</span>
+<span class="sd">        services : object or None, optional</span>
+<span class="sd">            Service provider or registry used when ``space`` is not supplied.</span>
+<span class="sd">            Explicit service arguments take precedence over services resolved</span>
+<span class="sd">            from this provider.</span>
+<span class="sd">        space : object or None, optional</span>
+<span class="sd">            Search-space or service provider. When supplied, it takes</span>
+<span class="sd">            precedence over ``services`` and its ``services`` registry is</span>
+<span class="sd">            queried for omitted service arguments.</span>
+<span class="sd">        fingerprint_service : FingerprintService or None, optional</span>
+<span class="sd">            Explicit service for exact identity lookup of opaque genomes.</span>
+<span class="sd">        equivalence_service : EquivalenceService or None, optional</span>
+<span class="sd">            Explicit service for tolerance-based identity lookup of opaque</span>
+<span class="sd">            genomes.</span>
+<span class="sd">        distance_service : DistanceService or None, optional</span>
+<span class="sd">            Explicit service for nearest-neighbor queries on opaque genomes.</span>
+<span class="sd">        **kwargs : Any</span>
+<span class="sd">            Additional constructor keywords accepted for population</span>
+<span class="sd">            compatibility.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``duplicate_policy`` is unknown or a compatibility</span>
+<span class="sd">            ``key_attr`` is absent from the schema.</span>
+<span class="sd">        ValidationError</span>
+<span class="sd">            If an append archive has an invalid observation schema, or if</span>
+<span class="sd">            service-backed duplicate detection lacks its required identity</span>
+<span class="sd">            service.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">duplicate_policy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;keep_first&quot;</span><span class="p">,</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span> <span class="s2">&quot;append&quot;</span><span class="p">}:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;duplicate_policy must be &#39;keep_first&#39;, &#39;replace&#39;, or &#39;append&#39;&quot;</span>
             <span class="p">)</span>
         <span class="n">_validate_observation_schema</span><span class="p">(</span><span class="n">attrs</span><span class="p">,</span> <span class="n">duplicate_policy</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="n">init_capacity</span><span class="p">)</span>  <span class="c1"># ty: ignore[unknown-argument]</span>
+        <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">)(</span>
+            <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span>
+            <span class="n">init_capacity</span><span class="o">=</span><span class="n">init_capacity</span><span class="p">,</span>
+            <span class="n">genomes</span><span class="o">=</span><span class="n">genomes</span><span class="p">,</span>
+            <span class="n">dense_numeric_view</span><span class="o">=</span><span class="n">dense_numeric_view</span><span class="p">,</span>
+            <span class="n">dense_view</span><span class="o">=</span><span class="n">dense_view</span><span class="p">,</span>
+            <span class="n">space</span><span class="o">=</span><span class="n">space</span><span class="p">,</span>
+        <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">key_attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key_attr &#39;</span><span class="si">{</span><span class="n">key_attr</span><span class="si">}</span><span class="s2">&#39; is not defined in attrs&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">=</span> <span class="n">duplicate_policy</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span> <span class="o">=</span> <span class="n">key_attr</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">atol</span> <span class="o">=</span> <span class="n">atol</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rtol</span> <span class="o">=</span> <span class="n">rtol</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span><span class="p">:</span> <span class="n">cKDTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_atol_override</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">atol</span> <span class="ow">is</span> <span class="n">_UNSET</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">atol</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rtol_override</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">rtol</span> <span class="ow">is</span> <span class="n">_UNSET</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">rtol</span><span class="p">))</span>
 
+        <span class="n">service_provider</span> <span class="o">=</span> <span class="n">space</span> <span class="k">if</span> <span class="n">space</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">services</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_service_provider</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">service_provider</span><span class="p">,</span> <span class="s2">&quot;services&quot;</span><span class="p">,</span> <span class="n">service_provider</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">fingerprint_service</span>
+            <span class="k">if</span> <span class="n">fingerprint_service</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">cast</span><span class="p">(</span>
+                <span class="n">FingerprintService</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">_service_from_registry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_service_provider</span><span class="p">,</span> <span class="s2">&quot;FingerprintService&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_equivalence_service</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">equivalence_service</span>
+            <span class="k">if</span> <span class="n">equivalence_service</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">cast</span><span class="p">(</span>
+                <span class="n">EquivalenceService</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">_service_from_registry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_service_provider</span><span class="p">,</span> <span class="s2">&quot;EquivalenceService&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_distance_service</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">distance_service</span>
+            <span class="k">if</span> <span class="n">distance_service</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">cast</span><span class="p">(</span>
+                <span class="n">DistanceService</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">_service_from_registry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_service_provider</span><span class="p">,</span> <span class="s2">&quot;DistanceService&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="o">=</span> <span class="s2">&quot;unresolved&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_service_configuration_supplied</span> <span class="o">=</span> <span class="n">service_provider</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">service</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="n">fingerprint_service</span><span class="p">,</span>
+                <span class="n">equivalence_service</span><span class="p">,</span>
+                <span class="n">distance_service</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Direct schema-backed archives remain usable without resolved</span>
+        <span class="c1"># services. Opaque genomes and explicit service configuration use the</span>
+        <span class="c1"># service path and fail early when identity services are missing.</span>
+        <span class="n">legacy_dense</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_genome_batch&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">DenseVectorBatch</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_legacy_identity</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_service_configuration_supplied</span>
+            <span class="ow">and</span> <span class="s2">&quot;x&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="n">genomes</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">legacy_dense</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">duplicate_policy</span> <span class="o">==</span> <span class="s2">&quot;append&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">effective_atol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atol</span>
+            <span class="n">effective_rtol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rtol</span>
+            <span class="k">if</span> <span class="n">effective_atol</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="n">effective_rtol</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_legacy_identity</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                        <span class="s2">&quot;Archive duplicate detection requires FingerprintService&quot;</span>
+                    <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;legacy&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_legacy_identity</span> <span class="k">else</span> <span class="s2">&quot;fingerprint&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_equivalence_service</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_legacy_identity</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                        <span class="s2">&quot;Archive duplicate detection requires EquivalenceService&quot;</span>
+                    <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;legacy&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_legacy_identity</span> <span class="k">else</span> <span class="s2">&quot;equivalence&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_legacy_identity</span> <span class="ow">and</span> <span class="n">key_attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key_attr &#39;</span><span class="si">{</span><span class="n">key_attr</span><span class="si">}</span><span class="s2">&#39; is not defined in attrs&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span><span class="p">:</span> <span class="n">cKDTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_distance_index</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_index_api</span><span class="p">(</span><span class="n">service</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">service</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_invalidate_service_indexes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_distance_index</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">atol</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an explicit or service-owned absolute tolerance.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_atol_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_atol_override</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_identity_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;legacy&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;equivalence&quot;</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_identity_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;legacy&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;unresolved&quot;</span>
+            <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_service_configuration_supplied&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">_service_tolerance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_equivalence_service</span><span class="p">,</span> <span class="s2">&quot;atol&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+
+    <span class="nd">@atol</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">atol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_atol_override</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rtol</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an explicit or service-owned relative tolerance.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rtol_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rtol_override</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_identity_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;legacy&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;equivalence&quot;</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_identity_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;legacy&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;unresolved&quot;</span>
+            <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_service_configuration_supplied&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">_service_tolerance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_equivalence_service</span><span class="p">,</span> <span class="s2">&quot;rtol&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+
+    <span class="nd">@rtol</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rtol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rtol_override</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ArchiveMixin.add">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.add">[ドキュメント]</a>
@@ -1076,7 +1355,7 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">Individual</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Add a new solution to the archive. Duplicate solutions are ignored.</span>
+<span class="sd">        Add a solution according to the configured duplicate policy.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1089,7 +1368,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        idx : int</span>
-<span class="sd">            Destination Index</span>
+<span class="sd">            Index of the retained or newly added row.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        ``&quot;keep_first&quot;`` returns the existing row for a duplicate,</span>
+<span class="sd">        ``&quot;replace&quot;`` updates or replaces that row, and ``&quot;append&quot;`` retains</span>
+<span class="sd">        every observation subject to its ID and request-ID constraints.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
@@ -1100,10 +1385,26 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">_collect_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[unresolved-attribute]</span>
         <span class="n">key_attr_val</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">key_attr_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_legacy_identity</span> <span class="ow">and</span> <span class="n">key_attr_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Solution must have </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="si">}</span><span class="s2"> attribute&quot;</span><span class="p">)</span>
 
         <span class="n">_validate_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>  <span class="c1"># type: ignore[unresolved-attribute]</span>
+        <span class="n">incoming_genome</span> <span class="o">=</span> <span class="n">_extract_genome</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">incoming_genome</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">key_attr_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;fingerprint&quot;</span><span class="p">,</span> <span class="s2">&quot;equivalence&quot;</span><span class="p">}</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span> <span class="o">==</span> <span class="s2">&quot;x&quot;</span>
+        <span class="p">):</span>
+            <span class="n">incoming_genome</span> <span class="o">=</span> <span class="n">_as_single_genome_batch</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">key_attr_val</span><span class="p">))</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;fingerprint&quot;</span><span class="p">,</span> <span class="s2">&quot;equivalence&quot;</span><span class="p">}</span>
+            <span class="ow">and</span> <span class="n">incoming_genome</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Archive.add() requires a genome for duplicate detection&quot;</span>
+            <span class="p">)</span>
+
         <span class="n">incoming_id</span> <span class="o">=</span> <span class="n">_extract_id_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[unresolved-attribute]</span>
         <span class="k">if</span> <span class="n">incoming_id</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -1124,7 +1425,7 @@ window.runMermaid = runMermaid;</script>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Duplicate (request_id, candidate_id) pair&quot;</span><span class="p">)</span>
 
-        <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_idx</span><span class="p">(</span><span class="n">key_attr_val</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_idx</span><span class="p">(</span><span class="n">key_attr_val</span><span class="p">,</span> <span class="n">incoming_genome</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">!=</span> <span class="s2">&quot;append&quot;</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">==</span> <span class="s2">&quot;keep_first&quot;</span><span class="p">:</span>
@@ -1143,10 +1444,22 @@ window.runMermaid = runMermaid;</script>
                     <span class="p">)</span>
                     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                     <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">&quot;id&quot;</span>
+                    <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
+                        <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;x&quot;</span>
+                        <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;fingerprint&quot;</span><span class="p">,</span> <span class="s2">&quot;equivalence&quot;</span><span class="p">}</span>
+                    <span class="p">)</span>
                 <span class="p">}</span>
-                <span class="k">if</span> <span class="n">values</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">update_rows</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">idx</span><span class="p">]),</span> <span class="n">values</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">update_rows</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">idx</span><span class="p">]),</span>
+                    <span class="n">values</span><span class="p">,</span>
+                    <span class="n">genome</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">incoming_genome</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;fingerprint&quot;</span><span class="p">,</span> <span class="s2">&quot;equivalence&quot;</span><span class="p">}</span>
+                        <span class="k">else</span> <span class="kc">None</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_service_indexes</span><span class="p">()</span>
                 <span class="k">return</span> <span class="n">idx</span>
 
             <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -1163,17 +1476,44 @@ window.runMermaid = runMermaid;</script>
             <span class="k">pass</span>
 
         <span class="n">new_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span>
+        <span class="n">append_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">append_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;genome&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">append_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;genomes&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">incoming_genome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="s2">&quot;x&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="ow">or</span> <span class="n">key_attr_val</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="n">append_kwargs</span><span class="p">[</span><span class="s2">&quot;genome&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">incoming_genome</span>
+        <span class="c1"># Population._append_internal() calls mod_structure(), which reaches</span>
+        <span class="c1"># ArchiveMixin.mod_value() and invalidates the exact-match index. Keep</span>
+        <span class="c1"># that handle across the expected append mutation so the fingerprint</span>
+        <span class="c1"># service can append just the new row instead of rebuilding it.</span>
+        <span class="n">fingerprint_index</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_index_api</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="p">,</span> <span class="s2">&quot;add_to_index&quot;</span><span class="p">)</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_append_internal</span><span class="p">(</span>
             <span class="n">element</span><span class="p">,</span>
             <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">allow_duplicate_ids</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">==</span> <span class="s2">&quot;append&quot;</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">append_kwargs</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="n">incoming_genome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">fingerprint_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="o">.</span><span class="n">add_to_index</span><span class="p">(</span><span class="n">fingerprint_index</span><span class="p">,</span> <span class="n">incoming_genome</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span> <span class="o">=</span> <span class="n">fingerprint_index</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># The fingerprint index is incrementally updated above; compatibility</span>
+        <span class="c1"># remain invalidated as before.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_index_api</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="p">,</span> <span class="s2">&quot;find_matches&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">new_idx</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_find_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_idx</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">element</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">genome</span><span class="p">:</span> <span class="n">GenomeBatch</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Search for duplicate indexes and return them if found.</span>
 
@@ -1187,6 +1527,17 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        int | None</span>
 <span class="sd">            Duplicate index. Return None if it does not exist.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="o">==</span> <span class="s2">&quot;fingerprint&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Archive duplicate detection requires a genome&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_fingerprint_idx</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="o">==</span> <span class="s2">&quot;equivalence&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Archive duplicate detection requires a genome&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_equivalence_idx</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="n">key_attr_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
@@ -1203,12 +1554,188 @@ window.runMermaid = runMermaid;</script>
             <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">return</span> <span class="kc">None</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_fingerprint_index</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Archive duplicate detection requires FingerprintService&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_index_api</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="p">,</span> <span class="s2">&quot;create_index&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="o">.</span><span class="n">create_index</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="o">.</span><span class="n">add_to_index</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genomes</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">fingerprints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="o">.</span><span class="n">fingerprint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genomes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fingerprints</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;FingerprintService returned an invalid number of fingerprints&quot;</span>
+            <span class="p">)</span>
+        <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">row</span><span class="p">,</span> <span class="n">fingerprint</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fingerprints</span><span class="p">):</span>
+            <span class="n">index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">fingerprint</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span> <span class="o">=</span> <span class="n">index</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_fingerprint_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">genome</span><span class="p">:</span> <span class="n">GenomeBatch</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Archive duplicate detection requires FingerprintService&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_index_api</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="p">,</span> <span class="s2">&quot;create_index&quot;</span>
+        <span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_index_api</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="p">,</span> <span class="s2">&quot;find_matches&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="o">.</span><span class="n">create_index</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="o">.</span><span class="n">add_to_index</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genomes</span>
+                <span class="p">)</span>
+            <span class="n">matches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="o">.</span><span class="n">find_matches</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span><span class="p">,</span> <span class="n">genome</span><span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intp</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">matches</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,):</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="s2">&quot;FingerprintService returned an invalid match array&quot;</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">fingerprints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="o">.</span><span class="n">fingerprint</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fingerprints</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;FingerprintService must return one fingerprint per genome&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_fingerprint_index</span><span class="p">()</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">fingerprints</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_equivalence_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">genome</span><span class="p">:</span> <span class="n">GenomeBatch</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_equivalence_service</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Archive duplicate detection requires EquivalenceService&quot;</span>
+            <span class="p">)</span>
+        <span class="n">find_matches</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_equivalence_service</span><span class="p">,</span> <span class="s2">&quot;find_matches&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">find_matches</span><span class="p">):</span>
+            <span class="n">matches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                <span class="n">find_matches</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genomes</span><span class="p">,</span> <span class="n">genome</span><span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intp</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">matches</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,):</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="s2">&quot;EquivalenceService returned an invalid match array&quot;</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genomes</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="p">):</span>
+            <span class="n">pair</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">existing</span><span class="o">.</span><span class="n">take</span><span class="p">([</span><span class="n">index</span><span class="p">]),</span> <span class="n">genome</span><span class="p">))</span>
+            <span class="n">duplicate_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_equivalence_service</span><span class="o">.</span><span class="n">find_duplicates</span><span class="p">(</span><span class="n">pair</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">duplicate_mask</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,):</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="s2">&quot;EquivalenceService returned an invalid duplicate mask&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">duplicate_mask</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="n">index</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
 <div class="viewcode-block" id="ArchiveMixin.delete">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.delete">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete element(s) and invalidate the kNN cache.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete candidates selected by ``index`` in place.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        index : int, slice, list of int, or ndarray</span>
+<span class="sd">            Row index or indices to remove from the active archive.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Surviving rows retain their relative order. The operation invalidates</span>
+<span class="sd">        the archive&#39;s identity and nearest-neighbor caches.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_service_indexes</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ArchiveMixin.extend">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.extend">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extend the archive with another candidate collection.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : Population or dict</span>
+<span class="sd">            Source population or column-data mapping accepted by</span>
+<span class="sd">            :meth:`Population.extend`.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The operation invalidates the archive&#39;s identity and nearest-neighbor</span>
+<span class="sd">        caches after copying the source rows.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_service_indexes</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ArchiveMixin.reorder">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.reorder">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reorder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reorder rows according to a complete row permutation.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        order : ndarray of int</span>
+<span class="sd">            Permutation containing one row index for every active candidate.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``order`` does not contain one entry per active row.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Reordering is in place and invalidates caches whose values are</span>
+<span class="sd">        row-indexed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">reorder</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_service_indexes</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ArchiveMixin.truncate">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.truncate">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">truncate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Keep the first ``new_size`` rows in place.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        new_size : int</span>
+<span class="sd">            Number of rows to retain.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If ``new_size`` is negative.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Truncation invalidates the archive&#39;s identity and nearest-neighbor</span>
+<span class="sd">        caches.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="n">new_size</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_service_indexes</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ArchiveMixin.clear">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.clear">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear rows and invalidate identity/neighbor caches.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_service_indexes</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="ArchiveMixin.mod_value">
@@ -1216,12 +1743,27 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">mod_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Invalidate the kNN cache on every value-only mutation, too.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_service_indexes</span><span class="p">()</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">mod_value</span><span class="p">()</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dense_archive_array</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return dense genome coordinates for the intentionally dense kNN API.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identity_mode</span> <span class="o">==</span> <span class="s2">&quot;legacy&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">)</span>
+        <span class="n">genomes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genomes</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">genomes</span><span class="p">,</span> <span class="n">DenseVectorBatch</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">genomes</span><span class="o">.</span><span class="n">array</span>
+        <span class="n">dense_view</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_dense_numeric_view&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dense_view</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Archive.get_knn requires the DenseNumericView service&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dense_view</span><span class="o">.</span><span class="n">get_view</span><span class="p">(</span><span class="n">genomes</span><span class="p">))</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_kdtree</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">))</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dense_archive_array</span><span class="p">())</span>
 
 <div class="viewcode-block" id="ArchiveMixin.get_knn">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.get_knn">[ドキュメント]</a>
@@ -1243,10 +1785,63 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="n">create_index</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_distance_service</span><span class="p">,</span> <span class="s2">&quot;create_index&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">query_knn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_distance_service</span><span class="p">,</span> <span class="s2">&quot;query_knn&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">create_index</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">query_knn</span><span class="p">):</span>
+            <span class="n">distance_service</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">DistanceService</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_distance_service</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_distance_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_distance_index</span> <span class="o">=</span> <span class="n">distance_service</span><span class="o">.</span><span class="n">create_index</span><span class="p">(</span>
+                    <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">genomes</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">distance_service</span><span class="o">.</span><span class="n">query_knn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_distance_index</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_kdtree</span><span class="p">()</span>
         <span class="n">k</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
         <span class="n">dist</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>  <span class="c1"># ty: ignore[unresolved-attribute]</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">dist</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ArchiveMixin.empty_like">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveMixin.html#saealib.ArchiveMixin.empty_like">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">capacity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an empty archive while retaining resolved identity services.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        capacity : int or None, optional</span>
+<span class="sd">            Storage capacity for the new archive. If omitted, the current</span>
+<span class="sd">            capacity is reused.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Archive</span>
+<span class="sd">            An empty archive of the same concrete type and schema with</span>
+<span class="sd">            independent row storage and the same identity services.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">capacity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_capacity</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_genome_batch&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">DenseVectorBatch</span><span class="p">):</span>
+            <span class="n">genome_template</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">genome_template</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">genomes</span><span class="o">.</span><span class="n">take</span><span class="p">([])</span>
+
+        <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;key_attr&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_attr</span><span class="p">,</span>
+            <span class="s2">&quot;duplicate_policy&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span><span class="p">,</span>
+            <span class="s2">&quot;dense_numeric_view&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_dense_numeric_view&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s2">&quot;services&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_service_provider</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_service_configuration_supplied</span>
+            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;fingerprint_service&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fingerprint_service</span><span class="p">,</span>
+            <span class="s2">&quot;equivalence_service&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_equivalence_service</span><span class="p">,</span>
+            <span class="s2">&quot;distance_service&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_distance_service</span><span class="p">,</span>
+            <span class="s2">&quot;genomes&quot;</span><span class="p">:</span> <span class="n">genome_template</span><span class="p">,</span>
+            <span class="s2">&quot;space&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;space&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_atol_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;atol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_atol_override</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rtol_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;rtol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rtol_override</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 </div>
 
 
@@ -1254,7 +1849,10 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="Archive">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.Archive.html#saealib.Archive">[ドキュメント]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Archive</span><span class="p">(</span><span class="n">ArchiveMixin</span><span class="p">,</span> <span class="n">Population</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Concrete archive: ``ArchiveMixin`` mixed into ``Population``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Concrete archive combining ``ArchiveMixin`` with ``Population``.</span>
+
+<span class="sd">    Its constructor is inherited from ``ArchiveMixin``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">pass</span></div>
 
@@ -1309,13 +1907,23 @@ window.runMermaid = runMermaid;</script>
         <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="n">duplicate_policy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;keep_first&quot;</span><span class="p">,</span>
+        <span class="n">genomes</span><span class="p">:</span> <span class="n">GenomeBatch</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dense_numeric_view</span><span class="p">:</span> <span class="n">DenseNumericView</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dense_view</span><span class="p">:</span> <span class="n">DenseNumericView</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">duplicate_policy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;keep_first&quot;</span><span class="p">,</span> <span class="s2">&quot;replace&quot;</span><span class="p">,</span> <span class="s2">&quot;append&quot;</span><span class="p">}:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid duplicate_policy&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">duplicate_policy</span> <span class="o">==</span> <span class="s2">&quot;append&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;ParetoArchive does not support append policy&quot;</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="n">init_capacity</span><span class="p">)</span>  <span class="c1"># ty: ignore[unknown-argument]</span>
+        <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">)(</span>
+            <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span>
+            <span class="n">init_capacity</span><span class="o">=</span><span class="n">init_capacity</span><span class="p">,</span>
+            <span class="n">genomes</span><span class="o">=</span><span class="n">genomes</span><span class="p">,</span>
+            <span class="n">dense_numeric_view</span><span class="o">=</span><span class="n">dense_numeric_view</span><span class="p">,</span>
+            <span class="n">dense_view</span><span class="o">=</span><span class="n">dense_view</span><span class="p">,</span>
+            <span class="n">space</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;space&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">key_attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_schema&quot;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key_attr &#39;</span><span class="si">{</span><span class="n">key_attr</span><span class="si">}</span><span class="s2">&#39; is not defined in attrs&quot;</span><span class="p">)</span>
 
@@ -1333,10 +1941,6 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_policy</span> <span class="o">=</span> <span class="n">duplicate_policy</span></div>
 
 
-    <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># Internal helpers</span>
-    <span class="c1"># ------------------------------------------------------------------</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_fv</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">Individual</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
@@ -1350,7 +1954,6 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        cv : float</span>
 <span class="sd">            Constraint violation (0.0 when absent).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># --- f ---</span>
         <span class="n">f_val</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">f_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -1365,7 +1968,6 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">f</span><span class="p">)):</span>
                 <span class="n">f</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="c1"># --- cv ---</span>
         <span class="n">cv_val</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cv&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cv_val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -1384,7 +1986,6 @@ window.runMermaid = runMermaid;</script>
         <span class="n">f_ex</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">cv_ex</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if the new solution dominates the existing one.&quot;&quot;&quot;</span>
         <span class="n">new_feasible</span> <span class="o">=</span> <span class="n">cv_new</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps_cv</span>
         <span class="n">ex_feasible</span> <span class="o">=</span> <span class="n">cv_ex</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps_cv</span>
 
@@ -1410,12 +2011,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">f_ex</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">cv_ex</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if an existing solution dominates the new one.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_new_dominates_existing</span><span class="p">(</span><span class="n">f_ex</span><span class="p">,</span> <span class="n">cv_ex</span><span class="p">,</span> <span class="n">f_new</span><span class="p">,</span> <span class="n">cv_new</span><span class="p">)</span>
-
-    <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># Public API</span>
-    <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="ParetoMixin.add">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ParetoMixin.html#saealib.ParetoMixin.add">[ドキュメント]</a>

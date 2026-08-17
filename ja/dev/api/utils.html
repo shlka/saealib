@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Utilities &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>ユーティリティ &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -171,8 +171,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -186,14 +193,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -346,8 +353,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -361,14 +375,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -469,21 +483,89 @@
      aria-label="セクションナビゲーション">
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 has-children"><a class="reference internal" href="highlevel.html">High-Level API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1"><a class="reference internal" href="imports.html">標準インポート</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="core.html">コアAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.Component.html">saealib.core.Component</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ComponentContract.html">saealib.core.ComponentContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.PartSpec.html">saealib.core.PartSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.AssumptionSet.html">saealib.core.AssumptionSet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.DataSpec.html">saealib.core.DataSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.PortContract.html">saealib.core.PortContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.PortSpec.html">saealib.core.PortSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StateContract.html">saealib.core.StateContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.LifecycleContract.html">saealib.core.LifecycleContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ExecutionContract.html">saealib.core.ExecutionContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ComponentGraph.html">saealib.core.ComponentGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StructuredGraph.html">saealib.core.StructuredGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StructuredRegion.html">saealib.core.StructuredRegion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.CompilationRule.html">saealib.core.CompilationRule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StateStore.html">saealib.core.StateStore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StateView.html">saealib.core.StateView</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StatePatch.html">saealib.core.StatePatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ExecutablePlan.html">saealib.core.ExecutablePlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ExecutionRuntime.html">saealib.core.ExecutionRuntime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.ComponentNode.html">saealib.core.compiler.ComponentNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.NodeRef.html">saealib.core.compiler.NodeRef</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.DataEdge.html">saealib.core.compiler.DataEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.ControlEdge.html">saealib.core.compiler.ControlEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.StateBinding.html">saealib.core.compiler.StateBinding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.Diagnostic.html">saealib.core.compiler.Diagnostic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.ContractPath.html">saealib.core.compiler.ContractPath</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="execution.html">実行API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.AsyncEvaluationScheduler.html">saealib.execution.AsyncEvaluationScheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.PollResult.html">saealib.execution.PollResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.RuntimeFactory.html">saealib.execution.RuntimeFactory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.RuntimeRegistration.html">saealib.execution.RuntimeRegistration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.RuntimeRegistry.html">saealib.execution.RuntimeRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.create_runtime.html">saealib.execution.create_runtime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.default_runtime_registry.html">saealib.execution.default_runtime_registry</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="space.html">探索空間API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.SearchSpace.html">saealib.space.SearchSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ServiceRegistry.html">saealib.space.ServiceRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ValidationResult.html">saealib.space.ValidationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.RepresentationSpec.html">saealib.core.contracts.RepresentationSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.VectorSpace.html">saealib.space.VectorSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ObjectSpace.html">saealib.space.ObjectSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.SequenceSpace.html">saealib.space.SequenceSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.PermutationSpace.html">saealib.space.PermutationSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.GenomeCodec.html">saealib.space.GenomeCodec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.SamplingService.html">saealib.space.SamplingService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ValidationService.html">saealib.space.ValidationService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.FeatureEncoder.html">saealib.space.FeatureEncoder</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="feedback.html">フィードバックAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.ProposalBatch.html">saealib.core.contracts.ProposalBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.ObservationBatch.html">saealib.core.contracts.ObservationBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.FeedbackBatch.html">saealib.core.contracts.FeedbackBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.FeedbackContract.html">saealib.core.contracts.FeedbackContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FeedbackBuilder.html">saealib.FeedbackBuilder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TrueOnlyFeedback.html">saealib.TrueOnlyFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PredictedFeedback.html">saealib.PredictedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.MixedFeedback.html">saealib.MixedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.NoFeedback.html">saealib.NoFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FeedbackResult.html">saealib.FeedbackResult</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="highlevel.html">高レベルAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Result.html">saealib.Result</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="optimizer.html">Optimizer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="optimizer.html">オプティマイザー</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Optimizer.html">saealib.Optimizer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="exceptions.html">Exceptions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="exceptions.html">例外</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SaealibError.html">saealib.SaealibError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ValidationError.html">saealib.ValidationError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ConfigurationError.html">saealib.ConfigurationError</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="registry.html">Registry</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="registry.html">レジストリ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.register.html">saealib.register</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.registry.build.html">saealib.registry.build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.registry.get.html">saealib.registry.get</a></li>
@@ -501,14 +583,14 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GradientRepairHandler.html">saealib.GradientRepairHandler</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="variables.html">Variables</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="variables.html">変数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Variable.html">saealib.Variable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ContinuousVariable.html">saealib.ContinuousVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IntegerVariable.html">saealib.IntegerVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CategoricalVariable.html">saealib.CategoricalVariable</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="comparators.html">Comparators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="comparators.html">比較器</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Comparator.html">saealib.Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SingleObjectiveComparator.html">saealib.SingleObjectiveComparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.WeightedSumComparator.html">saealib.WeightedSumComparator</a></li>
@@ -543,14 +625,15 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PopulationAttribute.html">saealib.PopulationAttribute</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="algorithms.html">Algorithms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="algorithms.html">アルゴリズム</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Algorithm.html">saealib.Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GA.html">saealib.GA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenomeGA.html">saealib.GenomeGA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PSO.html">saealib.PSO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PymooAlgorithm.html">saealib.PymooAlgorithm</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="operators.html">Operators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="operators.html">演算子</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Crossover.html">saealib.Crossover</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CrossoverBLXAlpha.html">saealib.CrossoverBLXAlpha</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CrossoverSBX.html">saealib.CrossoverSBX</a></li>
@@ -576,7 +659,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PymooMutation.html">saealib.PymooMutation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="surrogate.html">Surrogate Models</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="surrogate.html">サロゲートモデル</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Surrogate.html">saealib.Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RegressionSurrogate.html">saealib.RegressionSurrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ComparisonSurrogate.html">saealib.ComparisonSurrogate</a></li>
@@ -627,7 +710,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SpearmanCorrelation.html">saealib.SpearmanCorrelation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="acquisition.html">獲得関数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
@@ -641,7 +724,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SMSEGOAcquisition.html">saealib.SMSEGOAcquisition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="strategies.html">Optimization Strategies</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="strategies.html">最適化戦略</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html">saealib.OptimizationStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenerationBasedStrategy.html">saealib.GenerationBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
@@ -651,18 +734,26 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="initialization.html">初期化</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Initializer.html">saealib.Initializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenomeInitializer.html">saealib.GenomeInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.LHSInitializer.html">saealib.LHSInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RandomInitializer.html">saealib.RandomInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SobolInitializer.html">saealib.SobolInitializer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="evaluation.html">Evaluation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="evaluation.html">評価</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Evaluator.html">saealib.Evaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ThreadPoolEvaluator.html">saealib.ThreadPoolEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AsyncEvaluator.html">saealib.AsyncEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationAdapter.html">saealib.EvaluationAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationRequest.html">saealib.EvaluationRequest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationHandle.html">saealib.EvaluationHandle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationQuery.html">saealib.EvaluationQuery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationUpdate.html">saealib.EvaluationUpdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PendingEvaluation.html">saealib.PendingEvaluation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
@@ -673,6 +764,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -680,7 +772,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TerminationCondition.html">saealib.TerminationCondition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="callbacks.html">Callbacks</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="callbacks.html">コールバック</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Event.html">saealib.Event</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RunStartEvent.html">saealib.RunStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RunEndEvent.html">saealib.RunEndEvent</a></li>
@@ -690,6 +782,8 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenerationEndEvent.html">saealib.GenerationEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateStartEvent.html">saealib.SurrogateStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateEndEvent.html">saealib.SurrogateEndEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionStartEvent.html">saealib.AcquisitionStartEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionEndEvent.html">saealib.AcquisitionEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PostCrossoverEvent.html">saealib.PostCrossoverEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PostMutationEvent.html">saealib.PostMutationEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PostAskEvent.html">saealib.PostAskEvent</a></li>
@@ -699,25 +793,35 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CheckpointCallback.html">saealib.CheckpointCallback</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="pipeline.html">Pipeline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="pipeline.html">パイプライン</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Stage.html">saealib.Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Pipeline.html">saealib.Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Repeat.html">saealib.Repeat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Loop.html">saealib.Loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Branch.html">saealib.Branch</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="stages.html">ステージ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AskStage.html">saealib.AskStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AsyncEvaluationSubmitStage.html">saealib.AsyncEvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationSubmitStage.html">saealib.EvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationCollectStage.html">saealib.EvaluationCollectStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationApplyStage.html">saealib.EvaluationApplyStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationAcknowledgeStage.html">saealib.EvaluationAcknowledgeStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FeedbackStage.html">saealib.FeedbackStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.InitializationStage.html">saealib.InitializationStage</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Utilities</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">ユーティリティ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">参照</a></li>
 </ul>
 </div>
 </nav></div>
@@ -759,9 +863,9 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="index.html" class="nav-link">API Reference</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">APIリファレンス</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Utilities</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ユーティリティ</span></li>
   </ul>
 </nav>
 </div>
@@ -779,27 +883,22 @@
                 <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="utilities">
-<h1>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">#</a></h1>
-<dl class="py function">
+<h1>ユーティリティ<a class="headerlink" href="#utilities" title="Link to this heading">#</a></h1>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><dl class="py function">
 <dt class="sig sig-object py" id="saealib.hypervolume">
 <span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">hypervolume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saealib/utils/indicators.html#hypervolume"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.hypervolume" title="Link to this definition">#</a></dt>
-<dd><p>Compute hypervolume indicator (minimization convention).</p>
-<p>The hypervolume (S-metric) indicator was introduced by Zitzler &amp;
-Thiele (1998) as a way to measure the quality of a Pareto front
-approximation without a priori knowledge of the true front.</p>
-<p>Uses a recursive slicing algorithm. Complexity: O(n^(m-1) * n log n),
-where n is the number of points and m is the number of objectives.</p>
+<dd><p>超体積指標を計算します（最小化規約）。</p>
+<p>超体積（S指標）は、真のフロントを事前に知らなくてもパレートフロント近似の品質を測る方法としてZitzlerとThiele（1998）が導入しました。</p>
+<p>再帰的なスライスアルゴリズムを使います。計算量はO(n^(m-1) * n log n)です。nは点数、mは目的数です。</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> (<em>np.ndarray</em>) -- Objective matrix, shape (n, n_obj).</p></li>
-<li><p><strong>reference_point</strong> (<em>np.ndarray</em>) -- Reference (nadir) point, shape (n_obj,). Each component must be
-strictly greater than the corresponding component of at least one
-point in f for a non-zero hypervolume to be returned.</p></li>
+<li><p><strong>f</strong> (<em>np.ndarray</em>) -- 目的値行列。形状は(n, n_obj)です。</p></li>
+<li><p><strong>reference_point</strong> (<em>np.ndarray</em>) -- 参照（nadir）点。形状は(n_obj,)です。ゼロでない超体積を返すには、各成分がf内の少なくとも1点の対応する成分より厳密に大きくなければなりません。</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p>Hypervolume value.</p>
+<dd class="field-even"><p>超体積の値です。</p>
 </dd>
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p>float</p>
@@ -810,49 +909,28 @@ point in f for a non-zero hypervolume to be returned.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="saealib.hypervolume_contributions">
 <span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">hypervolume_contributions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saealib/utils/indicators.html#hypervolume_contributions"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.hypervolume_contributions" title="Link to this definition">#</a></dt>
-<dd><p>Compute exclusive hypervolume contributions for each point.</p>
-<p>The exclusive contribution of point <code class="docutils literal notranslate"><span class="pre">i</span></code> is defined as:</p>
+<dd><p>各点の排他的超体積寄与を計算します。</p>
+<p>点<code class="docutils literal notranslate"><span class="pre">i</span></code>の排他的寄与は次のように定義されます::</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Delta_HV</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">=</span> <span class="n">HV</span><span class="p">(</span><span class="n">S</span><span class="p">)</span> <span class="o">-</span> <span class="n">HV</span><span class="p">(</span><span class="n">S</span> \ <span class="p">{</span><span class="n">i</span><span class="p">})</span>
 </pre></div>
 </div>
-<p>i.e. the volume exclusively dominated by point <code class="docutils literal notranslate"><span class="pre">i</span></code> relative to the
-reference point.  Higher is better, consistent with the library-wide
-convention.  Dominated points and points not strictly better than the
-reference point contribute 0.</p>
-<p>This function reuses <a class="reference internal" href="#saealib.hypervolume" title="saealib.hypervolume"><code class="xref py py-func docutils literal notranslate"><span class="pre">hypervolume()</span></code></a> and therefore inherits the
-minimisation convention internally.  Use the <code class="docutils literal notranslate"><span class="pre">direction</span></code> parameter to
-handle maximisation objectives.</p>
+<p>つまり、参照点に対して点<code class="docutils literal notranslate"><span class="pre">i</span></code>だけが支配する体積です。ライブラリ全体の規約どおり値が大きいほど良く、支配された点や参照点より厳密に良くない点の寄与は0です。</p>
+<p>この関数は <a class="reference internal" href="#saealib.hypervolume" title="saealib.hypervolume"><code class="xref py py-func docutils literal notranslate"><span class="pre">hypervolume()</span></code></a> を再利用するため、内部では最小化規約を引き継ぎます。 最大化する目的には <code class="docutils literal notranslate"><span class="pre">direction</span></code> パラメータを使ってください。</p>
 <div class="admonition warning">
 <p class="admonition-title">警告</p>
-<p>Computing hypervolume is exponential in the number of objectives, and
-the leave-one-out loop adds a factor of N.  For many objectives or
-large N this becomes prohibitively expensive.  A future improvement
-may incorporate a faster batch hypervolume algorithm (e.g. the
-slicing-based approach of While, Hingston, Barone &amp; Huband, 2006;
-paper not yet obtained -- name only, not to be confused with the
-WFG benchmark-problem paper by Huband et al., 2006, which is a
-different work despite the overlapping author list).</p>
+<p>超体積の計算量は目的数に対して指数的で、1個抜きのループによってNの係数も加わります。目的数やNが大きい場合、非常に高コストになります。将来は、より高速なバッチ超体積アルゴリズム（例：While、Hingston、Barone、Huband、2006年のスライス法）を取り入れられる可能性があります。論文は未入手のため名称だけを示します。著者名が重なる別研究であるHuband et al., 2006のWFGベンチマーク問題論文とは異なるため、混同しないでください。</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> (<em>np.ndarray</em>) -- Objective matrix, shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">n_obj)</span></code>.</p></li>
-<li><p><strong>reference_point</strong> (<em>np.ndarray</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Reference point in the <em>original</em> objective space, shape
-<code class="docutils literal notranslate"><span class="pre">(n_obj,)</span></code>.  If <code class="docutils literal notranslate"><span class="pre">None</span></code>, it is auto-computed from the data with
-a fractional padding controlled by <code class="docutils literal notranslate"><span class="pre">margin</span></code>.</p></li>
-<li><p><strong>direction</strong> (<em>np.ndarray</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- Per-objective optimisation direction: <code class="docutils literal notranslate"><span class="pre">+1</span></code> to maximise, <code class="docutils literal notranslate"><span class="pre">-1</span></code>
-to minimise.  <code class="docutils literal notranslate"><span class="pre">None</span></code> defaults to all-minimise (equivalent to
-<code class="docutils literal notranslate"><span class="pre">np.full(n_obj,</span> <span class="pre">-1.0)</span></code>).  Same convention as
-<code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.comparators.spea2_fitness()</span></code>.</p></li>
-<li><p><strong>margin</strong> (<em>float</em><em>, </em><em>optional</em>) -- Fractional padding used when auto-computing the reference point.
-For each objective axis the auto reference is placed at
-<code class="docutils literal notranslate"><span class="pre">nadir</span> <span class="pre">+</span> <span class="pre">margin</span> <span class="pre">*</span> <span class="pre">span</span></code>.  Ignored when <code class="docutils literal notranslate"><span class="pre">reference_point</span></code> is
-provided.</p></li>
+<li><p><strong>f</strong> (<em>np.ndarray</em>) -- 目的値行列。形状は<code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">n_obj)</span></code>です。</p></li>
+<li><p><strong>reference_point</strong> (<em>np.ndarray</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- <em>元の</em>目的空間における参照点。形状は<code class="docutils literal notranslate"><span class="pre">(n_obj,)</span></code>です。<code class="docutils literal notranslate"><span class="pre">None</span></code>の場合は、<code class="docutils literal notranslate"><span class="pre">margin</span></code>で制御される割合の余白を使ってデータから自動計算します。</p></li>
+<li><p><strong>direction</strong> (<em>np.ndarray</em><em> or </em><em>None</em><em>, </em><em>optional</em>) -- 目的ごとの最適化方向です。最大化には<code class="docutils literal notranslate"><span class="pre">+1</span></code>、最小化には<code class="docutils literal notranslate"><span class="pre">-1</span></code>を使います。<code class="docutils literal notranslate"><span class="pre">None</span></code>ではすべて最小化（<code class="docutils literal notranslate"><span class="pre">np.full(n_obj,</span> <span class="pre">-1.0)</span></code>相当）になります。<code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.comparators.spea2_fitness()</span></code>と同じ規約です。</p></li>
+<li><p><strong>margin</strong> (<em>float</em><em>, </em><em>optional</em>) -- 参照点の自動計算に使う割合の余白です。各目的軸では自動参照点を<code class="docutils literal notranslate"><span class="pre">nadir</span> <span class="pre">+</span> <span class="pre">margin</span> <span class="pre">*</span> <span class="pre">span</span></code>に置きます。<code class="docutils literal notranslate"><span class="pre">reference_point</span></code>を指定した場合は無視されます。</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p>Exclusive hypervolume contribution per point, shape <code class="docutils literal notranslate"><span class="pre">(N,)</span></code>.
-All values are <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">0</span></code> (dominated / out-of-reference points get 0).</p>
+<dd class="field-even"><p>点ごとの排他的超体積寄与。形状は<code class="docutils literal notranslate"><span class="pre">(N,)</span></code>です。すべての値は<code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">0</span></code>で、支配された点や参照範囲外の点は0になります。</p>
 </dd>
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
@@ -860,12 +938,9 @@ All values are <code class="docutils literal notranslate"><span class="pre">&gt;
 </dl>
 <p class="rubric">参照</p>
 <dl class="simple">
-<dt>Beume, N., Naujoks, B., &amp; Emmerich, M. (2007).</dt><dd><p>SMS-EMOA: Multiobjective selection based on dominated hypervolume.
-<em>European Journal of Operational Research</em>, 181(3), 1653-1669.
-<a class="reference external" href="https://doi.org/10.1016/j.ejor.2006.08.008">https://doi.org/10.1016/j.ejor.2006.08.008</a></p>
+<dt>Beume, N., Naujoks, B., &amp; Emmerich, M.（2007）。</dt><dd><p>SMS-EMOA：被支配超体積に基づく多目的選択。<em>European Journal of Operational Research</em>, 181(3), 1653–1669。https://doi.org/10.1016/j.ejor.2006.08.008</p>
 </dd>
-<dt>Zitzler, E., &amp; Thiele, L. (1998).</dt><dd><p>Multiobjective optimization using evolutionary algorithms - a
-comparative case study.  <em>PPSN V</em>, LNCS 1498, pp. 292-301.</p>
+<dt>Zitzler, E., &amp; Thiele, L.（1998）。</dt><dd><p>進化アルゴリズムを用いた多目的最適化―比較事例研究。<em>PPSN V</em>, LNCS 1498, pp. 292–301。</p>
 </dd>
 </dl>
 </dd></dl>
@@ -873,30 +948,25 @@ comparative case study.  <em>PPSN V</em>, LNCS 1498, pp. 292-301.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="saealib.uniform_weight_vectors">
 <span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">uniform_weight_vectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_divisions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saealib/utils/weight_vectors.html#uniform_weight_vectors"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.uniform_weight_vectors" title="Link to this definition">#</a></dt>
-<dd><p>Generate weight vectors uniformly distributed on the unit simplex.</p>
-<p>Uses the simplex lattice design described in Das &amp; Dennis (1998), widely
-applied in MOEA/D (Zhang &amp; Li, 2007) and NSGA-III (Deb &amp; Jain, 2014).</p>
-<p>Each weight vector <code class="docutils literal notranslate"><span class="pre">w</span></code> satisfies <code class="docutils literal notranslate"><span class="pre">sum(w)</span> <span class="pre">==</span> <span class="pre">1</span></code> and <code class="docutils literal notranslate"><span class="pre">w_i</span> <span class="pre">&gt;=</span> <span class="pre">0</span></code>.
-The granularity is <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">n_divisions</span></code>; each component takes a value in
-<code class="docutils literal notranslate"><span class="pre">{0,</span> <span class="pre">1/H,</span> <span class="pre">2/H,</span> <span class="pre">...,</span> <span class="pre">1}</span></code> where <code class="docutils literal notranslate"><span class="pre">H</span> <span class="pre">=</span> <span class="pre">n_divisions</span></code>.</p>
-<p>The number of vectors returned is <code class="docutils literal notranslate"><span class="pre">math.comb(n_obj</span> <span class="pre">+</span> <span class="pre">H</span> <span class="pre">-</span> <span class="pre">1,</span> <span class="pre">H)</span></code>.</p>
+<dd><p>単体上に一様分布する重みベクトルを生成します。</p>
+<p>DasとDennis（1998）が示した単体格子設計を使います。この設計はMOEA/D（Zhang &amp; Li, 2007）やNSGA-III（Deb &amp; Jain, 2014）で広く使われています。</p>
+<p>各重みベクトル<code class="docutils literal notranslate"><span class="pre">w</span></code>は<code class="docutils literal notranslate"><span class="pre">sum(w)</span> <span class="pre">==</span> <span class="pre">1</span></code>および<code class="docutils literal notranslate"><span class="pre">w_i</span> <span class="pre">&gt;=</span> <span class="pre">0</span></code>を満たします。粒度は<code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">n_divisions</span></code>で、各成分は<code class="docutils literal notranslate"><span class="pre">H</span> <span class="pre">=</span> <span class="pre">n_divisions</span></code>における<code class="docutils literal notranslate"><span class="pre">{0,</span> <span class="pre">1/H,</span> <span class="pre">2/H,</span> <span class="pre">...,</span> <span class="pre">1}</span></code>のいずれかです。</p>
+<p>返されるベクトルの数は<code class="docutils literal notranslate"><span class="pre">math.comb(n_obj</span> <span class="pre">+</span> <span class="pre">H</span> <span class="pre">-</span> <span class="pre">1,</span> <span class="pre">H)</span></code>です。</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_obj</strong> (<em>int</em>) -- Number of objectives. Must be &gt;= 2.</p></li>
-<li><p><strong>n_divisions</strong> (<em>int</em>) -- Number of divisions <code class="docutils literal notranslate"><span class="pre">H</span></code> along each axis. Must be &gt;= 1. Larger values
-produce more weight vectors and finer coverage.</p></li>
+<li><p><strong>n_obj</strong> (<em>int</em>) -- 目的数。2以上でなければなりません。</p></li>
+<li><p><strong>n_divisions</strong> (<em>int</em>) -- 各軸の分割数<code class="docutils literal notranslate"><span class="pre">H</span></code>。1以上でなければなりません。大きい値ほど多くの重みベクトルが生成され、カバレッジが細かくなります。</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p>Weight matrix, shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">n_obj)</span></code>. Each row sums to 1.0 and all
-entries are non-negative.</p>
+<dd class="field-even"><p>重み行列。形状は<code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">n_obj)</span></code>です。各行の合計は1.0で、すべての要素が非負です。</p>
 </dd>
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
 </dd>
 <dt class="field-even">例外<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> -- If <code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&lt;</span> <span class="pre">2</span></code> or <code class="docutils literal notranslate"><span class="pre">n_divisions</span> <span class="pre">&lt;</span> <span class="pre">1</span></code>.</p>
+<dd class="field-even"><p><strong>ValueError</strong> -- <code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&lt;</span> <span class="pre">2</span></code>または<code class="docutils literal notranslate"><span class="pre">n_divisions</span> <span class="pre">&lt;</span> <span class="pre">1</span></code>の場合です。</p>
 </dd>
 </dl>
 <p class="rubric">参照</p>

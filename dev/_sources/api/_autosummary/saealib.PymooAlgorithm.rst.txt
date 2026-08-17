@@ -17,6 +17,7 @@
 
    ~PymooAlgorithm.__init__
    ~PymooAlgorithm.ask
+   ~PymooAlgorithm.contract
    ~PymooAlgorithm.create_pareto_archive
    ~PymooAlgorithm.get_required_attrs
    ~PymooAlgorithm.tell
@@ -33,6 +34,9 @@
 
 
 .. automethod:: saealib.PymooAlgorithm.ask
+
+
+.. automethod:: saealib.PymooAlgorithm.contract
 
 
 .. automethod:: saealib.PymooAlgorithm.create_pareto_archive

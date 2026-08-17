@@ -17,6 +17,7 @@
 
    ~FeasibilityClassificationSet.__init__
    ~FeasibilityClassificationSet.build
+   ~FeasibilityClassificationSet.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.FeasibilityClassificationSet.build
+
+
+.. automethod:: saealib.FeasibilityClassificationSet.contract
 
 
 

@@ -16,6 +16,7 @@
 
 
    ~MutationGaussian.__init__
+   ~MutationGaussian.contract
    ~MutationGaussian.mutate
    ~MutationGaussian.mutate_batch
    ~MutationGaussian.post_mutation
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.MutationGaussian.__init__
+
+
+.. automethod:: saealib.MutationGaussian.contract
 
 
 .. automethod:: saealib.MutationGaussian.mutate

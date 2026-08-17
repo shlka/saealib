@@ -20,6 +20,7 @@
    ~SerialEvaluator.can_reattach
    ~SerialEvaluator.cancel
    ~SerialEvaluator.collect
+   ~SerialEvaluator.contract
    ~SerialEvaluator.detach
    ~SerialEvaluator.evaluate_batch
    ~SerialEvaluator.evaluate_request
@@ -49,6 +50,9 @@
 
 
 .. automethod:: saealib.SerialEvaluator.collect
+
+
+.. automethod:: saealib.SerialEvaluator.contract
 
 
 .. automethod:: saealib.SerialEvaluator.detach

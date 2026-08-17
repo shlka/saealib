@@ -20,6 +20,7 @@
    ~Evaluator.can_reattach
    ~Evaluator.cancel
    ~Evaluator.collect
+   ~Evaluator.contract
    ~Evaluator.detach
    ~Evaluator.evaluate_batch
    ~Evaluator.evaluate_request
@@ -49,6 +50,9 @@
 
 
 .. automethod:: saealib.Evaluator.collect
+
+
+.. automethod:: saealib.Evaluator.contract
 
 
 .. automethod:: saealib.Evaluator.detach

@@ -16,6 +16,7 @@
 
 
    ~SobolInitializer.__init__
+   ~SobolInitializer.contract
    ~SobolInitializer.initialize
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.SobolInitializer.__init__
+
+
+.. automethod:: saealib.SobolInitializer.contract
 
 
 .. automethod:: saealib.SobolInitializer.initialize

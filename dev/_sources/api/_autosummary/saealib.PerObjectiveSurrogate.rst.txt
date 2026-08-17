@@ -16,6 +16,7 @@
 
 
    ~PerObjectiveSurrogate.__init__
+   ~PerObjectiveSurrogate.contract
    ~PerObjectiveSurrogate.fit
    ~PerObjectiveSurrogate.post_fit
    ~PerObjectiveSurrogate.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.PerObjectiveSurrogate.__init__
+
+
+.. automethod:: saealib.PerObjectiveSurrogate.contract
 
 
 .. automethod:: saealib.PerObjectiveSurrogate.fit

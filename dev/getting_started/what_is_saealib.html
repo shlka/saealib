@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>What is saealib &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>What is saealib? &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -501,7 +501,7 @@ window.runMermaid = runMermaid;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Installation" href="installation.html" />
-    <link rel="prev" title="Getting Started" href="index.html" />
+    <link rel="prev" title="Getting started" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -594,7 +594,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -607,8 +607,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -629,7 +636,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -769,7 +776,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -782,8 +789,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -804,7 +818,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -905,7 +919,7 @@ window.runMermaid = runMermaid;</script>
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">What is saealib</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">What is saealib?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 </ul>
@@ -949,9 +963,9 @@ window.runMermaid = runMermaid;</script>
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Getting Started</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Getting started</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">What is saealib</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">What is saealib?</span></li>
   </ul>
 </nav>
 </div>
@@ -969,105 +983,70 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="what-is-saealib">
-<h1>What is saealib<a class="headerlink" href="#what-is-saealib" title="Link to this heading">#</a></h1>
-<p>saealib is a general-purpose Python library for surrogate-assisted evolutionary algorithms (SAEA).
-Evolutionary algorithms (EA), surrogate models, and model management strategies are modularized, and you build and run an algorithm by combining them.</p>
+<h1>What is saealib?<a class="headerlink" href="#what-is-saealib" title="Link to this heading">#</a></h1>
+<div class="layer-badges"><span class="layer-badge">Cross-layer</span></div><p>saealib is a Python library for evolutionary computation with surrogate models.
+It targets optimization problems whose objective evaluations are expensive.</p>
 <section id="what-is-saea">
-<h2>What is SAEA<a class="headerlink" href="#what-is-saea" title="Link to this heading">#</a></h2>
-<p>An evolutionary algorithm (EA) is an optimization algorithm that mimics biological evolution.
-However, because the evolutionary process requires repeatedly evaluating individuals, it faces a challenge with expensive optimization problems.</p>
-<p>SAEA addresses this challenge by substituting evaluation with a lightweight mathematical model, reducing the number of expensive evaluations.</p>
-<section id="a-typical-ea-ga">
-<h3>A typical EA (GA)<a class="headerlink" href="#a-typical-ea-ga" title="Link to this heading">#</a></h3>
-<details>
-<summary><b>Typical EA process flow (click to expand)</b></summary>
+<h2>What is SAEA?<a class="headerlink" href="#what-is-saea" title="Link to this heading">#</a></h2>
+<p>Evolutionary computation repeatedly generates candidate solutions, evaluates them with an objective function, and uses the results to create the next candidates.
+When objective evaluations take time or money, directly evaluating many candidates becomes a major burden.</p>
+<p>SAEA uses a surrogate model that estimates objective values from past evaluations to narrow the candidates sent for direct evaluation.
+Surrogate predictions are inexpensive but approximate, so final decisions use direct objective evaluations.</p>
 <pre  class="mermaid">
         flowchart TD
-    A[Generate initial population] --&gt; B[&quot;Evaluate with objective function&quot;]
-    B --&gt; C[Select parents]
-    C --&gt; D[Selection, crossover, mutation]
-    D --&gt; E[&quot;Evaluate with objective function&quot;]
-    E --&gt; F[Select next generation]
-    F --&gt; G{Termination condition?}
-    G -- No --&gt; C
-    G -- Yes --&gt; H[Return best solution]
-
-    style B fill:#e57373,color:#fff,stroke:#c62828
-    style D fill:#e57373,color:#fff,stroke:#c62828
-    </pre></details>
-<p>Because the entire population is evaluated every generation, the evaluation cost grows large.</p>
+    A[Generate candidates] --&gt; B[Predict with surrogate model]
+    B --&gt; C[Select candidates for true evaluation]
+    C --&gt; D[Evaluate with objective function]
+    D --&gt; E[Update model and search]
+    E --&gt; A
+    </pre></section>
+<section id="what-saealib-provides">
+<h2>What saealib provides<a class="headerlink" href="#what-saealib-provides" title="Link to this heading">#</a></h2>
+<p>Candidate generation, surrogate modeling, and selection of candidates for evaluation are separate and replaceable.
+<code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code> is the independent strategy that decides which candidates receive direct evaluation.</p>
 </section>
-<section id="saea-individual-based-ga">
-<h3>SAEA (individual-based GA)<a class="headerlink" href="#saea-individual-based-ga" title="Link to this heading">#</a></h3>
-<details>
-<summary><b>SAEA process flow (click to expand)</b></summary>
-<pre  class="mermaid">
-        flowchart TD
-    A[Generate initial population] --&gt; B[&quot;Evaluate with objective function&quot;]
-    B --&gt; D[Select parents]
-    D --&gt; E[Selection, crossover, mutation]
-    E --&gt; F[Fit surrogate model]
-    F --&gt; G[&quot;Score with acquisition function&quot;]
-    G --&gt; H[Select promising candidates]
-    H --&gt; I[&quot;Evaluate with objective function&quot;]
-    I --&gt; J{Termination condition?}
-    J -- No --&gt; D
-    J -- Yes --&gt; K[Return best solution]
-
-    style B fill:#e57373,color:#fff,stroke:#c62828
-    style H fill:#e57373,color:#fff,stroke:#c62828
-    style F fill:#81c784,color:#fff,stroke:#2e7d32
-    </pre></details>
-<p>By narrowing down the number of individuals subjected to true evaluation, the overall evaluation cost is significantly reduced.</p>
-</section>
-</section>
-<section id="why-saealib">
-<h2>Why saealib<a class="headerlink" href="#why-saealib" title="Link to this heading">#</a></h2>
-<p>When using EAs in Python, the standard choice for multi-objective search is <strong>pymoo</strong>.
-Surrogate-assisted optimization specialized for expensive evaluations has been handled by <strong>pysamoo</strong>, a sister project of pymoo.
-Neither library treats the decision of “which candidate solutions receive an expensive true evaluation” as a swappable component.
-pymoo always evaluates generated candidates with the true function, and pysamoo writes this decision directly into each algorithm class.</p>
-<p>saealib factors this decision out into <strong>OptimizationStrategy</strong>, a first-class swappable component.
-The four built-in strategies — individual-based, generation-based, pre-selection, and direct — are all implementations of this abstraction, and if you need your own decision criteria, you can swap it out simply by subclassing <code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code>.
-On top of this, saealib separates <strong>Surrogate</strong>, which does only fitting and prediction, from <strong>AcquisitionFunction</strong>, which converts predictions into a score, with <strong>SurrogateManager</strong> mediating between the two.
-Changing the surrogate implementation does not affect the acquisition function code, and vice versa.</p>
-<div class="pst-scrollable-table-container"><table class="table">
-<thead>
-<tr class="row-odd"><th class="head"><p>Comparison</p></th>
-<th class="head"><p>saealib</p></th>
-<th class="head"><p>pymoo</p></th>
-<th class="head"><p>pysamoo</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>Model management strategy is a swappable component</p></td>
-<td><p>Yes</p></td>
-<td><p>No (always evaluates all candidates)</p></td>
-<td><p>Hardcoded per algorithm class</p></td>
-</tr>
-<tr class="row-odd"><td><p>Swapping components at runtime via typed events</p></td>
-<td><p>Yes</p></td>
-<td><p>“Not intended for customizing algorithms” (<a class="reference external" href="https://pymoo.org/interface/callback.html">official docs</a>)</p></td>
-<td><p>No</p></td>
-</tr>
-<tr class="row-even"><td><p>Separation of surrogate and acquisition function</p></td>
-<td><p>Yes</p></td>
-<td><p>No (delegated to pysamoo)</p></td>
-<td><p>Partial</p></td>
-</tr>
-</tbody>
-</table>
+<section id="read-next">
+<h2>Read next<a class="headerlink" href="#read-next" title="Link to this heading">#</a></h2>
+<div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
+<div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-2 sd-g-3 sd-g-xs-3 sd-g-sm-3 sd-g-md-3 sd-g-lg-3 docutils">
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="fa fa-rocket sd-mr-1"></span> Quickstart</div>
+<p class="sd-card-text">Run your first optimization with the smallest configuration.</p>
 </div>
-<p>This swappability is underpinned by a design in which <code class="docutils literal notranslate"><span class="pre">Algorithm</span></code>/<code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code>/<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>/<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>/<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code> all have abstract bases, and can be swapped at construction time via <code class="docutils literal notranslate"><span class="pre">Optimizer.set_*()</span></code> (see the <a class="reference internal" href="../components/index.html"><span class="std std-doc">component overview</span></a> for details).
-For lighter changes that don’t warrant subclassing, three lightweight mechanisms are also available: adding hooks via <code class="docutils literal notranslate"><span class="pre">with_post</span></code>/<code class="docutils literal notranslate"><span class="pre">with_post_fit</span></code>, rearranging stages via <code class="docutils literal notranslate"><span class="pre">Pipeline</span></code>/<code class="docutils literal notranslate"><span class="pre">Stage</span></code>, and observing and swapping components at runtime via <code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code> (see the <a class="reference internal" href="../components/extension_guidelines.html"><span class="std std-doc">extension guidelines</span></a> for details).</p>
-<p>Candidate generation and population updates are split into two procedures, <strong>Ask-Tell</strong>, and the decision of which of the candidates in between receive true evaluation is delegated to <code class="docutils literal notranslate"><span class="pre">OptimizationStrategy.step()</span></code> (see <a class="reference internal" href="../components/algorithm.html"><span class="std std-doc">Algorithm</span></a> for details).
-This separation makes it possible to swap out only the evaluation strategy while leaving the search algorithm itself unchanged.</p>
-<p>The pipeline assembled this way has two entry points: <code class="docutils literal notranslate"><span class="pre">minimize()</span></code>/<code class="docutils literal notranslate"><span class="pre">maximize()</span></code> is a boilerplate-free high-level API, while the <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> builder and <code class="docutils literal notranslate"><span class="pre">.iterate()</span></code> generator are a low-level API for research use cases that need per-generation inspection or custom loop control.
-Both are built on the same pipeline, and the low-level API has no functionality of its own that the high-level API lacks (see the <a class="reference internal" href="../components/index.html"><span class="std std-doc">component overview</span></a> for how it’s assembled).</p>
-<p>Across the entire pipeline, scores are consistently unified under the convention that “higher is better” (see <a class="reference internal" href="../components/problem.html"><span class="std std-doc">Problem</span></a> for details).</p>
-<p>The current trade-offs are also worth noting.
-The built-in algorithms saealib provides are only GA and PSO, and it doesn’t cover as many algorithms as pymoo or PlatEMO.
-This is a trade-off from focusing the design on the surrogate and strategy layers.</p>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="fa fa-graduation-cap sd-mr-1"></span> Tutorials</div>
+<p class="sd-card-text">Learn task-oriented usage from examples.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="../tutorials/index.html"><span class="doc">Tutorials</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="fa fa-cubes sd-mr-1"></span> Optimization components</div>
+<p class="sd-card-text">Review the roles of the components that make up saealib.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="../concepts/index.html"><span class="doc">Optimization components</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="fa fa-diagram-project sd-mr-1"></span> Algorithms</div>
+<p class="sd-card-text">Review the configurations of the available algorithms.</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="../algorithms/index.html"><span class="doc">Algorithms</span></a></div>
+</div>
+</div>
+</div>
 </section>
 </section>
 
@@ -1087,7 +1066,7 @@ This is a trade-off from focusing the design on the surrogate and strategy layer
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Getting Started</p>
+        <p class="prev-next-title">Getting started</p>
       </div>
     </a>
     <a class="right-next"
@@ -1118,12 +1097,9 @@ This is a trade-off from focusing the design on the surrogate and strategy layer
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-saea">What is SAEA</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#a-typical-ea-ga">A typical EA (GA)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saea-individual-based-ga">SAEA (individual-based GA)</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-saealib">Why saealib</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-saea">What is SAEA?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-saealib-provides">What saealib provides</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#read-next">Read next</a></li>
 </ul>
   </nav></div>
 

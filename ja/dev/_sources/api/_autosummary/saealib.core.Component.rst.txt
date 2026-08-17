@@ -1,0 +1,35 @@
+﻿saealib.core.Component
+======================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: Component
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Component.__init__
+   ~Component.contract
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.Component.__init__
+
+
+.. automethod:: saealib.core.Component.contract
+
+
+

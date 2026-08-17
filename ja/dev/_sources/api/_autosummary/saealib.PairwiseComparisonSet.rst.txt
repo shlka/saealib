@@ -17,6 +17,7 @@
 
    ~PairwiseComparisonSet.__init__
    ~PairwiseComparisonSet.build
+   ~PairwiseComparisonSet.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.PairwiseComparisonSet.build
+
+
+.. automethod:: saealib.PairwiseComparisonSet.contract
 
 
 

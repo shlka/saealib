@@ -16,6 +16,7 @@
 
 
    ~TournamentSelection.__init__
+   ~TournamentSelection.contract
    ~TournamentSelection.select
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.TournamentSelection.__init__
+
+
+.. automethod:: saealib.TournamentSelection.contract
 
 
 .. automethod:: saealib.TournamentSelection.select

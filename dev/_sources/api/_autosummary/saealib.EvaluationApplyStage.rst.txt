@@ -1,0 +1,47 @@
+﻿saealib.EvaluationApplyStage
+============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationApplyStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationApplyStage.__init__
+   ~EvaluationApplyStage.contract
+   ~EvaluationApplyStage.execute
+   ~EvaluationApplyStage.to_pseudocode
+   ~EvaluationApplyStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationApplyStage.__init__
+
+
+.. automethod:: saealib.EvaluationApplyStage.contract
+
+
+.. automethod:: saealib.EvaluationApplyStage.execute
+
+
+.. automethod:: saealib.EvaluationApplyStage.to_pseudocode
+
+
+.. automethod:: saealib.EvaluationApplyStage.to_text
+
+
+

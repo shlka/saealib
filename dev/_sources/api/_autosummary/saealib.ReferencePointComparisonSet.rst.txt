@@ -17,6 +17,7 @@
 
    ~ReferencePointComparisonSet.__init__
    ~ReferencePointComparisonSet.build
+   ~ReferencePointComparisonSet.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.ReferencePointComparisonSet.build
+
+
+.. automethod:: saealib.ReferencePointComparisonSet.contract
 
 
 

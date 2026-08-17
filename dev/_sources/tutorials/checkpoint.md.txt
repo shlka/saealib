@@ -1,12 +1,26 @@
+---
+primary_layer: layer2
+page_type: guide
+---
+
 # Reproducibility and Checkpointing
 
 Makes long-running optimizations reproducible and lets you resume them partway through.
 
-Checkpointing is only available with the low-level `Optimizer` API.
+Checkpointing uses the low-level `Optimizer` API.
+Construct `Optimizer(problem)`, configure components by chaining `set_*()`, and run it with `run()`.
+Resume from a saved state with `run_from()`.
 
-See the low-level API section of [Single-Objective Optimization](single_objective.md) for how to assemble an `Optimizer`.
+:::{admonition} What you'll be able to do
+:class: tip
 
-## Reproducibility via random seed
+By the end of this page, you'll be able to ensure reproducibility with a random seed, save and load checkpoints, and resume an optimization.
+:::
+
+For a single run with the high-level API, use the [high-level API](highlevel_api.md); for finer control of run state, see the [low-level API](lowlevel_api.md).
+This page shows how to save a reproducible low-level run and resume it partway through.
+
+## Reproduce runs with a random seed
 
 Passing the same `seed` to `Optimizer(problem, seed=...)` initializes all random-number-using processes in the same sequence, producing identical results.
 
@@ -63,10 +77,9 @@ def build_optimizer(max_fe_value):
             )
         )
         .set_surrogate_manager(
-            LocalSurrogateManager(
-                RBFSurrogate(gaussian_kernel, dim=DIM), MeanPrediction()
-            )
+            LocalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=DIM))
         )
+        .set_acquisition(MeanPrediction())
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.1))
         .set_termination(Termination(max_fe(max_fe_value)))
     )
@@ -80,7 +93,10 @@ print(np.allclose(ctx1.archive.get_array("f"), ctx2.archive.get_array("f")))  # 
 
 `build_optimizer` is used in the following sections too, to rebuild an `Optimizer` with the same component configuration.
 
-## Saving and resuming a checkpoint
+To preserve reproducibility, recreate the SurrogateManager and AcquisitionFunction with the same configuration.
+The current API does not support passing an AcquisitionFunction as an argument to `LocalSurrogateManager`.
+
+## Save and resume a checkpoint
 
 The `ctx` returned by `run()` can be saved to a single npz file with `ctx.save(path)`.
 
@@ -92,7 +108,7 @@ ctx.save("checkpoint.npz")
 A saved checkpoint can be loaded with `OptimizationState.load(path, problem)`, and passing it to `Optimizer.run_from(ctx)` resumes from where it left off.
 
 ```python
-from saealib.context import OptimizationState
+from saealib import OptimizationState
 
 loaded_ctx = OptimizationState.load("checkpoint.npz", problem)
 
@@ -105,7 +121,7 @@ print(resumed_ctx.data["resumed"])  # True
 
 From a callback such as `RunStartEvent`, it can be accessed as `event.ctx.data["resumed"]`.
 
-## Automatic checkpointing
+## Save checkpoints automatically
 
 Passing `checkpoint_path` to `run()`/`iterate()` saves automatically every `checkpoint_interval` generations.
 
@@ -134,7 +150,7 @@ ctx = build_optimizer(300).run(
 )
 ```
 
-## Saving in pickle format
+## Save in pickle format
 
 npz saves only `ctx`, but pickle format can save the entire `Optimizer`, including the fitted surrogate parameters.
 
@@ -150,7 +166,7 @@ A `UserWarning` about the Python or library version may appear at runtime.
 
 An `Optimizer` containing objects that the standard `pickle` cannot serialize — such as a lambda used in `Termination` — cannot be pickle-saved.
 
-## Using CheckpointCallback directly
+## Use CheckpointCallback directly
 
 The `checkpoint_path` argument of `run()` simply registers a `CheckpointCallback` internally.
 
@@ -168,7 +184,7 @@ ctx = optimizer.run()
 
 The `optimizer` argument is required when specifying `format="pickle"` or `format="both"`.
 
-## References
+## Related concepts and reference
 
 - {py:class}`saealib.Optimizer`
 - {py:class}`saealib.CheckpointCallback`

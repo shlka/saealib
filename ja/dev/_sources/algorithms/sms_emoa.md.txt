@@ -1,3 +1,9 @@
+---
+primary_layer: layer2
+related_layers: []
+page_type: concept
+---
+
 # SMS-EMOA (S Metric Selection EMOA)
 
 SMS-EMOA is a steady-state multi-objective evolutionary algorithm that incorporates dominated hypervolume (the $\mathcal{S}$ metric) directly into the selection criterion.
@@ -52,36 +58,22 @@ flowchart TD
     TERM -- "Reached" --> RESULT(["Population of the final generation"])
 ```
 
-## Complexity
-
-Hypervolume computation itself is polynomial in the number of points but exponential in the number of objectives.
-saealib's `hypervolume` (recursive slicing) is $O(n^{m-1} n \log n)$ ($n$ the number of points, $m$ the number of objectives).
-
-The exclusive contribution requires $k$ leave-one-out HV computations for a front of size $k$, so computing one front costs $O(k^{m} \log k)$.
-Because the paper's reduction procedure applies this only to the lowest front (size at most $\mu+1$), it stays within $O(\mu^{m} \log \mu)$ per generation {cite}`beume2007smsemoa`.
-
-`HypervolumeComparator` generalizes this by computing contributions across all fronts, but since the sum of front sizes never exceeds $\mu+1$, the asymptotic upper bound remains $O(\mu^{m} \log \mu)$.
-
 ## Configuration in saealib
 
 | Role | saealib implementation | Corresponding step |
 |---|---|---|
-| Search algorithm | `GA` (`ask(n_offspring=1)` generates only one new individual; `tell()` performs combining $Q=P_t\cup\{q_{t+1}\}$ and survivor selection) | L2-3, 6 |
+| Search algorithm | `GA` (`ask(n_offspring=1)` generates only one new individual; `tell()` performs combining $Q=P_t\cup\{q_{t+1}\}$ and survivor selection) | L2-3, L6 |
 | Parent selection | `TournamentSelection(tournament_size=1)` (uniform random selection with no comparison; the paper does not specify a parent-selection scheme) | L2 |
 | Crossover | `CrossoverSBX(prob=0.9, eta=20.0)` | L2 |
 | Mutation | `MutationPolynomial(eta=20.0)` | L2 |
 | Non-dominated sorting + in-front HV contribution | `HypervolumeComparator` (`sort_population` internally calls non-dominated sorting and `hypervolume_contributions`) | L3-5 |
 | Survivor selection | `TruncationSelection()` (culls the last individual in `comparator.sort_population`'s order — i.e. the one with the smallest contribution in the lowest front) | L4-6 |
-| Evaluation strategy | `SteadyStateStrategy` with `AsyncEvaluationScheduler` for steady-state completion | 2, 6-7 (in-generation evaluation) |
+| Evaluation strategy | `SteadyStateStrategy` with `SerialEvaluator` (sequential evaluation, equivalent to `max_workers=1`, `max_pending=1`) | L2, L6-7 (in-generation evaluation) |
 
-`SteadyStateStrategy` asks for one candidate per step and can be paired with
-`AsyncEvaluationScheduler` when evaluations have different completion times. The
-scheduler manages pending requests and applies each completed result serially.
+`SteadyStateStrategy` requests one candidate per step. The faithful configuration below uses sequential evaluation; asynchronous evaluation is described as a separate extension.
 
 ```python
 from saealib import (
-    AsyncEvaluator,
-    AsyncEvaluationScheduler,
     GA,
     HypervolumeComparator,
     Optimizer,
@@ -104,15 +96,13 @@ algorithm = GA(
     TournamentSelection(tournament_size=1),
     TruncationSelection(),
 )
-evaluator = AsyncEvaluator(SerialEvaluator(), max_workers=2)
-schedule = AsyncEvaluationScheduler(evaluator, max_pending=2)
+evaluator = SerialEvaluator()
 
 opt = (
     Optimizer(problem)
     .set_algorithm(algorithm)
     .set_strategy(SteadyStateStrategy())
     .set_evaluator(evaluator)
-    .set_async_evaluation_scheduler(schedule)
     .set_termination(Termination(max_fe(2000)))
 )
 ctx = opt.run()
@@ -122,33 +112,59 @@ pareto_f = ctx.pareto_archive.get_array("f")
 The `problem.comparator = HypervolumeComparator()` line cannot be omitted.
 In NSGA-II, `NSGA2Comparator` is the default for `n_obj > 1`, so the same line could be omitted, but as with SPEA2 and NSGA-III, SMS-EMOA also requires an explicit assignment.
 
+**Asynchronous extension**: When evaluation times vary, combine `SteadyStateStrategy` with `AsyncEvaluator` and `AsyncEvaluationScheduler` (for example, `max_workers=2`, `max_pending=2`). This extension has a different evaluation order from the sequential configuration above.
+
+```python
+from saealib import AsyncEvaluator, AsyncEvaluationScheduler
+
+async_evaluator = AsyncEvaluator(SerialEvaluator(), max_workers=2)
+async_schedule = AsyncEvaluationScheduler(async_evaluator, max_pending=2)
+async_opt = (
+    Optimizer(problem)
+    .set_algorithm(algorithm)
+    .set_strategy(SteadyStateStrategy())
+    .set_evaluator(async_evaluator)
+    .set_async_evaluation_scheduler(async_schedule)
+)
+```
+
+## Differences from the source
+
+The original SMS-EMOA uses a steady-state procedure that evaluates one individual at a time.
+This design limits hypervolume calculations for the lowest front to at most $\mu+1$.
+The configuration above generates one individual at a time with `SteadyStateStrategy`. If `DirectStrategy` generates several individuals per generation instead, `HypervolumeComparator` ranks hypervolume contributions across every front, so the configuration no longer follows the original procedure that targets only the lowest front.
+The original procedure does not specify parent selection, so the example uses `TournamentSelection(tournament_size=1)`, which performs no comparison.
+`HypervolumeComparator` also does not implement the SMS-EMOA dp variant described in the paper; it provides only the base hypervolume contribution.
+
 ## Parameters and variants
 
-**Steady-state vs. $(\mu+\lambda)$ generational replacement**: The paper's main procedure assumes a one-individual-per-generation steady-state design, a choice made to keep the expensive hypervolume evaluation to at most $\mu+1$ calls within the lowest front {cite}`beume2007smsemoa`.
-The code example above follows this faithfully.
-A configuration using `DirectStrategy` as-is, without specifying `AskStage`'s `n_offspring` (the same $(\mu+\lambda)$ pattern as NSGA-II/SPEA2/NSGA-III), also works, but note that in that case `HypervolumeComparator`'s "generalization across all fronts" actually comes into play.
-Generating $\mu$ new individuals in one generation means many individuals can be culled across multiple fronts after non-dominated sorting, departing from the paper's definition of looking only at the lowest front, and switching to a generalized survivor selection that applies HV-contribution ranking across all fronts.
+### Complexity
 
-**Handling the reference point**: `HypervolumeComparator(reference_point=...)` lets you specify a fixed value; the default `None` computes it automatically per generation and per front, following the paper's absolute offset, "worst objective value + 1.0". The `margin` constructor parameter is unused by this default computation and is kept only so existing calls do not break; pass an explicit `reference_point` if a margin-scaled reference point is needed instead.
-Also, for the two-objective case, the paper unconditionally keeps the two extreme boundary solutions without a reference-point computation, but saealib has no such special case — it always evaluates uniformly via the contribution beyond the reference point.
+Hypervolume computation itself is polynomial in the number of points but exponential in the number of objectives.
+saealib's `hypervolume` (recursive slicing) is $O(n^{m-1} n \log n)$ ($n$ the number of points, $m$ the number of objectives).
 
-**Parent-selection scheme**: The paper's main procedure only states that "a new individual is generated by the variation operator," without specifying how parents are chosen (there is no description of dominance-based tournament selection as in NSGA-II or SPEA2).
-`TournamentSelection(tournament_size=1)` was adopted as a configuration expressing uniform random selection from the population, since no comparison is actually performed when the tournament size is 1.
+The exclusive contribution requires $k$ leave-one-out HV computations for a front of size $k$, so computing one front costs $O(k^{m} \log k)$.
+Because the paper's reduction procedure applies this only to the lowest front (size at most $\mu+1$), it stays within $O(\mu^{m} \log \mu)$ per generation {cite}`beume2007smsemoa`.
+
+`HypervolumeComparator` generalizes this by computing contributions across all fronts, but since the sum of front sizes never exceeds $\mu+1$, the asymptotic upper bound remains $O(\mu^{m} \log \mu)$.
 
 **Alternative reduce procedure ("SMS-EMOA dp")**: The paper also proposes a faster variant using the domination count $d(s, P(t))$ instead of hypervolume contribution.
-`HypervolumeComparator` does not implement this variant, providing only the base version using $\Delta_{\mathcal{S}}$.
 
-**Swapping the dominator (dominance predicate)**: `HypervolumeComparator(reference_point=..., dominator=...)` lets you inject a [Dominator](../components/dominance.md) other than the default `ParetoDominator`.
+**Handling the reference point**: `HypervolumeComparator(reference_point=...)` accepts a fixed value.
+With `None`, it computes a reference point for each front in each generation according to the paper's definition of adding 1.0 to the worst value of each objective.
+For two objectives, it follows the paper's treatment of retaining the two boundary solutions without computing a reference point.
+
+**Swapping the dominator (dominance predicate)**: `HypervolumeComparator(reference_point=..., dominator=...)` lets you inject a [Dominator](../concepts/problem_and_ranking/dominance.md) other than the default `ParetoDominator`.
 Since this changes the result of non-dominated sorting, the population subjected to front splitting and contribution computation also depends on this dominance predicate.
 
 ## Related
 
 - [References](../references.md): Full bibliographic details for the source
-- [Comparator](../components/comparators.md): Detailed specification of `HypervolumeComparator`, and how population-relative comparators are handled
-- [Crossover](../components/crossover.md): List of crossover operators including `CrossoverSBX`
-- [Mutation](../components/mutation.md): List of mutation operators including `MutationPolynomial`
-- [ParentSelection](../components/parent_selection.md): Detailed usage of `TournamentSelection`
-- [SurvivorSelection](../components/survivor_selection.md): Detailed usage of `TruncationSelection`
-- [OptimizationStrategy](../components/strategies.md): Implementing a custom Strategy, and `AskStage`'s `n_offspring`
-- [NonDominatedSorting](../components/nondominated_sorting.md): Implementation details of non-dominated sorting
-- [Dominator](../components/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument
+- [Comparator](../concepts/problem_and_ranking/comparators.md): Detailed specification of `HypervolumeComparator`, and how population-relative comparators are handled
+- [Crossover](../concepts/search_algorithms/crossover.md): List of crossover operators including `CrossoverSBX`
+- [Mutation](../concepts/search_algorithms/mutation.md): List of mutation operators including `MutationPolynomial`
+- [ParentSelection](../concepts/search_algorithms/parent_selection.md): Detailed usage of `TournamentSelection`
+- [SurvivorSelection](../concepts/search_algorithms/survivor_selection.md): Detailed usage of `TruncationSelection`
+- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): Implementing a custom Strategy, and `AskStage`'s `n_offspring`
+- [NonDominatedSorting](../concepts/problem_and_ranking/nondominated_sorting.md): Implementation details of non-dominated sorting
+- [Dominator](../concepts/problem_and_ranking/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument

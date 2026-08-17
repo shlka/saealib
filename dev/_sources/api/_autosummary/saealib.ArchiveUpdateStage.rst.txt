@@ -16,8 +16,10 @@
 
 
    ~ArchiveUpdateStage.__init__
+   ~ArchiveUpdateStage.contract
    ~ArchiveUpdateStage.execute
    ~ArchiveUpdateStage.to_pseudocode
+   ~ArchiveUpdateStage.to_text
 
 
 
@@ -30,10 +32,16 @@
 .. automethod:: saealib.ArchiveUpdateStage.__init__
 
 
+.. automethod:: saealib.ArchiveUpdateStage.contract
+
+
 .. automethod:: saealib.ArchiveUpdateStage.execute
 
 
 .. automethod:: saealib.ArchiveUpdateStage.to_pseudocode
+
+
+.. automethod:: saealib.ArchiveUpdateStage.to_text
 
 
 

@@ -16,6 +16,7 @@
 
 
    ~RBFSurrogate.__init__
+   ~RBFSurrogate.contract
    ~RBFSurrogate.fit
    ~RBFSurrogate.post_fit
    ~RBFSurrogate.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.RBFSurrogate.__init__
+
+
+.. automethod:: saealib.RBFSurrogate.contract
 
 
 .. automethod:: saealib.RBFSurrogate.fit

@@ -16,6 +16,7 @@
 
 
    ~LinearRankSelection.__init__
+   ~LinearRankSelection.contract
    ~LinearRankSelection.select
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.LinearRankSelection.__init__
+
+
+.. automethod:: saealib.LinearRankSelection.contract
 
 
 .. automethod:: saealib.LinearRankSelection.select

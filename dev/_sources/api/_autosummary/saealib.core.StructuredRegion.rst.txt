@@ -1,0 +1,35 @@
+﻿saealib.core.StructuredRegion
+=============================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: StructuredRegion
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~StructuredRegion.__init__
+   ~StructuredRegion.with_body
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.StructuredRegion.__init__
+
+
+.. automethod:: saealib.core.StructuredRegion.with_body
+
+
+

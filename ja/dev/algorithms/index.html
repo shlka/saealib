@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>アルゴリズム &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>アルゴリズム &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -66,7 +66,7 @@
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="検索" href="../search.html" />
     <link rel="next" title="EGO（Efficient Global Optimization）" href="ego.html" />
-    <link rel="prev" title="Population" href="../components/population.html" />
+    <link rel="prev" title="フレームワークを拡張する" href="../framework/extensions.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
   <meta name="docsearch:version" content="" />
@@ -172,8 +172,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -187,14 +194,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -347,8 +354,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -362,14 +376,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -471,12 +485,12 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="ego.html">EGO（Efficient Global Optimization）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（Gaussian Process Upper Confidence Bound）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（ガウス過程上側信頼限界）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maxunc.html">MaxUnc（不確実性サンプリング）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rbf_cors.html">CORS-RBF（Constrained Optimization using Response Surfaces）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nsga2.html">NSGA-II（Nondominated Sorting Genetic Algorithm II）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2（Strength Pareto Evolutionary Algorithm 2）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="nsga3.html">NSGA-III</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsga3.html">式: NSGA-III</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sms_emoa.html">SMS-EMOA（S metric selection EMOA）</a></li>
 </ul>
 </div>
@@ -537,16 +551,16 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="algorithms">
 <h1>アルゴリズム<a class="headerlink" href="#algorithms" title="Link to this heading">#</a></h1>
-<p>文献上の名前がついたアルゴリズムを、saealibのコンポーネントの組み合わせとしてどう再現するかをまとめたページです。 各ページは、そのアルゴリズムの理論的な概要（saealibに依存しない一般的な説明）と、saealibでの構成方法（コンポーネントの組み合わせとPythonコード）の2部構成です。 出典の完全な書誌情報は<a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>にまとめてあり、このセクションの各ページはそこへリンクします。</p>
-<p>構成が理論上の定義と厳密に一致しない場合（近似）は、各ページにその旨を明記します。</p>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>文献上の名前がついたアルゴリズムを、saealibのコンポーネントの組み合わせとしてどう再現するかをまとめたページです。 各ページは、そのアルゴリズムの理論的な概要（saealibに依存しない一般的な説明）と、saealibでの構成方法（コンポーネントの組み合わせとPythonコード）の2部構成です。 出典の完全な書誌情報は<a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>にまとめてあり、このセクションの各ページはそこへリンクします。</p>
+<p>構成が理論定義と完全一致しない場合は、獲得関数の制約、選択やarchiveの扱い、評価順序など、実装上の差分を各ページで明示します。</p>
 <div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
 <div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-3 sd-g-3 sd-g-xs-3 sd-g-sm-3 sd-g-md-3 sd-g-lg-3 docutils">
 <div class="sd-col sd-d-flex-row docutils">
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-EGO</div>
-<p class="sd-card-text">Gaussian Process回帰と期待改善量(Expected Improvement)による逐次モデルベース最適化。</p>
+EGO法</div>
+<p class="sd-card-text">Gaussian Process回帰と期待改善量による逐次モデルベース最適化。</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="ego.html"><span class="doc">EGO（Efficient Global Optimization）</span></a></div>
 </div>
@@ -554,16 +568,16 @@ EGO</div>
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-GP-UCB</div>
-<p class="sd-card-text">Gaussian Process回帰と上側信頼限界(Upper Confidence Bound)による逐次モデルベース最適化。</p>
+GP-UCB法</div>
+<p class="sd-card-text">Gaussian Process回帰と上側信頼限界による逐次モデルベース最適化。</p>
 </div>
-<a class="sd-stretched-link sd-hide-link-text reference internal" href="gp_ucb.html"><span class="doc">GP-UCB（Gaussian Process Upper Confidence Bound）</span></a></div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="gp_ucb.html"><span class="doc">GP-UCB（ガウス過程上側信頼限界）</span></a></div>
 </div>
 <div class="sd-col sd-d-flex-row docutils">
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-MaxUnc</div>
+MaxUnc法</div>
 <p class="sd-card-text">Gaussian Process回帰の予測不確実性のみを基準にする、探索専用の逐次モデルベース最適化。</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="maxunc.html"><span class="doc">MaxUnc（不確実性サンプリング）</span></a></div>
@@ -572,7 +586,7 @@ MaxUnc</div>
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-CORS-RBF</div>
+CORS-RBF法</div>
 <p class="sd-card-text">RBF補間によるサロゲートモデルと、既存評価点からの距離制約による逐次モデルベース最適化。</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="rbf_cors.html"><span class="doc">CORS-RBF（Constrained Optimization using Response Surfaces）</span></a></div>
@@ -581,7 +595,7 @@ CORS-RBF</div>
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-NSGA-II</div>
+NSGA-II法</div>
 <p class="sd-card-text">非優越ソートと混雑度距離による多目的遺伝アルゴリズム。多目的最適化の比較演算子の基礎。</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="nsga2.html"><span class="doc">NSGA-II（Nondominated Sorting Genetic Algorithm II）</span></a></div>
@@ -590,7 +604,7 @@ NSGA-II</div>
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-SPEA2</div>
+SPEA2法</div>
 <p class="sd-card-text">支配関係に基づく強度と密度を組み合わせた適応度、固定サイズアーカイブによる多目的遺伝アルゴリズム。</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="spea2.html"><span class="doc">SPEA2（Strength Pareto Evolutionary Algorithm 2）</span></a></div>
@@ -599,16 +613,16 @@ SPEA2</div>
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-NSGA-III</div>
-<p class="sd-card-text">参照点ベースのニッチ保存による多目的遺伝アルゴリズム。4つ以上の目的を持つmany-objective最適化向け。</p>
+NSGA-III法</div>
+<p class="sd-card-text">reference-directionによるニッチ保持を用いる多目的遺伝的アルゴリズムです。many-objective optimizationを主対象とし、3目的でもreference-directionの挙動を観察できます。</p>
 </div>
-<a class="sd-stretched-link sd-hide-link-text reference internal" href="nsga3.html"><span class="doc">NSGA-III</span></a></div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="nsga3.html"><span class="doc">式: NSGA-III</span></a></div>
 </div>
 <div class="sd-col sd-d-flex-row docutils">
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-SMS-EMOA</div>
+SMS-EMOA法</div>
 <p class="sd-card-text">被支配超体積を選択基準に直接組み込んだ、定常状態の多目的進化アルゴリズム。</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="sms_emoa.html"><span class="doc">SMS-EMOA（S metric selection EMOA）</span></a></div>
@@ -630,12 +644,12 @@ SMS-EMOA</div>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../components/population.html"
+       href="../framework/extensions.html"
        title="前のページ">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">前へ</p>
-        <p class="prev-next-title">Population</p>
+        <p class="prev-next-title">フレームワークを拡張する</p>
       </div>
     </a>
     <a class="right-next"

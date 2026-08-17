@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>チュートリアル &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>チュートリアル &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -172,8 +172,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -187,14 +194,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -347,8 +354,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -362,14 +376,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -479,6 +493,13 @@
 <li class="toctree-l1"><a class="reference internal" href="logging.html">進捗のログ記録</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリとの連携</a></li>
 </ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="component_swap.html">ビルトインコンポーネントを選んで差し替える</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lowlevel_api.html">Optimizerを低レベルAPIで組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interface_hooks.html">Hook、Stage、Callbackを選ぶ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel_api.html">高レベルAPIで最適化を実行する</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_components.html">既存の契約に独自Componentを追加する</a></li>
+</ul>
 </div>
 </nav></div>
     </div>
@@ -537,7 +558,9 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="tutorials">
 <h1>チュートリアル<a class="headerlink" href="#tutorials" title="Link to this heading">#</a></h1>
-<p>よくある最適化シナリオに対応する、状況別のセットアップガイドです。高レベルAPIから、手動で組み立てる<code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>まで扱います。</p>
+<div class="layer-badges"><span class="layer-badge">Cross-layer</span></div><p>具体的な最適化シナリオに対する実装例を示します。 単目的、多目的、制約、混合変数など、目的に合うページを選べます。 シナリオごとの実装例であり、構成の深さを前提にしません。</p>
+<section id="optimization-scenarios">
+<h2>最適化シナリオ<a class="headerlink" href="#optimization-scenarios" title="Link to this heading">#</a></h2>
 <div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
 <div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-3 sd-g-3 sd-g-xs-3 sd-g-sm-3 sd-g-md-3 sd-g-lg-3 docutils">
 <div class="sd-col sd-d-flex-row docutils">
@@ -545,7 +568,7 @@
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
 <span class="fa fa-bullseye sd-mr-1"></span> 単目的最適化</div>
-<p class="sd-card-text">評価コストの高い単目的問題を、<code class="docutils literal notranslate"><span class="pre">minimize()</span></code>から手動で組み立てる<code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>まで、段階的に解きます。</p>
+<p class="sd-card-text">アルゴリズム、サロゲートモデル、評価戦略を選び、評価コストの高い単目的問題を<code class="docutils literal notranslate"><span class="pre">minimize()</span></code>で解きます。</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="single_objective.html"><span class="doc">単目的最適化</span></a></div>
 </div>
@@ -608,7 +631,7 @@
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
 <span class="fa fa-plug sd-mr-1"></span> 外部ライブラリとの連携</div>
-<p class="sd-card-text">scikit-learnなど外部ライブラリのモデルを、サロゲートとして組み込みます。</p>
+<p class="sd-card-text">アダプターを通じて、scikit-learnとPyTorchのモデルをサロゲートとして、pymooの演算子、アルゴリズム、問題を組み込みます。</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="external_libraries.html"><span class="doc">外部ライブラリとの連携</span></a></div>
 </div>
@@ -616,6 +639,62 @@
 </div>
 <div class="toctree-wrapper compound">
 </div>
+</section>
+<section id="configuration-and-control">
+<h2>構成と操作<a class="headerlink" href="#configuration-and-control" title="Link to this heading">#</a></h2>
+<p>ビルトインコンポーネントの選択、低レベルAPIの構成、実行経路へのHookやCallbackの追加を扱います。 詳細な内容は各ガイドで扱い、ここでは概要とリンクを示します。</p>
+<div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
+<div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-3 sd-g-3 sd-g-xs-3 sd-g-sm-3 sd-g-md-3 sd-g-lg-3 docutils">
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="fa fa-puzzle-piece sd-mr-1"></span> ビルトインコンポーネントを選んで差し替える</div>
+<p class="sd-card-text">責務に対応するビルトインコンポーネントを選びます。</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="component_swap.html"><span class="doc">ビルトインコンポーネントを選んで差し替える</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="fa fa-sliders sd-mr-1"></span> Optimizerを低レベルAPIで組み立てる</div>
+<p class="sd-card-text">サロゲート込みの完全な構成、終了条件の組み合わせ、<code class="docutils literal notranslate"><span class="pre">iterate()</span></code> による世代ごとの取得を扱います。</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="lowlevel_api.html"><span class="doc">Optimizerを低レベルAPIで組み立てる</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="fa fa-eye sd-mr-1"></span> Hook、Stage、Callbackを選ぶ</div>
+<p class="sd-card-text">実行経路への追加と観測を選びます。</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="interface_hooks.html"><span class="doc">Hook、Stage、Callbackを選ぶ</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="fa fa-rocket sd-mr-1"></span> 高レベルAPIで最適化を実行する</div>
+<p class="sd-card-text">高レベルAPIを使った最適化の実行とResultの読み方を確認します。</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="highlevel_api.html"><span class="doc">高レベルAPIで最適化を実行する</span></a></div>
+</div>
+<div class="sd-col sd-d-flex-row docutils">
+<div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
+<div class="sd-card-body docutils">
+<div class="sd-card-title sd-font-weight-bold docutils">
+<span class="fa fa-puzzle-piece sd-mr-1"></span> 独自Componentを実装する</div>
+<p class="sd-card-text">既存の契約に沿った独自Componentを実装し、登録してテストします。外部Operatorのnative移植も扱います。</p>
+</div>
+<a class="sd-stretched-link sd-hide-link-text reference internal" href="custom_components.html"><span class="doc">既存の契約に独自Componentを追加する</span></a></div>
+</div>
+</div>
+</div>
+<div class="toctree-wrapper compound">
+</div>
+</section>
 </section>
 
 
@@ -656,6 +735,19 @@
                 <dialog id="pst-secondary-sidebar-modal"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> このページでは
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optimization-scenarios">最適化シナリオ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-and-control">構成と操作</a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
 

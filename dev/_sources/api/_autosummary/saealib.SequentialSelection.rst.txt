@@ -16,6 +16,7 @@
 
 
    ~SequentialSelection.__init__
+   ~SequentialSelection.contract
    ~SequentialSelection.select
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.SequentialSelection.__init__
+
+
+.. automethod:: saealib.SequentialSelection.contract
 
 
 .. automethod:: saealib.SequentialSelection.select

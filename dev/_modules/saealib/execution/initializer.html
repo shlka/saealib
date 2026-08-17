@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.execution.initializer &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>saealib.execution.initializer &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../../../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -591,7 +591,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -604,8 +604,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -626,7 +633,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -764,7 +771,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -777,8 +784,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -799,7 +813,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -946,7 +960,10 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">scipy.stats</span>
@@ -954,9 +971,81 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitialEvaluationEndEvent</span><span class="p">,</span> <span class="n">InitialEvaluationStartEvent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">NSGA3Comparator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MANY</span><span class="p">,</span>
+    <span class="n">ComponentContract</span><span class="p">,</span>
+    <span class="n">DataSpec</span><span class="p">,</span>
+    <span class="n">Fixed</span><span class="p">,</span>
+    <span class="n">PortContract</span><span class="p">,</span>
+    <span class="n">PortDirection</span><span class="p">,</span>
+    <span class="n">PortSpec</span><span class="p">,</span>
+    <span class="n">StateContract</span><span class="p">,</span>
+    <span class="n">Var</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ARCHIVES_MAIN</span><span class="p">,</span>
+    <span class="n">ARCHIVES_PARETO</span><span class="p">,</span>
+    <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
+    <span class="n">POPULATIONS_MAIN</span><span class="p">,</span>
+    <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">,</span>
+    <span class="n">RUNTIME_GENERATION</span><span class="p">,</span>
+    <span class="n">RUNTIME_RNG</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentProvider</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">ParetoArchive</span><span class="p">,</span> <span class="n">Population</span><span class="p">,</span> <span class="n">PopulationAttribute</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.space</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoundsService</span><span class="p">,</span> <span class="n">DenseNumericView</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_population</span><span class="p">(</span><span class="n">factory</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">problem</span><span class="p">,</span> <span class="n">genomes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">dense_view</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;DenseNumericView&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">signature</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">factory</span><span class="p">)</span>
+        <span class="n">accepts</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">name</span> <span class="ow">in</span> <span class="n">signature</span><span class="o">.</span><span class="n">parameters</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;dense_numeric_view&quot;</span><span class="p">,</span> <span class="s2">&quot;space&quot;</span><span class="p">,</span> <span class="s2">&quot;genomes&quot;</span><span class="p">)</span>
+        <span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">parameter</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">VAR_KEYWORD</span>
+            <span class="k">for</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">signature</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="n">accepts</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">signature</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;attrs&quot;</span><span class="p">:</span> <span class="n">attrs</span><span class="p">,</span> <span class="s2">&quot;init_capacity&quot;</span><span class="p">:</span> <span class="n">capacity</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">accepts</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;dense_numeric_view&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dense_view</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">signature</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="s2">&quot;space&quot;</span> <span class="ow">in</span> <span class="n">signature</span><span class="o">.</span><span class="n">parameters</span>
+            <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">parameter</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">VAR_KEYWORD</span>
+                <span class="k">for</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">signature</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;space&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span>
+        <span class="k">if</span> <span class="n">genomes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">signature</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="s2">&quot;genomes&quot;</span> <span class="ow">in</span> <span class="n">signature</span><span class="o">.</span><span class="n">parameters</span>
+            <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">parameter</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">VAR_KEYWORD</span>
+                <span class="k">for</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">signature</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;genomes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">genomes</span>
+    <span class="n">population</span> <span class="o">=</span> <span class="n">factory</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">population</span><span class="p">,</span> <span class="n">Population</span><span class="p">):</span>
+        <span class="c1"># Factories without the optional service parameter still need the</span>
+        <span class="c1"># resolved view attached before evaluation begins.</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">_dense_numeric_view</span> <span class="o">=</span> <span class="n">dense_view</span>
+    <span class="k">return</span> <span class="n">population</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolved_dense_view</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DenseNumericView</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span>
+        <span class="n">DenseNumericView</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;DenseNumericView&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="Initializer">
@@ -964,24 +1053,44 @@ window.runMermaid = runMermaid;</script>
 <span class="k">class</span><span class="w"> </span><span class="nc">Initializer</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base for classes that set up the initial optimization context.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="Initializer.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Initializer.html#saealib.Initializer.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the initializer contract.&quot;&quot;&quot;</span>
+        <span class="n">candidate_count</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;N&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ComponentContract</span><span class="p">(</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;initializer&quot;</span><span class="p">:</span> <span class="n">PortContract</span><span class="p">(</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;population&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span>
+                                <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;Population&quot;</span><span class="p">,</span>
+                                <span class="n">bindings</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;candidate_count&quot;</span><span class="p">:</span> <span class="n">candidate_count</span><span class="p">},</span>
+                            <span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">StateContract</span><span class="p">(</span>
+                <span class="n">reads</span><span class="o">=</span><span class="p">(</span><span class="n">RUNTIME_RNG</span><span class="p">,),</span>
+                <span class="n">writes</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">POPULATIONS_MAIN</span><span class="p">,</span>
+                    <span class="n">ARCHIVES_MAIN</span><span class="p">,</span>
+                    <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
+                    <span class="n">ARCHIVES_PARETO</span><span class="p">,</span>
+                    <span class="n">RUNTIME_GENERATION</span><span class="p">,</span>
+                    <span class="n">RUNTIME_RNG</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
+
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_attrs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PopulationAttribute</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create attributes for Population and Archive.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        problem : Problem</span>
-<span class="sd">            The problem instance.</span>
-<span class="sd">        provider : ComponentProvider</span>
-<span class="sd">            The component provider instance.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        list[PopulationAttribute]</span>
-<span class="sd">            The attributes for Population and Archive.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">attrs</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,),</span> <span class="n">default</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
             <span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span><span class="p">,),</span> <span class="n">default</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
@@ -1005,27 +1114,6 @@ window.runMermaid = runMermaid;</script>
         <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">,</span>
         <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create an OptimizationState.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        problem : Problem</span>
-<span class="sd">            The problem instance.</span>
-<span class="sd">        archive : Archive</span>
-<span class="sd">            The archive instance.</span>
-<span class="sd">        pareto_archive : ParetoArchive</span>
-<span class="sd">            The Pareto archive instance.</span>
-<span class="sd">        population : Population</span>
-<span class="sd">            The population instance.</span>
-<span class="sd">        rng : np.random.Generator</span>
-<span class="sd">            The random number generator.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        OptimizationState</span>
-<span class="sd">            The optimization context.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="nb">isinstance</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">comparator</span><span class="p">,</span> <span class="n">NSGA3Comparator</span><span class="p">)</span>
             <span class="ow">and</span> <span class="n">problem</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">_rng</span> <span class="ow">is</span> <span class="kc">None</span>
@@ -1070,6 +1158,107 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<div class="viewcode-block" id="GenomeInitializer">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GenomeInitializer.html#saealib.GenomeInitializer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenomeInitializer</span><span class="p">(</span><span class="n">Initializer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize a population by sampling the problem&#39;s ``SearchSpace``.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GenomeInitializer.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GenomeInitializer.html#saealib.GenomeInitializer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">n_init_archive</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_init_population</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">n_init_archive</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">n_init_population</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;initial sizes must be non-negative&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_init_population</span> <span class="o">&gt;</span> <span class="n">n_init_archive</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;n_init_population cannot exceed n_init_archive&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span> <span class="o">=</span> <span class="n">n_init_archive</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span> <span class="o">=</span> <span class="n">n_init_population</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_attrs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PopulationAttribute</span><span class="p">]:</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span><span class="p">,),</span> <span class="n">default</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">n_constraints</span><span class="p">,),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;cv&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="p">(),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+            <span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="p">(),</span> <span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">required</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">get_required_attrs</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="p">{</span><span class="n">attr</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">}</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">attr</span> <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">required</span> <span class="k">if</span> <span class="n">attr</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attrs</span>
+
+<div class="viewcode-block" id="GenomeInitializer.initialize">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.GenomeInitializer.html#saealib.GenomeInitializer.initialize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the initial population and archive for a problem.&quot;&quot;&quot;</span>
+        <span class="n">provider_seed</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;seed&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span>
+            <span class="n">provider_seed</span> <span class="k">if</span> <span class="n">provider_seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">seed</span>
+        <span class="p">)</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_attrs</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">provider</span><span class="p">)</span>
+        <span class="n">empty_genomes</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">_make_population</span><span class="p">(</span>
+            <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">population_class</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">,</span>
+            <span class="n">problem</span><span class="p">,</span>
+            <span class="n">empty_genomes</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">archive</span> <span class="o">=</span> <span class="n">_make_population</span><span class="p">(</span>
+            <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">archive_class</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span>
+            <span class="n">problem</span><span class="p">,</span>
+            <span class="n">empty_genomes</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">pareto_archive</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">create_pareto_archive</span><span class="p">(</span>
+            <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="n">problem</span>
+        <span class="p">)</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+
+        <span class="n">genomes</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+        <span class="n">validation</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">genomes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">validation</span><span class="o">.</span><span class="n">valid</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;SearchSpace.sample returned invalid genomes: &quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">validation</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_batch</span><span class="p">(</span><span class="n">genomes</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">candidate_id_allocator</span><span class="o">.</span><span class="n">allocate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;genome&quot;</span><span class="p">:</span> <span class="n">genomes</span><span class="o">.</span><span class="n">take</span><span class="p">([</span><span class="n">i</span><span class="p">]),</span>
+                <span class="s2">&quot;f&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">g</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                <span class="s2">&quot;cv&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">cv</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+            <span class="p">}</span>
+            <span class="n">archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">pareto_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">ctx</span><span class="o">.</span><span class="n">count_fe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">)</span>
+        <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">InitialEvaluationEndEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">archive</span><span class="o">=</span><span class="n">archive</span><span class="p">))</span>
+
+        <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">sort_population</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
+        <span class="n">archive_sorted</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">sorted_idx</span><span class="p">)</span>
+        <span class="n">archive</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">archive</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span><span class="n">archive_sorted</span><span class="p">,</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span>
+            <span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">],</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ctx</span></div>
+</div>
+
+
+
 <div class="viewcode-block" id="LHSInitializer">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LHSInitializer</span><span class="p">(</span><span class="n">Initializer</span><span class="p">):</span>
@@ -1094,6 +1283,46 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span> <span class="o">=</span> <span class="n">n_init_archive</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span> <span class="o">=</span> <span class="n">n_init_population</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span></div>
+
+
+<div class="viewcode-block" id="LHSInitializer.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the LHS initializer contract.&quot;&quot;&quot;</span>
+        <span class="n">contract</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">contract</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;initializer&quot;</span><span class="p">]</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">contract</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span>
+                <span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">reads</span><span class="o">=</span><span class="p">(</span>
+                    <span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">reads</span><span class="p">,</span>
+                    <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">,</span>
+                    <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">writes</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">writes</span><span class="p">,</span> <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="o">**</span><span class="n">contract</span><span class="o">.</span><span class="n">ports</span><span class="p">,</span>
+                <span class="s2">&quot;initializer&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">output</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span>
+                                <span class="n">output</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                                <span class="n">bindings</span><span class="o">=</span><span class="p">{</span>
+                                    <span class="s2">&quot;candidate_count&quot;</span><span class="p">:</span> <span class="n">Fixed</span><span class="p">(</span>
+                                        <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span>
+                                    <span class="p">)</span>
+                                <span class="p">},</span>
+                            <span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LHSInitializer.initialize">
@@ -1121,22 +1350,33 @@ window.runMermaid = runMermaid;</script>
         <span class="p">)</span>
         <span class="n">attrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_attrs</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">provider</span><span class="p">)</span>
 
-        <span class="n">population</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">population_class</span><span class="p">(</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">_make_population</span><span class="p">(</span>
+            <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">population_class</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">,</span>
+            <span class="n">problem</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">archive</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">archive_class</span><span class="p">(</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span>
+        <span class="n">archive</span> <span class="o">=</span> <span class="n">_make_population</span><span class="p">(</span>
+            <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">archive_class</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span>
+            <span class="n">problem</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">pareto_archive</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">create_pareto_archive</span><span class="p">(</span>
             <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="n">problem</span>
         <span class="p">)</span>
+        <span class="n">pareto_archive</span><span class="o">.</span><span class="n">_dense_numeric_view</span> <span class="o">=</span> <span class="n">_resolved_dense_view</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
 
         <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
 
+        <span class="n">bounds_srv</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="n">BoundsService</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s2">&quot;BoundsService&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">bounds_srv</span><span class="o">.</span><span class="n">bounds</span>
         <span class="n">archive_x</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">qmc</span><span class="o">.</span><span class="n">LatinHypercube</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span><span class="o">.</span><span class="n">random</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span>
         <span class="p">)</span>
-        <span class="n">archive_x</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">qmc</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">archive_x</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">lb</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">ub</span><span class="p">)</span>
+        <span class="n">archive_x</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">qmc</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">archive_x</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
 
         <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">InitialEvaluationStartEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">candidates_x</span><span class="o">=</span><span class="n">archive_x</span><span class="p">))</span>
 
@@ -1199,6 +1439,46 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span></div>
 
 
+<div class="viewcode-block" id="RandomInitializer.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.RandomInitializer.html#saealib.RandomInitializer.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the random initializer contract.&quot;&quot;&quot;</span>
+        <span class="n">contract</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">contract</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;initializer&quot;</span><span class="p">]</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">contract</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span>
+                <span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">reads</span><span class="o">=</span><span class="p">(</span>
+                    <span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">reads</span><span class="p">,</span>
+                    <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">,</span>
+                    <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">writes</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">writes</span><span class="p">,</span> <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="o">**</span><span class="n">contract</span><span class="o">.</span><span class="n">ports</span><span class="p">,</span>
+                <span class="s2">&quot;initializer&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">output</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span>
+                                <span class="n">output</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                                <span class="n">bindings</span><span class="o">=</span><span class="p">{</span>
+                                    <span class="s2">&quot;candidate_count&quot;</span><span class="p">:</span> <span class="n">Fixed</span><span class="p">(</span>
+                                        <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span>
+                                    <span class="p">)</span>
+                                <span class="p">},</span>
+                            <span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="RandomInitializer.initialize">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.RandomInitializer.html#saealib.RandomInitializer.initialize">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span>
@@ -1224,21 +1504,30 @@ window.runMermaid = runMermaid;</script>
         <span class="p">)</span>
         <span class="n">attrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_attrs</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">provider</span><span class="p">)</span>
 
-        <span class="n">population</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">population_class</span><span class="p">(</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">_make_population</span><span class="p">(</span>
+            <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">population_class</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">,</span>
+            <span class="n">problem</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">archive</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">archive_class</span><span class="p">(</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span>
+        <span class="n">archive</span> <span class="o">=</span> <span class="n">_make_population</span><span class="p">(</span>
+            <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">archive_class</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span>
+            <span class="n">problem</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">pareto_archive</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">create_pareto_archive</span><span class="p">(</span>
             <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="n">problem</span>
         <span class="p">)</span>
+        <span class="n">pareto_archive</span><span class="o">.</span><span class="n">_dense_numeric_view</span> <span class="o">=</span> <span class="n">_resolved_dense_view</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
 
         <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
 
-        <span class="n">archive_x</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span>
-            <span class="n">problem</span><span class="o">.</span><span class="n">lb</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">ub</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">bounds_srv</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="n">BoundsService</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s2">&quot;BoundsService&quot;</span><span class="p">)</span>
         <span class="p">)</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">bounds_srv</span><span class="o">.</span><span class="n">bounds</span>
+        <span class="n">archive_x</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">))</span>
 
         <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">InitialEvaluationStartEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">candidates_x</span><span class="o">=</span><span class="n">archive_x</span><span class="p">))</span>
 
@@ -1301,6 +1590,46 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span></div>
 
 
+<div class="viewcode-block" id="SobolInitializer.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SobolInitializer.html#saealib.SobolInitializer.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the Sobol initializer contract.&quot;&quot;&quot;</span>
+        <span class="n">contract</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">contract</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;initializer&quot;</span><span class="p">]</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">contract</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span>
+                <span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">reads</span><span class="o">=</span><span class="p">(</span>
+                    <span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">reads</span><span class="p">,</span>
+                    <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">,</span>
+                    <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">writes</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">writes</span><span class="p">,</span> <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="o">**</span><span class="n">contract</span><span class="o">.</span><span class="n">ports</span><span class="p">,</span>
+                <span class="s2">&quot;initializer&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">output</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span>
+                                <span class="n">output</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                                <span class="n">bindings</span><span class="o">=</span><span class="p">{</span>
+                                    <span class="s2">&quot;candidate_count&quot;</span><span class="p">:</span> <span class="n">Fixed</span><span class="p">(</span>
+                                        <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span>
+                                    <span class="p">)</span>
+                                <span class="p">},</span>
+                            <span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="SobolInitializer.initialize">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.SobolInitializer.html#saealib.SobolInitializer.initialize">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span>
@@ -1326,22 +1655,33 @@ window.runMermaid = runMermaid;</script>
         <span class="p">)</span>
         <span class="n">attrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_attrs</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">provider</span><span class="p">)</span>
 
-        <span class="n">population</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">population_class</span><span class="p">(</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span>
+        <span class="n">population</span> <span class="o">=</span> <span class="n">_make_population</span><span class="p">(</span>
+            <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">population_class</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">,</span>
+            <span class="n">problem</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">archive</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">archive_class</span><span class="p">(</span>
-            <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span>
+        <span class="n">archive</span> <span class="o">=</span> <span class="n">_make_population</span><span class="p">(</span>
+            <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">archive_class</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span>
+            <span class="n">problem</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">pareto_archive</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">create_pareto_archive</span><span class="p">(</span>
             <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="n">problem</span>
         <span class="p">)</span>
+        <span class="n">pareto_archive</span><span class="o">.</span><span class="n">_dense_numeric_view</span> <span class="o">=</span> <span class="n">_resolved_dense_view</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
 
         <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
 
+        <span class="n">bounds_srv</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="n">BoundsService</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s2">&quot;BoundsService&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">bounds_srv</span><span class="o">.</span><span class="n">bounds</span>
         <span class="n">archive_x</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">qmc</span><span class="o">.</span><span class="n">Sobol</span><span class="p">(</span>
             <span class="n">d</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">scramble</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">rng</span>
         <span class="p">)</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">)</span>
-        <span class="n">archive_x</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">qmc</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">archive_x</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">lb</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">ub</span><span class="p">)</span>
+        <span class="n">archive_x</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">qmc</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">archive_x</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
 
         <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">InitialEvaluationStartEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">candidates_x</span><span class="o">=</span><span class="n">archive_x</span><span class="p">))</span>
 

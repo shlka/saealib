@@ -16,6 +16,7 @@
 
 
    ~FidelityPromotion.__init__
+   ~FidelityPromotion.contract
    ~FidelityPromotion.plan
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.FidelityPromotion.__init__
+
+
+.. automethod:: saealib.FidelityPromotion.contract
 
 
 .. automethod:: saealib.FidelityPromotion.plan

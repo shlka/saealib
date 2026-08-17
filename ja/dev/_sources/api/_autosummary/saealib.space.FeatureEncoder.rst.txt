@@ -1,0 +1,35 @@
+﻿saealib.space.FeatureEncoder
+============================
+
+.. currentmodule:: saealib.space
+
+.. autoclass:: FeatureEncoder
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~FeatureEncoder.__init__
+   ~FeatureEncoder.encode
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.space.FeatureEncoder.__init__
+
+
+.. automethod:: saealib.space.FeatureEncoder.encode
+
+
+

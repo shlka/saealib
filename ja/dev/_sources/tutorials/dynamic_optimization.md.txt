@@ -1,3 +1,8 @@
+---
+primary_layer: layer2
+page_type: guide
+---
+
 # Dynamic Switching Based on Surrogate Accuracy
 
 The prediction accuracy of a surrogate model changes as generations progress.
@@ -6,9 +11,18 @@ Early on, when training data is scarce, accuracy is low; as the archive fills in
 
 This page covers how to switch the evaluation strategy or the `SurrogateManager` at runtime in response to these changes.
 
-## Problem setup
+:::{admonition} What you'll be able to do
+:class: tip
 
-We use the same Sphere function as in the single-objective optimization tutorial.
+By the end of this page, you'll be able to track Surrogate accuracy by generation and switch Strategy or SurrogateManager during a run based on that value.
+:::
+
+For a fixed evaluation strategy, use the [low-level API](lowlevel_api.md); to implement custom switching conditions, see [Custom components](custom_components.md).
+This page shows how to switch the run configuration during `iterate()` while reading Surrogate accuracy.
+
+## Set up the problem
+
+The example uses the simple Sphere function.
 
 ```python
 import numpy as np
@@ -22,11 +36,14 @@ DIM = 10
 SEED = 0
 ```
 
-## Tracking surrogate accuracy
+## Track surrogate accuracy
 
 Passing an `accuracy_evaluator` to `SurrogateManager` computes accuracy on every fit and records it in `surrogate_manager.last_accuracy`.
 
 `LOOAccuracyEvaluator` computes accuracy via leave-one-out cross-validation on the current training data, without preparing any additional held-out data.
+
+Pass the Surrogate and accuracy evaluator to the `LocalSurrogateManager` constructor.
+Configure AcquisitionFunction separately with `Optimizer.set_acquisition()`.
 
 ```python
 from saealib import (
@@ -65,7 +82,6 @@ algorithm = GA(
 
 surrogate_manager = LocalSurrogateManager(
     RBFSurrogate(gaussian_kernel, dim=DIM),
-    MeanPrediction(),
     accuracy_evaluator=LOOAccuracyEvaluator(),
 )
 
@@ -78,11 +94,12 @@ initializer = LHSInitializer(
 
 Note that `last_accuracy` is `None` in the first generation.
 
-## Switching the evaluation strategy with StrategySwitcher
+## Switch the evaluation strategy with StrategySwitcher
 
 `StrategySwitcher(primary, fallback, metric="spearman", threshold=0.56)` returns `primary` if accuracy is at or above the threshold, and `fallback` otherwise.
 
-The strategy returned by `switch()` takes effect from the next generation onward by passing it to `optimizer.set_strategy(...)` inside the `iterate()` loop.
+The following example changes the configuration by calling `set_strategy()` at each `iterate()` step. The runtime detects the change and recompiles the plan, so the Strategy returned by `switch()` takes effect from the next generation.
+This procedure works on both the Stage compatibility path and the graph-native path.
 
 ```python
 from saealib import PreSelectionStrategy, IndividualBasedStrategy, StrategySwitcher
@@ -96,6 +113,7 @@ optimizer = (
     .set_initializer(initializer)
     .set_algorithm(algorithm)
     .set_surrogate_manager(surrogate_manager)
+    .set_acquisition(MeanPrediction())
     .set_strategy(ib_strategy)
     .set_termination(Termination(max_fe(600)))
 )
@@ -111,7 +129,9 @@ Running this, the search stays on `IndividualBasedStrategy` early on while accur
 
 If the search progresses, the gap between objective values narrows, and accuracy drops again, it switches back to `IndividualBasedStrategy`.
 
-## Other switchers
+For the path where a Component requests recompilation, see [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md), "Behavior of runtime swapping."
+
+## Choose another switcher
 
 Switchers with the same `switch()` interface are available besides `StrategySwitcher`.
 
@@ -122,6 +142,7 @@ Switchers with the same `switch()` interface are available besides `StrategySwit
 | `GenCtrlSwitcher` | `GenerationBasedStrategy`'s `gen_ctrl` (smooths accuracy with an exponential moving average and maps it to a continuous value) |
 
 `GenCtrlSwitcher` returns a number, so assign it directly to the `gen_ctrl` attribute of a `GenerationBasedStrategy` instance.
+The next example also updates the configuration during `iterate()`.
 
 ```python
 from saealib import GenerationBasedStrategy, GenCtrlSwitcher
@@ -135,7 +156,7 @@ for ctx in optimizer.iterate():
     strategy.gen_ctrl = gen_ctrl_switcher.switch(accuracy)
 ```
 
-## References
+## Related concepts and reference
 
 - {py:class}`saealib.StrategySwitcher` / {py:class}`saealib.ManagerSwitcher` / {py:class}`saealib.GenCtrlSwitcher`
 - {py:class}`saealib.LOOAccuracyEvaluator` / {py:class}`saealib.HeldOutAccuracyEvaluator` / {py:class}`saealib.KFoldAccuracyEvaluator`

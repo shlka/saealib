@@ -1,3 +1,7 @@
+---
+primary_layer: layer1
+---
+
 # High-Level API
 
 ```{eval-rst}

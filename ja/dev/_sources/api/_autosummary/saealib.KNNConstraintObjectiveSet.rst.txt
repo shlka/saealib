@@ -17,6 +17,7 @@
 
    ~KNNConstraintObjectiveSet.__init__
    ~KNNConstraintObjectiveSet.build
+   ~KNNConstraintObjectiveSet.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.KNNConstraintObjectiveSet.build
+
+
+.. automethod:: saealib.KNNConstraintObjectiveSet.contract
 
 
 

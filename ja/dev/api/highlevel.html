@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>High-Level API &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>高レベルAPI &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -66,7 +66,7 @@
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="検索" href="../search.html" />
     <link rel="next" title="saealib.Result" href="_autosummary/saealib.Result.html" />
-    <link rel="prev" title="API Reference" href="index.html" />
+    <link rel="prev" title="saealib.FeedbackResult" href="_autosummary/saealib.FeedbackResult.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
   <meta name="docsearch:version" content="" />
@@ -172,8 +172,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -187,14 +194,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -347,8 +354,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -362,14 +376,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -470,21 +484,89 @@
      aria-label="セクションナビゲーション">
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">High-Level API</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1"><a class="reference internal" href="imports.html">標準インポート</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="core.html">コアAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.Component.html">saealib.core.Component</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ComponentContract.html">saealib.core.ComponentContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.PartSpec.html">saealib.core.PartSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.AssumptionSet.html">saealib.core.AssumptionSet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.DataSpec.html">saealib.core.DataSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.PortContract.html">saealib.core.PortContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.PortSpec.html">saealib.core.PortSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StateContract.html">saealib.core.StateContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.LifecycleContract.html">saealib.core.LifecycleContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ExecutionContract.html">saealib.core.ExecutionContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ComponentGraph.html">saealib.core.ComponentGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StructuredGraph.html">saealib.core.StructuredGraph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StructuredRegion.html">saealib.core.StructuredRegion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.CompilationRule.html">saealib.core.CompilationRule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StateStore.html">saealib.core.StateStore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StateView.html">saealib.core.StateView</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.StatePatch.html">saealib.core.StatePatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ExecutablePlan.html">saealib.core.ExecutablePlan</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.ExecutionRuntime.html">saealib.core.ExecutionRuntime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.ComponentNode.html">saealib.core.compiler.ComponentNode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.NodeRef.html">saealib.core.compiler.NodeRef</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.DataEdge.html">saealib.core.compiler.DataEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.ControlEdge.html">saealib.core.compiler.ControlEdge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.StateBinding.html">saealib.core.compiler.StateBinding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.Diagnostic.html">saealib.core.compiler.Diagnostic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.compiler.ContractPath.html">saealib.core.compiler.ContractPath</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="execution.html">実行API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.AsyncEvaluationScheduler.html">saealib.execution.AsyncEvaluationScheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.PollResult.html">saealib.execution.PollResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.RuntimeFactory.html">saealib.execution.RuntimeFactory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.RuntimeRegistration.html">saealib.execution.RuntimeRegistration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.RuntimeRegistry.html">saealib.execution.RuntimeRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.create_runtime.html">saealib.execution.create_runtime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.execution.default_runtime_registry.html">saealib.execution.default_runtime_registry</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="space.html">探索空間API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.SearchSpace.html">saealib.space.SearchSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ServiceRegistry.html">saealib.space.ServiceRegistry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ValidationResult.html">saealib.space.ValidationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.RepresentationSpec.html">saealib.core.contracts.RepresentationSpec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.VectorSpace.html">saealib.space.VectorSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ObjectSpace.html">saealib.space.ObjectSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.SequenceSpace.html">saealib.space.SequenceSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.PermutationSpace.html">saealib.space.PermutationSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.GenomeCodec.html">saealib.space.GenomeCodec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.SamplingService.html">saealib.space.SamplingService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.ValidationService.html">saealib.space.ValidationService</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.space.FeatureEncoder.html">saealib.space.FeatureEncoder</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="feedback.html">フィードバックAPI</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.ProposalBatch.html">saealib.core.contracts.ProposalBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.ObservationBatch.html">saealib.core.contracts.ObservationBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.FeedbackBatch.html">saealib.core.contracts.FeedbackBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.core.contracts.FeedbackContract.html">saealib.core.contracts.FeedbackContract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FeedbackBuilder.html">saealib.FeedbackBuilder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TrueOnlyFeedback.html">saealib.TrueOnlyFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PredictedFeedback.html">saealib.PredictedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.MixedFeedback.html">saealib.MixedFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.NoFeedback.html">saealib.NoFeedback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FeedbackResult.html">saealib.FeedbackResult</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">高レベルAPI</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Result.html">saealib.Result</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="optimizer.html">Optimizer</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="optimizer.html">オプティマイザー</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Optimizer.html">saealib.Optimizer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="exceptions.html">Exceptions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="exceptions.html">例外</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SaealibError.html">saealib.SaealibError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ValidationError.html">saealib.ValidationError</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ConfigurationError.html">saealib.ConfigurationError</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="registry.html">Registry</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="registry.html">レジストリ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.register.html">saealib.register</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.registry.build.html">saealib.registry.build</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.registry.get.html">saealib.registry.get</a></li>
@@ -502,14 +584,14 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GradientRepairHandler.html">saealib.GradientRepairHandler</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="variables.html">Variables</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="variables.html">変数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Variable.html">saealib.Variable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ContinuousVariable.html">saealib.ContinuousVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IntegerVariable.html">saealib.IntegerVariable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CategoricalVariable.html">saealib.CategoricalVariable</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="comparators.html">Comparators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="comparators.html">比較器</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Comparator.html">saealib.Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SingleObjectiveComparator.html">saealib.SingleObjectiveComparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.WeightedSumComparator.html">saealib.WeightedSumComparator</a></li>
@@ -544,14 +626,15 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PopulationAttribute.html">saealib.PopulationAttribute</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="algorithms.html">Algorithms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="algorithms.html">アルゴリズム</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Algorithm.html">saealib.Algorithm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GA.html">saealib.GA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenomeGA.html">saealib.GenomeGA</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PSO.html">saealib.PSO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PymooAlgorithm.html">saealib.PymooAlgorithm</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="operators.html">Operators</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="operators.html">演算子</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Crossover.html">saealib.Crossover</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CrossoverBLXAlpha.html">saealib.CrossoverBLXAlpha</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CrossoverSBX.html">saealib.CrossoverSBX</a></li>
@@ -577,7 +660,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PymooMutation.html">saealib.PymooMutation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="surrogate.html">Surrogate Models</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="surrogate.html">サロゲートモデル</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Surrogate.html">saealib.Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RegressionSurrogate.html">saealib.RegressionSurrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ComparisonSurrogate.html">saealib.ComparisonSurrogate</a></li>
@@ -628,7 +711,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SpearmanCorrelation.html">saealib.SpearmanCorrelation</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="acquisition.html">Acquisition Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="acquisition.html">獲得関数</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionFunction.html">saealib.AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ExpectedImprovement.html">saealib.ExpectedImprovement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.BatchExpectedImprovement.html">saealib.BatchExpectedImprovement</a></li>
@@ -642,7 +725,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SMSEGOAcquisition.html">saealib.SMSEGOAcquisition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="strategies.html">Optimization Strategies</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="strategies.html">最適化戦略</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html">saealib.OptimizationStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenerationBasedStrategy.html">saealib.GenerationBasedStrategy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IndividualBasedStrategy.html">saealib.IndividualBasedStrategy</a></li>
@@ -652,18 +735,26 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.IslandModel.html">saealib.IslandModel</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="initialization.html">Initialization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="initialization.html">初期化</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Initializer.html">saealib.Initializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenomeInitializer.html">saealib.GenomeInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.LHSInitializer.html">saealib.LHSInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RandomInitializer.html">saealib.RandomInitializer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SobolInitializer.html">saealib.SobolInitializer</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="evaluation.html">Evaluation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="evaluation.html">評価</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Evaluator.html">saealib.Evaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SerialEvaluator.html">saealib.SerialEvaluator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.JoblibEvaluator.html">saealib.JoblibEvaluator</a></li>
-<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ThreadPoolEvaluator.html">saealib.ThreadPoolEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AsyncEvaluator.html">saealib.AsyncEvaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationAdapter.html">saealib.EvaluationAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationRequest.html">saealib.EvaluationRequest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationHandle.html">saealib.EvaluationHandle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationQuery.html">saealib.EvaluationQuery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationUpdate.html">saealib.EvaluationUpdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PendingEvaluation.html">saealib.PendingEvaluation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlanner.html">saealib.EvaluationPlanner</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlan.html">saealib.EvaluationPlan</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluateAll.html">saealib.EvaluateAll</a></li>
@@ -674,6 +765,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FidelityPromotion.html">saealib.FidelityPromotion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ReplicateSummary.html">saealib.ReplicateSummary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.aggregate_replicates.html">saealib.aggregate_replicates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationResult.html">saealib.EvaluationResult</a></li>
 </ul>
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="termination.html">Termination</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -681,7 +773,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TerminationCondition.html">saealib.TerminationCondition</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="callbacks.html">Callbacks</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="callbacks.html">コールバック</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Event.html">saealib.Event</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RunStartEvent.html">saealib.RunStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.RunEndEvent.html">saealib.RunEndEvent</a></li>
@@ -691,6 +783,8 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.GenerationEndEvent.html">saealib.GenerationEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateStartEvent.html">saealib.SurrogateStartEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateEndEvent.html">saealib.SurrogateEndEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionStartEvent.html">saealib.AcquisitionStartEvent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionEndEvent.html">saealib.AcquisitionEndEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PostCrossoverEvent.html">saealib.PostCrossoverEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PostMutationEvent.html">saealib.PostMutationEvent</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.PostAskEvent.html">saealib.PostAskEvent</a></li>
@@ -700,25 +794,35 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CheckpointCallback.html">saealib.CheckpointCallback</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="pipeline.html">Pipeline</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="pipeline.html">パイプライン</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Stage.html">saealib.Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Pipeline.html">saealib.Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Repeat.html">saealib.Repeat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Loop.html">saealib.Loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.Branch.html">saealib.Branch</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="stages.html">Stages</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="stages.html">ステージ</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CountGenerationStage.html">saealib.CountGenerationStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AskStage.html">saealib.AskStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AcquisitionStage.html">saealib.AcquisitionStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogatePredictStage.html">saealib.SurrogatePredictStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationPlanStage.html">saealib.EvaluationPlanStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.AsyncEvaluationSubmitStage.html">saealib.AsyncEvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationSubmitStage.html">saealib.EvaluationSubmitStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationCollectStage.html">saealib.EvaluationCollectStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationApplyStage.html">saealib.EvaluationApplyStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EvaluationAcknowledgeStage.html">saealib.EvaluationAcknowledgeStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateFitStage.html">saealib.SurrogateFitStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ArchiveUpdateStage.html">saealib.ArchiveUpdateStage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.FeedbackStage.html">saealib.FeedbackStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.TellStage.html">saealib.TellStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.SurrogateOnlyLoopStage.html">saealib.SurrogateOnlyLoopStage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.InitializationStage.html">saealib.InitializationStage</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">ユーティリティ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">参照</a></li>
 </ul>
 </div>
 </nav></div>
@@ -760,9 +864,9 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="index.html" class="nav-link">API Reference</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">APIリファレンス</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">High-Level API</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">高レベルAPI</span></li>
   </ul>
 </nav>
 </div>
@@ -780,40 +884,28 @@
                 <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="high-level-api">
-<h1>High-Level API<a class="headerlink" href="#high-level-api" title="Link to this heading">#</a></h1>
-<dl class="py function">
+<h1>高レベルAPI<a class="headerlink" href="#high-level-api" title="Link to this heading">#</a></h1>
+<div class="layer-badges"><span class="layer-badge">Layer 1: Use</span></div><dl class="py function">
 <dt class="sig sig-object py" id="saealib.minimize">
 <span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">minimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">UNSET</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surrogate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">UNSET</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">UNSET</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_fe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saealib/api.html#minimize"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.minimize" title="Link to this definition">#</a></dt>
-<dd><p>Run surrogate-assisted minimization.</p>
+<dd><p>を実行します。サロゲートモデルを用いた最小化を実行します。</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>func</strong> (<em>callable</em><em> or </em><a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><em>Problem</em></a>) -- Objective function <code class="docutils literal notranslate"><span class="pre">f(x)</span> <span class="pre">-&gt;</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">array</span></code>, or a fully configured
-<a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a> instance (in which case <code class="docutils literal notranslate"><span class="pre">dim</span></code>, <code class="docutils literal notranslate"><span class="pre">lb</span></code>, <code class="docutils literal notranslate"><span class="pre">ub</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">n_obj</span></code> are ignored).</p></li>
-<li><p><strong>algorithm</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><em>Algorithm</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'GA'</span></code>, <code class="docutils literal notranslate"><span class="pre">'PSO'</span></code>, or an <a class="reference internal" href="_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">Algorithm</span></code></a> instance. If omitted,
-the library's bundled default preset resolves it (currently GA with
-BLX-alpha crossover and uniform mutation).</p></li>
-<li><p><strong>dim</strong> (<em>int</em><em>, </em><em>optional</em>) -- Number of design variables. Required when <em>func</em> is a callable.</p></li>
-<li><p><strong>lb</strong> (<em>array-like</em><em>, </em><em>optional</em>) -- Lower bounds of length <em>dim</em>. Required when <em>func</em> is a callable.</p></li>
-<li><p><strong>ub</strong> (<em>array-like</em><em>, </em><em>optional</em>) -- Upper bounds of length <em>dim</em>. Required when <em>func</em> is a callable.</p></li>
-<li><p><strong>n_obj</strong> (<em>int</em>) -- Number of objectives. Ignored when <em>func</em> is a <a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a>. Default: 1.</p></li>
-<li><p><strong>direction</strong> (<em>np.ndarray</em><em>, </em><em>list</em><em>[</em><em>str</em><em>]</em><em>, or </em><em>None</em>) -- Optimization direction per objective. Each element is <code class="docutils literal notranslate"><span class="pre">-1</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;minimize&quot;</span></code>
-(minimize) or <code class="docutils literal notranslate"><span class="pre">+1</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;maximize&quot;</span></code> (maximize). Default: all minimize.</p></li>
-<li><p><strong>surrogate</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><em>Surrogate</em></a><em>, </em><a class="reference internal" href="_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><em>SurrogateManager</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'rbf'</span></code>, a <a class="reference internal" href="_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">Surrogate</span></code></a>, or a <a class="reference internal" href="_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurrogateManager</span></code></a>. If
-omitted, the library's bundled default preset resolves it (currently
-an RBF surrogate with mean-prediction acquisition). Passing <code class="docutils literal notranslate"><span class="pre">None</span></code>
-explicitly is not supported and raises <a class="reference internal" href="_autosummary/saealib.ValidationError.html#saealib.ValidationError" title="saealib.ValidationError"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidationError</span></code></a>.</p></li>
-<li><p><strong>strategy</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><em>OptimizationStrategy</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'ib'</span></code>, <code class="docutils literal notranslate"><span class="pre">'gb'</span></code>, <code class="docutils literal notranslate"><span class="pre">'ps'</span></code>, or an <a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code></a>. If
-omitted, the library's bundled default preset resolves it (currently
-individual-based).</p></li>
-<li><p><strong>preset</strong> (<em>str</em><em>, </em><em>Path</em><em>, </em><em>dict</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) -- A preset (YAML file path or dict) providing default component
-configuration. See <a class="reference internal" href="_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_preset" title="saealib.Optimizer.set_preset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Optimizer.set_preset()</span></code></a>. Components explicitly
-passed via <em>algorithm</em>/<em>surrogate</em>/<em>strategy</em> still take precedence.</p></li>
-<li><p><strong>max_fe</strong> (<em>int</em><em> or </em><em>None</em>) -- Maximum true function evaluations. Default: <code class="docutils literal notranslate"><span class="pre">200</span> <span class="pre">*</span> <span class="pre">dim</span></code>.</p></li>
-<li><p><strong>pop_size</strong> (<em>int</em><em> or </em><em>None</em>) -- Population size. Default: <code class="docutils literal notranslate"><span class="pre">4</span> <span class="pre">*</span> <span class="pre">dim</span></code>.</p></li>
-<li><p><strong>seed</strong> (<em>int</em><em> or </em><em>None</em>) -- Random seed for <a class="reference internal" href="_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer" title="saealib.LHSInitializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LHSInitializer</span></code></a>.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em>) -- If <code class="docutils literal notranslate"><span class="pre">False</span></code>, suppress per-generation log output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>func</strong> (<em>callable</em><em> or </em><a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><em>Problem</em></a>) -- 目的関数<code class="docutils literal notranslate"><span class="pre">f(x)</span> <span class="pre">-&gt;</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">array</span></code>、または完全に構成済みの <a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a> インスタンスです（この場合<code class="docutils literal notranslate"><span class="pre">dim</span></code>、<code class="docutils literal notranslate"><span class="pre">lb</span></code>、<code class="docutils literal notranslate"><span class="pre">ub</span></code>、<code class="docutils literal notranslate"><span class="pre">n_obj</span></code>は無視されます）。</p></li>
+<li><p><strong>algorithm</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><em>Algorithm</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'GA'</span></code>、<code class="docutils literal notranslate"><span class="pre">'PSO'</span></code>、または <a class="reference internal" href="_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">Algorithm</span></code></a> インスタンスです。省略時は付属の既定プリセット（BLX-alpha交叉と一様突然変異を使うGA）が解決します。</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em>, </em><em>optional</em>) -- 設計変数の数です。<em>func</em>が呼び出し可能な場合に必要です。</p></li>
+<li><p><strong>lb</strong> (<em>array-like</em><em>, </em><em>optional</em>) -- 長さ<em>dim</em>の下限です。<em>func</em>が呼び出し可能な場合に必要です。</p></li>
+<li><p><strong>ub</strong> (<em>array-like</em><em>, </em><em>optional</em>) -- 長さ<em>dim</em>の上限です。<em>func</em>が呼び出し可能な場合に必要です。</p></li>
+<li><p><strong>n_obj</strong> (<em>int</em>) -- 目的数。<em>func</em> が <a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a> の場合は無視されます。既定値：1。</p></li>
+<li><p><strong>direction</strong> (<em>np.ndarray</em><em>, </em><em>list</em><em>[</em><em>str</em><em>]</em><em>, or </em><em>None</em>) -- 目的ごとの最適化方向です。各要素は<code class="docutils literal notranslate"><span class="pre">-1</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;minimize&quot;</span></code>（最小化）または<code class="docutils literal notranslate"><span class="pre">+1</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;maximize&quot;</span></code>（最大化）です。既定値はすべて最小化です。</p></li>
+<li><p><strong>surrogate</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><em>Surrogate</em></a><em>, </em><a class="reference internal" href="_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><em>SurrogateManager</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'rbf'</span></code>、 <a class="reference internal" href="_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">Surrogate</span></code></a>、または <a class="reference internal" href="_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurrogateManager</span></code></a> です。省略時は平均予測の獲得関数を使うRBFサロゲートの既定プリセットが解決します。<code class="docutils literal notranslate"><span class="pre">None</span></code>の明示指定はサポートせず、 <a class="reference internal" href="_autosummary/saealib.ValidationError.html#saealib.ValidationError" title="saealib.ValidationError"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidationError</span></code></a> を発生させます。</p></li>
+<li><p><strong>strategy</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><em>OptimizationStrategy</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'ib'</span></code>、<code class="docutils literal notranslate"><span class="pre">'gb'</span></code>、<code class="docutils literal notranslate"><span class="pre">'ps'</span></code>、または <a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code></a> です。省略時は個体ベースの既定プリセットが解決します。</p></li>
+<li><p><strong>preset</strong> (<em>str</em><em>, </em><em>Path</em><em>, </em><em>dict</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) -- <a class="reference internal" href="_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_preset" title="saealib.Optimizer.set_preset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Optimizer.set_preset()</span></code></a> で指定する、既定のコンポーネント構成用プリセット（YAMLファイルパスまたは辞書）。<em>algorithm</em>、<em>surrogate</em>、<em>strategy</em> で明示したコンポーネントが優先されます。</p></li>
+<li><p><strong>max_fe</strong> (<em>int</em><em> or </em><em>None</em>) -- 真の関数評価の最大回数です。既定値：<code class="docutils literal notranslate"><span class="pre">200</span> <span class="pre">*</span> <span class="pre">dim</span></code>。</p></li>
+<li><p><strong>pop_size</strong> (<em>int</em><em> or </em><em>None</em>) -- 個体群サイズです。既定値：<code class="docutils literal notranslate"><span class="pre">4</span> <span class="pre">*</span> <span class="pre">dim</span></code>。</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> or </em><em>None</em>) -- <a class="reference internal" href="_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer" title="saealib.LHSInitializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LHSInitializer</span></code></a> に渡す乱数シード。</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) -- <code class="docutils literal notranslate"><span class="pre">False</span></code>の場合、世代ごとのログ出力を抑制します。既定値は<code class="docutils literal notranslate"><span class="pre">True</span></code>です。</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
@@ -833,37 +925,25 @@ passed via <em>algorithm</em>/<em>surrogate</em>/<em>strategy</em> still take pr
 <dl class="py function">
 <dt class="sig sig-object py" id="saealib.maximize">
 <span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">maximize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">UNSET</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surrogate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">UNSET</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">UNSET</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_fe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pop_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saealib/api.html#maximize"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.maximize" title="Link to this definition">#</a></dt>
-<dd><p>Run surrogate-assisted maximization.</p>
-<p>Identical to <a class="reference internal" href="#saealib.minimize" title="saealib.minimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">minimize()</span></code></a> except that all objectives are maximized
-(<code class="docutils literal notranslate"><span class="pre">direction</span> <span class="pre">=</span> <span class="pre">+1</span></code>).</p>
+<dd><p>を実行します。サロゲートモデルを用いた最大化を実行します。</p>
+<p><a class="reference internal" href="#saealib.minimize" title="saealib.minimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">minimize()</span></code></a> と同じですが、すべての目的を最大化します（<code class="docutils literal notranslate"><span class="pre">direction</span> <span class="pre">=</span> <span class="pre">+1</span></code>）。</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>func</strong> (<em>callable</em><em> or </em><a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><em>Problem</em></a>) -- Objective function <code class="docutils literal notranslate"><span class="pre">f(x)</span> <span class="pre">-&gt;</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">array</span></code>, or a fully configured
-<a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a> instance.</p></li>
-<li><p><strong>algorithm</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><em>Algorithm</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'GA'</span></code>, <code class="docutils literal notranslate"><span class="pre">'PSO'</span></code>, or an <a class="reference internal" href="_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">Algorithm</span></code></a> instance. If omitted,
-the library's bundled default preset resolves it (currently GA with
-BLX-alpha crossover and uniform mutation).</p></li>
-<li><p><strong>dim</strong> (<em>int</em><em>, </em><em>optional</em>) -- Number of design variables. Required when <em>func</em> is a callable.</p></li>
-<li><p><strong>lb</strong> (<em>array-like</em><em>, </em><em>optional</em>) -- Lower bounds of length <em>dim</em>. Required when <em>func</em> is a callable.</p></li>
-<li><p><strong>ub</strong> (<em>array-like</em><em>, </em><em>optional</em>) -- Upper bounds of length <em>dim</em>. Required when <em>func</em> is a callable.</p></li>
-<li><p><strong>n_obj</strong> (<em>int</em>) -- Number of objectives. Ignored when <em>func</em> is a <a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a>. Default: 1.</p></li>
-<li><p><strong>direction</strong> (<em>np.ndarray</em><em>, </em><em>list</em><em>[</em><em>str</em><em>]</em><em>, or </em><em>None</em>) -- Optimization direction per objective. Each element is <code class="docutils literal notranslate"><span class="pre">-1</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;minimize&quot;</span></code>
-(minimize) or <code class="docutils literal notranslate"><span class="pre">+1</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;maximize&quot;</span></code> (maximize). Default: all maximize.</p></li>
-<li><p><strong>surrogate</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><em>Surrogate</em></a><em>, </em><a class="reference internal" href="_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><em>SurrogateManager</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'rbf'</span></code>, a <a class="reference internal" href="_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">Surrogate</span></code></a>, or a <a class="reference internal" href="_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurrogateManager</span></code></a>. If
-omitted, the library's bundled default preset resolves it (currently
-an RBF surrogate with mean-prediction acquisition). Passing <code class="docutils literal notranslate"><span class="pre">None</span></code>
-explicitly is not supported and raises <a class="reference internal" href="_autosummary/saealib.ValidationError.html#saealib.ValidationError" title="saealib.ValidationError"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidationError</span></code></a>.</p></li>
-<li><p><strong>strategy</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><em>OptimizationStrategy</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'ib'</span></code>, <code class="docutils literal notranslate"><span class="pre">'gb'</span></code>, <code class="docutils literal notranslate"><span class="pre">'ps'</span></code>, or an <a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code></a>. If
-omitted, the library's bundled default preset resolves it (currently
-individual-based).</p></li>
-<li><p><strong>preset</strong> (<em>str</em><em>, </em><em>Path</em><em>, </em><em>dict</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) -- A preset (YAML file path or dict) providing default component
-configuration. See <a class="reference internal" href="_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_preset" title="saealib.Optimizer.set_preset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Optimizer.set_preset()</span></code></a>. Components explicitly
-passed via <em>algorithm</em>/<em>surrogate</em>/<em>strategy</em> still take precedence.</p></li>
-<li><p><strong>max_fe</strong> (<em>int</em><em> or </em><em>None</em>) -- Maximum true function evaluations. Default: <code class="docutils literal notranslate"><span class="pre">200</span> <span class="pre">*</span> <span class="pre">dim</span></code>.</p></li>
-<li><p><strong>pop_size</strong> (<em>int</em><em> or </em><em>None</em>) -- Population size. Default: <code class="docutils literal notranslate"><span class="pre">4</span> <span class="pre">*</span> <span class="pre">dim</span></code>.</p></li>
-<li><p><strong>seed</strong> (<em>int</em><em> or </em><em>None</em>) -- Random seed for <a class="reference internal" href="_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer" title="saealib.LHSInitializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LHSInitializer</span></code></a>.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em>) -- If <code class="docutils literal notranslate"><span class="pre">False</span></code>, suppress per-generation log output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>func</strong> (<em>callable</em><em> or </em><a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><em>Problem</em></a>) -- 目的関数<code class="docutils literal notranslate"><span class="pre">f(x)</span> <span class="pre">-&gt;</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">array</span></code>、または完全に構成済みの <a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a> インスタンスです。</p></li>
+<li><p><strong>algorithm</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><em>Algorithm</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'GA'</span></code>、<code class="docutils literal notranslate"><span class="pre">'PSO'</span></code>、または <a class="reference internal" href="_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">Algorithm</span></code></a> インスタンスです。省略時は付属の既定プリセット（BLX-alpha交叉と一様突然変異を使うGA）が解決します。</p></li>
+<li><p><strong>dim</strong> (<em>int</em><em>, </em><em>optional</em>) -- 設計変数の数です。<em>func</em>が呼び出し可能な場合に必要です。</p></li>
+<li><p><strong>lb</strong> (<em>array-like</em><em>, </em><em>optional</em>) -- 長さ<em>dim</em>の下限です。<em>func</em>が呼び出し可能な場合に必要です。</p></li>
+<li><p><strong>ub</strong> (<em>array-like</em><em>, </em><em>optional</em>) -- 長さ<em>dim</em>の上限です。<em>func</em>が呼び出し可能な場合に必要です。</p></li>
+<li><p><strong>n_obj</strong> (<em>int</em>) -- 目的数。<em>func</em> が <a class="reference internal" href="_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Problem</span></code></a> の場合は無視されます。既定値：1。</p></li>
+<li><p><strong>direction</strong> (<em>np.ndarray</em><em>, </em><em>list</em><em>[</em><em>str</em><em>]</em><em>, or </em><em>None</em>) -- 目的ごとの最適化方向です。各要素は<code class="docutils literal notranslate"><span class="pre">-1</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;minimize&quot;</span></code>（最小化）または<code class="docutils literal notranslate"><span class="pre">+1</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;maximize&quot;</span></code>（最大化）です。既定値はすべて最大化です。</p></li>
+<li><p><strong>surrogate</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><em>Surrogate</em></a><em>, </em><a class="reference internal" href="_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><em>SurrogateManager</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'rbf'</span></code>、 <a class="reference internal" href="_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">Surrogate</span></code></a>、または <a class="reference internal" href="_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurrogateManager</span></code></a> です。省略時は平均予測の獲得関数を使うRBFサロゲートの既定プリセットが解決します。<code class="docutils literal notranslate"><span class="pre">None</span></code>の明示指定はサポートせず、 <a class="reference internal" href="_autosummary/saealib.ValidationError.html#saealib.ValidationError" title="saealib.ValidationError"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidationError</span></code></a> を発生させます。</p></li>
+<li><p><strong>strategy</strong> (<em>str</em><em>, </em><a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><em>OptimizationStrategy</em></a><em>, or </em><em>None</em>) -- <code class="docutils literal notranslate"><span class="pre">'ib'</span></code>、<code class="docutils literal notranslate"><span class="pre">'gb'</span></code>、<code class="docutils literal notranslate"><span class="pre">'ps'</span></code>、または <a class="reference internal" href="_autosummary/saealib.OptimizationStrategy.html#saealib.OptimizationStrategy" title="saealib.OptimizationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code></a> です。省略時は個体ベースの既定プリセットが解決します。</p></li>
+<li><p><strong>preset</strong> (<em>str</em><em>, </em><em>Path</em><em>, </em><em>dict</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) -- <a class="reference internal" href="_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_preset" title="saealib.Optimizer.set_preset"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Optimizer.set_preset()</span></code></a> で指定する、既定のコンポーネント構成用プリセット（YAMLファイルパスまたは辞書）。<em>algorithm</em>、<em>surrogate</em>、<em>strategy</em> で明示したコンポーネントが優先されます。</p></li>
+<li><p><strong>max_fe</strong> (<em>int</em><em> or </em><em>None</em>) -- 真の関数評価の最大回数です。既定値：<code class="docutils literal notranslate"><span class="pre">200</span> <span class="pre">*</span> <span class="pre">dim</span></code>。</p></li>
+<li><p><strong>pop_size</strong> (<em>int</em><em> or </em><em>None</em>) -- 個体群サイズです。既定値：<code class="docutils literal notranslate"><span class="pre">4</span> <span class="pre">*</span> <span class="pre">dim</span></code>。</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em> or </em><em>None</em>) -- <a class="reference internal" href="_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer" title="saealib.LHSInitializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">LHSInitializer</span></code></a> に渡す乱数シード。</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) -- <code class="docutils literal notranslate"><span class="pre">False</span></code>の場合、世代ごとのログ出力を抑制します。既定値は<code class="docutils literal notranslate"><span class="pre">True</span></code>です。</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
@@ -882,8 +962,8 @@ passed via <em>algorithm</em>/<em>surrogate</em>/<em>strategy</em> still take pr
 
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.Result.html#saealib.Result" title="saealib.Result"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.Result</span></code></a></p></td>
-<td><p>Optimization result returned by <code class="xref py py-func docutils literal notranslate"><span class="pre">minimize()</span></code> / <code class="xref py py-func docutils literal notranslate"><span class="pre">maximize()</span></code>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.Result.html#saealib.Result" title="saealib.Result"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.Result</span></code></a>・結果</p></td>
+<td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">minimize()</span></code> / <code class="xref py py-func docutils literal notranslate"><span class="pre">maximize()</span></code> が返す最適化結果。</p></td>
 </tr>
 </tbody>
 </table>
@@ -901,12 +981,12 @@ passed via <em>algorithm</em>/<em>surrogate</em>/<em>strategy</em> still take pr
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="index.html"
+       href="_autosummary/saealib.FeedbackResult.html"
        title="前のページ">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">前へ</p>
-        <p class="prev-next-title">API Reference</p>
+        <p class="prev-next-title">saealib.FeedbackResult</p>
       </div>
     </a>
     <a class="right-next"

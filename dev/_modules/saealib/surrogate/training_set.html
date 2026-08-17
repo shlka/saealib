@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.surrogate.training_set &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>saealib.surrogate.training_set &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../../../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -591,7 +591,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -604,8 +604,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -626,7 +633,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -764,7 +771,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -777,8 +784,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -799,7 +813,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -976,12 +990,26 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MANY</span><span class="p">,</span>
+    <span class="n">ComponentContract</span><span class="p">,</span>
+    <span class="n">DataSpec</span><span class="p">,</span>
+    <span class="n">PortContract</span><span class="p">,</span>
+    <span class="n">PortDirection</span><span class="p">,</span>
+    <span class="n">PortSpec</span><span class="p">,</span>
+    <span class="n">StateContract</span><span class="p">,</span>
+    <span class="n">Var</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">RUNTIME_RNG</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population.archive</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population.genome</span><span class="w"> </span><span class="kn">import</span> <span class="n">DenseVectorBatch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.space.space</span><span class="w"> </span><span class="kn">import</span> <span class="n">encode_features</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
@@ -1009,6 +1037,43 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_canonical_dense_archive_data</span><span class="p">(</span>
+    <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return canonical dense archive storage, or ``None`` for custom paths.</span>
+
+<span class="sd">    This is deliberately limited to the exact built-in ``Archive`` and its</span>
+<span class="sd">    built-in dense genome storage.  Custom archives and subclasses retain the</span>
+<span class="sd">    public-property path, since their properties or storage may have different</span>
+<span class="sd">    semantics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Archive</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="vm">__dict__</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_genome_batch&quot;</span><span class="p">),</span> <span class="n">DenseVectorBatch</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_data&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dense_archive_rows</span><span class="p">(</span>
+    <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">indices</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return dense genome and column rows without going through properties.&quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">_canonical_dense_archive_data</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="s2">&quot;x&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">or</span> <span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">][:</span><span class="n">size</span><span class="p">][</span><span class="n">indices</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">target</span><span class="p">][:</span><span class="n">size</span><span class="p">][</span><span class="n">indices</span><span class="p">]</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">y</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+
+
 <div class="viewcode-block" id="TrainingSet">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.TrainingSet.html#saealib.TrainingSet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TrainingSet</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -1017,6 +1082,55 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Inject an instance into ``LocalSurrogateManager`` or</span>
 <span class="sd">    ``GlobalSurrogateManager`` via their ``training_set`` constructor argument.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TrainingSet.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.TrainingSet.html#saealib.TrainingSet.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the training-set contract.&quot;&quot;&quot;</span>
+        <span class="n">feature_schema</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="p">)</span>
+        <span class="n">objective_schema</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;O&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ComponentContract</span><span class="p">(</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;training_set&quot;</span><span class="p">:</span> <span class="n">PortContract</span><span class="p">(</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;archive&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">INPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;Population&quot;</span><span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;population&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">INPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;Population&quot;</span><span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                            <span class="n">optional</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;features&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span>
+                                <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;FeatureBatch&quot;</span><span class="p">,</span>
+                                <span class="n">bindings</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;feature_schema&quot;</span><span class="p">:</span> <span class="n">feature_schema</span><span class="p">},</span>
+                            <span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;targets&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span>
+                                <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;FeatureBatch&quot;</span><span class="p">,</span>
+                                <span class="n">bindings</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;objective_schema&quot;</span><span class="p">:</span> <span class="n">objective_schema</span><span class="p">},</span>
+                            <span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="TrainingSet.build">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.TrainingSet.html#saealib.TrainingSet.build">[docs]</a>
@@ -1053,19 +1167,10 @@ window.runMermaid = runMermaid;</script>
 
 
 
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Regression defaults (backward-compatible)</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
-
-
 <div class="viewcode-block" id="ArchiveObjectiveSet">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveObjectiveSet.html#saealib.ArchiveObjectiveSet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ArchiveObjectiveSet</span><span class="p">(</span><span class="n">TrainingSet</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Use the entire archive as training data with raw objective values.</span>
-
-<span class="sd">    Default for ``GlobalSurrogateManager``.  Equivalent to the behaviour</span>
-<span class="sd">    before Issue #026.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Use the entire archive as training data with raw objective values.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ArchiveObjectiveSet.build">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ArchiveObjectiveSet.html#saealib.ArchiveObjectiveSet.build">[docs]</a>
@@ -1077,7 +1182,12 @@ window.runMermaid = runMermaid;</script>
         <span class="n">candidate_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrainingData</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return all archive points with raw objective values.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">TrainingData</span><span class="p">(</span><span class="n">train_x</span><span class="o">=</span><span class="n">archive</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">train_y</span><span class="o">=</span><span class="n">archive</span><span class="o">.</span><span class="n">f</span><span class="p">)</span></div>
+        <span class="n">genomes</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="s2">&quot;genomes&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">genomes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">train_x</span> <span class="o">=</span> <span class="n">encode_features</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="p">,</span> <span class="n">genomes</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">train_x</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">x</span>
+        <span class="k">return</span> <span class="n">TrainingData</span><span class="p">(</span><span class="n">train_x</span><span class="o">=</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="o">=</span><span class="n">archive</span><span class="o">.</span><span class="n">f</span><span class="p">)</span></div>
 </div>
 
 
@@ -1088,8 +1198,7 @@ window.runMermaid = runMermaid;</script>
 <span class="k">class</span><span class="w"> </span><span class="nc">KNNObjectiveSet</span><span class="p">(</span><span class="n">TrainingSet</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve the *k* nearest archive neighbours of ``candidate_x``.</span>
 
-<span class="sd">    Default for ``LocalSurrogateManager``.  Equivalent to the</span>
-<span class="sd">    ``n_neighbors``-based behaviour before Issue #026.</span>
+<span class="sd">    This is the default training set for ``LocalSurrogateManager``.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1116,14 +1225,12 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="n">candidate_x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;KNNObjectiveSet requires candidate_x.&quot;</span><span class="p">)</span>
         <span class="n">idx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">get_knn</span><span class="p">(</span><span class="n">candidate_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_neighbors</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">_dense_archive_rows</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="s2">&quot;f&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TrainingData</span><span class="p">(</span><span class="n">train_x</span><span class="o">=</span><span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">train_y</span><span class="o">=</span><span class="n">rows</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">TrainingData</span><span class="p">(</span><span class="n">train_x</span><span class="o">=</span><span class="n">archive</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">train_y</span><span class="o">=</span><span class="n">archive</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span></div>
 </div>
 
-
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Constraint regression (raw g values)</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
 
 
 <div class="viewcode-block" id="ConstraintObjectiveSet">
@@ -1201,21 +1308,23 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return k nearest-neighbour archive points with raw constraint values.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">candidate_x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;KNNConstraintObjectiveSet requires candidate_x.&quot;</span><span class="p">)</span>
-        <span class="n">g</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">g</span>
+        <span class="n">dense_data</span> <span class="o">=</span> <span class="n">_canonical_dense_archive_data</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dense_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;g&quot;</span> <span class="ow">in</span> <span class="n">dense_data</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">dense_data</span><span class="p">[</span><span class="s2">&quot;g&quot;</span><span class="p">][:</span> <span class="nb">len</span><span class="p">(</span><span class="n">archive</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">g</span>
         <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;KNNConstraintObjectiveSet requires at least one constraint &quot;</span>
                 <span class="s2">&quot;(archive.g has 0 columns).&quot;</span>
             <span class="p">)</span>
         <span class="n">idx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">archive</span><span class="o">.</span><span class="n">get_knn</span><span class="p">(</span><span class="n">candidate_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_neighbors</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">_dense_archive_rows</span><span class="p">(</span><span class="n">archive</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">TrainingData</span><span class="p">(</span><span class="n">train_x</span><span class="o">=</span><span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">train_y</span><span class="o">=</span><span class="n">rows</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">TrainingData</span><span class="p">(</span><span class="n">train_x</span><span class="o">=</span><span class="n">archive</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">train_y</span><span class="o">=</span><span class="n">g</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span></div>
 </div>
 
-
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Constraint-based classification</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
 
 
 <div class="viewcode-block" id="FeasibilityClassificationSet">
@@ -1271,11 +1380,6 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">TrainingData</span><span class="p">(</span><span class="n">train_x</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">),</span> <span class="n">train_y</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span></div>
 </div>
 
-
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Rank-based labelling</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
 
 
 <div class="viewcode-block" id="TopKBipartitionSet">
@@ -1404,11 +1508,6 @@ window.runMermaid = runMermaid;</script>
 
 
 
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Pairwise comparison</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
-
-
 <div class="viewcode-block" id="PairwiseComparisonSet">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.PairwiseComparisonSet.html#saealib.PairwiseComparisonSet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PairwiseComparisonSet</span><span class="p">(</span><span class="n">TrainingSet</span><span class="p">):</span>
@@ -1454,6 +1553,18 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">source</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_pairs</span> <span class="o">=</span> <span class="n">n_pairs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">rng</span></div>
+
+
+<div class="viewcode-block" id="PairwiseComparisonSet.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.PairwiseComparisonSet.html#saealib.PairwiseComparisonSet.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the pairwise-training contract.&quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">StateContract</span><span class="p">(</span><span class="n">reads</span><span class="o">=</span><span class="p">(</span><span class="n">RUNTIME_RNG</span><span class="p">,),</span> <span class="n">writes</span><span class="o">=</span><span class="p">(</span><span class="n">RUNTIME_RNG</span><span class="p">,))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_pairs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">StateContract</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">(),</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PairwiseComparisonSet.build">
@@ -1504,11 +1615,6 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">TrainingData</span><span class="p">(</span><span class="n">train_x</span><span class="o">=</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="o">=</span><span class="n">train_y</span><span class="p">)</span></div>
 </div>
 
-
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Reference point comparison</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
 
 
 <div class="viewcode-block" id="ReferencePointComparisonSet">

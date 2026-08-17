@@ -16,6 +16,7 @@
 
 
    ~ComparisonSurrogate.__init__
+   ~ComparisonSurrogate.contract
    ~ComparisonSurrogate.fit
    ~ComparisonSurrogate.post_fit
    ~ComparisonSurrogate.predict
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.ComparisonSurrogate.__init__
+
+
+.. automethod:: saealib.ComparisonSurrogate.contract
 
 
 .. automethod:: saealib.ComparisonSurrogate.fit

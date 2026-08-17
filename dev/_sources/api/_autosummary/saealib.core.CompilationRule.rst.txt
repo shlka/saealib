@@ -1,0 +1,35 @@
+﻿saealib.core.CompilationRule
+============================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: CompilationRule
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CompilationRule.__init__
+   ~CompilationRule.apply
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.CompilationRule.__init__
+
+
+.. automethod:: saealib.core.CompilationRule.apply
+
+
+

@@ -1,0 +1,31 @@
+﻿saealib.core.compiler.ContractPath
+==================================
+
+.. currentmodule:: saealib.core.compiler
+
+.. autoclass:: ContractPath
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ContractPath.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.compiler.ContractPath.__init__
+
+
+

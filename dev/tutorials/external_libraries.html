@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Integrating External Libraries &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>Integrating External Libraries &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -64,7 +64,7 @@
     <link rel="icon" href="../_static/icon.svg"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Components" href="../components/index.html" />
+    <link rel="next" title="Choose and swap built-in components" href="component_swap.html" />
     <link rel="prev" title="Logging Progress" href="logging.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -158,7 +158,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -171,8 +171,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -193,7 +200,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -333,7 +340,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -346,8 +353,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -368,7 +382,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -478,6 +492,13 @@
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Progress</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Integrating External Libraries</a></li>
 </ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="component_swap.html">Choose and swap built-in components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lowlevel_api.html">Assembling an Optimizer with the Low-Level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interface_hooks.html">Choose a Hook, Stage, or Callback</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel_api.html">Run an optimization with the high-level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_components.html">Add a custom component to an existing contract</a></li>
+</ul>
 </div>
 </nav></div>
     </div>
@@ -539,11 +560,17 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="integrating-external-libraries">
 <h1>Integrating External Libraries<a class="headerlink" href="#integrating-external-libraries" title="Link to this heading">#</a></h1>
-<p><code class="docutils literal notranslate"><span class="pre">saealib</span></code> provides adapters that thinly wrap external machine learning and evolutionary-computation libraries behind its own abstract base classes.</p>
+<div class="layer-badges"><span class="layer-badge">Layer 3: Extend Components</span></div><p><code class="docutils literal notranslate"><span class="pre">saealib</span></code> provides adapters that thinly wrap external machine learning and evolutionary-computation libraries behind its own abstract base classes.</p>
 <p>The adapter only translates <code class="docutils literal notranslate"><span class="pre">saealib</span></code>-side data representations such as <code class="docutils literal notranslate"><span class="pre">Problem</span></code>/<code class="docutils literal notranslate"><span class="pre">Population</span></code>/<code class="docutils literal notranslate"><span class="pre">ctx</span></code>; the learning algorithm or search operator itself uses the external library’s implementation as-is.</p>
-<p>Currently, surrogate model adapters (scikit-learn, XGBoost, LightGBM, PyTorch) and pymoo adapters (<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">Algorithm</span></code>/<code class="docutils literal notranslate"><span class="pre">Problem</span></code>) are implemented. For users who would rather remove the runtime dependency on an external evolutionary-computation library, <a class="reference internal" href="#porting-operators-to-native-saealib-code">Porting operators to native saealib code</a> below covers rewriting a pymoo- or DEAP-style operator as a native <code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code> subclass instead.</p>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<p>Currently, surrogate model adapters (scikit-learn, XGBoost, LightGBM, PyTorch) and pymoo adapters (<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">Algorithm</span></code>/<code class="docutils literal notranslate"><span class="pre">Problem</span></code>) are implemented. For users who would rather remove the runtime dependency on an external evolutionary-computation library, <a class="reference internal" href="custom_components.html#port-operators-to-native-saealib-code"><span class="std std-ref">Porting operators to native saealib code</span></a> covers rewriting a pymoo- or DEAP-style operator as a native <code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code> subclass instead.</p>
+<div class="tip admonition">
+<p class="admonition-title">What you’ll be able to do</p>
+<p>By the end of this page, you’ll be able to install external-library dependencies and use models or operators through saealib adapters.</p>
+</div>
+<p>Use the <a class="reference internal" href="highlevel_api.html"><span class="std std-doc">High-level API</span></a> when built-in models or operators are sufficient, and see <a class="reference internal" href="custom_components.html"><span class="std std-doc">Custom components</span></a> when you want to port an implementation.
+This page covers installing extras and integrating Surrogate and pymoo adapters into a configuration.</p>
+<section id="install-the-adapter-extras">
+<h2>Install the adapter extras<a class="headerlink" href="#install-the-adapter-extras" title="Link to this heading">#</a></h2>
 <p>Each adapter can only be used once the corresponding <code class="docutils literal notranslate"><span class="pre">extra</span></code> is installed.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;saealib[sklearn]&quot;</span>
 </pre></div>
@@ -551,8 +578,8 @@
 <p>See <a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">Installation</span></a> for how to install and the full list of extras.</p>
 <p>Importing an adapter without the corresponding <code class="docutils literal notranslate"><span class="pre">extra</span></code> installed raises <code class="docutils literal notranslate"><span class="pre">ImportError</span></code>.</p>
 </section>
-<section id="surrogate-adapters">
-<h2>Surrogate adapters<a class="headerlink" href="#surrogate-adapters" title="Link to this heading">#</a></h2>
+<section id="use-surrogate-adapters">
+<h2>Use surrogate adapters<a class="headerlink" href="#use-surrogate-adapters" title="Link to this heading">#</a></h2>
 <p>Each adapter implements <code class="docutils literal notranslate"><span class="pre">saealib</span></code>’s <code class="docutils literal notranslate"><span class="pre">Surrogate</span></code> base class, and can be passed to the <code class="docutils literal notranslate"><span class="pre">surrogate</span></code> argument just like the built-in <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -615,11 +642,11 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>Passing a <code class="docutils literal notranslate"><span class="pre">Surrogate</span></code> instance to the <code class="docutils literal notranslate"><span class="pre">surrogate</span></code> argument works the same as the <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code> example in “Switching components” in <a class="reference internal" href="single_objective.html"><span class="std std-doc">Single-Objective Optimization</span></a> — internally it is wrapped in a <code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>.</p>
-<p>See <a class="reference internal" href="../components/surrogate.html"><span class="std std-doc">Surrogate</span></a> for adapters aimed at classification problems (e.g. feasibility classification) and the detailed arguments of each adapter.</p>
+<p>When you pass a <code class="docutils literal notranslate"><span class="pre">Surrogate</span></code> instance to <code class="docutils literal notranslate"><span class="pre">minimize(...,</span> <span class="pre">surrogate=...)</span></code>, it is wrapped in a <code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code> internally.</p>
+<p>See <a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a> for adapters aimed at classification problems (e.g. feasibility classification) and the detailed arguments of each adapter.</p>
 </section>
-<section id="pymoo-adapters">
-<h2>pymoo adapters<a class="headerlink" href="#pymoo-adapters" title="Link to this heading">#</a></h2>
+<section id="use-pymoo-adapters">
+<h2>Use pymoo adapters<a class="headerlink" href="#use-pymoo-adapters" title="Link to this heading">#</a></h2>
 <p>Each adapter wraps an already-constructed pymoo object and implements the corresponding <code class="docutils literal notranslate"><span class="pre">saealib</span></code> base class, so it can be passed anywhere that base class is expected.</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -677,10 +704,9 @@
 <p><code class="docutils literal notranslate"><span class="pre">PymooAlgorithm</span></code> reuses a whole pymoo algorithm’s own search and survival logic, and <code class="docutils literal notranslate"><span class="pre">PymooProblem</span></code> reuses an existing pymoo problem definition unchanged:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pymoo.algorithms.moo.nsga2</span><span class="w"> </span><span class="kn">import</span> <span class="n">NSGA2</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pymoo.problems</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_problem</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span><span class="p">,</span> <span class="n">PymooProblem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="n">PymooAlgorithm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">PymooProblem</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.direct</span><span class="w"> </span><span class="kn">import</span> <span class="n">DirectStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">DirectStrategy</span>
 
 <span class="n">problem</span> <span class="o">=</span> <span class="n">PymooProblem</span><span class="p">(</span><span class="n">get_problem</span><span class="p">(</span><span class="s2">&quot;zdt1&quot;</span><span class="p">))</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
@@ -695,111 +721,10 @@
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">PymooAlgorithm</span></code> runs in “engine mode”: the wrapped pymoo algorithm owns its own population and internal survival state, and <code class="docutils literal notranslate"><span class="pre">ctx.population</span></code> is refreshed from it after every generation rather than being the source of truth.
-See <a class="reference internal" href="../components/algorithm.html"><span class="std std-doc">Algorithm</span></a> for what this means in practice (no checkpoint/resume, <code class="docutils literal notranslate"><span class="pre">n_offspring</span></code> is ignored, and <code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code>’s partial <code class="docutils literal notranslate"><span class="pre">tell()</span></code> needs an explicit opt-in).</p>
+See <a class="reference internal" href="../concepts/search_algorithms/algorithm.html"><span class="std std-doc">Algorithm</span></a> for what this means in practice (no checkpoint/resume, <code class="docutils literal notranslate"><span class="pre">n_offspring</span></code> is ignored, and <code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code>’s partial <code class="docutils literal notranslate"><span class="pre">tell()</span></code> needs an explicit opt-in).</p>
 </section>
-<section id="porting-operators-to-native-saealib-code">
-<span id="id1"></span><h2>Porting operators to native saealib code<a class="headerlink" href="#porting-operators-to-native-saealib-code" title="Link to this heading">#</a></h2>
-<p>Wrapping an external operator, as in the previous section, keeps a runtime dependency on that library.
-The pymoo adapters already preserve population-level vectorization in <code class="docutils literal notranslate"><span class="pre">GA</span></code>’s default batch mode, calling the wrapped operator once for the whole batch or gated subset, so porting is not normally needed to remove per-item calling overhead.
-Port an operator when you want to remove the runtime dependency, or when its logic should be directly auditable and citable as native saealib code for a software paper.
-The core logic usually stays the same; the main changes are adapting the array shape where necessary and using saealib’s RNG.</p>
-<p>The one detail that is easy to get wrong when porting is <em>where</em> the individual-level probability gate lives.
-saealib’s <code class="docutils literal notranslate"><span class="pre">GA</span></code> checks <code class="docutils literal notranslate"><span class="pre">Crossover.prob</span></code> itself and passes only gated parent groups to <code class="docutils literal notranslate"><span class="pre">crossover_batch()</span></code>, but <code class="docutils literal notranslate"><span class="pre">Mutation.mutate_batch()</span></code> must draw one <code class="docutils literal notranslate"><span class="pre">self.prob</span></code> gate per row and leave ungated rows unchanged.
-Both pymoo’s built-in mutations and DEAP’s <code class="docutils literal notranslate"><span class="pre">toolbox.mutate()</span></code> (gated externally by <code class="docutils literal notranslate"><span class="pre">algorithms.varAnd</span></code>’s <code class="docutils literal notranslate"><span class="pre">mutpb</span></code>) leave this gate outside the operator, so a ported mutation usually needs a gate array that the original code did not have.</p>
-<section id="from-pymoo">
-<h3>From pymoo<a class="headerlink" href="#from-pymoo" title="Link to this heading">#</a></h3>
-<p>A custom pymoo <code class="docutils literal notranslate"><span class="pre">Mutation</span></code> typically vectorizes over the whole batch <code class="docutils literal notranslate"><span class="pre">X</span></code> (shape <code class="docutils literal notranslate"><span class="pre">(n_individuals,</span> <span class="pre">dim)</span></code>):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pymoo.core.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mutation</span> <span class="k">as</span> <span class="n">PymooMutationBase</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">MyPymooMutation</span><span class="p">(</span><span class="n">PymooMutationBase</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_do</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">rng</span> <span class="o">=</span> <span class="n">random_state</span> <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
-        <span class="n">Xp</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">Xp</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.5</span>
-        <span class="n">Xp</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">+=</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">Xp</span><span class="o">.</span><span class="n">shape</span><span class="p">)[</span><span class="n">mask</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">Xp</span>
-</pre></div>
-</div>
-<p>Ported to a native saealib <code class="docutils literal notranslate"><span class="pre">Mutation</span></code>, the batch axis stays in place.
-The <code class="docutils literal notranslate"><span class="pre">_do()</span></code> body maps almost directly to <code class="docutils literal notranslate"><span class="pre">mutate_batch()</span></code>; the main addition is saealib’s per-row <code class="docutils literal notranslate"><span class="pre">prob</span></code> gate:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mutation</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">MyMutation</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">prob_var</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">prob</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates_batch</span><span class="p">,</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()):</span>
-        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
-        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">result</span>
-
-        <span class="n">selected</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">selected</span><span class="p">),</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span>
-        <span class="n">noise</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">selected</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-        <span class="n">selected</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">+=</span> <span class="n">noise</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
-        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">selected</span>
-        <span class="k">return</span> <span class="n">result</span>
-</pre></div>
-</div>
-</section>
-<section id="from-deap">
-<h3>From DEAP<a class="headerlink" href="#from-deap" title="Link to this heading">#</a></h3>
-<p>DEAP operators work on one individual or parent pair at a time, so a native saealib port must add and vectorize over a leading batch axis.
-A custom crossover:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">my_cx</span><span class="p">(</span><span class="n">ind1</span><span class="p">,</span> <span class="n">ind2</span><span class="p">,</span> <span class="n">swap_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind1</span><span class="p">)):</span>
-        <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">swap_rate</span><span class="p">:</span>
-            <span class="n">ind1</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ind2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ind2</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ind1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">ind1</span><span class="p">,</span> <span class="n">ind2</span>
-</pre></div>
-</div>
-<p>becomes a native <code class="docutils literal notranslate"><span class="pre">Crossover</span></code> by vectorizing over both the parent pairs and dimensions.
-It also replaces <code class="docutils literal notranslate"><span class="pre">random.random()</span></code> with the <code class="docutils literal notranslate"><span class="pre">rng</span></code> saealib passes in, dropping DEAP’s implicit global RNG state in favor of saealib’s per-run <code class="docutils literal notranslate"><span class="pre">np.random.Generator</span></code> (kept reproducible via <code class="docutils literal notranslate"><span class="pre">minimize(...,</span> <span class="pre">seed=...)</span></code>):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators</span><span class="w"> </span><span class="kn">import</span> <span class="n">Crossover</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">MyCrossover</span><span class="p">(</span><span class="n">Crossover</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">swap_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">prob</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">swap_rate</span> <span class="o">=</span> <span class="n">swap_rate</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">crossover_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parents_batch</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()):</span>
-        <span class="n">n_pair</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">parents_batch</span><span class="o">.</span><span class="n">shape</span>
-        <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">parents_batch</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">parents_batch</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">n_pair</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">swap_rate</span>
-        <span class="n">c1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">p1</span><span class="p">)</span>
-        <span class="n">c2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">toolbox.mate</span></code> is gated externally by <code class="docutils literal notranslate"><span class="pre">varAnd</span></code>’s <code class="docutils literal notranslate"><span class="pre">cxpb</span></code>, matching saealib’s <code class="docutils literal notranslate"><span class="pre">GA</span></code>, so — unlike mutation — no extra gate is needed here.</p>
-</section>
-<section id="algorithm-and-problem-level-code">
-<h3>Algorithm- and Problem-level code<a class="headerlink" href="#algorithm-and-problem-level-code" title="Link to this heading">#</a></h3>
-<p>Porting a whole search algorithm (survival selection, archive management, index-coupled state such as DE) is not a mechanical rewrite in the same way: it means reimplementing <code class="docutils literal notranslate"><span class="pre">Algorithm.ask()</span></code>/<code class="docutils literal notranslate"><span class="pre">tell()</span></code> from scratch. For pymoo specifically, the engine-mode <code class="docutils literal notranslate"><span class="pre">PymooAlgorithm</span></code> adapter above covers this case without a rewrite; for other libraries, see <a class="reference internal" href="../components/algorithm.html"><span class="std std-doc">Algorithm</span></a> for what a native <code class="docutils literal notranslate"><span class="pre">Algorithm</span></code> subclass needs to implement.</p>
-</section>
-</section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="related-concepts-and-reference">
+<h2>Related concepts and reference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Surrogate</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate" title="saealib.SklearnGPRSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SklearnGPRSurrogate</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate" title="saealib.SklearnRFRSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SklearnRFRSurrogate</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.SklearnSVMSurrogate.html#saealib.SklearnSVMSurrogate" title="saealib.SklearnSVMSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SklearnSVMSurrogate</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.SklearnNNSurrogate.html#saealib.SklearnNNSurrogate" title="saealib.SklearnNNSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SklearnNNSurrogate</span></code></a></p></li>
@@ -833,11 +758,11 @@ It also replaces <code class="docutils literal notranslate"><span class="pre">ra
       </div>
     </a>
     <a class="right-next"
-       href="../components/index.html"
+       href="component_swap.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Components</p>
+        <p class="prev-next-title">Choose and swap built-in components</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -860,16 +785,10 @@ It also replaces <code class="docutils literal notranslate"><span class="pre">ra
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogate-adapters">Surrogate adapters</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pymoo-adapters">pymoo adapters</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#porting-operators-to-native-saealib-code">Porting operators to native saealib code</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-pymoo">From pymoo</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-deap">From DEAP</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#algorithm-and-problem-level-code">Algorithm- and Problem-level code</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#install-the-adapter-extras">Install the adapter extras</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-surrogate-adapters">Use surrogate adapters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-pymoo-adapters">Use pymoo adapters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">Related concepts and reference</a></li>
 </ul>
   </nav></div>
 

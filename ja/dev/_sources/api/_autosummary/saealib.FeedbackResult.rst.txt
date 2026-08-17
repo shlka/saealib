@@ -1,0 +1,31 @@
+﻿saealib.FeedbackResult
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: FeedbackResult
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~FeedbackResult.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.FeedbackResult.__init__
+
+
+

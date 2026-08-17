@@ -16,8 +16,10 @@
 
 
    ~AcquisitionStage.__init__
+   ~AcquisitionStage.contract
    ~AcquisitionStage.execute
    ~AcquisitionStage.to_pseudocode
+   ~AcquisitionStage.to_text
 
 
 
@@ -30,10 +32,16 @@
 .. automethod:: saealib.AcquisitionStage.__init__
 
 
+.. automethod:: saealib.AcquisitionStage.contract
+
+
 .. automethod:: saealib.AcquisitionStage.execute
 
 
 .. automethod:: saealib.AcquisitionStage.to_pseudocode
+
+
+.. automethod:: saealib.AcquisitionStage.to_text
 
 
 

@@ -1,3 +1,7 @@
+---
+primary_layer: layer1
+---
+
 # Quickstart
 Have you finished installing saealib?
 See [here](./installation.md) for installation instructions.
@@ -42,6 +46,7 @@ By specifying an expensive-to-evaluate objective function here — such as a sim
 What's shown here is only a part of `saealib`.
 See the following pages for detailed guides.
 
+- [Choosing a layer](#choose-your-layer): Choose the Layer and related pages for your goal
 - [Tutorials](../tutorials/index.md): Guides for specific usage scenarios
-- [Components](../components/index.md): Detailed usage of each component
+- [Concepts](../concepts/index.md): Detailed usage of each component
 - [API Reference](../api/index.md): Reference for all parameters

@@ -16,6 +16,7 @@
 
 
    ~BatchExpectedImprovement.__init__
+   ~BatchExpectedImprovement.contract
    ~BatchExpectedImprovement.evaluate
    ~BatchExpectedImprovement.prepare
 
@@ -28,6 +29,9 @@
 
 
 .. automethod:: saealib.BatchExpectedImprovement.__init__
+
+
+.. automethod:: saealib.BatchExpectedImprovement.contract
 
 
 .. automethod:: saealib.BatchExpectedImprovement.evaluate

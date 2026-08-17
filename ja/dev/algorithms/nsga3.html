@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>NSGA-III &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>式: NSGA-III &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -610,8 +610,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -625,14 +632,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -785,8 +792,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -800,14 +814,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -909,12 +923,12 @@ window.runMermaid = runMermaid;</script>
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="ego.html">EGO（Efficient Global Optimization）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（Gaussian Process Upper Confidence Bound）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（ガウス過程上側信頼限界）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maxunc.html">MaxUnc（不確実性サンプリング）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rbf_cors.html">CORS-RBF（Constrained Optimization using Response Surfaces）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nsga2.html">NSGA-II（Nondominated Sorting Genetic Algorithm II）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2（Strength Pareto Evolutionary Algorithm 2）</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">NSGA-III</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">式: NSGA-III</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sms_emoa.html">SMS-EMOA（S metric selection EMOA）</a></li>
 </ul>
 </div>
@@ -959,7 +973,7 @@ window.runMermaid = runMermaid;</script>
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">アルゴリズム</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">NSGA-III</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">式: NSGA-III</span></li>
   </ul>
 </nav>
 </div>
@@ -977,20 +991,20 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="nsga-iii">
-<h1>NSGA-III<a class="headerlink" href="#nsga-iii" title="Link to this heading">#</a></h1>
-<p>NSGA-IIIは、NSGA-IIの選択機構を4つ以上の目的を持つ多目的最適化(many-objective optimization)向けに拡張した遺伝アルゴリズムです。 混雑度距離による多様性維持を、あらかじめ配置した参照点(reference point)へのニッチ保存操作に置き換え、目的数が増えても解集合の分布を維持します。</p>
+<h1>式: NSGA-III<a class="headerlink" href="#nsga-iii" title="Link to this heading">#</a></h1>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>NSGA-IIIは主に多数目的最適化を対象としますが、3目的でも参照方向による挙動を観察できます。混雑距離による多様性維持を、あらかじめ配置した参照点に対するニッチ保存操作へ置き換え、目的数が増えても解集合の分布を維持します。</p>
 <section id="overview">
 <h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>目的数が4つ以上に増えると、NSGA-IIの混雑度距離は多様性維持の役割を十分に果たせなくなります。 ランダムに生成した個体群のうち非優越な個体の割合は目的数の増加とともに指数的に増えるため、優越関係による絞り込みだけでは次世代個体群を埋められなくなり、混雑度距離が担う多様性維持の比重が相対的に大きくなるためです。</p>
-<p>NSGA-IIIは、この混雑度距離を、目的空間上にあらかじめ配置した<strong>参照点</strong>(reference point)へのニッチ保存操作に置き換えます。 各世代で、個体群全体の<strong>理想点</strong>(ideal point)と<strong>極端点</strong>(extreme point)から超平面の切片を求めて目的関数を正規化し、各個体を最も近い参照点への垂直距離で対応付けます。 まだ完全には受理できていない最後のフロントでは、割り当て済みの個体数（ニッチカウント）が少ない参照点を優先し、そこに対応付けられた個体のうち垂直距離が最小の個体から順に選ぶことで、参照点ごとにほぼ均等な数の解を残します。</p>
+<p>NSGA-IIIは、この混雑度距離を、目的空間上にあらかじめ配置した<strong>参照点</strong>へのニッチ保存操作に置き換えます。 各世代で、個体群全体の<strong>理想点</strong>と<strong>極端点</strong>から超平面の切片を求めて目的関数を正規化し、各個体を最も近い参照点への垂直距離で対応付けます。 まだ完全には受理できていない最後のフロントでは、割り当て済みの個体数（ニッチカウント）が少ない参照点を優先し、そこに対応付けられた個体のうち垂直距離が最小の個体から順に選ぶことで、参照点ごとにほぼ均等な数の解を残します。</p>
 <p>NSGA-IIIは、このニッチ保存操作によってすでに多様性を確保しているため、NSGA-IIのような優越関係に基づく親選択を用いません。 次世代個体群から親をランダムに選び、交叉と突然変異を適用して子個体群を生成します。</p>
-<p>参照点の一様配置には、Das and Dennisが提案した単体格子法(simplex-lattice design)を用います(Das &amp; Dennis, 1998)。</p>
+<p>参照点の一様配置には、Das and Dennisが提案した単体格子法を用います(Das &amp; Dennis, 1998)。</p>
 <p>出典は<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
 </section>
 <section id="pseudocode">
 <h2>擬似コード<a class="headerlink" href="#pseudocode" title="Link to this heading">#</a></h2>
 <div class="proof algorithm admonition" id="alg-nsga3">
-<p class="admonition-title"><span class="caption-number">アルゴリズム 7 </span> (NSGA-III)</p>
+<p class="admonition-title"><span class="caption-number">アルゴリズム 7 </span>式: (NSGA-III)</p>
 <section class="algorithm-content" id="proof-content">
 <p><strong>Inputs</strong> 目的関数群、参照点集合 <span class="math notranslate nohighlight">\(Z^r\)</span>（構造化点 <span class="math notranslate nohighlight">\(Z^s\)</span> またはユーザー指定点 <span class="math notranslate nohighlight">\(Z^a\)</span>）、個体数 <span class="math notranslate nohighlight">\(N\)</span>、初期個体群 <span class="math notranslate nohighlight">\(P_0\)</span> <strong>Output</strong> 最終世代の個体群 <span class="math notranslate nohighlight">\(P_{t+1}\)</span></p>
 <ol class="arabic simple">
@@ -1012,7 +1026,7 @@ window.runMermaid = runMermaid;</script>
     INIT[&quot;Initializer&lt;br/&gt;Generate initial population P0&lt;br/&gt;(L1)&quot;] --&gt; GEN
     subgraph GEN[&quot;One generation (DirectStrategy.step)&quot;]
         direction TB
-        ASK[&quot;GA.ask()&lt;br/&gt;Randomly select parents →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate Qt&lt;br/&gt;(L1, 8)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved)&quot;]
+        ASK[&quot;GA.ask()&lt;br/&gt;Randomly select parents →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate Qt&lt;br/&gt;(L1, L8)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved)&quot;]
         EVAL --&gt; COMB[&quot;GA.tell()&lt;br/&gt;Combine Rt = Pt ∪ Qt&lt;br/&gt;(L2)&quot;]
         COMB --&gt; SORT[&quot;NSGA3Comparator.sort_population()&lt;br/&gt;Non-dominated sorting → adaptive normalization →&lt;br/&gt;association to reference points →&lt;br/&gt;niche-preservation selection&lt;br/&gt;(L3-7)&quot;]
         SORT --&gt; TRUNC[&quot;TruncationSelection&lt;br/&gt;Take top N individuals as Pt+1&lt;br/&gt;(L4-7)&quot;]
@@ -1021,10 +1035,6 @@ window.runMermaid = runMermaid;</script>
     TERM -- &quot;Not yet (L8)&quot; --&gt; GEN
     TERM -- &quot;Reached&quot; --&gt; RESULT([&quot;Population of the final generation&quot;])
     </pre></section>
-<section id="complexity">
-<h2>計算量<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h2>
-<p>非優越ソートは <span class="math notranslate nohighlight">\(O(N\log^{M-2}N)\)</span>（<span class="math notranslate nohighlight">\(M\)</span>は目的数、<span class="math notranslate nohighlight">\(N\)</span>は個体数）であり、これはNSGA-IIの <span class="math notranslate nohighlight">\(O(MN^2)\)</span> とは異なる漸近的な計算量になります。 正規化、対応付け、ニッチ保存を合わせた1世代あたりの最悪計算量は、<span class="math notranslate nohighlight">\(O(N^2\log^{M-2}N)\)</span> または <span class="math notranslate nohighlight">\(O(N^2 M)\)</span> のうち大きい方になります<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>。</p>
-</section>
 <section id="configuration-in-saealib">
 <h2>saealibでの構成<a class="headerlink" href="#configuration-in-saealib" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -1037,35 +1047,35 @@ window.runMermaid = runMermaid;</script>
 <tbody>
 <tr class="row-even"><td><p>探索アルゴリズム本体</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code>（<code class="docutils literal notranslate"><span class="pre">ask()</span></code>で交叉と突然変異、<code class="docutils literal notranslate"><span class="pre">tell()</span></code>で <span class="math notranslate nohighlight">\(R_t=P_t\cup Q_t\)</span> の結合と生存選択を実行）</p></td>
-<td><p>L1-2, 8</p></td>
+<td><p>「L1-2, L8」</p></td>
 </tr>
 <tr class="row-odd"><td><p>親選択</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code>（トーナメントサイズ1では比較処理自体が実行されないため、論文が述べる「<span class="math notranslate nohighlight">\(P_{t+1}\)</span>からランダムに親を選ぶ」動作に対応する）</p></td>
-<td><p>L1, 8</p></td>
+<td><p>「L1, L8」</p></td>
 </tr>
-<tr class="row-even"><td><p>交叉</p></td>
+<tr class="row-even"><td><p>Crossover</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">CrossoverSBX(prob=1.0,</span> <span class="pre">eta=30.0)</span></code></p></td>
-<td><p>L1, 8</p></td>
+<td><p>「L1, L8」</p></td>
 </tr>
-<tr class="row-odd"><td><p>突然変異</p></td>
+<tr class="row-odd"><td><p>Mutation</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">MutationPolynomial(eta=20.0)</span></code></p></td>
-<td><p>L1, 8</p></td>
+<td><p>「L1, L8」</p></td>
 </tr>
 <tr class="row-even"><td><p>参照点生成</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">uniform_weight_vectors(n_obj,</span> <span class="pre">n_divisions)</span></code>（Das-Dennis法の単体格子で <span class="math notranslate nohighlight">\(Z^r\)</span> の初期値 <span class="math notranslate nohighlight">\(Z^s\)</span> を生成）</p></td>
-<td><p>L5</p></td>
+<td><p>手順 L5</p></td>
 </tr>
 <tr class="row-odd"><td><p>非優越ソート＋正規化＋対応付け＋ニッチ保存</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">NSGA3Comparator</span></code>（<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>が内部で<code class="docutils literal notranslate"><span class="pre">_normalize_objectives</span></code>/<code class="docutils literal notranslate"><span class="pre">_associate_to_reference_points</span></code>/<code class="docutils literal notranslate"><span class="pre">_niche_count_select</span></code>を順に呼ぶ）</p></td>
-<td><p>L3-7</p></td>
+<td><p>「L3-7」</p></td>
 </tr>
 <tr class="row-even"><td><p>生存選択</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">TruncationSelection()</span></code>（<code class="docutils literal notranslate"><span class="pre">comparator.sort_population</span></code>の順に上位 <span class="math notranslate nohighlight">\(N\)</span> 個体を残す）</p></td>
-<td><p>L4-7</p></td>
+<td><p>「L4-7」</p></td>
 </tr>
 <tr class="row-odd"><td><p>評価戦略</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>（サロゲートを介さず、<code class="docutils literal notranslate"><span class="pre">GA.ask()</span></code>が生成した候補を全て真の目的関数で評価する）</p></td>
-<td><p>L2</p></td>
+<td><p>手順 L2</p></td>
 </tr>
 </tbody>
 </table>
@@ -1101,27 +1111,33 @@ window.runMermaid = runMermaid;</script>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">problem.comparator</span> <span class="pre">=</span> <span class="pre">NSGA3Comparator(reference_points)</span></code>の行は省略できません。 NSGA-IIでは<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>が<code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>のときの既定値なので同じ行を省略できましたが、NSGA-IIIではSPEA2と同様に明示的な代入が必要になります。</p>
-<p>2目的のZDTベンチマークではなく3目的のDTLZ2を使ったのは、NSGA-IIIが4つ以上の目的を持つ多目的最適化を主眼にした手法であり、3目的以上の問題で初めて参照点ベースのニッチ保存の効果が現れるためです。</p>
+<p>2目的のZDTベンチマークではなく3目的のDTLZ2を使うのは、NSGA-IIIが多数目的最適化を主対象としつつ、3目的でも参照方向によるニッチ保持の挙動を観察できるためです。</p>
+</section>
+<section id="differences-from-the-source">
+<h2>文献との差分<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<p>原法のNSGA-IIIは親をランダムに選びますが、saealibでは比較を行わない<code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code>で表現します。<code class="docutils literal notranslate"><span class="pre">tournament_size</span></code>を2以上にすると、原法が指定していない支配関係による選択圧が加わります。例におけるSBX、多項式突然変異、<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code>の組み合わせはsaealibの構成上の選択です。原法は個体群サイズと参照点数の関係を推奨しますが、saealibの既定初期化では個体群サイズは<code class="docutils literal notranslate"><span class="pre">dim</span></code>に依存し、参照点数とは連動しません。</p>
 </section>
 <section id="parameters-and-variants">
 <h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
+<section id="complexity">
+<h3>計算量<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h3>
+<p>実装された非劣ソート器の計算量は<span class="math notranslate nohighlight">\(O(N\log^{M-2}N)\)</span>です（<span class="math notranslate nohighlight">\(M\)</span>は目的数、<span class="math notranslate nohighlight">\(N\)</span>は個体群サイズ）。これはNSGA-IIの<span class="math notranslate nohighlight">\(O(MN^2)\)</span>とは漸近的に異なりますが、この上界はソート器だけに適用され、NSGA-III全体には適用されません。正規化、対応付け、ニッチ保存を組み合わせた世代ごとの最悪計算量は、<span class="math notranslate nohighlight">\(O(N^2\log^{M-2}N)\)</span>と<span class="math notranslate nohighlight">\(O(N^2 M)\)</span>の大きい方です。<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span></p>
 <p><strong><span class="math notranslate nohighlight">\(\eta_c\)</span>（SBX分布指数）と交叉確率<span class="math notranslate nohighlight">\(p_c\)</span></strong>：論文は、NSGA-IIIで<span class="math notranslate nohighlight">\(p_c=1\)</span>（<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(prob=1.0)</span></code>）、<span class="math notranslate nohighlight">\(\eta_c=30\)</span>（<code class="docutils literal notranslate"><span class="pre">CrossoverSBX(eta=30.0)</span></code>）を使ったと報告しています。 NSGA-IIの既定値（<span class="math notranslate nohighlight">\(p_c=0.9\)</span>、<span class="math notranslate nohighlight">\(\eta_c=20\)</span>）より交叉確率と分布指数のいずれも大きく、親に近い子個体をより高い確率で生成する設定になっています<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>。</p>
-<p><strong>個体数<span class="math notranslate nohighlight">\(N\)</span>と参照点数<span class="math notranslate nohighlight">\(H\)</span>の対応</strong>：論文は、参照点数<span class="math notranslate nohighlight">\(H\)</span>に対して個体数<span class="math notranslate nohighlight">\(N\)</span>を<span class="math notranslate nohighlight">\(H\)</span>以上で最小の4の倍数に選ぶことを推奨しています。 <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>は<code class="docutils literal notranslate"><span class="pre">set_initializer()</span></code>を呼ばない場合<code class="docutils literal notranslate"><span class="pre">LHSInitializer(n_init_population=4*dim)</span></code>を既定値として使うため、この個体数は決定変数の次元<code class="docutils literal notranslate"><span class="pre">dim</span></code>にのみ依存し、<code class="docutils literal notranslate"><span class="pre">H</span></code>とは連動しません。 <code class="docutils literal notranslate"><span class="pre">H</span></code>に対して個体数を意図的に揃えたい場合は、<code class="docutils literal notranslate"><span class="pre">uniform_weight_vectors</span></code>が返す配列の行数を確認したうえで、<code class="docutils literal notranslate"><span class="pre">set_initializer()</span></code>で<code class="docutils literal notranslate"><span class="pre">n_init_population</span></code>を明示的に指定します。</p>
-<p><strong>親選択がトーナメントでない理由</strong>：論文は、NSGA-IIIがニッチ保存操作によってすでに多様性を確保しているため、明示的な選択演算子を用いず親をランダムに選ぶと述べています<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../references.html#id27" title="Kalyanmoy Deb and Himanshu Jain. An evolutionary many-objective optimization algorithm using reference-point-based nondominated sorting approach, part i: solving problems with box constraints. IEEE Transactions on Evolutionary Computation, 18(4):577–601, 2014. doi:10.1109/TEVC.2013.2281535.">7</a>]</span>。 <code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code>は、トーナメントサイズが1のとき比較処理自体が実行されないため、この「ランダムな親選択」を表現します。 <code class="docutils literal notranslate"><span class="pre">tournament_size</span></code>を2以上に変更すると、NSGA-II/SPEA2と同じ優越関係ベースの選択圧が加わり、論文が意図的に排除した選択機構を導入することになります。</p>
-<p><strong>dominator（支配述語）の差し替え</strong>：<code class="docutils literal notranslate"><span class="pre">NSGA3Comparator(reference_points,</span> <span class="pre">dominator=...)</span></code>で、既定の<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>以外の<a class="reference internal" href="../components/dominance.html"><span class="std std-doc">Dominator</span></a>を注入できます。 非優越ソート自体の結果が変わるため、フロント分割とニッチ保存の対象個体群もこの支配述語に依存します。</p>
+<p><strong>支配述語の差し替え</strong>：<code class="docutils literal notranslate"><span class="pre">NSGA3Comparator(reference_points,</span> <span class="pre">dominator=...)</span></code>では、既定の<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>以外の<a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a>を注入できます。非劣ソート自体の結果が変わるため、フロント分割とニッチ保存の対象となる個体群もこの支配述語に依存します。</p>
+</section>
 </section>
 <section id="related">
 <h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>：出典の完全な書誌情報</p></li>
-<li><p><a class="reference internal" href="../components/comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">NSGA3Comparator</span></code>の詳しい仕様、<code class="docutils literal notranslate"><span class="pre">reference_points</span></code>引数、<code class="docutils literal notranslate"><span class="pre">rng</span></code>の遅延生成</p></li>
-<li><p><a class="reference internal" href="../components/crossover.html"><span class="std std-doc">Crossover</span></a>：<code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code>を含む交叉演算子一覧</p></li>
-<li><p><a class="reference internal" href="../components/mutation.html"><span class="std std-doc">Mutation</span></a>：<code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code>を含む突然変異演算子一覧</p></li>
-<li><p><a class="reference internal" href="../components/parent_selection.html"><span class="std std-doc">ParentSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>の詳しい使い方</p></li>
-<li><p><a class="reference internal" href="../components/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code>の詳しい使い方</p></li>
-<li><p><a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>：<code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>を含む戦略一覧</p></li>
-<li><p><a class="reference internal" href="../components/nondominated_sorting.html"><span class="std std-doc">NonDominatedSorting</span></a>：非優越ソートの実装詳細</p></li>
-<li><p><a class="reference internal" href="../components/dominance.html"><span class="std std-doc">Dominator</span></a>：<code class="docutils literal notranslate"><span class="pre">dominator</span></code>引数として差し替え可能な支配述語一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">NSGA3Comparator</span></code>、<code class="docutils literal notranslate"><span class="pre">reference_points</span></code>引数、<code class="docutils literal notranslate"><span class="pre">rng</span></code>の遅延生成の詳細</p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/crossover.html"><span class="std std-doc">Crossover</span></a>: <code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code>を含む交叉演算子の一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/mutation.html"><span class="std std-doc">Mutation</span></a>: <code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code>を含む突然変異演算子の一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/parent_selection.html"><span class="std std-doc">ParentSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>の詳しい使い方</p></li>
+<li><p><a class="reference internal" href="../concepts/search_algorithms/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code>の詳しい使い方</p></li>
+<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>を含む戦略の一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/problem_and_ranking/nondominated_sorting.html"><span class="std std-doc">NonDominatedSorting</span></a>：非劣ソートの実装詳細</p></li>
+<li><p><a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a>：<code class="docutils literal notranslate"><span class="pre">dominator</span></code>引数で差し替えられる支配述語の一覧</p></li>
 </ul>
 </section>
 </section>
@@ -1176,9 +1192,12 @@ window.runMermaid = runMermaid;</script>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">概要</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">擬似コード</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">フローチャート</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">計算量</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">saealibでの構成</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">文献との差分</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">計算量</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">関連</a></li>
 </ul>
   </nav></div>

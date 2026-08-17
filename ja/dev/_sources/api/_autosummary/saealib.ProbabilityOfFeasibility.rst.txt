@@ -17,6 +17,7 @@
 
    ~ProbabilityOfFeasibility.__init__
    ~ProbabilityOfFeasibility.compute_reference
+   ~ProbabilityOfFeasibility.contract
    ~ProbabilityOfFeasibility.evaluate
    ~ProbabilityOfFeasibility.prepare
    ~ProbabilityOfFeasibility.score
@@ -33,6 +34,9 @@
 
 
 .. automethod:: saealib.ProbabilityOfFeasibility.compute_reference
+
+
+.. automethod:: saealib.ProbabilityOfFeasibility.contract
 
 
 .. automethod:: saealib.ProbabilityOfFeasibility.evaluate

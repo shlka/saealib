@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>進捗のログ記録 &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>進捗のログ記録 &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../_static/documentation_options.js?v=c8372973"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -172,8 +172,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -187,14 +194,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -347,8 +354,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -362,14 +376,14 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -479,6 +493,13 @@
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">進捗のログ記録</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリとの連携</a></li>
 </ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="component_swap.html">ビルトインコンポーネントを選んで差し替える</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lowlevel_api.html">Optimizerを低レベルAPIで組み立てる</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interface_hooks.html">Hook、Stage、Callbackを選ぶ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel_api.html">高レベルAPIで最適化を実行する</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_components.html">既存の契約に独自Componentを追加する</a></li>
+</ul>
 </div>
 </nav></div>
     </div>
@@ -540,11 +561,16 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="logging-progress">
 <h1>進捗のログ記録<a class="headerlink" href="#logging-progress" title="Link to this heading">#</a></h1>
-<p>最適化の進捗を、標準の<code class="docutils literal notranslate"><span class="pre">logging</span></code>モジュールで記録します。</p>
-<section id="default-behavior">
-<h2>既定の挙動<a class="headerlink" href="#default-behavior" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>は、世代開始のたびに進捗を記録するハンドラ(<code class="docutils literal notranslate"><span class="pre">logging_generation</span></code>)を、<code class="docutils literal notranslate"><span class="pre">minimize</span></code>/<code class="docutils literal notranslate"><span class="pre">maximize</span></code>の<code class="docutils literal notranslate"><span class="pre">verbose=True</span></code>（既定）のときだけ登録します。</p>
-<p>ただし、このハンドラは<code class="docutils literal notranslate"><span class="pre">logging.getLogger(__name__).info(...)</span></code>を呼ぶだけなので、Pythonの<code class="docutils literal notranslate"><span class="pre">logging</span></code>モジュール側でINFOレベルの出力を有効にしないかぎり、何も表示されません。</p>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>標準の <code class="docutils literal notranslate"><span class="pre">logging</span></code> モジュールで最適化の進捗を記録します。</p>
+<div class="tip admonition">
+<p class="admonition-title">このページでできるようになること</p>
+<p>このページを終えると、Python標準の <code class="docutils literal notranslate"><span class="pre">logging</span></code> モジュールで進捗、警告、独自イベントを記録できるようになります。</p>
+</div>
+<p>基本的な最適化の実行は <a class="reference internal" href="highlevel_api.html"><span class="std std-doc">高レベルAPI</span></a> を使い、世代単位の構成まで調整する場合は <a class="reference internal" href="lowlevel_api.html"><span class="std std-doc">低レベルAPI</span></a> を参照してください。 このページでは、標準loggingの出力先とログレベルを設定し、組み込み・独自のイベントを記録する方法を扱います。</p>
+<section id="use-the-default-logging-behavior">
+<h2>既定のログ動作を使う<a class="headerlink" href="#use-the-default-logging-behavior" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> は各世代の開始時に進捗を記録するハンドラ（<code class="docutils literal notranslate"><span class="pre">logging_generation</span></code>）を登録しますが、<code class="docutils literal notranslate"><span class="pre">minimize</span></code>/<code class="docutils literal notranslate"><span class="pre">maximize</span></code> の <code class="docutils literal notranslate"><span class="pre">verbose=True</span></code>（既定値）の場合に限られます。</p>
+<p>ただし、このハンドラは <code class="docutils literal notranslate"><span class="pre">logging.getLogger(__name__).info(...)</span></code> を呼ぶだけなので、Pythonの <code class="docutils literal notranslate"><span class="pre">logging</span></code> モジュールでINFOレベルの出力を有効にしない限り何も表示されません。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
 
@@ -561,7 +587,7 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>進捗を表示するには、<code class="docutils literal notranslate"><span class="pre">logging.basicConfig</span></code>でINFOレベルを有効にします。</p>
+<p>進捗を表示するには、<code class="docutils literal notranslate"><span class="pre">logging.basicConfig</span></code> でINFOレベルを有効にします。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -574,8 +600,8 @@
 <span class="c1"># ...</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">logging_generation</span></code>は目的数を見て記録内容を切り替え、単目的では最良の目的値を、多目的では第一非優越フロントのサイズと目的ごとの値の範囲を記録します。</p>
-<p>進捗の記録自体が不要な場合は、<code class="docutils literal notranslate"><span class="pre">verbose=False</span></code>を指定してハンドラの登録を止めます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">logging_generation</span></code> は目的数に応じて記録内容を切り替えます。単目的では最良の目的値を記録し、多目的では最初の非劣フロントのサイズと目的ごとの値の範囲を記録します。</p>
+<p>進捗をまったく記録しない場合は、<code class="docutils literal notranslate"><span class="pre">verbose=False</span></code> を指定してハンドラの登録を停止します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
     <span class="n">expensive_func</span><span class="p">,</span>
     <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">,</span>
@@ -588,9 +614,9 @@
 </pre></div>
 </div>
 </section>
-<section id="writing-to-a-file">
-<h2>ファイルへの出力<a class="headerlink" href="#writing-to-a-file" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">saealib.callback.handlers</span></code>ロガーに<code class="docutils literal notranslate"><span class="pre">FileHandler</span></code>を追加すると、進捗をファイルに書き出せます。</p>
+<section id="write-progress-to-a-file">
+<h2>進捗をファイルへ書き込む<a class="headerlink" href="#write-progress-to-a-file" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">saealib.callback.handlers</span></code> ロガーに <code class="docutils literal notranslate"><span class="pre">FileHandler</span></code> を追加すると、進捗をファイルに書き出せます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
 <span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="s2">&quot;optimization.log&quot;</span><span class="p">)</span>
@@ -606,9 +632,9 @@
 </pre></div>
 </div>
 </section>
-<section id="hypervolume-logging-for-multi-objective-problems">
-<h2>多目的でのハイパーボリュームログ<a class="headerlink" href="#hypervolume-logging-for-multi-objective-problems" title="Link to this heading">#</a></h2>
-<p>多目的問題では、<code class="docutils literal notranslate"><span class="pre">logging_generation_hv(reference_point)</span></code>が返すハンドラを登録すると、世代ごとのハイパーボリュームを記録できます。</p>
+<section id="log-hypervolume-for-multi-objective-problems">
+<h2>多目的問題のハイパーボリュームを記録する<a class="headerlink" href="#log-hypervolume-for-multi-objective-problems" title="Link to this heading">#</a></h2>
+<p>多目的問題では、<code class="docutils literal notranslate"><span class="pre">logging_generation_hv(reference_point)</span></code> が返すハンドラを登録すると、各世代のハイパーボリュームを記録します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">,</span>
@@ -634,22 +660,22 @@
 <span class="c1"># ...</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">reference_point</span></code>は最小化の慣例で、各目的の達成可能な最良値より大きい値を指定します。</p>
+<p>最小化の規約では、<code class="docutils literal notranslate"><span class="pre">reference_point</span></code> は各目的で達成可能な最良値より大きい値にします。</p>
 </section>
-<section id="warning-level-logging">
-<h2>警告レベルのログ<a class="headerlink" href="#warning-level-logging" title="Link to this heading">#</a></h2>
-<p>一部のコンポーネントは、数値的な問題を<code class="docutils literal notranslate"><span class="pre">logger.warning(...)</span></code>で記録します。</p>
-<p>例えば<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>は、カーネル行列が悪条件になったときに警告を出します。</p>
-<p><code class="docutils literal notranslate"><span class="pre">logging.basicConfig</span></code>を呼んでいなくても、WARNING以上のログはPythonの「handler of last resort」によって標準エラー出力に表示されます。</p>
-<p>INFOレベルの進捗ログとは異なり、この種の警告は設定なしでも見える点に注意してください。</p>
+<section id="handle-warning-level-logs">
+<h2>warningレベルのログを扱う<a class="headerlink" href="#handle-warning-level-logs" title="Link to this heading">#</a></h2>
+<p>一部のコンポーネントは <code class="docutils literal notranslate"><span class="pre">logger.warning(...)</span></code> で数値上の問題を記録します。</p>
+<p>たとえば <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code> は、カーネル行列の条件が悪くなったときに警告を発します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">logging.basicConfig</span></code> を呼ばなくても、WARNINGレベル以上のログはPythonの「最後の手段のハンドラ」によって標準エラー出力に表示されます。</p>
+<p>INFOレベルの進捗ログとは異なり、この種の警告は設定なしでも表示される点に注意してください。</p>
 </section>
-<section id="custom-logging">
-<h2>独自のログ処理<a class="headerlink" href="#custom-logging" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">logging_generation</span></code>/<code class="docutils literal notranslate"><span class="pre">logging_generation_hv</span></code>が記録する内容以外を記録したい場合は、<code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code>に独自のハンドラを登録します。</p>
-<p>詳しい仕組みは<a class="reference internal" href="../components/callbacks.html"><span class="std std-doc">CallbackManager</span></a>を参照してください。</p>
+<section id="add-custom-logging">
+<h2>独自のログ記録を追加する<a class="headerlink" href="#add-custom-logging" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">logging_generation</span></code>/<code class="docutils literal notranslate"><span class="pre">logging_generation_hv</span></code> と異なる内容を記録したい場合は、<code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code> に独自のハンドラを登録します。</p>
+<p>仕組みの詳細は <a class="reference internal" href="../concepts/observation_and_state/callbacks.html"><span class="std std-doc">CallbackManager</span></a> を参照してください。</p>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="related-concepts-and-reference">
+<h2>関連するConceptとReference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/callbacks.html#saealib.logging_generation" title="saealib.logging_generation"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.logging_generation()</span></code></a> / <a class="reference internal" href="../api/callbacks.html#saealib.logging_generation_hv" title="saealib.logging_generation_hv"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.logging_generation_hv()</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CallbackManager.html#saealib.CallbackManager" title="saealib.CallbackManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CallbackManager</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.GenerationStartEvent.html#saealib.GenerationStartEvent" title="saealib.GenerationStartEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GenerationStartEvent</span></code></a></p></li>
@@ -705,12 +731,12 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#default-behavior">既定の挙動</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#writing-to-a-file">ファイルへの出力</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hypervolume-logging-for-multi-objective-problems">多目的でのハイパーボリュームログ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#warning-level-logging">警告レベルのログ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#custom-logging">独自のログ処理</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-the-default-logging-behavior">既定のログ動作を使う</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#write-progress-to-a-file">進捗をファイルへ書き込む</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#log-hypervolume-for-multi-objective-problems">多目的問題のハイパーボリュームを記録する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#handle-warning-level-logs">warningレベルのログを扱う</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#add-custom-logging">独自のログ記録を追加する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">関連するConceptとReference</a></li>
 </ul>
   </nav></div>
 

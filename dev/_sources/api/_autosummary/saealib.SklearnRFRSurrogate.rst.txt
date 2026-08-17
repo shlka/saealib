@@ -16,6 +16,7 @@
 
 
    ~SklearnRFRSurrogate.__init__
+   ~SklearnRFRSurrogate.contract
    ~SklearnRFRSurrogate.fit
    ~SklearnRFRSurrogate.post_fit
    ~SklearnRFRSurrogate.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.SklearnRFRSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnRFRSurrogate.contract
 
 
 .. automethod:: saealib.SklearnRFRSurrogate.fit

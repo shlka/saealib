@@ -1,0 +1,55 @@
+﻿saealib.execution.RuntimeRegistry
+=================================
+
+.. currentmodule:: saealib.execution
+
+.. autoclass:: RuntimeRegistry
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~RuntimeRegistry.__init__
+   ~RuntimeRegistry.create
+   ~RuntimeRegistry.offered_capabilities
+   ~RuntimeRegistry.register
+   ~RuntimeRegistry.registrations
+   ~RuntimeRegistry.replace
+   ~RuntimeRegistry.unregister
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.execution.RuntimeRegistry.__init__
+
+
+.. automethod:: saealib.execution.RuntimeRegistry.create
+
+
+.. automethod:: saealib.execution.RuntimeRegistry.offered_capabilities
+
+
+.. automethod:: saealib.execution.RuntimeRegistry.register
+
+
+.. automethod:: saealib.execution.RuntimeRegistry.registrations
+
+
+.. automethod:: saealib.execution.RuntimeRegistry.replace
+
+
+.. automethod:: saealib.execution.RuntimeRegistry.unregister
+
+
+

@@ -1,0 +1,51 @@
+﻿saealib.space.ServiceRegistry
+=============================
+
+.. currentmodule:: saealib.space
+
+.. autoclass:: ServiceRegistry
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ServiceRegistry.__init__
+   ~ServiceRegistry.contains
+   ~ServiceRegistry.get
+   ~ServiceRegistry.names
+   ~ServiceRegistry.register
+   ~ServiceRegistry.require
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.space.ServiceRegistry.__init__
+
+
+.. automethod:: saealib.space.ServiceRegistry.contains
+
+
+.. automethod:: saealib.space.ServiceRegistry.get
+
+
+.. automethod:: saealib.space.ServiceRegistry.names
+
+
+.. automethod:: saealib.space.ServiceRegistry.register
+
+
+.. automethod:: saealib.space.ServiceRegistry.require
+
+
+

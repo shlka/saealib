@@ -17,6 +17,7 @@
 
    ~Decomposition.__init__
    ~Decomposition.aggregate
+   ~Decomposition.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.Decomposition.aggregate
+
+
+.. automethod:: saealib.Decomposition.contract
 
 
 

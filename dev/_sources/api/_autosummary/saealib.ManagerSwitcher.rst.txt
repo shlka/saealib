@@ -16,6 +16,7 @@
 
 
    ~ManagerSwitcher.__init__
+   ~ManagerSwitcher.contract
    ~ManagerSwitcher.switch
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.ManagerSwitcher.__init__
+
+
+.. automethod:: saealib.ManagerSwitcher.contract
 
 
 .. automethod:: saealib.ManagerSwitcher.switch

@@ -28,7 +28,6 @@
    ~Archive.get_array
    ~Archive.get_cache
    ~Archive.get_knn
-   ~Archive.get_readonly_array
    ~Archive.mod_structure
    ~Archive.mod_value
    ~Archive.reorder
@@ -82,9 +81,6 @@
 
 
 .. automethod:: saealib.Archive.get_knn
-
-
-.. automethod:: saealib.Archive.get_readonly_array
 
 
 .. automethod:: saealib.Archive.mod_structure

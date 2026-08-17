@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>EGO (Efficient Global Optimization) &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>EGO (Efficient Global Optimization) &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -596,7 +596,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -609,8 +609,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -631,7 +638,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -771,7 +778,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -784,8 +791,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -806,7 +820,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -977,7 +991,7 @@ window.runMermaid = runMermaid;</script>
                   
   <section class="tex2jax_ignore mathjax_ignore" id="ego-efficient-global-optimization">
 <h1>EGO (Efficient Global Optimization)<a class="headerlink" href="#ego-efficient-global-optimization" title="Link to this heading">#</a></h1>
-<section id="overview">
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>EGO is a sequential optimization method for expensive-to-evaluate objective functions, combining a surrogate model built from Gaussian Process (GP) regression with the <strong>Expected Improvement</strong> (EI) acquisition function.</p>
 <p>A GP’s predictive variance grows larger in regions farther from the training data.
@@ -1028,7 +1042,7 @@ Because EI is a scalar value computed from both this predictive mean and predict
 <tbody>
 <tr class="row-even"><td><p>Search algorithm</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code> (the specific combination of crossover, mutation, and selection is not part of EGO’s definition)</p></td>
-<td><p>Candidate generation (search for argmax EI)</p></td>
+<td><p>L3</p></td>
 </tr>
 <tr class="row-odd"><td><p>Surrogate model</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code> (GP regression; requires the <code class="docutils literal notranslate"><span class="pre">sklearn</span></code> extra)</p></td>
@@ -1091,7 +1105,12 @@ Because EI is a scalar value computed from both this predictive mean and predict
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Since the specific crossover, mutation, and selection operators are not part of EGO’s own definition, the above is just one example, and any <code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">SurvivorSelection</span></code> can be swapped in.</p>
+</section>
+<section id="differences-from-the-source">
+<h2>Differences from the source<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<p>The original EGO finds the acquisition-function maximizer one point at a time, whereas saealib approximates <code class="docutils literal notranslate"><span class="pre">argmax</span> <span class="pre">EI</span></code> by selecting the highest-EI candidates from the pool generated by <code class="docutils literal notranslate"><span class="pre">GA</span></code>.
+<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code> also allows several selected candidates to receive true evaluations together.
+The crossover, mutation, parent-selection, and environmental-selection combination in the example is an saealib configuration choice, not part of the EGO definition.</p>
 </section>
 <section id="parameters-and-variants">
 <h2>Parameters and variants<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
@@ -1099,18 +1118,15 @@ Because EI is a scalar value computed from both this predictive mean and predict
 The default is <code class="docutils literal notranslate"><span class="pre">0.01</span></code>, a practical heuristic rather than a value prescribed by the original EGO formulation.
 Brochu et al. (2010) discuss prior experimental use of this value <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id9" title="Eric Brochu, Vlad M. Cora, and Nando de Freitas. A tutorial on Bayesian optimization of expensive cost functions, with application to active user modeling and hierarchical reinforcement learning. 2010. arXiv:1012.2599.">36</a>]</span>.
 <span class="math notranslate nohighlight">\(\xi=0\)</span> leans toward exploitation, and larger values lean toward exploration.</p>
-<p><strong>evaluation_ratio (switching between sequential and batch evaluation)</strong>: EGO as described in the literature is a sequential algorithm that executes steps 3-4 of the pseudocode for a single point per loop.
-saealib’s <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code> is a batch extension that truly evaluates the top <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code> fraction of the offspring population generated by the GA’s EI scores at once.
-Shrinking <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code> down to roughly the inverse of the population size approximates one-point-at-a-time sequential evaluation.</p>
 </section>
 <section id="related">
 <h2>Related<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">References</span></a>: Full bibliographic details for the source, and a list of sources for acquisition functions other than EI</p></li>
-<li><p><a class="reference internal" href="../components/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code></p></li>
-<li><p><a class="reference internal" href="../components/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>: List of acquisition functions including <code class="docutils literal notranslate"><span class="pre">ExpectedImprovement</span></code></p></li>
-<li><p><a class="reference internal" href="../components/surrogate.html"><span class="std std-doc">Surrogate</span></a>: List of surrogate models including <code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code>, and an explanation of the <code class="docutils literal notranslate"><span class="pre">sklearn</span></code> extra</p></li>
-<li><p><a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: List of strategies including <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>’s <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>: List of acquisition functions including <code class="docutils literal notranslate"><span class="pre">ExpectedImprovement</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>: List of surrogate models including <code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code>, and an explanation of the <code class="docutils literal notranslate"><span class="pre">sklearn</span></code> extra</p></li>
+<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: List of strategies including <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>’s <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code></p></li>
 </ul>
 </section>
 </section>
@@ -1166,6 +1182,7 @@ Shrinking <code class="docutils literal notranslate"><span class="pre">evaluatio
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">Pseudocode</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">Flowchart</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">Configuration in saealib</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">Differences from the source</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">Parameters and variants</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">Related</a></li>
 </ul>

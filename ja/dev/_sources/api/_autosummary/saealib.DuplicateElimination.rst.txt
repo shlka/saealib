@@ -16,6 +16,7 @@
 
 
    ~DuplicateElimination.__init__
+   ~DuplicateElimination.contract
    ~DuplicateElimination.find_duplicates
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.DuplicateElimination.__init__
+
+
+.. automethod:: saealib.DuplicateElimination.contract
 
 
 .. automethod:: saealib.DuplicateElimination.find_duplicates

@@ -1,0 +1,43 @@
+﻿saealib.core.StateView
+======================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: StateView
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~StateView.__init__
+   ~StateView.contains
+   ~StateView.dispatch
+   ~StateView.get
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.StateView.__init__
+
+
+.. automethod:: saealib.core.StateView.contains
+
+
+.. automethod:: saealib.core.StateView.dispatch
+
+
+.. automethod:: saealib.core.StateView.get
+
+
+

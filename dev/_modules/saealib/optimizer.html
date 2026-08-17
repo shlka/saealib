@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -591,7 +591,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -604,8 +604,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -626,7 +633,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -764,7 +771,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -777,8 +784,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -799,7 +813,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -951,7 +965,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -967,9 +981,26 @@ window.runMermaid = runMermaid;</script>
     <span class="n">logging_generation</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.compiler</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CompileContext</span><span class="p">,</span>
+    <span class="n">Compiler</span><span class="p">,</span>
+    <span class="n">ContractPath</span><span class="p">,</span>
+    <span class="n">Diagnostic</span><span class="p">,</span>
+    <span class="n">DiagnosticBag</span><span class="p">,</span>
+    <span class="n">ExecutablePlan</span><span class="p">,</span>
+    <span class="n">Severity</span><span class="p">,</span>
+    <span class="n">check_component_contract</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.compiler.contract_diagnostics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">check_pymoo_feedback_compatibility</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.compiler.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentGraph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentContract</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">OPTIMIZATION_STATE_INITIAL_KEYS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigurationError</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Evaluator</span><span class="p">,</span> <span class="n">SerialEvaluator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">Runner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_runtime_registry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncEvaluationScheduler</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationPlanner</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.policies.feedback</span><span class="w"> </span><span class="kn">import</span> <span class="n">FeedbackBuilder</span>
@@ -1129,10 +1160,185 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder_explicit</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span><span class="p">:</span> <span class="n">AsyncEvaluationScheduler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">instance_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_preset</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_preset</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_contract_diagnostics</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span><span class="p">:</span> <span class="n">ExecutablePlan</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
     <span class="c1"># --- setters (all return self for chaining) ---</span>
+
+<div class="viewcode-block" id="Optimizer.contract_diagnostics">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.contract_diagnostics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract_diagnostics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DiagnosticBag</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return diagnostics for the currently configured component graph.&quot;&quot;&quot;</span>
+        <span class="n">diagnostics</span> <span class="o">=</span> <span class="n">DiagnosticBag</span><span class="p">()</span>
+        <span class="n">contracts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ComponentContract</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">component_names</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;initializer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;algorithm&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;surrogate_manager&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;termination&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;evaluator&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;evaluation_planner&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;feedback_builder&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;acquisition&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;async_evaluation_scheduler&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;strategy&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">component_names</span><span class="p">:</span>
+            <span class="n">component</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">component</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">contract_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="s2">&quot;contract&quot;</span><span class="p">,</span> <span class="n">missing</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="n">diagnostics</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Diagnostic</span><span class="p">(</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;contract_unavailable&quot;</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.contract attribute could not be read: &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="n">path</span><span class="o">=</span><span class="n">ContractPath</span><span class="p">(</span><span class="n">components</span><span class="o">=</span><span class="p">(</span><span class="n">name</span><span class="p">,)),</span>
+                        <span class="n">resolutions</span><span class="o">=</span><span class="p">(</span>
+                            <span class="s2">&quot;Make the component&#39;s contract attribute readable and &quot;</span>
+                            <span class="s2">&quot;provide a callable contract() method.&quot;</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">contract_method</span> <span class="ow">is</span> <span class="n">missing</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">contract_method</span><span class="p">):</span>
+                <span class="n">diagnostics</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Diagnostic</span><span class="p">(</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;contract_unavailable&quot;</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.contract exists on </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">component</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> &quot;</span>
+                            <span class="s2">&quot;but is not callable.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="n">path</span><span class="o">=</span><span class="n">ContractPath</span><span class="p">(</span><span class="n">components</span><span class="o">=</span><span class="p">(</span><span class="n">name</span><span class="p">,)),</span>
+                        <span class="n">resolutions</span><span class="o">=</span><span class="p">(</span>
+                            <span class="s2">&quot;Provide a callable contract() method returning &quot;</span>
+                            <span class="s2">&quot;ComponentContract.&quot;</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">contract</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">object</span><span class="p">],</span> <span class="n">contract_method</span><span class="p">)()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="n">diagnostics</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Diagnostic</span><span class="p">(</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;contract_unavailable&quot;</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.contract() on </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">component</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;raised </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="n">path</span><span class="o">=</span><span class="n">ContractPath</span><span class="p">(</span><span class="n">components</span><span class="o">=</span><span class="p">(</span><span class="n">name</span><span class="p">,)),</span>
+                        <span class="n">resolutions</span><span class="o">=</span><span class="p">(</span>
+                            <span class="s2">&quot;Make contract() return a ComponentContract without &quot;</span>
+                            <span class="s2">&quot;raising.&quot;</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">contract</span><span class="p">,</span> <span class="n">ComponentContract</span><span class="p">):</span>
+                <span class="n">diagnostics</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Diagnostic</span><span class="p">(</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;contract_unavailable&quot;</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.contract() on </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">component</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;returned </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">contract</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, not &quot;</span>
+                            <span class="s2">&quot;ComponentContract.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="n">path</span><span class="o">=</span><span class="n">ContractPath</span><span class="p">(</span><span class="n">components</span><span class="o">=</span><span class="p">(</span><span class="n">name</span><span class="p">,)),</span>
+                        <span class="n">resolutions</span><span class="o">=</span><span class="p">(</span>
+                            <span class="s2">&quot;Make contract() return a ComponentContract instance.&quot;</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">contracts</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">contract</span>
+            <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="n">check_component_contract</span><span class="p">(</span>
+                    <span class="n">contract</span><span class="p">,</span>
+                    <span class="n">component</span><span class="o">=</span><span class="n">component</span><span class="p">,</span>
+                    <span class="n">path</span><span class="o">=</span><span class="n">ContractPath</span><span class="p">(</span><span class="n">components</span><span class="o">=</span><span class="p">(</span><span class="n">name</span><span class="p">,)),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">algorithm</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.pymoo_algorithm</span><span class="w"> </span><span class="kn">import</span> <span class="n">PymooAlgorithm</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">PymooAlgorithm</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;allow_partial_tell&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="n">algorithm_contract</span> <span class="o">=</span> <span class="n">contracts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">algorithm_contract</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="n">check_pymoo_feedback_compatibility</span><span class="p">(</span>
+                        <span class="n">algorithm_contract</span><span class="p">,</span>
+                        <span class="n">consumer_path</span><span class="o">=</span><span class="n">ContractPath</span><span class="p">(</span><span class="n">components</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">,)),</span>
+                        <span class="n">runtime_path</span><span class="o">=</span><span class="n">ContractPath</span><span class="p">(</span>
+                            <span class="n">components</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;async_evaluation_scheduler&quot;</span><span class="p">,)</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">diagnostics</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">last_contract_diagnostics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Diagnostic</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the diagnostics collected by the most recent ``validate``.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_contract_diagnostics</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">executable_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutablePlan</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the plan produced by the most recent execution preparation.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span>
+
+<div class="viewcode-block" id="Optimizer.describe">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.describe">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Describe the most recently compiled plan, if one exists.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Optimizer(uncompiled)&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compile_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutablePlan</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build and compile the configured strategy graph once per run.&quot;&quot;&quot;</span>
+        <span class="n">strategy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;strategy&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">build_graph</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="s2">&quot;build_graph&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">build_graph</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">ComponentGraph</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">plan</span> <span class="o">=</span> <span class="n">Compiler</span><span class="p">()</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+            <span class="n">graph</span><span class="p">,</span>
+            <span class="n">CompileContext</span><span class="p">(</span>
+                <span class="n">space</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="p">,</span>
+                <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+                <span class="n">offered_runtime_capabilities</span><span class="o">=</span><span class="n">default_runtime_registry</span><span class="o">.</span><span class="n">offered_capabilities</span><span class="p">(</span>
+                    <span class="bp">self</span>
+                <span class="p">),</span>
+                <span class="n">initial_state_keys</span><span class="o">=</span><span class="n">OPTIMIZATION_STATE_INITIAL_KEYS</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span> <span class="o">=</span> <span class="n">plan</span>
+        <span class="k">return</span> <span class="n">plan</span>
 
 <div class="viewcode-block" id="Optimizer.set_seed">
 <a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_seed">[docs]</a>
@@ -1155,6 +1361,8 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">Algorithm</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the evolutionary algorithm. Returns self.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">algorithm</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">algorithm</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
@@ -1278,9 +1486,8 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set a user-defined preset. Returns self.</span>
 
-<span class="sd">        The preset is only used to fill components not already configured</span>
-<span class="sd">        via ``set_*()`` (see ``_resolve_defaults()``); explicitly set</span>
-<span class="sd">        components always take precedence over the preset.</span>
+<span class="sd">        The preset fills components that are not already configured via</span>
+<span class="sd">        ``set_*()``; explicitly set components take precedence.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_preset</span>
 
@@ -1367,6 +1574,9 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check configuration consistency. Returns list of issues.</span>
 
+<span class="sd">        Call :meth:`resolve_defaults` first when validation results should</span>
+<span class="sd">        reflect the components that will be used for execution.</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        require_initializer : bool, optional</span>
@@ -1391,6 +1601,18 @@ window.runMermaid = runMermaid;</script>
 
         <span class="k">if</span> <span class="n">surrogate_manager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_surrogate_compatibility</span><span class="p">(</span><span class="n">issues</span><span class="p">,</span> <span class="n">surrogate_manager</span><span class="p">)</span>
+
+        <span class="n">diagnostics</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contract_diagnostics</span><span class="p">())</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">diagnostics</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">((</span><span class="o">*</span><span class="n">diagnostics</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_contract_diagnostics</span> <span class="o">=</span> <span class="n">diagnostics</span>
+        <span class="n">issues</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">diagnostic</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">diagnostic</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_contract_diagnostics</span>
+            <span class="k">if</span> <span class="n">diagnostic</span><span class="o">.</span><span class="n">severity</span> <span class="ow">is</span> <span class="n">Severity</span><span class="o">.</span><span class="n">ERROR</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">issues</span></div>
 
@@ -1495,7 +1717,9 @@ window.runMermaid = runMermaid;</script>
                     <span class="sa">f</span><span class="s2">&quot;not match problem.n_obj (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span><span class="si">}</span><span class="s2">)&quot;</span>
                 <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Optimizer.resolve_defaults">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.resolve_defaults">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fill unset components with library defaults (Registry + presets file).</span>
 
 <span class="sd">        Components already set via ``set_*()`` are never overwritten. Gaps</span>
@@ -1600,6 +1824,13 @@ window.runMermaid = runMermaid;</script>
 
         <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;termination&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">termination</span> <span class="o">=</span> <span class="n">Termination</span><span class="p">(</span><span class="n">max_fe_cond</span><span class="p">(</span><span class="mi">200</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compatibility wrapper for :meth:`resolve_defaults`.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolve_defaults</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_inject_acquisition_directions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Auto-inject ``problem.direction`` into unset acquisition directions.</span>
@@ -1743,7 +1974,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Generator[OptimizationState]</span>
 <span class="sd">            Generator of OptimizationState.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_defaults</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolve_defaults</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compile_plan</span><span class="p">()</span>
         <span class="n">issues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">issues</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
@@ -1789,7 +2021,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        OptimizationState</span>
 <span class="sd">            The optimization context.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_defaults</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolve_defaults</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compile_plan</span><span class="p">()</span>
         <span class="n">issues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">issues</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
@@ -1825,6 +2058,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        -------</span>
 <span class="sd">        Generator[OptimizationState, None, None]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compile_plan</span><span class="p">()</span>
         <span class="n">issues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">require_initializer</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">issues</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
@@ -1850,6 +2084,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        OptimizationState</span>
 <span class="sd">            The final optimization context.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compile_plan</span><span class="p">()</span>
         <span class="n">issues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">require_initializer</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">issues</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
@@ -1868,6 +2103,17 @@ window.runMermaid = runMermaid;</script>
         <span class="s2">&quot;Reproducibility is only guaranteed within the same Python &quot;</span>
         <span class="s2">&quot;and library versions.&quot;</span>
     <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Exclude the compiled graph plan from legacy pickle checkpoints.&quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">state</span><span class="p">[</span><span class="s2">&quot;_executable_plan&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">state</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Restore an optimizer without a stale compiled execution plan.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;_executable_plan&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Optimizer.save_pickle">
 <a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.save_pickle">[docs]</a>

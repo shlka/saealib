@@ -17,6 +17,7 @@
 
    ~MeanPrediction.__init__
    ~MeanPrediction.compute_reference
+   ~MeanPrediction.contract
    ~MeanPrediction.evaluate
    ~MeanPrediction.prepare
    ~MeanPrediction.score
@@ -33,6 +34,9 @@
 
 
 .. automethod:: saealib.MeanPrediction.compute_reference
+
+
+.. automethod:: saealib.MeanPrediction.contract
 
 
 .. automethod:: saealib.MeanPrediction.evaluate

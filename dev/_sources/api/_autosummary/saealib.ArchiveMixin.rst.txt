@@ -17,9 +17,14 @@
 
    ~ArchiveMixin.__init__
    ~ArchiveMixin.add
+   ~ArchiveMixin.clear
    ~ArchiveMixin.delete
+   ~ArchiveMixin.empty_like
+   ~ArchiveMixin.extend
    ~ArchiveMixin.get_knn
    ~ArchiveMixin.mod_value
+   ~ArchiveMixin.reorder
+   ~ArchiveMixin.truncate
 
 
 
@@ -35,13 +40,28 @@
 .. automethod:: saealib.ArchiveMixin.add
 
 
+.. automethod:: saealib.ArchiveMixin.clear
+
+
 .. automethod:: saealib.ArchiveMixin.delete
+
+
+.. automethod:: saealib.ArchiveMixin.empty_like
+
+
+.. automethod:: saealib.ArchiveMixin.extend
 
 
 .. automethod:: saealib.ArchiveMixin.get_knn
 
 
 .. automethod:: saealib.ArchiveMixin.mod_value
+
+
+.. automethod:: saealib.ArchiveMixin.reorder
+
+
+.. automethod:: saealib.ArchiveMixin.truncate
 
 
 

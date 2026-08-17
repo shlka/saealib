@@ -1,0 +1,51 @@
+﻿saealib.GenomeGA
+================
+
+.. currentmodule:: saealib
+
+.. autoclass:: GenomeGA
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~GenomeGA.__init__
+   ~GenomeGA.ask
+   ~GenomeGA.contract
+   ~GenomeGA.create_pareto_archive
+   ~GenomeGA.get_required_attrs
+   ~GenomeGA.tell
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.GenomeGA.__init__
+
+
+.. automethod:: saealib.GenomeGA.ask
+
+
+.. automethod:: saealib.GenomeGA.contract
+
+
+.. automethod:: saealib.GenomeGA.create_pareto_archive
+
+
+.. automethod:: saealib.GenomeGA.get_required_attrs
+
+
+.. automethod:: saealib.GenomeGA.tell
+
+
+

@@ -16,6 +16,7 @@
 
 
    ~TruncationSelection.__init__
+   ~TruncationSelection.contract
    ~TruncationSelection.select
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.TruncationSelection.__init__
+
+
+.. automethod:: saealib.TruncationSelection.contract
 
 
 .. automethod:: saealib.TruncationSelection.select

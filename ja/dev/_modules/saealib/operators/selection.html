@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.operators.selection &#8212; saealib 0.1.0b5.dev80+gf7a639677 ドキュメント</title>
+    <title>saealib.operators.selection &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
   
   
   
@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=bb59488c"></script>
+    <script src="../../../_static/documentation_options.js?v=c8372973"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -605,8 +605,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -620,14 +627,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -778,8 +785,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../../../components/index.html">
-    コンポーネント
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    フレームワーク
   </a>
 </li>
 
@@ -793,14 +807,14 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../references.html">
-    文献リファレンス
+    参照
   </a>
 </li>
 
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../../api/index.html">
-    API Reference
+    APIリファレンス
   </a>
 </li>
 
@@ -948,12 +962,35 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Protocol</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MANY</span><span class="p">,</span>
+    <span class="n">ComponentContract</span><span class="p">,</span>
+    <span class="n">DataSpec</span><span class="p">,</span>
+    <span class="n">PortContract</span><span class="p">,</span>
+    <span class="n">PortDirection</span><span class="p">,</span>
+    <span class="n">PortSpec</span><span class="p">,</span>
+    <span class="n">ServiceRequirement</span><span class="p">,</span>
+    <span class="n">StateContract</span><span class="p">,</span>
+    <span class="n">Var</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">RUNTIME_RNG</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Population</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_SelectionContext</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Comparison and random capabilities used by selection operators.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comparator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rng</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">:</span> <span class="o">...</span>
 
 
 <div class="viewcode-block" id="ParentSelection">
@@ -961,12 +998,44 @@ window.runMermaid = runMermaid;</script>
 <span class="k">class</span><span class="w"> </span><span class="nc">ParentSelection</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for parent selection operators.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="ParentSelection.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.ParentSelection.html#saealib.ParentSelection.contract">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the parent-selection contract.&quot;&quot;&quot;</span>
+        <span class="n">parents</span> <span class="o">=</span> <span class="n">DataSpec</span><span class="p">(</span>
+            <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;Ordering&quot;</span><span class="p">,</span>
+            <span class="n">bindings</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;parent_count&quot;</span><span class="p">:</span> <span class="n">Var</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;P&quot;</span><span class="p">)},</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ComponentContract</span><span class="p">(</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;parent_selection&quot;</span><span class="p">:</span> <span class="n">PortContract</span><span class="p">(</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;population&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">INPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;Population&quot;</span><span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;parents&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">parents</span><span class="p">,</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="ParentSelection.select">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ParentSelection.html#saealib.ParentSelection.select">[ドキュメント]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">select</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">_SelectionContext</span><span class="p">,</span>
         <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">,</span>
         <span class="n">n_pair</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">n_parents</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -977,7 +1046,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">        ctx : ExecutionContext</span>
 <span class="sd">            Optimization context.</span>
 <span class="sd">        population : Population</span>
 <span class="sd">            Population to select from.</span>
@@ -1023,11 +1092,35 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">tournament_size</span> <span class="o">=</span> <span class="n">tournament_size</span></div>
 
 
+<div class="viewcode-block" id="TournamentSelection.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.TournamentSelection.html#saealib.TournamentSelection.contract">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the tournament-selection contract.&quot;&quot;&quot;</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;parent_selection&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">base</span><span class="p">,</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;parent_selection&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">required_services</span><span class="o">=</span><span class="p">(</span>
+                                <span class="n">ServiceRequirement</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;ComparisonService&quot;</span><span class="p">),</span>
+                            <span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="TournamentSelection.select">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.TournamentSelection.html#saealib.TournamentSelection.select">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">select</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">_SelectionContext</span><span class="p">,</span>
         <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">,</span>
         <span class="n">n_pair</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">n_parents</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1038,7 +1131,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">        ctx : ExecutionContext</span>
 <span class="sd">            Optimization context.</span>
 <span class="sd">        population : Population</span>
 <span class="sd">            Population to select from.</span>
@@ -1088,7 +1181,6 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="SequentialSelection.__init__">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.SequentialSelection.html#saealib.SequentialSelection.__init__">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize sequential selection operator.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
 
 
@@ -1096,7 +1188,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.SequentialSelection.html#saealib.SequentialSelection.select">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">select</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">_SelectionContext</span><span class="p">,</span>
         <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">,</span>
         <span class="n">n_pair</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">n_parents</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1109,7 +1201,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">        ctx : ExecutionContext</span>
 <span class="sd">            Optimization context.</span>
 <span class="sd">        population : Population</span>
 <span class="sd">            Population to select from.</span>
@@ -1150,15 +1242,38 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="LinearRankSelection.__init__">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.LinearRankSelection.html#saealib.LinearRankSelection.__init__">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize linear rank selection.&quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="LinearRankSelection.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.LinearRankSelection.html#saealib.LinearRankSelection.contract">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the linear-rank-selection contract.&quot;&quot;&quot;</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;parent_selection&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">base</span><span class="p">,</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;parent_selection&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">required_services</span><span class="o">=</span><span class="p">(</span>
+                                <span class="n">ServiceRequirement</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;ComparisonService&quot;</span><span class="p">),</span>
+                            <span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LinearRankSelection.select">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.LinearRankSelection.html#saealib.LinearRankSelection.select">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">select</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">_SelectionContext</span><span class="p">,</span>
         <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">,</span>
         <span class="n">n_pair</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">n_parents</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1169,7 +1284,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">        ctx : ExecutionContext</span>
 <span class="sd">            Optimization context.</span>
 <span class="sd">        population : Population</span>
 <span class="sd">            Population to select from.</span>
@@ -1202,12 +1317,40 @@ window.runMermaid = runMermaid;</script>
 <span class="k">class</span><span class="w"> </span><span class="nc">SurvivorSelection</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for survivor selection operators.&quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="SurvivorSelection.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SurvivorSelection.html#saealib.SurvivorSelection.contract">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the survivor-selection contract.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ComponentContract</span><span class="p">(</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;survivor_selection&quot;</span><span class="p">:</span> <span class="n">PortContract</span><span class="p">(</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pool&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">INPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;Population&quot;</span><span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;survivors&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">DataSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;Ordering&quot;</span><span class="p">),</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="SurvivorSelection.select">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.SurvivorSelection.html#saealib.SurvivorSelection.select">[ドキュメント]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">select</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">_SelectionContext</span><span class="p">,</span>
         <span class="n">pool</span><span class="p">:</span> <span class="n">Population</span><span class="p">,</span>
         <span class="n">n_survivors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -1220,7 +1363,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">        ctx : ExecutionContext</span>
 <span class="sd">            Optimization context.</span>
 <span class="sd">        pool : Population</span>
 <span class="sd">            Selection pool to choose survivors from.</span>
@@ -1269,11 +1412,41 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">randomize_ties</span> <span class="o">=</span> <span class="n">randomize_ties</span></div>
 
 
+<div class="viewcode-block" id="TruncationSelection.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.TruncationSelection.html#saealib.TruncationSelection.contract">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the truncation-selection contract.&quot;&quot;&quot;</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;survivor_selection&quot;</span><span class="p">]</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">StateContract</span><span class="p">(</span><span class="n">reads</span><span class="o">=</span><span class="p">(</span><span class="n">RUNTIME_RNG</span><span class="p">,),</span> <span class="n">writes</span><span class="o">=</span><span class="p">(</span><span class="n">RUNTIME_RNG</span><span class="p">,))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">randomize_ties</span>
+            <span class="k">else</span> <span class="n">StateContract</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">base</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;survivor_selection&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">required_services</span><span class="o">=</span><span class="p">(</span>
+                                <span class="n">ServiceRequirement</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;ComparisonService&quot;</span><span class="p">),</span>
+                            <span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="TruncationSelection.select">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.TruncationSelection.html#saealib.TruncationSelection.select">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">select</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">_SelectionContext</span><span class="p">,</span>
         <span class="n">pool</span><span class="p">:</span> <span class="n">Population</span><span class="p">,</span>
         <span class="n">n_survivors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -1282,7 +1455,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ctx : OptimizationState</span>
+<span class="sd">        ctx : ExecutionContext</span>
 <span class="sd">            Optimization context.</span>
 <span class="sd">        pool : Population</span>
 <span class="sd">            Selection pool to choose survivors from.</span>

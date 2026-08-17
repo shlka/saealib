@@ -16,6 +16,7 @@
 
 
    ~ParentSelection.__init__
+   ~ParentSelection.contract
    ~ParentSelection.select
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.ParentSelection.__init__
+
+
+.. automethod:: saealib.ParentSelection.contract
 
 
 .. automethod:: saealib.ParentSelection.select

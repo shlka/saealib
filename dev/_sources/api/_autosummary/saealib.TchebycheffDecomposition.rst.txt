@@ -17,6 +17,7 @@
 
    ~TchebycheffDecomposition.__init__
    ~TchebycheffDecomposition.aggregate
+   ~TchebycheffDecomposition.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.TchebycheffDecomposition.aggregate
+
+
+.. automethod:: saealib.TchebycheffDecomposition.contract
 
 
 

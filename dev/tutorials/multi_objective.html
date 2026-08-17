@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Multi-Objective Optimization &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>Multi-Objective Optimization &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -158,7 +158,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -171,8 +171,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -193,7 +200,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -333,7 +340,7 @@
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -346,8 +353,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -368,7 +382,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -478,6 +492,13 @@
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Progress</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external_libraries.html">Integrating External Libraries</a></li>
 </ul>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="component_swap.html">Choose and swap built-in components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lowlevel_api.html">Assembling an Optimizer with the Low-Level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interface_hooks.html">Choose a Hook, Stage, or Callback</a></li>
+<li class="toctree-l1"><a class="reference internal" href="highlevel_api.html">Run an optimization with the high-level API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_components.html">Add a custom component to an existing contract</a></li>
+</ul>
 </div>
 </nav></div>
     </div>
@@ -539,11 +560,18 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="multi-objective-optimization">
 <h1>Multi-Objective Optimization<a class="headerlink" href="#multi-objective-optimization" title="Link to this heading">#</a></h1>
-<p>Solve multi-objective optimization problems with trade-offs between objectives, using <code class="docutils literal notranslate"><span class="pre">saealib</span></code>.</p>
-<p>Regardless of the number of objectives, switching algorithms, surrogates, and the evaluation strategy works the same as in “Switching components” in <a class="reference internal" href="single_objective.html"><span class="std std-doc">Single-Objective Optimization</span></a>.</p>
+<div class="layer-badges"><span class="layer-badge">Layer 1: Use</span></div><p>Solve multi-objective optimization problems with trade-offs between objectives, using <code class="docutils literal notranslate"><span class="pre">saealib</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">minimize()</span></code> uses default components based on the number of objectives.
+Use <code class="docutils literal notranslate"><span class="pre">Optimizer.set_*()</span></code> to configure the algorithm, surrogate model, or evaluation strategy individually.</p>
 <p>This page covers what’s specific to problems with two or more objectives: choosing a comparator and extracting the Pareto front.</p>
-<section id="problem-setup">
-<h2>Problem setup<a class="headerlink" href="#problem-setup" title="Link to this heading">#</a></h2>
+<div class="tip admonition">
+<p class="admonition-title">What you’ll be able to do</p>
+<p>By the end of this page, you’ll be able to choose a Comparator for a multi-objective problem and extract the resulting Pareto front.</p>
+</div>
+<p>For the basic single-objective procedure, use <a class="reference internal" href="single_objective.html"><span class="std std-doc">Single-objective optimization</span></a>; if you need a custom Comparator, see <a class="reference internal" href="custom_components.html"><span class="std std-doc">Custom components</span></a>.
+This page runs a multi-objective <code class="docutils literal notranslate"><span class="pre">Problem</span></code>, selects a Comparator, and extracts the Pareto front.</p>
+<section id="set-up-the-problem">
+<h2>Set up the problem<a class="headerlink" href="#set-up-the-problem" title="Link to this heading">#</a></h2>
 <p>When multiple objective functions are in a trade-off relationship, there exist solutions where improving one worsens another.</p>
 <p>Under this relationship, the set of solutions not dominated by any other solution in every objective is called the <strong>Pareto front</strong>.</p>
 <p>Here, as an example, we minimize the ZDT1 function built into <code class="docutils literal notranslate"><span class="pre">saealib</span></code>.</p>
@@ -554,8 +582,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">zdt1</span></code> is a <code class="docutils literal notranslate"><span class="pre">Problem</span></code> instance returning a two-objective benchmark problem with a convex Pareto front.</p>
 </section>
-<section id="high-level-api-minimize">
-<h2>High-level API: minimize<a class="headerlink" href="#high-level-api-minimize" title="Link to this heading">#</a></h2>
+<section id="run-minimize">
+<h2>Run minimize<a class="headerlink" href="#run-minimize" title="Link to this heading">#</a></h2>
 <p>Passing a <code class="docutils literal notranslate"><span class="pre">Problem</span></code> instance directly carries over the number of objectives from it.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
 
@@ -567,8 +595,22 @@
 </div>
 <p>Where <code class="docutils literal notranslate"><span class="pre">result.x</span></code>/<code class="docutils literal notranslate"><span class="pre">result.f</span></code> were a single point in the single-objective case, in the multi-objective case they become multiple solutions forming the Pareto front.</p>
 </section>
-<section id="choosing-a-comparator">
-<h2>Choosing a comparator<a class="headerlink" href="#choosing-a-comparator" title="Link to this heading">#</a></h2>
+<section id="configure-an-optimizer">
+<h2>Configure an Optimizer<a class="headerlink" href="#configure-an-optimizer" title="Link to this heading">#</a></h2>
+<p>With <code class="docutils literal notranslate"><span class="pre">Optimizer(problem)</span></code>, you can configure each component independently.
+<code class="docutils literal notranslate"><span class="pre">set_*()</span></code> returns the same <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> for chaining, and <code class="docutils literal notranslate"><span class="pre">run()</span></code> or <code class="docutils literal notranslate"><span class="pre">iterate()</span></code> executes the optimization.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
+
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">2000</span><span class="p">)))</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">pareto_f</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Unconfigured components resolve to their defaults.
+Set multi-objective ranking by choosing one of the following Comparators.</p>
+</section>
+<section id="choose-a-comparator">
+<h2>Choose a comparator<a class="headerlink" href="#choose-a-comparator" title="Link to this heading">#</a></h2>
 <p>In multi-objective optimization, <code class="docutils literal notranslate"><span class="pre">Comparator</span></code> decides the relative superiority between candidate solutions.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">Problem</span></code>’s <code class="docutils literal notranslate"><span class="pre">comparator</span></code> argument is omitted, one is auto-selected based on the number of objectives (<code class="docutils literal notranslate"><span class="pre">SingleObjectiveComparator</span></code> when <code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">==</span> <span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code> when <code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>).</p>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -607,8 +649,8 @@
 </pre></div>
 </div>
 </section>
-<section id="extracting-the-pareto-front">
-<h2>Extracting the Pareto front<a class="headerlink" href="#extracting-the-pareto-front" title="Link to this heading">#</a></h2>
+<section id="extract-the-pareto-front">
+<h2>Extract the Pareto front<a class="headerlink" href="#extract-the-pareto-front" title="Link to this heading">#</a></h2>
 <p>After running, <code class="docutils literal notranslate"><span class="pre">result.ctx.pareto_archive</span></code> holds the final Pareto front.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pareto_x</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
 <span class="n">pareto_f</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
@@ -623,8 +665,8 @@
 </pre></div>
 </div>
 </section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="related-concepts-and-reference">
+<h2>Related concepts and reference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/highlevel.html#saealib.minimize" title="saealib.minimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.minimize()</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Problem</span></code></a></p></li>
@@ -681,11 +723,12 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-setup">Problem setup</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#high-level-api-minimize">High-level API: minimize</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#choosing-a-comparator">Choosing a comparator</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-the-pareto-front">Extracting the Pareto front</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-the-problem">Set up the problem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#run-minimize">Run minimize</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configure-an-optimizer">Configure an Optimizer</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#choose-a-comparator">Choose a comparator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-the-pareto-front">Extract the Pareto front</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">Related concepts and reference</a></li>
 </ul>
   </nav></div>
 

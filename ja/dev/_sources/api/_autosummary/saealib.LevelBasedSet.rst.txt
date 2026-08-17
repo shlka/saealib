@@ -17,6 +17,7 @@
 
    ~LevelBasedSet.__init__
    ~LevelBasedSet.build
+   ~LevelBasedSet.contract
 
 
 
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.LevelBasedSet.build
+
+
+.. automethod:: saealib.LevelBasedSet.contract
 
 
 

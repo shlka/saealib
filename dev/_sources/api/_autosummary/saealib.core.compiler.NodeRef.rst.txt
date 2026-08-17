@@ -1,0 +1,35 @@
+﻿saealib.core.compiler.NodeRef
+=============================
+
+.. currentmodule:: saealib.core.compiler
+
+.. autoclass:: NodeRef
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~NodeRef.__init__
+   ~NodeRef.from_value
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.compiler.NodeRef.__init__
+
+
+.. automethod:: saealib.core.compiler.NodeRef.from_value
+
+
+

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>MaxUnc (Uncertainty Sampling) &#8212; saealib 0.1.0b5.dev80+gf7a639677 documentation</title>
+    <title>MaxUnc (Uncertainty Sampling) &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
   
   
   
@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=88dfc25e" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=431400f5" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=2243f322"></script>
+    <script src="../_static/documentation_options.js?v=512d92dd"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -596,7 +596,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -609,8 +609,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -631,7 +638,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -771,7 +778,7 @@ window.runMermaid = runMermaid;</script>
     
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../getting_started/index.html">
-    Getting Started
+    Getting started
   </a>
 </li>
 
@@ -784,8 +791,15 @@ window.runMermaid = runMermaid;</script>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../components/index.html">
-    Components
+  <a class="nav-link nav-internal" href="../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../framework/index.html">
+    Framework
   </a>
 </li>
 
@@ -806,7 +820,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../api/index.html">
-    API Reference
+    API reference
   </a>
 </li>
 
@@ -977,14 +991,15 @@ window.runMermaid = runMermaid;</script>
                   
   <section class="tex2jax_ignore mathjax_ignore" id="maxunc-uncertainty-sampling">
 <h1>MaxUnc (Uncertainty Sampling)<a class="headerlink" href="#maxunc-uncertainty-sampling" title="Link to this heading">#</a></h1>
-<p>MaxUnc is an exploration-only acquisition function that uses a surrogate model’s predictive uncertainty (standard deviation) as its criterion, selecting for the next true evaluation the candidate point the model is least confident about.</p>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>MaxUnc is an exploration-only acquisition function that uses a surrogate model’s predictive uncertainty (standard deviation) as its criterion, selecting for the next true evaluation the candidate point the model is least confident about.</p>
+<p>MaxUnc is better understood as the <span class="math notranslate nohighlight">\(\alpha \to \infty\)</span> limit of the merit function described by Büche et al. than as an independent algorithm with its own named original formulation.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
 <p>EGO’s Expected Improvement and GP-UCB’s upper confidence bound were both designed to balance exploration and exploitation using both the predictive mean <span class="math notranslate nohighlight">\(\mu(x)\)</span> and predictive standard deviation <span class="math notranslate nohighlight">\(\sigma(x)\)</span>.
 MaxUnc removes the predictive-mean term entirely from this construction, using only <span class="math notranslate nohighlight">\(\sigma(x)\)</span> as its criterion.</p>
 <p>The procedure is structurally identical to EGO/GP-UCB.
 A GP is fit to the entire archive, the point maximizing the predictive standard deviation <span class="math notranslate nohighlight">\(\sigma(x)\)</span> is found, evaluated with the true function, and added to the archive.
-Because the predictive mean is never referenced, evaluation is always biased toward the region “where the model is furthest from the training data,” rather than actively seeking out promising values.</p>
+Because it does not use the predictive mean, it can be understood intuitively as favoring regions far from the training data. However, the shape of the uncertainty depends on the GP kernel, noise, and other factors, so MaxUnc does not simply identify the farthest point for every GP.</p>
 <p>As background for this construction, Büche, Schraudolph &amp; Koumoutsakos (2005), in a survey paper on GP-based surrogate models, proposed a merit function <span class="math notranslate nohighlight">\(f_{\mathrm{M}}(x) = \hat{t}(x) - \alpha \sigma_t(x)\)</span> — a linear combination of the predictive mean and predictive standard deviation — and stated that larger <span class="math notranslate nohighlight">\(\alpha\)</span> leans more toward exploration <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id21" title="Dirk Büche, Nicol N. Schraudolph, and Petros Koumoutsakos. Accelerating evolutionary algorithms with gaussian process fitness function models. IEEE Transactions on Systems, Man, and Cybernetics—Part C, 35(2):183–194, 2005. doi:10.1109/TSMCC.2004.841917.">37</a>]</span>.
 The criterion MaxUnc computes, <span class="math notranslate nohighlight">\(\sigma(x)\)</span> alone, corresponds to the limit of this merit function as <span class="math notranslate nohighlight">\(\alpha \to \infty\)</span> — that is, the case where the predictive-mean contribution is eliminated entirely.</p>
 <p>MaxUnc is not a criterion that directly targets improving the objective function.
@@ -1035,7 +1050,7 @@ While the evaluation budget is small, it prioritizes filling in the model’s un
 <tbody>
 <tr class="row-even"><td><p>Search algorithm</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code> (the specific combination of crossover, mutation, and selection is not part of MaxUnc’s definition)</p></td>
-<td><p>Candidate generation (search for argmax σ)</p></td>
+<td><p>L3</p></td>
 </tr>
 <tr class="row-odd"><td><p>Surrogate model</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code> (GP regression; requires the <code class="docutils literal notranslate"><span class="pre">sklearn</span></code> extra)</p></td>
@@ -1084,22 +1099,28 @@ While the evaluation budget is small, it prioritizes filling in the model’s un
     <span class="n">SequentialSelection</span><span class="p">(),</span>
     <span class="n">TruncationSelection</span><span class="p">(),</span>
 <span class="p">)</span>
-<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">SklearnGPRSurrogate</span><span class="p">(),</span> <span class="n">MaxUncertainty</span><span class="p">())</span>
+<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">SklearnGPRSurrogate</span><span class="p">())</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 
 <span class="n">opt</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span><span class="n">surrogate_manager</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_acquisition</span><span class="p">(</span><span class="n">MaxUncertainty</span><span class="p">())</span>
     <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span>
     <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">200</span><span class="p">)))</span>
 <span class="p">)</span>
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Since the specific crossover, mutation, and selection operators are not part of MaxUnc’s own definition, the above is just one example, and any <code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">SurvivorSelection</span></code> can be swapped in.</p>
 <p>Running this example with the same 200-FE evaluation budget as the EGO/GP-UCB examples, the best value may improve less than with EI/LCB, precisely because MaxUnc is exploration-only.
 This is a natural consequence of MaxUnc being a criterion aimed at reducing model uncertainty rather than improving the objective function, and is the expected behavior.</p>
+</section>
+<section id="differences-from-the-source">
+<h2>Differences from the source<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<p>Because MaxUnc selects its candidate from the pool generated by <code class="docutils literal notranslate"><span class="pre">GA</span></code>, saealib approximates <code class="docutils literal notranslate"><span class="pre">argmax</span> <span class="pre">σ</span></code>.
+<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code> also allows the top candidates to receive true evaluations together.
+The crossover, mutation, parent-selection, and environmental-selection combination in the example is an saealib configuration choice, not part of the MaxUnc definition.</p>
 </section>
 <section id="parameters-and-variants">
 <h2>Parameters and variants<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
@@ -1114,10 +1135,10 @@ To continuously adjust the exploration–exploitation weight, use <a class="refe
 <h2>Related<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">References</span></a>: Full bibliographic details for the source</p></li>
-<li><p><a class="reference internal" href="../components/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code></p></li>
-<li><p><a class="reference internal" href="../components/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>: List of acquisition functions including <code class="docutils literal notranslate"><span class="pre">MaxUncertainty</span></code></p></li>
-<li><p><a class="reference internal" href="../components/surrogate.html"><span class="std std-doc">Surrogate</span></a>: List of surrogate models including <code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code>, and an explanation of the <code class="docutils literal notranslate"><span class="pre">sklearn</span></code> extra</p></li>
-<li><p><a class="reference internal" href="../components/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: List of strategies including <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>’s <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>: List of acquisition functions including <code class="docutils literal notranslate"><span class="pre">MaxUncertainty</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>: List of surrogate models including <code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code>, and an explanation of the <code class="docutils literal notranslate"><span class="pre">sklearn</span></code> extra</p></li>
+<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: List of strategies including <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>’s <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code></p></li>
 <li><p><a class="reference internal" href="ego.html"><span class="std std-doc">EGO</span></a>: A method using the same GP surrogate model + <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code> configuration, replacing the acquisition function with the exploitation-leaning Expected Improvement (EI)</p></li>
 <li><p><a class="reference internal" href="gp_ucb.html"><span class="std std-doc">GP-UCB</span></a>: A method using the <code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code> acquisition function, which has the same <span class="math notranslate nohighlight">\(\mu - \kappa\sigma\)</span> structure as Büche et al.’s merit function</p></li>
 </ul>
@@ -1175,6 +1196,7 @@ To continuously adjust the exploration–exploitation weight, use <a class="refe
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">Pseudocode</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">Flowchart</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">Configuration in saealib</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">Differences from the source</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">Parameters and variants</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">Related</a></li>
 </ul>

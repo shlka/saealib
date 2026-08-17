@@ -1,0 +1,35 @@
+﻿saealib.space.ValidationService
+===============================
+
+.. currentmodule:: saealib.space
+
+.. autoclass:: ValidationService
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ValidationService.__init__
+   ~ValidationService.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.space.ValidationService.__init__
+
+
+.. automethod:: saealib.space.ValidationService.validate
+
+
+

@@ -17,6 +17,7 @@
 
    ~GA.__init__
    ~GA.ask
+   ~GA.contract
    ~GA.create_pareto_archive
    ~GA.get_required_attrs
    ~GA.tell
@@ -33,6 +34,9 @@
 
 
 .. automethod:: saealib.GA.ask
+
+
+.. automethod:: saealib.GA.contract
 
 
 .. automethod:: saealib.GA.create_pareto_archive

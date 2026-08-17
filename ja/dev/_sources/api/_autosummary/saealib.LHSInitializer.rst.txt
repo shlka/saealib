@@ -16,6 +16,7 @@
 
 
    ~LHSInitializer.__init__
+   ~LHSInitializer.contract
    ~LHSInitializer.initialize
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.LHSInitializer.__init__
+
+
+.. automethod:: saealib.LHSInitializer.contract
 
 
 .. automethod:: saealib.LHSInitializer.initialize

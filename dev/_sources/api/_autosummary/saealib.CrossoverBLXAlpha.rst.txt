@@ -16,6 +16,7 @@
 
 
    ~CrossoverBLXAlpha.__init__
+   ~CrossoverBLXAlpha.contract
    ~CrossoverBLXAlpha.crossover
    ~CrossoverBLXAlpha.crossover_batch
    ~CrossoverBLXAlpha.post_crossover
@@ -31,6 +32,9 @@
 
 
 .. automethod:: saealib.CrossoverBLXAlpha.__init__
+
+
+.. automethod:: saealib.CrossoverBLXAlpha.contract
 
 
 .. automethod:: saealib.CrossoverBLXAlpha.crossover

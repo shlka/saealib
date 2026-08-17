@@ -16,6 +16,7 @@
 
 
    ~CompositeSurrogateManager.__init__
+   ~CompositeSurrogateManager.contract
    ~CompositeSurrogateManager.fit
    ~CompositeSurrogateManager.on_generation_end
    ~CompositeSurrogateManager.predict
@@ -30,6 +31,9 @@
 
 
 .. automethod:: saealib.CompositeSurrogateManager.__init__
+
+
+.. automethod:: saealib.CompositeSurrogateManager.contract
 
 
 .. automethod:: saealib.CompositeSurrogateManager.fit

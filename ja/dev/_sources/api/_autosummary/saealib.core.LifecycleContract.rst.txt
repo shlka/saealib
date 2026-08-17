@@ -1,0 +1,31 @@
+﻿saealib.core.LifecycleContract
+==============================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: LifecycleContract
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~LifecycleContract.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.LifecycleContract.__init__
+
+
+

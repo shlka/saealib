@@ -16,6 +16,7 @@
 
 
    ~EvaluationPlanner.__init__
+   ~EvaluationPlanner.contract
    ~EvaluationPlanner.plan
 
 
@@ -27,6 +28,9 @@
 
 
 .. automethod:: saealib.EvaluationPlanner.__init__
+
+
+.. automethod:: saealib.EvaluationPlanner.contract
 
 
 .. automethod:: saealib.EvaluationPlanner.plan

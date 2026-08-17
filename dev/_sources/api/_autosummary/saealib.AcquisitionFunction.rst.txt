@@ -16,6 +16,7 @@
 
 
    ~AcquisitionFunction.__init__
+   ~AcquisitionFunction.contract
    ~AcquisitionFunction.evaluate
    ~AcquisitionFunction.prepare
 
@@ -28,6 +29,9 @@
 
 
 .. automethod:: saealib.AcquisitionFunction.__init__
+
+
+.. automethod:: saealib.AcquisitionFunction.contract
 
 
 .. automethod:: saealib.AcquisitionFunction.evaluate

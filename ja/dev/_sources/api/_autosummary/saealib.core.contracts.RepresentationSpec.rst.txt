@@ -1,0 +1,31 @@
+﻿saealib.core.contracts.RepresentationSpec
+=========================================
+
+.. currentmodule:: saealib.core.contracts
+
+.. autoclass:: RepresentationSpec
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~RepresentationSpec.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.contracts.RepresentationSpec.__init__
+
+
+
