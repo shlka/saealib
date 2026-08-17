@@ -446,6 +446,7 @@ _LAZY_EXPORTS: dict[str, str] = {
     "stage_component": "saealib.stages",
     # utils
     "gaussian_kernel": "saealib.surrogate.rbf",
+    "thin_plate_spline_kernel": "saealib.surrogate.rbf",
     "uniform_weight_vectors": "saealib.utils.weight_vectors",
 }
 

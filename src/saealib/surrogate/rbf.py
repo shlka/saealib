@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 import scipy.spatial
 
+from saealib.exceptions import ValidationError
 from saealib.registry import register
 from saealib.surrogate.base import RegressionSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -42,6 +43,31 @@ def gaussian_kernel(x1: np.ndarray, x2: np.ndarray, sigma=2.0) -> np.ndarray:
     return np.exp(-sq_dist / (2 * (sigma**2)))
 
 
+def thin_plate_spline_kernel(
+    x1: np.ndarray, x2: np.ndarray, sigma: float | None = None
+) -> np.ndarray:
+    """Thin-plate spline radial basis function kernel.
+
+    Parameters
+    ----------
+    x1 : np.ndarray
+        Input data 1.
+    x2 : np.ndarray
+        Input data 2.
+    sigma : float or None
+        Unused kernel width parameter accepted for kernel compatibility.
+
+    Returns
+    -------
+    np.ndarray
+        Matrix of kernel evaluations between x1 and x2. shape: (len(x1), len(x2))
+    """
+    r = scipy.spatial.distance.cdist(x1, x2, "euclidean")
+    with np.errstate(divide="ignore", invalid="ignore"):
+        out = r**2 * np.log(r)
+    return np.nan_to_num(out, nan=0.0)
+
+
 class _RBFModel:
     """
     Single-objective RBF interpolation model (internal use only).
@@ -50,14 +76,27 @@ class _RBFModel:
     block by RBFSurrogate to support multi-objective problems.
     """
 
-    def __init__(self, kernel: Callable[..., Any], dim: int):
+    def __init__(
+        self,
+        kernel: Callable[..., Any],
+        dim: int,
+        polynomial_degree: int,
+        solver: str,
+        alpha: float,
+    ) -> None:
         self.kernel = kernel
         self.dim = dim
+        self.polynomial_degree = polynomial_degree
+        self.solver = solver
+        self.alpha = alpha
         self.train_x: np.ndarray | None = None
         self.train_y: np.ndarray | None = None
         self.weights: np.ndarray | None = None
+        self.poly_coeffs: np.ndarray | None = None
         self.kernel_matrix: np.ndarray | None = None
         self.sigma: np.floating[Any] | float | None = None
+        self._last_ill_conditioned = False
+        self._last_singular = False
 
     def fit(self, train_x: np.ndarray, train_y_1d: np.ndarray) -> None:
         """
@@ -72,21 +111,60 @@ class _RBFModel:
         """
         self.train_x = np.asarray(train_x)
         self.train_y = np.asarray(train_y_1d)
-        n_samples = len(train_x)
+        n_samples = len(self.train_x)
         self.sigma = np.median(scipy.spatial.distance.pdist(self.train_x))
-        self.kernel_matrix = self.kernel(self.train_x, self.train_x, sigma=self.sigma)
-        rcond = 1 / np.linalg.cond(self.kernel_matrix)
-        if rcond < np.finfo(self.kernel_matrix.dtype).eps:
-            logger.warning(f"Kernel matrix is ill-conditioned. RCOND: {rcond}")
+        phi = self.kernel(self.train_x, self.train_x, sigma=self.sigma)
+
+        if self.polynomial_degree == -1:
+            target = self.train_y - np.mean(self.train_y)
+            n_poly = 0
+            a = np.array(phi, copy=True)
+        else:
+            target = self.train_y
+            if self.polynomial_degree == 0:
+                polynomial_basis = np.ones((n_samples, 1))
+            else:
+                polynomial_basis = np.hstack([np.ones((n_samples, 1)), self.train_x])
+            n_poly = polynomial_basis.shape[1]
+            a = np.block(
+                [
+                    [phi, polynomial_basis],
+                    [polynomial_basis.T, np.zeros((n_poly, n_poly))],
+                ]
+            )
+
+        rhs = np.concatenate((target, np.zeros(n_poly))) if n_poly else target
+
+        if self.solver == "tikhonov":
+            a[:n_samples, :n_samples] += self.alpha * np.eye(n_samples)
+
+        self.kernel_matrix = a
+        rcond = 1 / np.linalg.cond(a)
+        ill_conditioned = rcond < np.finfo(a.dtype).eps
+        if ill_conditioned:
+            logger.debug(f"Kernel matrix is ill-conditioned. RCOND: {rcond}")
+        self._last_ill_conditioned = ill_conditioned
+
         try:
-            self.weights = np.linalg.solve(
-                self.kernel_matrix, (self.train_y - np.mean(self.train_y))
-            )
+            if self.solver == "lstsq":
+                solution = np.linalg.lstsq(a, rhs, rcond=None)[0]
+            else:
+                solution = np.linalg.solve(a, rhs)
         except np.linalg.LinAlgError:
-            logger.error(
-                "Failed to solve linear system (Kernel matrix might be singular)."
-            )
-            self.weights = np.nan * np.ones(n_samples)
+            logger.debug(f"Kernel matrix solve failed (singular). RCOND: {rcond}")
+            if not self._last_singular:
+                logger.warning(
+                    "Failed to solve linear system (Kernel matrix might be singular)."
+                )
+            self._last_singular = True
+            solution = np.nan * np.ones(a.shape[0])
+        else:
+            if self._last_singular:
+                logger.debug("Kernel matrix solve recovered from singularity.")
+            self._last_singular = False
+
+        self.weights = solution[:n_samples]
+        self.poly_coeffs = solution[n_samples:] if n_poly else None
 
     def predict(self, test_x: np.ndarray) -> np.ndarray:
         """
@@ -108,7 +186,15 @@ class _RBFModel:
         assert self.train_x is not None
         assert self.weights is not None and self.train_y is not None
         k = self.kernel(self.train_x, test, sigma=self.sigma)
-        preds = k.T.dot(self.weights) + np.mean(self.train_y)
+        if self.polynomial_degree == -1:
+            preds = k.T.dot(self.weights) + np.mean(self.train_y)
+        else:
+            assert self.poly_coeffs is not None
+            if self.polynomial_degree == 0:
+                polynomial_test = np.ones((len(test), 1))
+            else:
+                polynomial_test = np.hstack([np.ones((len(test), 1)), test])
+            preds = k.T.dot(self.weights) + polynomial_test.dot(self.poly_coeffs)
         return np.asarray(preds).flatten()
 
 
@@ -128,6 +214,12 @@ class RBFSurrogate(RegressionSurrogate):
         Dimensionality of the input data.
     n_obj : int or None
         Number of objectives. Set on first fit call.
+    polynomial_degree : int
+        Degree of the optional polynomial term, or ``-1`` to disable it.
+    solver : str
+        Linear system solver used during fitting.
+    alpha : float
+        Tikhonov regularization strength.
 
     References
     ----------
@@ -143,9 +235,26 @@ class RBFSurrogate(RegressionSurrogate):
     153-171.
     """
 
-    def __init__(self, kernel: Callable[..., Any], dim: int):
+    def __init__(
+        self,
+        kernel: Callable[..., Any],
+        dim: int,
+        polynomial_degree: int = -1,
+        solver: str = "solve",
+        alpha: float = 1e-8,
+    ) -> None:
+        if polynomial_degree not in (-1, 0, 1):
+            raise ValidationError("polynomial_degree must be -1, 0, or 1")
+        if solver not in ("solve", "lstsq", "tikhonov"):
+            raise ValidationError("solver must be 'solve', 'lstsq', or 'tikhonov'")
+        if alpha <= 0:
+            raise ValidationError("alpha must be greater than 0")
+
         self.kernel = kernel
         self.dim = dim
+        self.polynomial_degree = polynomial_degree
+        self.solver = solver
+        self.alpha = alpha
         self.n_obj: int | None = None
         self._models: list[_RBFModel] | None = None
 
@@ -169,7 +278,16 @@ class RBFSurrogate(RegressionSurrogate):
         # (Re-)initialize models when n_obj changes or on first fit
         if self._models is None or n_obj != self.n_obj:
             self.n_obj = n_obj
-            self._models = [_RBFModel(self.kernel, self.dim) for _ in range(n_obj)]
+            self._models = [
+                _RBFModel(
+                    self.kernel,
+                    self.dim,
+                    self.polynomial_degree,
+                    self.solver,
+                    self.alpha,
+                )
+                for _ in range(n_obj)
+            ]
 
         for i, model in enumerate(self._models):
             model.fit(train_x, arr[:, i])

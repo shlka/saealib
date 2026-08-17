@@ -302,6 +302,7 @@ from saealib.surrogate import rank_weighted_combine as rank_weighted_combine
 
 # utils
 from saealib.surrogate.rbf import gaussian_kernel as gaussian_kernel
+from saealib.surrogate.rbf import thin_plate_spline_kernel as thin_plate_spline_kernel
 from saealib.termination import Termination as Termination
 from saealib.termination import TerminationCondition as TerminationCondition
 from saealib.termination import f_target as f_target

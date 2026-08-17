@@ -43,9 +43,14 @@ Archive-based criteria such as `NoveltyAcquisition` instead receive candidate an
 
 ## Built-in Surrogates
 
-**`RBFSurrogate(kernel, dim)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors` (the origin of RBF interpolation itself is Hardy, 1971).
-`gaussian_kernel(x1, x2, sigma=2.0)` is the default kernel used, but the `kernel` argument is designed as a public API accepting a kernel function, so users can inject any kernel.
-`predict()` explicitly returns `std=None` (RBF interpolation doesn't provide uncertainty).
+**`RBFSurrogate(kernel, dim, polynomial_degree=-1, solver="solve", alpha=1e-8)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors` (the origin of RBF interpolation itself is Hardy, 1971).
+Accepts any kernel function (default `gaussian_kernel`; `thin_plate_spline_kernel` is also built in), and `predict()` explicitly returns `std=None` (RBF interpolation provides no uncertainty).
+
+| Parameter | Values | Role |
+|---|---|---|
+| `polynomial_degree` | `-1` (default) / `0` / `1` | Augments the system with a polynomial term (none / constant / linear); required for conditionally positive definite kernels like thin-plate-spline, unneeded for strictly positive definite ones like `gaussian_kernel`. |
+| `solver` | `"solve"` (default) / `"lstsq"` / `"tikhonov"` | How the (possibly augmented) linear system is solved: direct / least squares (tolerant of rank-deficient systems) / ridge-regularized via `alpha`. |
+| `alpha` | `1e-8` (default) | Ridge regularization strength, used only when `solver="tikhonov"`. |
 
 **`PerObjectiveSurrogate(surrogates)`**: A `RegressionSurrogate` subclass, a composite class that assigns a different surrogate per objective.
 Raises `ValueError` at `fit` time if `train_y`'s column count doesn't match `len(surrogates)`.
@@ -160,6 +165,7 @@ To use an uncertainty-based [AcquisitionFunction](acquisition_functions.md), `Su
 - {py:class}`saealib.SurrogatePrediction`
 - {py:class}`saealib.RBFSurrogate`
 - {py:func}`saealib.gaussian_kernel`
+- {py:func}`saealib.thin_plate_spline_kernel`
 - {py:class}`saealib.PerObjectiveSurrogate`
 - {py:class}`saealib.SklearnGPRSurrogate`
 - {py:class}`saealib.SklearnRFRSurrogate`

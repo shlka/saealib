@@ -60,7 +60,7 @@ flowchart TD
 | Role | saealib implementation | Corresponding step |
 |---|---|---|
 | Search algorithm | `GA` (the specific combination of crossover, mutation, and selection is not part of CORS's definition) | L3 |
-| Surrogate model | `RBFSurrogate` (RBF interpolation; defaults to `gaussian_kernel`, but any kernel function can be injected) | L2 |
+| Surrogate model | `RBFSurrogate` (RBF interpolation; defaults to `gaussian_kernel` with no polynomial term, but any kernel and `polynomial_degree` can be injected — see Differences from the source) | L2 |
 | Acquisition function | `CORSDistance` (applies a $\beta_i\Delta_i$ distance constraint to the predictive mean) | L3 |
 | Surrogate management | `GlobalSurrogateManager` (fits the RBF over the entire archive) | L2-3 |
 | Evaluation strategy | `IndividualBasedStrategy` (true-evaluates only individuals with the highest `CORSDistance` scores) | L3-4 |
@@ -119,8 +119,8 @@ The original CORS procedure selects candidate points sequentially by minimizing 
 `IndividualBasedStrategy.evaluation_ratio` also allows the selected candidates to receive true evaluations as a batch.
 The crossover, mutation, parent-selection, and environmental-selection combination in the example is an saealib configuration choice, not part of the CORS definition.
 The paper's numerical experiments use a thin-plate-spline kernel ($\phi(r) = r^2 \log r$) with a first-order polynomial term $p(x)$.
-saealib's `RBFSurrogate` is a pure RBF interpolator without a polynomial term; it fits residuals after subtracting the training-data mean.
-Therefore, swapping only the kernel cannot fully reproduce the paper's configuration.
+By default, `RBFSurrogate` fits a pure RBF interpolator without a polynomial term (residuals after subtracting the training-data mean), so swapping only the kernel does not reproduce the paper's configuration.
+Passing `kernel=thin_plate_spline_kernel` together with `polynomial_degree=1` reproduces it, since a linear polynomial term is what makes the interpolation system well-posed for a conditionally positive definite kernel such as thin-plate-spline.
 
 ## Parameters and variants
 
