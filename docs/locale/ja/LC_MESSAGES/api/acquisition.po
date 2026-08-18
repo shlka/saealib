@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 19:12+0900\n"
+"POT-Creation-Date: 2026-08-18 21:18+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -141,8 +141,8 @@ msgid ""
 "``domain_size`` is a discretization-count proxy supplied by the caller; "
 "this function does not derive one."
 msgstr ""
-"``beta_t = 2 log(domain_size * t^2 * pi^2 / (6 * "
-"delta))``は、引用文献 :cite:`srinivas2012gpucb` "
+"``beta_t = 2 log(domain_size * t^2 * pi^2 / (6 * delta))``は、引用文献 "
+":cite:`srinivas2012gpucb` "
 "の後悔上界がサイズ``domain_size``の有限探索領域に対して用いるスケジュールです。連続領域の場合、``domain_size``は呼び出し側が与える離散化点数の代理値であり、この関数自体はその値を導出しません。"
 
 #: ../../api/acquisition.md
@@ -152,12 +152,12 @@ msgstr "パラメータ"
 #: of saealib.acquisition.lcb.gp_ucb_beta_schedule:9
 msgid ""
 "Size of the (possibly discretized) search domain (``|D|`` in the cited "
-"bound)."
-msgstr "（離散化されている場合を含む）探索領域のサイズ（引用文献の``|D|``）。"
+"bound). Must be positive."
+msgstr "（離散化されている場合を含む）探索領域のサイズ（引用文献の``|D|``）。正の値でなければなりません。"
 
 #: of saealib.acquisition.lcb.gp_ucb_beta_schedule:12
-msgid "Confidence parameter (``0 < delta < 1``). Default: 0.1."
-msgstr "信頼度パラメータ（``0 < delta < 1``）。既定値は0.1。"
+msgid "Confidence parameter. Must satisfy ``0 < delta < 1``. Default: 0.1."
+msgstr "信頼度パラメータ。``0 < delta < 1``を満たさなければなりません。既定値は0.1。"
 
 #: ../../api/acquisition.md
 msgid "Returns"
@@ -165,11 +165,22 @@ msgstr "返します"
 
 #: of saealib.acquisition.lcb.gp_ucb_beta_schedule:15
 msgid ""
-"``schedule(t) -> float``, increasing in the round index ``t`` (``t`` "
-"starting at 1)."
-msgstr "``schedule(t) -> float``。反復回数``t``（1始まり）に対して増加します。"
+"A picklable ``schedule(t) -> float``, increasing in the round index ``t``"
+" (``t`` starting at 1; raises "
+":class:`~saealib.exceptions.ValidationError` for ``t < 1``)."
+msgstr ""
+"pickle可能な``schedule(t) -> float``。反復回数``t``（1始まり）に対して増加します。``t < 1``の場合は"
+" :class:`~saealib.exceptions.ValidationError` を送出します。"
 
 #: ../../api/acquisition.md
 msgid "Return type"
 msgstr "戻り値の型"
+
+#: ../../api/acquisition.md
+msgid "Raises"
+msgstr "発生する例外"
+
+#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:20
+msgid "If ``domain_size`` is not positive, or ``delta`` is not in ``(0, 1)``."
+msgstr "``domain_size``が正でない場合、または``delta``が``(0, 1)``の範囲外の場合。"
 

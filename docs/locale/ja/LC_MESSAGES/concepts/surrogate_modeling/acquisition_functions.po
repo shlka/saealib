@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 19:12+0900\n"
+"POT-Creation-Date: 2026-08-18 21:18+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -71,6 +71,18 @@ msgstr ""
 
 #: ../../concepts/surrogate_modeling/acquisition_functions.md:22
 msgid ""
+"`compute_reference()` receives no `ctx`, so a subclass that needs runtime"
+" state (such as `LowerConfidenceBound`'s optional `beta_schedule`, which "
+"reads `ctx.decision_count`) overrides `prepare(archive, ctx=None)` "
+"directly instead; whatever it returns still flows into `score()` as "
+"`reference`."
+msgstr ""
+"`compute_reference()`は`ctx`を受け取らないため、実行時状態が必要なサブクラス（`ctx.decision_count`を読む`LowerConfidenceBound`の"
+" `beta_schedule`など）は代わりに`prepare(archive, "
+"ctx=None)`を直接オーバーライドします。その戻り値は`reference`として`score()`にそのまま渡されます。"
+
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:24
+msgid ""
 "The class attribute `requires_uncertainty: bool` indicates whether this "
 "acquisition function needs `SurrogatePrediction.std` (uncertainty). "
 "`direction_sensitive: bool` (default `True`) indicates whether "
@@ -86,7 +98,7 @@ msgstr ""
 " 実行可能性確率のように目的の方向という概念を持たない獲得関数は、`direction_sensitive = "
 "False`にしてこの自動注入を無効化します。"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:26
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:28
 msgid "Built-in AcquisitionFunctions"
 msgstr "組み込みAcquisitionFunction"
 
@@ -231,7 +243,7 @@ msgstr "`MaximinDistanceAcquisition`"
 msgid "Candidate and archive diversity criterion"
 msgstr "候補とアーカイブの多様性基準"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:44
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:46
 msgid ""
 "The uncertainty-based acquisitions in the table have "
 "`requires_uncertainty=True`. Archive-based acquisitions "
@@ -253,7 +265,7 @@ msgstr ""
 "組み込みSurrogateでは`SklearnGPRSurrogate`だけがこれを満たします。 "
 "詳細は[Surrogate](surrogate.md)の不確実性対応表を参照してください。"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:50
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:52
 msgid ""
 "`MaxUncertainty`/`ProbabilityOfFeasibility`/`ProductOfFeasibility` have "
 "`direction_sensitive = False`. This is because the magnitude of "
@@ -263,7 +275,7 @@ msgstr ""
 "`MaxUncertainty`/`ProbabilityOfFeasibility`/`ProductOfFeasibility`は`direction_sensitive"
 " = False`です。 不確実性の大きさや実行可能性確率は、目的の最大化と最小化という方向の概念を持たないためです。"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:53
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:55
 msgid ""
 "`ProbabilityOfFeasibility`/`ProductOfFeasibility` are used paired with a "
 "classification or regression surrogate that predicts a constraint value "
@@ -276,11 +288,11 @@ msgstr ""
 " "
 "[TrainingSet](training_set.md)の`ConstraintObjectiveSet`で学習データを抽出し、目的側の獲得関数（EIなど）と`CompositeAcquisition`の`product_combine`で組み合わせるのが典型的な使い方です。"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:73
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:75
 msgid "The meaning of the weights/direction arguments"
 msgstr "weights/direction引数の意味"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:75
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:77
 msgid ""
 "Some acquisition functions, such as `MeanPrediction`, can scalarize "
 "multi-objective predictions via the `weights` argument. Use a negative "
@@ -290,7 +302,7 @@ msgstr ""
 "`MeanPrediction`など一部の獲得関数は、`weights`引数で多目的予測をスカラー化できます。 "
 "`weights=np.array([-1.0])`のように、最小化したい目的には負の重みを使います。"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:78
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:80
 msgid ""
 "Specifying the `direction` argument produces a sign-only scalarization "
 "with no magnitude, and takes priority over `weights`. If `direction` "
@@ -301,11 +313,11 @@ msgstr ""
 "`direction`引数を指定すると、大きさを持たない符号だけのスカラー化になり、`weights`よりも優先されます。 "
 "`direction`を明示しない場合、実行開始時に`problem.direction`が自動的に注入されます（`direction_sensitive`が`True`の獲得関数のみ）。"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:81
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:83
 msgid "Implementing a custom AcquisitionFunction"
 msgstr "独自AcquisitionFunctionの実装方法"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:83
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:85
 msgid ""
 "If you need a custom pointwise scoring scheme, subclass "
 "`PointwiseAcquisition` and implement `compute_reference()`/`score()`. The"
@@ -316,11 +328,11 @@ msgstr ""
 "独自の点ごとのスコアリング方式が必要な場合は、`PointwiseAcquisition`を継承して`compute_reference()`/`score()`を実装します。"
 " 次の例は、予測平均が閾値を下回る候補ほど高いスコアを与える単純な獲得関数です。"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:104
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:106
 msgid "Combine it by passing it to `Optimizer.set_acquisition()`."
 msgstr "`Optimizer.set_acquisition()`へ渡して組み込みます。"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:107
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:109
 msgid ""
 "`Optimizer.validate()` detects and warns about a mismatch between the "
 "acquisition function's `requires_uncertainty` and the surrogate's "
@@ -331,88 +343,88 @@ msgstr ""
 "`Optimizer.validate()`は、獲得関数の`requires_uncertainty`とサロゲートの`provides_uncertainty`の不整合を検出して警告します。"
 " `requires_uncertainty=True`の獲得関数を`std`を返さないサロゲートと組み合わせた場合、この警告で気付けます。"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:111
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:113
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:113
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:115
 msgid ""
 "[Surrogate](surrogate.md): The source of `SurrogatePrediction`. See here "
 "also for the uncertainty-support table"
 msgstr "[Surrogate](surrogate.md)：`SurrogatePrediction`の提供元。不確実性対応表もこちらを参照する"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:114
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:116
 msgid ""
 "[SurrogateManager](surrogate_manager.md): Provides predictions to "
 "`AcquisitionFunction`"
 msgstr "[SurrogateManager](surrogate_manager.md)：`AcquisitionFunction`へ予測を提供する"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:115
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:117
 msgid ""
 "[TrainingSet](training_set.md): Constraint data extraction paired with "
 "`ProbabilityOfFeasibility`/`ProductOfFeasibility`"
 msgstr "[TrainingSet](training_set.md)：`ProbabilityOfFeasibility`/`ProductOfFeasibility`と組み合わせる制約用データ抽出"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:117
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:119
 msgid "References"
 msgstr "参照"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:119
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:121
 #, python-brace-format
 msgid "{py:class}`saealib.AcquisitionFunction`"
 msgstr "{py:class}`saealib.AcquisitionFunction`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:120
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:122
 #, python-brace-format
 msgid "{py:class}`saealib.MeanPrediction`"
 msgstr "{py:class}`saealib.MeanPrediction`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:121
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:123
 #, python-brace-format
 msgid "{py:class}`saealib.ExpectedImprovement`"
 msgstr "{py:class}`saealib.ExpectedImprovement`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:122
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:124
 #, python-brace-format
 msgid "{py:class}`saealib.BatchExpectedImprovement`"
 msgstr "{py:class}`saealib.BatchExpectedImprovement`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:123
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:125
 #, python-brace-format
 msgid "{py:class}`saealib.LowerConfidenceBound`"
 msgstr "{py:class}`saealib.LowerConfidenceBound`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:124
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:126
 #, python-brace-format
 msgid "{py:class}`saealib.MaxUncertainty`"
 msgstr "{py:class}`saealib.MaxUncertainty`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:125
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:127
 #, python-brace-format
 msgid "{py:class}`saealib.EHVIAcquisition`"
 msgstr "{py:class}`saealib.EHVIAcquisition`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:126
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:128
 #, python-brace-format
 msgid "{py:class}`saealib.SMSEGOAcquisition`"
 msgstr "{py:class}`saealib.SMSEGOAcquisition`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:127
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:129
 #, python-brace-format
 msgid "{py:class}`saealib.ParEGOAcquisition`"
 msgstr "{py:class}`saealib.ParEGOAcquisition`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:128
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:130
 #, python-brace-format
 msgid "{py:class}`saealib.ProbabilityOfFeasibility`"
 msgstr "{py:class}`saealib.ProbabilityOfFeasibility`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:129
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:131
 #, python-brace-format
 msgid "{py:class}`saealib.ProductOfFeasibility`"
 msgstr "{py:class}`saealib.ProductOfFeasibility`"
 
-#: ../../concepts/surrogate_modeling/acquisition_functions.md:130
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:132
 #, python-brace-format
 msgid "{py:func}`saealib.gp_ucb_beta_schedule`"
 msgstr "{py:func}`saealib.gp_ucb_beta_schedule`"
