@@ -60,7 +60,7 @@ flowchart TD
 | Role | saealib implementation | Corresponding step |
 |---|---|---|
 | Search algorithm | `GA` (the specific combination of crossover, mutation, and selection is not part of CORS's definition) | L3 |
-| Surrogate model | `RBFSurrogate` (RBF interpolation; defaults to `GaussianKernel()` with no polynomial term, but any `RBFKernel` and `polynomial_degree` can be injected — see Differences from the source) | L2 |
+| Surrogate model | `RBFSurrogate` (RBF interpolation; this example uses `GaussianKernel()` with no polynomial term, but `kernel` is a required argument and any `RBFKernel`/`polynomial_degree` can be injected — see Differences from the source) | L2 |
 | Acquisition function | `CORSDistance` (applies a $\beta_i\Delta_i$ distance constraint to the predictive mean) | L3 |
 | Surrogate management | `GlobalSurrogateManager` (fits the RBF over the entire archive) | L2-3 |
 | Evaluation strategy | `IndividualBasedStrategy` (true-evaluates only individuals with the highest `CORSDistance` scores) | L3-4 |
@@ -119,13 +119,13 @@ The original CORS procedure selects candidate points sequentially by minimizing 
 `IndividualBasedStrategy.evaluation_ratio` also allows the selected candidates to receive true evaluations as a batch.
 The crossover, mutation, parent-selection, and environmental-selection combination in the example is an saealib configuration choice, not part of the CORS definition.
 The paper's numerical experiments use a thin-plate-spline kernel ($\phi(r) = r^2 \log r$) with a first-order polynomial term $p(x)$.
-By default, `RBFSurrogate` fits a pure RBF interpolator with no polynomial term (`GaussianKernel`'s `min_polynomial_degree` is `None`, so the default `polynomial_degree="auto"` resolves to no polynomial term), so swapping only the kernel does not reproduce the paper's configuration.
+With the `kernel=GaussianKernel()` used above, `RBFSurrogate`'s default `polynomial_degree="auto"` resolves to no polynomial term (`GaussianKernel`'s `min_polynomial_degree` is `None`), so swapping only the kernel does not reproduce the paper's configuration.
 Passing `kernel=ThinPlateSplineKernel()` together with `polynomial_degree=1` reproduces it, since a linear polynomial term is what makes the interpolation system well-posed for a conditionally positive definite kernel such as thin-plate-spline.
 
 ## Parameters and variants
 
-**kernel (choice of RBF kernel)**: Any `RBFKernel` instance can be injected via `RBFSurrogate(kernel=...)`.
-The default is `GaussianKernel()`.
+**kernel (choice of RBF kernel)**: `RBFSurrogate(kernel=...)` requires an `RBFKernel` instance; there is no default.
+The example above passes `GaussianKernel()`.
 
 **delta**: Pass the diagonal length of the design-space box bounds to `CORSDistance(delta=...)`.
 This example uses $\mathrm{norm}(ub-lb)$ and applies $\beta_i\Delta_i$ as the distance threshold from previously evaluated points.

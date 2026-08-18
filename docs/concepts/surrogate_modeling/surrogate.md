@@ -44,7 +44,7 @@ Archive-based criteria such as `NoveltyAcquisition` instead receive candidate an
 ## Built-in Surrogates
 
 **`RBFSurrogate(kernel, polynomial_degree="auto", solver="solve", alpha=1e-8)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml` (the origin of RBF interpolation itself is Hardy, 1971).
-`kernel` is an `RBFKernel` object (built-in kernels are listed below); a custom kernel is a subclass implementing `evaluate(r)`.
+`kernel` is a required `RBFKernel` object with no default (built-in kernels are listed below); a custom kernel is a subclass implementing `evaluate(r)`.
 `predict()` explicitly returns `std=None` (RBF interpolation provides no uncertainty).
 
 | Parameter | Values | Role |
@@ -60,7 +60,7 @@ Kernels carrying a `length_scale` field (in the same distance units as the input
 
 | Kernel | Formula | Requires `polynomial_degree` |
 |---|---|---|
-| `GaussianKernel` (default) | $\exp\left(-\dfrac{r^2}{2\,\ell^2}\right)$ | `None` (none) |
+| `GaussianKernel` | $\exp\left(-\dfrac{r^2}{2\,\ell^2}\right)$ | `None` (none) |
 | `ThinPlateSplineKernel` | $r^2 \log r$ (no `length_scale`) | `1` (linear) |
 | `LinearKernel` | $r$ (no `length_scale`) | `0` (constant) |
 | `CubicKernel` | $r^3$ (no `length_scale`) | `1` (linear) |
