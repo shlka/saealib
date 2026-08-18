@@ -18,8 +18,21 @@ TRAIN_X = np.array([[-1.0], [0.0], [1.0]])
 TRAIN_Y = np.array([1.0, 2.0, -0.5])
 
 
+def test_n_features_in_is_none_before_fit():
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
+
+    assert surrogate.n_features_in_ is None
+
+
+def test_n_features_in_tracks_most_recent_fit():
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
+    surrogate.fit(TRAIN_X, TRAIN_Y)
+
+    assert surrogate.n_features_in_ == 1
+
+
 def test_default_degree_and_solver_interpolate_training_points():
-    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
     surrogate.fit(TRAIN_X, TRAIN_Y)
 
     np.testing.assert_allclose(
@@ -34,7 +47,6 @@ def test_default_degree_and_solver_interpolate_training_points():
 def test_polynomial_terms_interpolate_training_points(polynomial_degree):
     surrogate = RBFSurrogate(
         kernel=GaussianKernel(),
-        dim=1,
         polynomial_degree=polynomial_degree,
     )
     surrogate.fit(TRAIN_X, TRAIN_Y)
@@ -56,13 +68,12 @@ def test_degree_one_reproduces_linear_extrapolation_but_default_does_not():
 
     polynomial_surrogate = RBFSurrogate(
         kernel=GaussianKernel(),
-        dim=1,
         polynomial_degree=1,
     )
     polynomial_surrogate.fit(TRAIN_X, train_y)
     polynomial_prediction = polynomial_surrogate.predict(outside_x).value[:, 0]
 
-    default_surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    default_surrogate = RBFSurrogate(kernel=GaussianKernel())
     default_surrogate.fit(TRAIN_X, train_y)
     default_prediction = default_surrogate.predict(outside_x).value[:, 0]
 
@@ -78,7 +89,6 @@ def test_degree_one_reproduces_linear_extrapolation_but_default_does_not():
 def test_thin_plate_spline_kernel_with_degree_one_interpolates_training_points():
     surrogate = RBFSurrogate(
         kernel=ThinPlateSplineKernel(),
-        dim=1,
         polynomial_degree=1,
     )
     surrogate.fit(TRAIN_X, TRAIN_Y)
@@ -92,7 +102,7 @@ def test_thin_plate_spline_kernel_with_degree_one_interpolates_training_points()
 
 
 def test_tikhonov_residual_increases_with_alpha_and_approaches_solve():
-    solve_surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    solve_surrogate = RBFSurrogate(kernel=GaussianKernel())
     solve_surrogate.fit(TRAIN_X, TRAIN_Y)
     solve_prediction = solve_surrogate.predict(TRAIN_X).value[:, 0]
 
@@ -101,7 +111,6 @@ def test_tikhonov_residual_increases_with_alpha_and_approaches_solve():
     for alpha in (1e-6, 1e-3, 1.0):
         surrogate = RBFSurrogate(
             kernel=GaussianKernel(),
-            dim=1,
             solver="tikhonov",
             alpha=alpha,
         )
@@ -126,7 +135,6 @@ def test_lstsq_returns_finite_values_for_rank_deficient_training_data():
     test_x = np.array([[-1.0], [0.0], [1.0], [2.0]])
     surrogate = RBFSurrogate(
         kernel=GaussianKernel(),
-        dim=1,
         polynomial_degree=1,
         solver="lstsq",
     )
@@ -141,7 +149,6 @@ def test_invalid_polynomial_degree_raises_validation_error(polynomial_degree):
     with pytest.raises(ValidationError):
         RBFSurrogate(
             kernel=GaussianKernel(),
-            dim=1,
             polynomial_degree=polynomial_degree,
         )
 
@@ -150,7 +157,7 @@ def test_invalid_polynomial_degree_raises_validation_error(polynomial_degree):
 def test_invalid_polynomial_degree_assignment_raises_validation_error(
     polynomial_degree,
 ):
-    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
 
     with pytest.raises(ValidationError):
         surrogate.polynomial_degree = polynomial_degree
@@ -159,14 +166,14 @@ def test_invalid_polynomial_degree_assignment_raises_validation_error(
 @pytest.mark.parametrize("solver", ["invalid", "qr"])
 def test_invalid_solver_raises_validation_error(solver):
     with pytest.raises(ValidationError):
-        RBFSurrogate(kernel=GaussianKernel(), dim=1, solver=solver)
+        RBFSurrogate(kernel=GaussianKernel(), solver=solver)
 
 
 @pytest.mark.parametrize("solver", ["solve", "lstsq", "tikhonov"])
 @pytest.mark.parametrize("alpha", [0.0, -1.0])
 def test_nonpositive_alpha_raises_validation_error(solver, alpha):
     with pytest.raises(ValidationError):
-        RBFSurrogate(kernel=GaussianKernel(), dim=1, solver=solver, alpha=alpha)
+        RBFSurrogate(kernel=GaussianKernel(), solver=solver, alpha=alpha)
 
 
 @pytest.mark.parametrize(
@@ -180,7 +187,6 @@ def test_nonpositive_alpha_raises_validation_error(solver, alpha):
 def test_additional_cpd_kernels_interpolate_training_points(kernel, polynomial_degree):
     surrogate = RBFSurrogate(
         kernel=kernel,
-        dim=1,
         polynomial_degree=polynomial_degree,
     )
     surrogate.fit(TRAIN_X, TRAIN_Y)
@@ -195,7 +201,7 @@ def test_additional_cpd_kernels_interpolate_training_points(kernel, polynomial_d
 
 @pytest.mark.parametrize("nu", [0.5, 1.5, 2.5])
 def test_matern_kernels_interpolate_training_points_without_polynomial_term(nu):
-    surrogate = RBFSurrogate(kernel=MaternKernel(nu=nu), dim=1)
+    surrogate = RBFSurrogate(kernel=MaternKernel(nu=nu))
     surrogate.fit(TRAIN_X, TRAIN_Y)
 
     np.testing.assert_allclose(
@@ -214,7 +220,6 @@ def test_matern_kernel_rejects_invalid_nu_at_construction_time():
 def test_explicit_none_disables_polynomial_term_for_kernel_without_requirement():
     surrogate = RBFSurrogate(
         kernel=GaussianKernel(),
-        dim=1,
         polynomial_degree=None,
     )
 
@@ -234,14 +239,14 @@ def test_explicit_none_disables_polynomial_term_for_kernel_without_requirement()
     ],
 )
 def test_auto_polynomial_degree_resolution(kernel, expected_degree):
-    surrogate = RBFSurrogate(kernel=kernel, dim=1)
+    surrogate = RBFSurrogate(kernel=kernel)
 
     assert surrogate.polynomial_degree == "auto"
     assert surrogate.resolved_polynomial_degree == expected_degree
 
 
 def test_polynomial_degree_exposes_configured_value_separately():
-    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
 
     assert surrogate.polynomial_degree == "auto"
     assert surrogate.resolved_polynomial_degree is None
@@ -256,7 +261,7 @@ def test_polynomial_degree_exposes_configured_value_separately():
 
 
 def test_default_polynomial_degree_round_trips_through_registry():
-    rebuilt = build(to_spec(RBFSurrogate(kernel=GaussianKernel(), dim=1)))
+    rebuilt = build(to_spec(RBFSurrogate(kernel=GaussianKernel())))
 
     assert rebuilt.polynomial_degree == "auto"
     assert rebuilt.resolved_polynomial_degree is None
@@ -264,7 +269,7 @@ def test_default_polynomial_degree_round_trips_through_registry():
 
 def test_resolved_kernel_tracks_fit_and_clears_after_failed_fit():
     configured_kernel = GaussianKernel()
-    surrogate = RBFSurrogate(kernel=configured_kernel, dim=1)
+    surrogate = RBFSurrogate(kernel=configured_kernel)
 
     assert surrogate.resolved_kernel is None
     expected_kernel = surrogate.kernel.resolve(TRAIN_X)
@@ -287,7 +292,6 @@ def test_no_polynomial_term_fits_large_offset_without_centering():
     train_y = 1e8 + train_x[:, 0] ** 2
     surrogate = RBFSurrogate(
         kernel=GaussianKernel(length_scale=2.0),
-        dim=1,
         polynomial_degree=None,
     )
 
@@ -314,7 +318,6 @@ def test_invalid_polynomial_degree_kernel_combinations_raise_validation_error(
     with pytest.raises(ValidationError):
         RBFSurrogate(
             kernel=kernel,
-            dim=1,
             polynomial_degree=polynomial_degree,
         )
 
@@ -322,7 +325,6 @@ def test_invalid_polynomial_degree_kernel_combinations_raise_validation_error(
 def test_linear_kernel_with_degree_one_is_allowed():
     surrogate = RBFSurrogate(
         kernel=LinearKernel(),
-        dim=1,
         polynomial_degree=1,
     )
 
@@ -340,7 +342,7 @@ def test_linear_kernel_with_degree_one_is_allowed():
     ],
 )
 def test_configuration_replacement_invalidates_fitted_state(attribute, value):
-    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
     surrogate.fit(TRAIN_X, TRAIN_Y)
     setattr(surrogate, attribute, value)
 
@@ -356,7 +358,7 @@ def test_configuration_replacement_invalidates_fitted_state(attribute, value):
     [("polynomial_degree", 2), ("solver", "bad"), ("alpha", 0.0)],
 )
 def test_invalid_configuration_replacement_preserves_fitted_state(attribute, value):
-    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
     surrogate.fit(TRAIN_X, TRAIN_Y)
 
     with pytest.raises(ValidationError):
@@ -368,7 +370,6 @@ def test_invalid_configuration_replacement_preserves_fitted_state(attribute, val
 def test_incompatible_kernel_swap_preserves_fitted_state():
     surrogate = RBFSurrogate(
         kernel=GaussianKernel(),
-        dim=1,
         polynomial_degree=None,
     )
     surrogate.fit(TRAIN_X, TRAIN_Y)
@@ -381,7 +382,7 @@ def test_incompatible_kernel_swap_preserves_fitted_state():
 
 
 def test_auto_polynomial_degree_reresolves_on_kernel_swap():
-    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
     assert surrogate.resolved_polynomial_degree is None
 
     surrogate.kernel = LinearKernel()
@@ -393,7 +394,6 @@ def test_auto_polynomial_degree_reresolves_on_kernel_swap():
 def test_failed_fit_clears_previous_fitted_state():
     surrogate = RBFSurrogate(
         kernel=GaussianKernel(length_scale=1.0),
-        dim=1,
         polynomial_degree=1,
     )
     surrogate.fit(TRAIN_X, TRAIN_Y)
@@ -403,6 +403,7 @@ def test_failed_fit_clears_previous_fitted_state():
         surrogate.fit(degenerate_x, np.ones(3))
 
     assert surrogate.resolved_kernel is None
+    assert surrogate.n_features_in_ is None
     with pytest.raises(RuntimeError):
         surrogate.predict(TRAIN_X)
 
@@ -429,21 +430,21 @@ def test_failed_fit_clears_previous_fitted_state():
     ],
 )
 def test_fit_rejects_invalid_training_inputs(train_x, train_y):
-    surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0))
 
     with pytest.raises(ValidationError):
         surrogate.fit(train_x, train_y)
 
 
 def test_fit_rejects_non_1d_or_2d_training_targets():
-    surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0))
 
     with pytest.raises(ValidationError):
         surrogate.fit(TRAIN_X, np.ones((3, 1, 1)))
 
 
 def test_predict_rejects_nonfinite_inputs_and_feature_count_mismatch():
-    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
     surrogate.fit(TRAIN_X, TRAIN_Y)
 
     for test_x in (np.array([[np.nan]]), np.array([[np.inf]])):
@@ -455,7 +456,7 @@ def test_predict_rejects_nonfinite_inputs_and_feature_count_mismatch():
 
 
 def test_predict_before_fit_raises_runtime_error():
-    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
 
     with pytest.raises(RuntimeError):
         surrogate.predict(TRAIN_X)
@@ -467,7 +468,7 @@ class _CustomKernel(RBFKernel):
 
 
 def test_custom_rbf_kernel_subclass_works_with_surrogate():
-    surrogate = RBFSurrogate(kernel=_CustomKernel(), dim=1)
+    surrogate = RBFSurrogate(kernel=_CustomKernel())
 
     surrogate.fit(TRAIN_X, TRAIN_Y)
     prediction = surrogate.predict(TRAIN_X).value
@@ -489,7 +490,7 @@ def test_fixed_length_scale_bypasses_auto_resolution():
     ],
 )
 def test_degenerate_auto_length_scale_raises_validation_error(train_x):
-    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
 
     with pytest.raises(ValidationError):
         surrogate.fit(train_x, np.ones(len(train_x)))

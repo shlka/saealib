@@ -123,7 +123,7 @@ def test_strategy_requires_surrogate_present():
     opt.set_strategy(IndividualBasedStrategy())
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
-            RBFSurrogate(kernel=GaussianKernel(), dim=DIM),
+            RBFSurrogate(kernel=GaussianKernel()),
             cast(Any, MeanPrediction()),
         )
     )
@@ -150,7 +150,7 @@ def test_acquisition_uncertainty_mismatch():
     opt = _fully_configured()
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
-            RBFSurrogate(kernel=GaussianKernel(), dim=DIM),
+            RBFSurrogate(kernel=GaussianKernel()),
         )
     )
     opt.set_acquisition(ExpectedImprovement())
@@ -161,7 +161,7 @@ def test_mean_prediction_with_rbf_ok():
     opt = _fully_configured()
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
-            RBFSurrogate(kernel=GaussianKernel(), dim=DIM),
+            RBFSurrogate(kernel=GaussianKernel()),
         )
     )
     opt.set_acquisition(MeanPrediction())
@@ -233,7 +233,7 @@ def test_acquisition_direction_length_mismatch():
     opt = _fully_configured()
     opt.set_surrogate_manager(
         GlobalSurrogateManager(
-            RBFSurrogate(kernel=GaussianKernel(), dim=DIM),
+            RBFSurrogate(kernel=GaussianKernel()),
         )
     )
     opt.set_acquisition(ExpectedImprovement(direction=np.array([1.0, 1.0])))
@@ -249,7 +249,7 @@ def test_inject_acquisition_directions_sets_from_problem():
     opt.set_termination(MagicMock())
     acq = MeanPrediction()
     opt.set_surrogate_manager(
-        GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel(), dim=2))
+        GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel()))
     )
     opt.set_acquisition(acq)
     opt._inject_acquisition_directions()
@@ -260,7 +260,7 @@ def test_inject_acquisition_directions_idempotent():
     opt = _fully_configured()
     acq = MeanPrediction()
     opt.set_surrogate_manager(
-        GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel(), dim=DIM))
+        GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel()))
     )
     opt.set_acquisition(acq)
     opt._inject_acquisition_directions()
@@ -274,7 +274,7 @@ def test_inject_acquisition_directions_preserves_explicit_direction():
     explicit = np.array([1.0])
     acq = MeanPrediction(direction=explicit)
     opt.set_surrogate_manager(
-        GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel(), dim=DIM))
+        GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel()))
     )
     opt.set_acquisition(acq)
     opt._inject_acquisition_directions()
@@ -290,7 +290,7 @@ def test_inject_acquisition_directions_skips_direction_insensitive():
         MaxUncertainty(),
     ):
         opt.set_surrogate_manager(
-            GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel(), dim=DIM))
+            GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel()))
         )
         opt.set_acquisition(acq)
         opt._inject_acquisition_directions()

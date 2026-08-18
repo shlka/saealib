@@ -60,13 +60,11 @@ class _RBFModel:
     def __init__(
         self,
         kernel: RBFKernel,
-        dim: int,
         polynomial_degree: int | None,
         solver: str,
         alpha: float,
     ) -> None:
         self.kernel = kernel
-        self.dim = dim
         self.polynomial_degree = polynomial_degree
         self.solver = solver
         self.alpha = alpha
@@ -199,8 +197,9 @@ class RBFSurrogate(RegressionSurrogate):
         Kernel object (e.g. ``GaussianKernel()``). Reassigning this
         property invalidates any fitted state; call ``fit()`` again before
         the next ``predict()``.
-    dim : int
-        Dimensionality of the input data.
+    n_features_in_ : int or None
+        Number of input features seen by the most recent successful ``fit()``;
+        ``None`` before the first successful fit.
     n_obj : int or None
         Number of objectives. Set on first fit call.
     polynomial_degree : {"auto", None, 0, 1}
@@ -237,7 +236,6 @@ class RBFSurrogate(RegressionSurrogate):
     def __init__(
         self,
         kernel: RBFKernel,
-        dim: int,
         polynomial_degree: Literal["auto", 0, 1] | None = "auto",
         solver: str = "solve",
         alpha: float = 1e-8,
@@ -249,17 +247,18 @@ class RBFSurrogate(RegressionSurrogate):
         self._resolved_polynomial_degree = _resolve_polynomial_degree(
             kernel, polynomial_degree
         )
-        self.dim = dim
         self._solver = solver
         self._alpha = alpha
         self.n_obj: int | None = None
         self._models: list[_RBFModel] | None = None
         self._resolved_kernel: RBFKernel | None = None
+        self.n_features_in_: int | None = None
 
     def _invalidate_fit(self) -> None:
         self._models = None
         self.n_obj = None
         self._resolved_kernel = None
+        self.n_features_in_ = None
 
     @property
     def kernel(self) -> RBFKernel:
@@ -365,7 +364,6 @@ class RBFSurrogate(RegressionSurrogate):
             new_models = [
                 _RBFModel(
                     resolved_kernel,
-                    self.dim,
                     self._resolved_polynomial_degree,
                     self.solver,
                     self.alpha,
@@ -381,6 +379,7 @@ class RBFSurrogate(RegressionSurrogate):
         self._models = new_models
         self.n_obj = n_obj
         self._resolved_kernel = resolved_kernel
+        self.n_features_in_ = train_x_arr.shape[1]
 
     def predict(self, test_x: np.ndarray) -> SurrogatePrediction:
         """
@@ -424,9 +423,9 @@ class RBFSurrogate(RegressionSurrogate):
         test = np.atleast_2d(test)
         if not np.all(np.isfinite(test)):
             raise ValidationError("test_x must contain only finite values")
-        if test.shape[1] != self.dim:
+        if test.shape[1] != self.n_features_in_:
             raise ValidationError(
-                f"test_x must have {self.dim} features, got {test.shape[1]}"
+                f"test_x must have {self.n_features_in_} features, got {test.shape[1]}"
             )
         preds = [m.predict(test) for m in self._models]
         value = np.column_stack(preds)  # (n_samples, n_obj)

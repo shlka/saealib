@@ -334,11 +334,7 @@ def test_five_actual_configurations_have_zero_compile_errors() -> None:
     problem = _problem()
     configurations: dict[str, list[Optimizer]] = {
         "default": [Optimizer(problem)],
-        "surrogate": [
-            Optimizer(problem).set_surrogate(
-                RBFSurrogate(GaussianKernel(), problem.dim)
-            )
-        ],
+        "surrogate": [Optimizer(problem).set_surrogate(RBFSurrogate(GaussianKernel()))],
         "async": [
             Optimizer(problem).set_async_evaluation_scheduler(
                 AsyncEvaluationScheduler(SerialEvaluator())

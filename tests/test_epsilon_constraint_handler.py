@@ -218,7 +218,7 @@ def _make_optimizer(problem, n_gen: int):
                 survivor_selection=TruncationSelection(),
             )
         )
-        .set_surrogate(RBFSurrogate(GaussianKernel(), problem.dim), n_neighbors=5)
+        .set_surrogate(RBFSurrogate(GaussianKernel()), n_neighbors=5)
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=1.0))
         .set_termination(Termination(max_gen(n_gen)))
     )

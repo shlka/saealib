@@ -196,7 +196,7 @@ class TestGenerationBasedStrategy:
     def test_gen_ctrl_zero_skips_surrogate_fit(self):
         fit_count = [0]
         ctx = _make_ctx()
-        surrogate = RBFSurrogate(GaussianKernel(), DIM).with_post_fit(
+        surrogate = RBFSurrogate(GaussianKernel()).with_post_fit(
             lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
         )
         provider = _MockProvider(
@@ -219,7 +219,7 @@ class TestGenerationBasedStrategy:
         fit_count = [0]
 
         ctx = _make_ctx()
-        surrogate = RBFSurrogate(GaussianKernel(), DIM).with_post_fit(
+        surrogate = RBFSurrogate(GaussianKernel()).with_post_fit(
             lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
         )
         manager = GlobalSurrogateManager(surrogate)
@@ -235,7 +235,7 @@ class TestGenerationBasedStrategy:
         fit_count = [0]
 
         ctx = _make_ctx()
-        surrogate = RBFSurrogate(GaussianKernel(), DIM).with_post_fit(
+        surrogate = RBFSurrogate(GaussianKernel()).with_post_fit(
             lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
         )
         manager = LocalSurrogateManager(surrogate)
@@ -333,14 +333,14 @@ class TestPreSelectionStrategy:
 
 def _make_novelty_manager() -> tuple[GlobalSurrogateManager, AcquisitionFunction]:
     return (
-        GlobalSurrogateManager(RBFSurrogate(GaussianKernel(), DIM)),
+        GlobalSurrogateManager(RBFSurrogate(GaussianKernel())),
         NoveltyAcquisition(k=3),
     )
 
 
 def _make_density_manager() -> tuple[GlobalSurrogateManager, AcquisitionFunction]:
     return (
-        GlobalSurrogateManager(RBFSurrogate(GaussianKernel(), DIM)),
+        GlobalSurrogateManager(RBFSurrogate(GaussianKernel())),
         InverseDensityAcquisition(eps=1.0),
     )
 

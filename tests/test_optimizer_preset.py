@@ -109,7 +109,6 @@ class TestRoundTripAcrossProblems:
         manager = opt5.surrogate_manager
         assert isinstance(manager, LocalSurrogateManager)
         assert isinstance(manager.surrogate, RBFSurrogate)
-        assert manager.surrogate.dim == 5
         assert isinstance(opt5.acquisition, MeanPrediction)
         np.testing.assert_array_equal(opt5.acquisition.direction, problem5.direction)
 
@@ -217,7 +216,7 @@ class TestPresetEndToEndRun:
         manager = opt5.surrogate_manager
         assert isinstance(manager, LocalSurrogateManager)
         assert isinstance(manager.surrogate, RBFSurrogate)
-        assert manager.surrogate.dim == 5
+        assert manager.surrogate.n_features_in_ == 5
         assert isinstance(manager.surrogate.kernel, RBFKernel)
 
 

@@ -203,7 +203,7 @@ def _recipe_local_surrogate_manager() -> Any:
             "params": {
                 "surrogate": {
                     "type": "RBFSurrogate",
-                    "params": {"kernel": GaussianKernel(), "dim": 5},
+                    "params": {"kernel": GaussianKernel()},
                 },
                 "training_set": {
                     "type": "KNNObjectiveSet",
@@ -218,7 +218,7 @@ def _recipe_rbf_surrogate() -> Any:
     return build(
         {
             "type": "RBFSurrogate",
-            "params": {"kernel": GaussianKernel(), "dim": 5},
+            "params": {"kernel": GaussianKernel()},
         }
     )
 

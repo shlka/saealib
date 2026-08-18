@@ -279,9 +279,7 @@ def _resolved_optimizer(*, kind: str) -> Optimizer:
         from saealib.surrogate.rbf import RBFSurrogate
         from saealib.surrogate.rbf_kernels import GaussianKernel
 
-        optimizer.set_surrogate(
-            RBFSurrogate(kernel=GaussianKernel(), dim=optimizer.problem.dim)
-        )
+        optimizer.set_surrogate(RBFSurrogate(kernel=GaussianKernel()))
     elif kind == "async":
         optimizer.set_async_evaluation_scheduler(
             AsyncEvaluationScheduler(SerialEvaluator())

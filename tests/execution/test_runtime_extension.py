@@ -267,7 +267,7 @@ def test_real_strategy_graphs_compile_and_initialize_selected_runtimes() -> None
     configurations = {
         "default": [Optimizer(_problem())],
         "surrogate": [
-            Optimizer(_problem()).set_surrogate(RBFSurrogate(GaussianKernel(), dim=3))
+            Optimizer(_problem()).set_surrogate(RBFSurrogate(GaussianKernel()))
         ],
         "async": [
             Optimizer(_problem()).set_async_evaluation_scheduler(

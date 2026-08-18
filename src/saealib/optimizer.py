@@ -870,7 +870,7 @@ class Optimizer:
             "surrogate",
             {
                 "type": "RBFSurrogate",
-                "params": {"kernel": GaussianKernel(), "dim": dim},
+                "params": {"kernel": GaussianKernel()},
             },
         )
         acquisition_spec = params.pop("acquisition", None)
@@ -903,7 +903,7 @@ class Optimizer:
             "surrogate",
             {
                 "type": "RBFSurrogate",
-                "params": {"kernel": GaussianKernel(), "dim": dim},
+                "params": {"kernel": GaussianKernel()},
             },
         )
         params.pop("acquisition", None)

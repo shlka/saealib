@@ -25,7 +25,7 @@ N_OBJ = 1
 
 
 def _make_surrogate() -> RBFSurrogate:
-    return RBFSurrogate(kernel=GaussianKernel(), dim=DIM)
+    return RBFSurrogate(kernel=GaussianKernel())
 
 
 def _sphere_data(n: int = 30, rng_seed: int = 0) -> tuple[np.ndarray, np.ndarray]:

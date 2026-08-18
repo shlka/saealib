@@ -79,7 +79,7 @@ class TestBuildMatchesApiResolvers:
             "params": {
                 "surrogate": {
                     "type": "RBFSurrogate",
-                    "params": {"kernel": GaussianKernel(), "dim": 5},
+                    "params": {"kernel": GaussianKernel()},
                 },
                 "acquisition": {
                     "type": "MeanPrediction",

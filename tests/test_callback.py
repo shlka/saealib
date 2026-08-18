@@ -311,7 +311,7 @@ class TestEventClasses:
 
     def test_post_surrogate_fit_event_fields(self) -> None:
         ctx = _make_ctx()
-        surrogate = RBFSurrogate(GaussianKernel(), DIM)
+        surrogate = RBFSurrogate(GaussianKernel())
         train_x = np.zeros((10, DIM))
         train_f = np.zeros((10, N_OBJ))
         e = PostSurrogateFitEvent(
@@ -457,7 +457,6 @@ class TestPostEvaluationDispatch:
             max_fe,
         )
 
-        dim = DIM
         problem = _make_problem()
         opt = (
             Optimizer(problem)
@@ -472,7 +471,7 @@ class TestPostEvaluationDispatch:
                     survivor_selection=TruncationSelection(),
                 )
             )
-            .set_surrogate(RBFSurrogate(GaussianKernel(), dim), n_neighbors=10)
+            .set_surrogate(RBFSurrogate(GaussianKernel()), n_neighbors=10)
             .set_strategy(IndividualBasedStrategy(evaluation_ratio=evaluation_ratio))
             .set_termination(Termination(max_fe(100)))
         )

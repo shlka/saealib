@@ -66,7 +66,7 @@ class TestSetComponentsAreNeverOverwritten:
         from saealib.surrogate.rbf_kernels import GaussianKernel
 
         opt = Optimizer(_problem())
-        manager = GlobalSurrogateManager(RBFSurrogate(GaussianKernel(), dim=2))
+        manager = GlobalSurrogateManager(RBFSurrogate(GaussianKernel()))
         opt.set_surrogate_manager(manager)
         opt._resolve_defaults()
         assert opt.surrogate_manager is manager
@@ -183,7 +183,6 @@ class TestSurrogateManagerInjection:
         manager = opt.surrogate_manager
         assert isinstance(manager, LocalSurrogateManager)
         assert isinstance(manager.surrogate, RBFSurrogate)
-        assert manager.surrogate.dim == 3
         assert isinstance(opt.acquisition, MeanPrediction)
         np.testing.assert_array_equal(opt.acquisition.direction, problem.direction)
 

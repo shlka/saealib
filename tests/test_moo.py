@@ -902,7 +902,7 @@ class TestMOOIntegration:
             survivor_selection=TruncationSelection(),
         )
         termination = Termination(max_fe(80 * dim))
-        surrogate = RBFSurrogate(GaussianKernel(), dim)
+        surrogate = RBFSurrogate(GaussianKernel())
         strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
 
         opt = (
