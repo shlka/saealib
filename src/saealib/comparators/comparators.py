@@ -690,6 +690,8 @@ class SPEA2Comparator(Comparator):
 
     def prepare_population(self, population: Population) -> None:
         """Recompute and store SPEA2 fitness for the current population."""
+        if "spea2_fitness" not in population.schema:
+            return
         population.update_array("spea2_fitness", self._compute_fitness(population))
 
     def _assigned_fitness(self, population: Population) -> np.ndarray | None:

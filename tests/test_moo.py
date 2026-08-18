@@ -32,6 +32,7 @@ from saealib import (
     RBFSurrogate,
     SequentialSelection,
     Termination,
+    TournamentSelection,
     TruncationSelection,
     WeightedSumComparator,
     crowding_distance,
@@ -2083,6 +2084,21 @@ class TestSPEA2Comparator:
         np.testing.assert_array_equal(selected, expected)
         np.testing.assert_allclose(pool.get_array("spea2_fitness"), expected_fitness)
 
+    def test_truncation_selection_works_on_schema_less_population(self) -> None:
+        comp = SPEA2Comparator(direction=np.array([-1.0, -1.0]))
+        f = np.array([[0.6, 0.3], [0.3, 0.7], [0.0, 1.0], [0.1, 0.9], [0.2, 0.8]])
+        pool = _make_pop(f)
+        assert "spea2_fitness" not in pool.schema
+        expected_fitness = comp._compute_fitness(pool)
+        expected_pool = pool.extract(np.arange(len(pool)))
+        expected = comp.sort_population(expected_pool)[:3]
+
+        selection_ctx = SimpleNamespace(comparator=comp, rng=np.random.default_rng(0))
+        selected = TruncationSelection().select(selection_ctx, pool, 3)
+
+        np.testing.assert_array_equal(selected, expected)
+        np.testing.assert_allclose(comp._compute_fitness(pool), expected_fitness)
+
     # -----------------------------------------------------------------------
     # 2. Class marker
     # -----------------------------------------------------------------------
@@ -2326,7 +2342,7 @@ class TestSPEA2Lifecycle:
                 GA(
                     crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
                     mutation=MutationUniform(prob_var=0.1),
-                    parent_selection=SequentialSelection(),
+                    parent_selection=TournamentSelection(2),
                     survivor_selection=TruncationSelection(),
                 )
             )
