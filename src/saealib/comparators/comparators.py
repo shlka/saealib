@@ -26,9 +26,11 @@ from saealib.comparators.nds import (
     spea2_fitness,
     spea2_truncation_order,
 )
+from saealib.identity import PopulationAttribute
 
 if TYPE_CHECKING:
     from saealib.population import Population
+    from saealib.problem import Problem
 
 
 class Comparator(ABC):
@@ -130,6 +132,67 @@ class Comparator(ABC):
             -1 if a is better than b, 1 if b is better than a, 0 if equal.
         """
         pass
+
+    def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
+        """Return population attributes this comparator needs to persist.
+
+        Population-relative ranking state (e.g. SPEA2 fitness) that must
+        survive across selections belongs here as a named, typed attribute
+        rather than in the population's transient cache. Default: no
+        additional attributes.
+
+        Parameters
+        ----------
+        problem : Problem
+            The optimization problem.
+
+        Returns
+        -------
+        list[PopulationAttribute]
+            Empty by default.
+        """
+        return []
+
+    def prepare_population(self, population: Population) -> None:
+        """Freshly recompute and materialize population-relative ranking state.
+
+        Default is a no-op — comparators whose ranking depends only on
+        per-individual values already stored in ``f``/``cv`` do not need this.
+        Comparators that declare attributes via :meth:`get_required_attrs`
+        should override this to recompute and write those attributes for the
+        given population, unconditionally (not reusing any prior cached value).
+
+        Parameters
+        ----------
+        population : Population
+            The population to prepare ranking state for.
+        """
+        return None
+
+    def rank_population(self, population: Population) -> np.ndarray:
+        """Prepare population-relative ranking state, then sort.
+
+        Equivalent to calling :meth:`prepare_population` followed by
+        :meth:`sort_population`. Callers performing environmental selection on
+        a freshly assembled pool (e.g. survivor selection merging population
+        and offspring) should call this instead of :meth:`sort_population`
+        directly, so any population-relative state declared via
+        :meth:`get_required_attrs` is recomputed for the new set before
+        ranking.
+
+        Parameters
+        ----------
+        population : Population
+            The population to rank.
+
+        Returns
+        -------
+        np.ndarray
+            Sorted population indices, as returned by
+            :meth:`sort_population`.
+        """
+        self.prepare_population(population)
+        return self.sort_population(population)
 
 
 class SingleObjectiveComparator(Comparator):
@@ -605,36 +668,49 @@ class SPEA2Comparator(Comparator):
         """The dominance predicate used by this comparator."""
         return self._dominator
 
-    def _fitness(self, population: Population) -> np.ndarray:
-        """
-        Return the length-N SPEA2 fitness array, computing and caching as needed.
+    def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
+        """Declare persistent SPEA2 fitness storage."""
+        return [PopulationAttribute("spea2_fitness", np.float64, (), default=np.nan)]
 
-        Infeasible individuals (cv > eps_cv) receive ``+inf`` so they naturally
-        sort to the end.  Feasible rows with any NaN objective also receive
-        ``+inf`` so they sort to the end of the feasible block.
-        """
-        cached = population.get_cache("spea2_fitness")
-        if cached is not None:
-            return cached
-
+    def _compute_fitness(self, population: Population) -> np.ndarray:
+        """Compute SPEA2 fitness for the current population."""
         f_arr = population.get_array("f")
         cv_arr = population.get_array("cv")
         n = len(f_arr)
-
-        fitness_all = np.full(n, np.inf)  # infeasible -> +inf (sort last)
+        fitness_all = np.full(n, np.inf)
         feasible = np.where(cv_arr <= self.eps_cv)[0]
         if len(feasible):
             f_feasible = spea2_fitness(
-                f_arr[feasible],
-                direction=self.direction,
-                dominator=self._dominator,
+                f_arr[feasible], direction=self.direction, dominator=self._dominator
             )
-            # Rows with any NaN objective -> +inf so they sort after valid feasibles
             nan_mask = np.isnan(f_arr[feasible]).any(axis=1)
             f_feasible = np.where(nan_mask, np.inf, f_feasible)
             fitness_all[feasible] = f_feasible
+        return fitness_all
 
-        population.set_cache("spea2_fitness", fitness_all)
+    def prepare_population(self, population: Population) -> None:
+        """Recompute and store SPEA2 fitness for the current population."""
+        population.update_array("spea2_fitness", self._compute_fitness(population))
+
+    def _assigned_fitness(self, population: Population) -> np.ndarray | None:
+        """Return persisted fitness when every active row has a value."""
+        if "spea2_fitness" not in population.schema:
+            return None
+        values = population.get_array("spea2_fitness")
+        if np.isnan(values).any():
+            return None
+        return values
+
+    def _fitness(self, population: Population) -> np.ndarray:
+        """Return persisted SPEA2 fitness or compute it through the fallback."""
+        assigned = self._assigned_fitness(population)
+        if assigned is not None:
+            return assigned
+        cached = population.get_cache("spea2_fitness_fallback")
+        if cached is not None:
+            return cached
+        fitness_all = self._compute_fitness(population)
+        population.set_cache("spea2_fitness_fallback", fitness_all)
         return fitness_all
 
     def sort_population(self, population: Population) -> np.ndarray:

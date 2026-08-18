@@ -12,6 +12,8 @@ Tests cover:
 """
 
 import logging
+from collections.abc import Callable
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -40,15 +42,18 @@ from saealib import (
     spea2_fitness,
 )
 from saealib.comparators import (
+    Comparator,
     Dominator,
     EpsilonDominanceComparator,
     EpsilonDominator,
+    HypervolumeComparator,
     NSGA2Comparator,
     NSGA3Comparator,
     ParetoComparator,
     ParetoDominator,
     RNSGA2Comparator,
     SingleObjectiveComparator,
+    SPEA2Comparator,
 )
 from saealib.comparators.comparators import _normalize_objectives
 from saealib.population import Population, PopulationAttribute
@@ -84,6 +89,21 @@ def _make_pop(f_values: np.ndarray, cv_values: np.ndarray | None = None) -> Popu
     for i in range(n):
         pop.append(f=f_values[i], cv=float(cv_values[i]))
     return pop
+
+
+def _make_spea2_pop(
+    f_values: np.ndarray, comparator: SPEA2Comparator, problem: Problem
+) -> Population:
+    n, n_obj = f_values.shape
+    attrs = [
+        PopulationAttribute("f", np.float64, (n_obj,)),
+        PopulationAttribute("cv", np.float64, (), default=0.0),
+        *comparator.get_required_attrs(problem),
+    ]
+    population = Population(attrs, init_capacity=n + 1)
+    for row in f_values:
+        population.append(f=row, cv=0.0)
+    return population
 
 
 def _nsga3_tie_population_f() -> np.ndarray:
@@ -787,6 +807,87 @@ class TestNSGA2Comparator:
         pop = _make_pop(f)
         comp = NSGA2Comparator()
         assert comp.compare_population(pop, 0, 1) == 0
+
+
+# ===========================================================================
+# Comparator Default Ranking Hooks Tests
+# ===========================================================================
+class TestComparatorDefaultRankingHooks:
+    @pytest.mark.parametrize(
+        ("comparator_factory", "population_factory"),
+        [
+            pytest.param(
+                lambda: SingleObjectiveComparator(),
+                lambda: _make_pop(np.array([[3.0], [1.0], [2.0]])),
+                id="single-objective",
+            ),
+            pytest.param(
+                lambda: WeightedSumComparator(direction=np.array([-1.0, -1.0])),
+                lambda: _make_pop(np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])),
+                id="weighted-sum",
+            ),
+            pytest.param(
+                lambda: ParetoComparator(),
+                lambda: _make_pop(np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])),
+                id="pareto",
+            ),
+            pytest.param(
+                lambda: NSGA2Comparator(),
+                lambda: _make_pop(np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])),
+                id="nsga2",
+            ),
+            pytest.param(
+                lambda: HypervolumeComparator(),
+                lambda: _make_pop(np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])),
+                id="hypervolume",
+            ),
+            pytest.param(
+                lambda: EpsilonDominanceComparator(eps=0.5),
+                lambda: _make_pop(np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])),
+                id="epsilon-dominance",
+            ),
+            pytest.param(
+                lambda: NSGA3Comparator(
+                    np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]]), seed=0
+                ),
+                lambda: _make_pop(np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])),
+                id="nsga3",
+            ),
+            pytest.param(
+                lambda: RNSGA2Comparator(
+                    np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+                ),
+                lambda: _make_pop(np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]])),
+                id="rnsga2",
+            ),
+        ],
+    )
+    def test_default_ranking_hooks_are_noop_for_all_comparators(
+        self,
+        comparator_factory: Callable[[], Comparator],
+        population_factory: Callable[[], Population],
+    ) -> None:
+        comparator = comparator_factory()
+        population = population_factory()
+        problem = Problem(
+            func=lambda x: np.array([np.sum(x), np.sum(x)]),
+            dim=2,
+            n_obj=2,
+            direction=np.array([-1.0, -1.0]),
+            lb=[0.0, 0.0],
+            ub=[1.0, 1.0],
+        )
+        f_before = population.get_array("f").copy()
+        cv_before = population.get_array("cv").copy()
+
+        assert comparator.get_required_attrs(problem) == []
+        assert comparator.prepare_population(population) is None
+        np.testing.assert_array_equal(population.get_array("f"), f_before)
+        np.testing.assert_array_equal(population.get_array("cv"), cv_before)
+
+        ranked = comparator.rank_population(population)
+        sorted_direct = comparator.sort_population(population)
+        assert np.array_equal(ranked, sorted_direct)
 
 
 # ===========================================================================
@@ -1877,7 +1978,113 @@ class TestSPEA2Comparator:
     """Tests for SPEA2Comparator (Zitzler et al., 2001)."""
 
     # -----------------------------------------------------------------------
-    # 1. Class marker
+    # 1. Persistent fitness declaration
+    # -----------------------------------------------------------------------
+    def test_get_required_attrs_declares_spea2_fitness(self) -> None:
+        comp = SPEA2Comparator()
+        problem = Problem(
+            func=lambda x: np.array([np.sum(x), np.sum(x)]),
+            dim=2,
+            n_obj=2,
+            direction=np.array([-1.0, -1.0]),
+            lb=[0.0, 0.0],
+            ub=[1.0, 1.0],
+        )
+
+        attrs = comp.get_required_attrs(problem)
+
+        assert len(attrs) == 1
+        attr = attrs[0]
+        assert attr.name == "spea2_fitness"
+        assert np.dtype(attr.dtype) == np.dtype(np.float64)
+        assert attr.shape == ()
+        assert np.isnan(attr.default)
+
+    def test_fitness_persists_from_merged_pool_to_mating_population(self) -> None:
+        comp = SPEA2Comparator()
+        problem = Problem(
+            func=lambda x: np.array([np.sum(x), np.sum(x)]),
+            dim=2,
+            n_obj=2,
+            direction=np.array([-1.0, -1.0]),
+            lb=[0.0, 0.0],
+            ub=[1.0, 1.0],
+        )
+        f = np.array(
+            [
+                [0.6, 0.3],
+                [0.3, 0.7],
+                [0.0, 1.0],
+                [0.1, 0.9],
+                [0.2, 0.8],
+                [0.4, 0.6],
+                [0.5, 0.5],
+                [0.7, 0.2],
+            ]
+        )
+        pool = _make_spea2_pop(f, comp, problem)
+        comp.prepare_population(pool)
+        smaller = pool.extract([0, 1])
+
+        assert comp.compare_population(smaller, 0, 1) == -1
+
+        recomputed = comp._compute_fitness(smaller)
+        np.testing.assert_allclose(recomputed[0], recomputed[1])
+
+    def test_prepare_population_recomputes_stale_fitness(self) -> None:
+        comp = SPEA2Comparator()
+        problem = Problem(
+            func=lambda x: np.array([np.sum(x), np.sum(x)]),
+            dim=2,
+            n_obj=2,
+            direction=np.array([-1.0, -1.0]),
+            lb=[0.0, 0.0],
+            ub=[1.0, 1.0],
+        )
+        f = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
+        population = _make_spea2_pop(f, comp, problem)
+        population.update_array("spea2_fitness", np.full(len(population), 999.0))
+        expected = comp._compute_fitness(population)
+
+        comp.prepare_population(population)
+
+        np.testing.assert_allclose(population.get_array("spea2_fitness"), expected)
+
+    def test_truncation_selection_recomputes_stale_pool_fitness(self) -> None:
+        comp = SPEA2Comparator(direction=np.array([-1.0, -1.0]))
+        problem = Problem(
+            func=lambda x: np.array([np.sum(x), np.sum(x)]),
+            dim=2,
+            n_obj=2,
+            direction=np.array([-1.0, -1.0]),
+            lb=[0.0, 0.0],
+            ub=[1.0, 1.0],
+        )
+        f = np.array(
+            [
+                [0.0, 1.0],
+                [0.5, 0.5],
+                [1.0, 0.0],
+                [0.2, 0.8],
+                [0.8, 0.2],
+                [2.0, 2.0],
+            ]
+        )
+        pool = _make_spea2_pop(f, comp, problem)
+        pool.update_array("spea2_fitness", np.full(len(pool), 999.0))
+        expected_fitness = comp._compute_fitness(pool)
+        expected_pool = pool.extract(np.arange(len(pool)))
+        expected_pool.update_array("spea2_fitness", expected_fitness)
+        expected = comp.sort_population(expected_pool)[:3]
+
+        selection_ctx = SimpleNamespace(comparator=comp, rng=np.random.default_rng(0))
+        selected = TruncationSelection().select(selection_ctx, pool, 3)
+
+        np.testing.assert_array_equal(selected, expected)
+        np.testing.assert_allclose(pool.get_array("spea2_fitness"), expected_fitness)
+
+    # -----------------------------------------------------------------------
+    # 2. Class marker
     # -----------------------------------------------------------------------
     def test_is_population_relative_marker(self) -> None:
         """SPEA2Comparator.is_population_relative is True."""
@@ -2089,6 +2296,52 @@ class TestSPEA2Comparator:
         order = comp.sort_population(pop)
         kept = set(order[:4].tolist())
         assert {0, 5} <= kept
+
+
+# ===========================================================================
+# SPEA2 lifecycle Tests
+# ===========================================================================
+class TestSPEA2Lifecycle:
+    def test_environmental_selection_refreshes_fitness_with_independent_sizes(
+        self,
+    ) -> None:
+        direction = np.array([-1.0, -1.0])
+        problem = Problem(
+            func=lambda x: np.array([np.sum(x**2), np.sum((x - 1.0) ** 2)]),
+            dim=2,
+            n_obj=2,
+            direction=direction,
+            lb=[-1.0, -1.0],
+            ub=[1.0, 1.0],
+            comparator=SPEA2Comparator(direction=direction),
+        )
+        n_bar = 4
+        n_offspring = 3
+        optimizer = (
+            Optimizer(problem, seed=0)
+            .set_initializer(
+                LHSInitializer(n_init_archive=6, n_init_population=n_bar, seed=0)
+            )
+            .set_algorithm(
+                GA(
+                    crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
+                    mutation=MutationUniform(prob_var=0.1),
+                    parent_selection=SequentialSelection(),
+                    survivor_selection=TruncationSelection(),
+                )
+            )
+            .set_strategy(DirectStrategy(n_offspring=n_offspring))
+            .set_termination(Termination(max_gen(3)))
+        )
+
+        states = list(optimizer.iterate())
+
+        assert states[-1].gen >= 2
+        assert len(states) >= 3
+        for ctx in states:
+            assert "spea2_fitness" in ctx.population.schema
+            assert np.all(np.isfinite(ctx.population.get_array("spea2_fitness")))
+            assert len(ctx.population) == n_bar
 
 
 # ===========================================================================

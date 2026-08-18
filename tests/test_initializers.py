@@ -17,13 +17,16 @@ from saealib import (
     TruncationSelection,
     max_gen,
 )
-from saealib.comparators import SingleObjectiveComparator
+from saealib.comparators import Comparator, SingleObjectiveComparator, SPEA2Comparator
+from saealib.exceptions import ConfigurationError
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.execution.initializer import (
+    GenomeInitializer,
     Initializer,
     RandomInitializer,
     SobolInitializer,
 )
+from saealib.population import Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.strategies.base import OptimizationStrategy
 from saealib.strategies.direct import DirectStrategy
@@ -37,7 +40,7 @@ LB = [-2.0] * DIM
 UB = [3.0] * DIM
 
 
-def _make_problem() -> Problem:
+def _make_problem(comparator: Comparator | None = None) -> Problem:
     return Problem(
         func=lambda x: np.array([np.sum(x**2)]),
         dim=DIM,
@@ -45,13 +48,47 @@ def _make_problem() -> Problem:
         direction=np.array([-1.0]),
         lb=LB,
         ub=UB,
-        comparator=SingleObjectiveComparator(),
+        comparator=(
+            comparator if comparator is not None else SingleObjectiveComparator()
+        ),
     )
 
 
 class _MockSurrogateManager:
     def fit(self, archive, ctx=None):
         pass
+
+
+class _RequiredAttrsComparator(Comparator):
+    def __init__(self, required_attrs: list[PopulationAttribute]):
+        super().__init__(weights=np.empty(0), eps_cv=1e-6, eps_obj=1e-6)
+        self.required_attrs = required_attrs
+
+    def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
+        return list(self.required_attrs)
+
+    def sort_population(self, population: Population) -> np.ndarray:
+        return np.arange(len(population))
+
+    def compare_population(self, population: Population, idx_a: int, idx_b: int) -> int:
+        return 0
+
+    def compare(self, fa: np.ndarray, cv_a: float, fb: np.ndarray, cv_b: float) -> int:
+        return 0
+
+
+class _RequiredAttrsGA(GA):
+    def __init__(self, required_attrs: list[PopulationAttribute]):
+        super().__init__(
+            crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
+            mutation=MutationUniform(prob_var=0.1),
+            parent_selection=SequentialSelection(),
+            survivor_selection=TruncationSelection(),
+        )
+        self.required_attrs = required_attrs
+
+    def get_required_attrs(self, problem: Problem) -> list[PopulationAttribute]:
+        return list(self.required_attrs)
 
 
 class _MockProvider:
@@ -84,6 +121,14 @@ def problem():
 @pytest.fixture
 def provider():
     return _MockProvider()
+
+
+def _make_required_attrs_provider(
+    required_attrs: list[PopulationAttribute],
+) -> _MockProvider:
+    provider = _MockProvider()
+    provider.algorithm = _RequiredAttrsGA(required_attrs)
+    return provider
 
 
 # ---------------------------------------------------------------------------
@@ -185,3 +230,96 @@ def test_sobol_initializer_same_seed_reproducible(problem, provider):
     np.testing.assert_array_equal(
         ctx1.archive.get_array("x"), ctx2.archive.get_array("x")
     )
+
+
+def test_comparator_required_attrs_are_added_to_population_and_archive():
+    marker = PopulationAttribute("marker", np.float64, (), default=np.nan)
+    problem = _make_problem(_RequiredAttrsComparator([marker]))
+    provider = _make_required_attrs_provider([])
+
+    ctx = LHSInitializer(N_ARCHIVE, N_POP, seed=0).initialize(
+        cast(Any, provider), problem
+    )
+
+    assert "marker" in ctx.population.schema
+    assert "marker" in ctx.archive.schema
+
+
+def test_genome_initializer_merges_comparator_required_attrs():
+    marker = PopulationAttribute("marker", np.float64, (), default=np.nan)
+    problem = _make_problem(_RequiredAttrsComparator([marker]))
+    provider = _make_required_attrs_provider([])
+
+    attrs = GenomeInitializer(N_ARCHIVE, N_POP, seed=0)._create_attrs(
+        problem, cast(Any, provider)
+    )
+
+    assert [attr.name for attr in attrs].count("marker") == 1
+
+
+def test_compatible_algorithm_and_comparator_attrs_are_deduplicated():
+    algorithm_attr = PopulationAttribute("marker", np.float64, (), default=np.nan)
+    comparator_attr = PopulationAttribute("marker", float, (), default=0.0)
+    problem = _make_problem(_RequiredAttrsComparator([comparator_attr]))
+    provider = _make_required_attrs_provider([algorithm_attr])
+
+    ctx = LHSInitializer(N_ARCHIVE, N_POP, seed=0).initialize(
+        cast(Any, provider), problem
+    )
+
+    assert sum(attr.name == "marker" for attr in ctx.population.attrs) == 1
+    assert sum(attr.name == "marker" for attr in ctx.archive.attrs) == 1
+
+
+def test_conflicting_algorithm_and_comparator_attrs_raise_configuration_error():
+    algorithm_attr = PopulationAttribute("marker", np.float64, (), default=np.nan)
+    comparator_attr = PopulationAttribute("marker", np.int64, (), default=0)
+    problem = _make_problem(_RequiredAttrsComparator([comparator_attr]))
+    provider = _make_required_attrs_provider([algorithm_attr])
+
+    with pytest.raises(ConfigurationError, match="marker"):
+        LHSInitializer(N_ARCHIVE, N_POP, seed=0).initialize(
+            cast(Any, provider), problem
+        )
+
+
+def test_builtin_comparator_keeps_the_default_initializer_schema():
+    ctx = LHSInitializer(N_ARCHIVE, N_POP, seed=0).initialize(
+        cast(Any, _MockProvider()), _make_problem()
+    )
+    expected = ["x", "f", "g", "cv", "id"]
+
+    assert [attr.name for attr in ctx.population.attrs] == expected
+    assert [attr.name for attr in ctx.archive.attrs] == expected
+
+
+def test_lhs_initializer_populates_spea2_fitness_before_return():
+    direction = np.array([-1.0, -1.0])
+    problem = Problem(
+        func=lambda x: np.array([np.sum(x**2), np.sum((x - 1.0) ** 2)]),
+        dim=DIM,
+        n_obj=2,
+        direction=direction,
+        lb=LB,
+        ub=UB,
+        comparator=SPEA2Comparator(direction=direction),
+    )
+    ctx = LHSInitializer(N_ARCHIVE, N_POP, seed=0).initialize(
+        cast(Any, _MockProvider()), problem
+    )
+
+    assert np.all(np.isfinite(ctx.population.get_array("spea2_fitness")))
+
+
+def test_spea2_fitness_is_nan_on_new_population_rows_until_prepared():
+    comparator = SPEA2Comparator()
+    problem = _make_problem(comparator)
+    ctx = LHSInitializer(N_ARCHIVE, N_POP, seed=0).initialize(
+        cast(Any, _MockProvider()), problem
+    )
+
+    ctx.population.append(x=np.zeros(DIM), f=np.array([1.0]), cv=0.0)
+    assert np.isnan(ctx.population.get_array("spea2_fitness")[-1])
+
+    comparator.prepare_population(ctx.population)
+    assert np.all(np.isfinite(ctx.population.get_array("spea2_fitness")))

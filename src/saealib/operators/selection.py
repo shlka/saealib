@@ -448,7 +448,7 @@ class TruncationSelection(SurvivorSelection):
             Indices of selected survivors in the pool.
         """
         cmp = ctx.comparator
-        sorted_idx = cmp.sort_population(pool)
+        sorted_idx = cmp.rank_population(pool)
         if not self.randomize_ties or n_survivors >= len(sorted_idx):
             return sorted_idx[:n_survivors]
 
