@@ -260,16 +260,102 @@ def test_linear_kernel_with_degree_one_is_allowed():
     surrogate.predict(TRAIN_X)
 
 
-def test_kernel_replacement_invalidates_fitted_state():
+@pytest.mark.parametrize(
+    ("attribute", "value"),
+    [
+        ("kernel", GaussianKernel(length_scale=0.5)),
+        ("polynomial_degree", 0),
+        ("solver", "lstsq"),
+        ("alpha", 1e-3),
+    ],
+)
+def test_configuration_replacement_invalidates_fitted_state(attribute, value):
     surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
     surrogate.fit(TRAIN_X, TRAIN_Y)
-    surrogate.kernel = GaussianKernel(length_scale=0.5)
+    setattr(surrogate, attribute, value)
 
     with pytest.raises(RuntimeError):
         surrogate.predict(TRAIN_X)
 
     surrogate.fit(TRAIN_X, TRAIN_Y)
     surrogate.predict(TRAIN_X)
+
+
+@pytest.mark.parametrize(
+    ("attribute", "value"),
+    [("polynomial_degree", 2), ("solver", "bad"), ("alpha", 0.0)],
+)
+def test_invalid_configuration_replacement_preserves_fitted_state(attribute, value):
+    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate.fit(TRAIN_X, TRAIN_Y)
+
+    with pytest.raises(ValidationError):
+        setattr(surrogate, attribute, value)
+
+    surrogate.predict(TRAIN_X)
+
+
+def test_failed_fit_clears_previous_fitted_state():
+    surrogate = RBFSurrogate(
+        kernel=GaussianKernel(length_scale=1.0),
+        dim=1,
+        polynomial_degree=1,
+    )
+    surrogate.fit(TRAIN_X, TRAIN_Y)
+
+    degenerate_x = np.array([[1.0], [1.0], [1.0]])
+    with pytest.raises(ValidationError, match=r"rank|degenerate"):
+        surrogate.fit(degenerate_x, np.ones(3))
+
+    with pytest.raises(RuntimeError):
+        surrogate.predict(TRAIN_X)
+
+
+@pytest.mark.parametrize(
+    ("train_x", "train_y"),
+    [
+        (TRAIN_X[:, 0], TRAIN_Y),
+        (np.empty((0, 1)), np.empty(0)),
+        (np.array([[np.nan], [0.0], [1.0]]), TRAIN_Y),
+        (np.array([[np.inf], [0.0], [1.0]]), TRAIN_Y),
+        (TRAIN_X, np.array([1.0, np.nan, 3.0])),
+        (TRAIN_X, np.array([1.0, np.inf, 3.0])),
+        (TRAIN_X, np.ones(2)),
+    ],
+    ids=[
+        "train_x_1d",
+        "empty_training_set",
+        "train_x_nan",
+        "train_x_inf",
+        "train_y_nan",
+        "train_y_inf",
+        "sample_count_mismatch",
+    ],
+)
+def test_fit_rejects_invalid_training_inputs(train_x, train_y):
+    surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0), dim=1)
+
+    with pytest.raises(ValidationError):
+        surrogate.fit(train_x, train_y)
+
+
+def test_fit_rejects_non_1d_or_2d_training_targets():
+    surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0), dim=1)
+
+    with pytest.raises(ValidationError):
+        surrogate.fit(TRAIN_X, np.ones((3, 1, 1)))
+
+
+def test_predict_rejects_nonfinite_inputs_and_feature_count_mismatch():
+    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    surrogate.fit(TRAIN_X, TRAIN_Y)
+
+    for test_x in (np.array([[np.nan]]), np.array([[np.inf]])):
+        with pytest.raises(ValidationError):
+            surrogate.predict(test_x)
+
+    with pytest.raises(ValidationError, match="features"):
+        surrogate.predict(np.ones((1, 2)))
 
 
 def test_predict_before_fit_raises_runtime_error():

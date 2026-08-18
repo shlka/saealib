@@ -171,6 +171,24 @@ def test_resolve_rejects_degenerate_training_data(kernel_cls, train_x):
         kernel_cls().resolve(train_x)
 
 
+@pytest.mark.parametrize(
+    "kernel", [GaussianKernel(), MultiquadricKernel(), MaternKernel()]
+)
+def test_unresolved_length_scale_evaluate_raises_validation_error(kernel):
+    with pytest.raises(ValidationError, match="length_scale is unresolved"):
+        kernel.evaluate(np.array([[0.0, 1.0]]))
+
+
+@pytest.mark.parametrize(
+    "kernel", [GaussianKernel(), MultiquadricKernel(), MaternKernel()]
+)
+def test_unresolved_length_scale_pairwise_raises_validation_error(kernel):
+    x = np.array([[0.0], [1.0]])
+
+    with pytest.raises(ValidationError, match="length_scale is unresolved"):
+        kernel.pairwise(x, x)
+
+
 def test_pairwise_returns_cross_kernel_matrix_shape():
     x1 = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
     x2 = np.array(

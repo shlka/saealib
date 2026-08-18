@@ -101,8 +101,12 @@ class GaussianKernel(RBFKernel):
         return replace(self, length_scale=_resolve_length_scale(train_x))
 
     def evaluate(self, r: np.ndarray) -> np.ndarray:
-        """Evaluate the Gaussian kernel for a radial-distance matrix."""
-        assert self.length_scale is not None
+        """Evaluate the Gaussian kernel ``exp(-0.5 * (r / length_scale)**2)``."""
+        if self.length_scale is None:
+            raise ValidationError(
+                "GaussianKernel.length_scale is unresolved (None); call "
+                "resolve(train_x) first, or construct with an explicit length_scale."
+            )
         q = r / self.length_scale
         return np.exp(-0.5 * q**2)
 
@@ -190,8 +194,12 @@ class MultiquadricKernel(RBFKernel):
         return replace(self, length_scale=_resolve_length_scale(train_x))
 
     def evaluate(self, r: np.ndarray) -> np.ndarray:
-        """Evaluate the multiquadric kernel for a radial-distance matrix."""
-        assert self.length_scale is not None
+        """Evaluate the multiquadric kernel ``sqrt(r**2 + length_scale**2)``."""
+        if self.length_scale is None:
+            raise ValidationError(
+                "MultiquadricKernel.length_scale is unresolved (None); call "
+                "resolve(train_x) first, or construct with an explicit length_scale."
+            )
         return np.sqrt(r**2 + self.length_scale**2)
 
 
@@ -230,8 +238,12 @@ class MaternKernel(RBFKernel):
         return replace(self, length_scale=_resolve_length_scale(train_x))
 
     def evaluate(self, r: np.ndarray) -> np.ndarray:
-        """Evaluate the Matérn kernel for a radial-distance matrix."""
-        assert self.length_scale is not None
+        """Evaluate the Matérn kernel's nu-dependent radial profile."""
+        if self.length_scale is None:
+            raise ValidationError(
+                "MaternKernel.length_scale is unresolved (None); call "
+                "resolve(train_x) first, or construct with an explicit length_scale."
+            )
         length_scale = self.length_scale
         if self.nu == 0.5:
             return np.exp(-r / length_scale)
