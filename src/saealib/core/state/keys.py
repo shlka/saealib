@@ -36,6 +36,7 @@ __all__ = [
     "PROPOSALS_OFFSPRING",
     "RUNTIME_ASYNC_FATAL",
     "RUNTIME_CANDIDATE_ID_ALLOCATOR",
+    "RUNTIME_DECISION_COUNT",
     "RUNTIME_GENERATION",
     "RUNTIME_REQUEST_ID_ALLOCATOR",
     "RUNTIME_RNG",
@@ -140,6 +141,9 @@ RUNTIME_RNG = StateKey[object](namespace="runtime", name="rng", schema_version=1
 RUNTIME_GENERATION = StateKey[object](
     namespace="runtime", name="generation", schema_version=1
 )
+RUNTIME_DECISION_COUNT = StateKey[object](
+    namespace="runtime", name="decision_count", schema_version=1
+)
 RUNTIME_ASYNC_FATAL = StateKey[object](
     namespace="runtime", name="async_fatal", schema_version=1
 )
@@ -187,6 +191,7 @@ OPTIMIZATION_STATE_INITIAL_KEYS = frozenset(
         ARCHIVES_PARETO,
         RUNTIME_RNG,
         RUNTIME_GENERATION,
+        RUNTIME_DECISION_COUNT,
         RUNTIME_CANDIDATE_ID_ALLOCATOR,
         RUNTIME_REQUEST_ID_ALLOCATOR,
         PROPOSALS_ID_ALLOCATOR,

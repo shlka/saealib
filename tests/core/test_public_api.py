@@ -49,6 +49,7 @@ PUBLIC_EXPORTS = {
     "RuntimeContext": ("saealib.core.state.context", "RuntimeContext"),
     "ExecutionContext": ("saealib.core.state.context", "ExecutionContext"),
     "StatePatch": ("saealib.core.state.patch", "StatePatch"),
+    "RUNTIME_DECISION_COUNT": ("saealib.core.state.keys", "RUNTIME_DECISION_COUNT"),
     "RUNTIME_GENERATION": ("saealib.core.state.keys", "RUNTIME_GENERATION"),
     "ExecutionRuntime": ("saealib.core.runtime", "ExecutionRuntime"),
     "RegionFrame": ("saealib.core.runtime", "RegionFrame"),

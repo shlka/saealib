@@ -28,6 +28,7 @@ from saealib.core.state import (
     PROPOSALS_OFFSPRING,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
     RUNTIME_RNG,
@@ -59,8 +60,8 @@ if TYPE_CHECKING:
     from saealib.surrogate.prediction import SurrogatePrediction
 
 
-CURRENT_CHECKPOINT_SCHEMA_VERSION = 3
-SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS = frozenset({1, 2, 3})
+CURRENT_CHECKPOINT_SCHEMA_VERSION = 4
+SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS = frozenset({1, 2, 3, 4})
 _SAFE_EMPTY_PENDING = frozenset(
     pickle.dumps({}, protocol=protocol)
     for protocol in range(pickle.HIGHEST_PROTOCOL + 1)
@@ -75,6 +76,7 @@ _STORE_FIELDS = {
     "request_id_allocator": RUNTIME_REQUEST_ID_ALLOCATOR,
     "fe": EVALUATIONS_COUNT,
     "gen": RUNTIME_GENERATION,
+    "decision_count": RUNTIME_DECISION_COUNT,
     "evaluation_plan": EVALUATIONS_PLAN,
     "evaluation_plan_state": EVALUATIONS_PLAN_STATE,
     "evaluation_plan_updates": EVALUATIONS_PLAN_UPDATES,
@@ -390,6 +392,11 @@ class OptimizationState:
         Number of function evaluations.
     gen : int
         Number of generations.
+    decision_count : int
+        Number of confirmed evaluation plans (one per infill decision,
+        regardless of how many candidates that plan evaluates). Incremented
+        by :class:`~saealib.stages.EvaluationPlanStage` only when a new plan
+        is confirmed. Independent of ``gen``/``fe``.
     offspring : Population or None
         Candidate population produced by the current generation's ask step.
         Set by :class:`~saealib.stages.AskStage`; consumed and updated by
@@ -431,6 +438,7 @@ class OptimizationState:
 
     fe: int = 0
     gen: int = 0
+    decision_count: int = 0
 
     # Pipeline stage data (typed)
     offspring: Population | None = None
@@ -646,6 +654,7 @@ class OptimizationState:
         request_id_allocator: IDAllocator | None = None,
         fe: int = 0,
         gen: int = 0,
+        decision_count: int = 0,
         offspring: Population | None = None,
         evaluated_offspring: Population | None = None,
         scores: np.ndarray | None = None,
@@ -712,6 +721,7 @@ class OptimizationState:
         )
         self.fe = fe
         self.gen = gen
+        self.decision_count = decision_count
         self.offspring = offspring
         self.evaluated_offspring = evaluated_offspring
         self.scores = scores
@@ -1404,7 +1414,7 @@ class OptimizationState:
                 )
             if schema_version == 1:
                 return _load_v1(cls, data, problem)
-            if schema_version == 3:
+            if schema_version in (3, 4):
                 return _load_v3(cls, data, problem)
             return _load_v2(cls, data, problem)
         except CheckpointError:
@@ -2620,6 +2630,7 @@ def _load_v2(
 def _load_v3(
     cls: type[OptimizationState], data: Any, problem: Problem
 ) -> OptimizationState:
+    """Load a schema-v3 or schema-v4 checkpoint (v4 only adds decision_count)."""
     genome_codec = problem.space.services.get("GenomeCodec")
     dense_numeric_view = problem.space.services.get("DenseNumericView")
     entries = _read_json(data, "_state_entries")
@@ -2742,6 +2753,7 @@ def _load_v3(
     kwargs.update(values)
     kwargs["fe"] = int(kwargs.get("fe", 0))
     kwargs["gen"] = int(kwargs.get("gen", 0))
+    kwargs["decision_count"] = int(kwargs.get("decision_count", 0))
     state = cls(**kwargs)
     state.data = {**state.data, "resumed": True}
     return state
