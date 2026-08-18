@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 00:36+0900\n"
+"POT-Creation-Date: 2026-08-18 14:06+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:6
+#: ../../concepts/surrogate_modeling/surrogate.md:6
 msgid "Surrogate"
 msgstr "Surrogate"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:8
+#: ../../concepts/surrogate_modeling/surrogate.md:8
 msgid ""
 "`saealib` restricts the responsibility of the predictive model "
 "approximating the objective function to `Surrogate`, a swappable "
@@ -36,15 +36,15 @@ msgstr ""
 "`saealib`は、目的関数を近似する予測モデルの責務を`Surrogate`という差し替え可能なコンポーネントに限定しています。 "
 "`Surrogate`はfit/predictだけを知り、予測値をどうスコアに変換するか（[AcquisitionFunction](acquisition_functions.md)）や、学習データをどこから集めるか（[TrainingSet](training_set.md)、[SurrogateManager](surrogate_manager.md)経由）は一切知りません。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:11
+#: ../../concepts/surrogate_modeling/surrogate.md:11
 msgid "Surrogate's role"
 msgstr "Surrogateの役割"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:13
+#: ../../concepts/surrogate_modeling/surrogate.md:13
 msgid "`Surrogate` requires two methods to be implemented."
 msgstr "`Surrogate`が実装を要求するメソッドは2つあります。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:15
+#: ../../concepts/surrogate_modeling/surrogate.md:15
 msgid ""
 "**`fit(train_x, train_y) -> None`**: Trains the model on inputs of shape "
 "`(n_samples, n_features)` and outputs of shape `(n_samples, n_obj)` (or "
@@ -54,7 +54,7 @@ msgstr ""
 "n_features)`の入力と、形状`(n_samples, "
 "n_obj)`（単目的では`(n_samples,)`）の出力でモデルを学習します。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:17
+#: ../../concepts/surrogate_modeling/surrogate.md:17
 msgid ""
 "**`predict(test_x) -> SurrogatePrediction`**: Returns predictions for "
 "inputs of shape `(n_samples, n_features)`."
@@ -62,7 +62,7 @@ msgstr ""
 "**`predict(test_x) -> SurrogatePrediction`**：形状`(n_samples, "
 "n_features)`の入力に対する予測を返します。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:19
+#: ../../concepts/surrogate_modeling/surrogate.md:19
 msgid ""
 "The class attribute `provides_uncertainty: bool = False` indicates "
 "whether predictions carry uncertainty (standard deviation). The default "
@@ -71,17 +71,17 @@ msgstr ""
 "クラス属性`provides_uncertainty: bool = False`は、予測が不確実性（標準偏差）を伴うかどうかを示します。 "
 "既定は`False`で、ガウス過程の実装だけが`True`にオーバーライドします。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:22
+#: ../../concepts/surrogate_modeling/surrogate.md:22
 msgid "There are two marker base classes between `Surrogate` and `predict()`."
 msgstr "`Surrogate`と`predict()`の間には2つのマーカー基底クラスがあります。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:24
+#: ../../concepts/surrogate_modeling/surrogate.md:24
 msgid ""
 "**`RegressionSurrogate`**: A marker for regression surrogates where "
 "`train_y` is a real-valued objective function output."
 msgstr "**`RegressionSurrogate`**：`train_y`が実数値の目的関数出力である回帰サロゲート向けのマーカー。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:26
+#: ../../concepts/surrogate_modeling/surrogate.md:26
 #, python-brace-format
 msgid ""
 "**`ComparisonSurrogate`**: For comparison surrogates where `train_y` is a"
@@ -94,59 +94,59 @@ msgstr ""
 "`predict_proba(test_x) -> SurrogatePrediction`（値は`[0, "
 "1]`の勝率）が主インターフェースで、`predict()`は既定で`predict_proba()`に委譲します。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:29
+#: ../../concepts/surrogate_modeling/surrogate.md:29
 msgid "SurrogatePrediction"
 msgstr "SurrogatePrediction"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:31
+#: ../../concepts/surrogate_modeling/surrogate.md:31
 msgid "`predict()`'s return value is `SurrogatePrediction`, a unified dataclass."
 msgstr "`predict()`の戻り値は`SurrogatePrediction`という統一データクラスです。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Field"
 msgstr "フィールド"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Content"
 msgstr "内容"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`value`"
 msgstr "`value`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "The predicted value. Shape `(n_samples, n_obj)`"
 msgstr "予測値。形状 `(n_samples, n_obj)`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`std`"
 msgstr "`std`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid ""
 "Uncertainty (standard deviation). `None` for surrogates that don't "
 "provide it"
 msgstr "不確実性（標準偏差）。提供しないサロゲートでは`None`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`label`"
 msgstr "`label`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Class labels, only present for classification models"
 msgstr "分類モデルのみが持つクラスラベル"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`metadata`"
 msgstr "`metadata`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid ""
 "A `dict` holding implementation-specific auxiliary information, such as "
 "SHAP values"
 msgstr "SHAP値など実装固有の付加情報を格納する`dict`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:40
+#: ../../concepts/surrogate_modeling/surrogate.md:40
 msgid ""
 "`value` and `std` are convenience properties for the objective channel. "
 "When a surrogate's prediction represents a quantity that isn't the "
@@ -156,164 +156,175 @@ msgid ""
 "directly."
 msgstr "`value`と`std`は目的関数チャンネル向けの便利なプロパティです。サロゲートの予測が目的関数値ではない量（新規性スコアなど）を表す場合、この仕組みによってpbestのような値が汚染されるのを防ぎます。`NoveltyAcquisition`などのアーカイブベースの基準は、候補とアーカイブの設計点を直接受け取ります。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:44
+#: ../../concepts/surrogate_modeling/surrogate.md:44
 msgid "Built-in Surrogates"
 msgstr "組み込みSurrogate"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:46
+#: ../../concepts/surrogate_modeling/surrogate.md:46
 #, python-brace-format
 msgid ""
-"**`RBFSurrogate(kernel, dim, polynomial_degree=-1, solver=\"solve\", "
+"**`RBFSurrogate(kernel, polynomial_degree=\"auto\", solver=\"solve\", "
 "alpha=1e-8)`**: A surrogate using RBF interpolation "
 "{cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml` (the origin of RBF"
-" interpolation itself is Hardy, 1971). Accepts any kernel function "
-"(default `gaussian_kernel`; built-in kernels are listed below), and "
-"`predict()` explicitly returns `std=None` (RBF interpolation provides no "
-"uncertainty)."
+" interpolation itself is Hardy, 1971). `kernel` is an `RBFKernel` object "
+"(built-in kernels are listed below); a custom kernel is a subclass "
+"implementing `evaluate(r)`. `predict()` explicitly returns `std=None` "
+"(RBF interpolation provides no uncertainty)."
 msgstr ""
-"**`RBFSurrogate(kernel, dim, polynomial_degree=-1, solver=\"solve\", "
+"**`RBFSurrogate(kernel, polynomial_degree=\"auto\", solver=\"solve\", "
 "alpha=1e-8)`**：RBF補間によるサロゲートです{cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml`（RBF補間自体の起源はHardy,"
 " "
-"1971）。任意のカーネル関数を受け取ります（既定は`gaussian_kernel`で、組み込みカーネルは以下に示します）。`predict()`は`std=None`を明示的に返します（RBF補間は不確実性を提供しません）。"
+"1971）。`kernel`は`RBFKernel`オブジェクトです（組み込みカーネルは以下に示します）。カスタムカーネルは`evaluate(r)`を実装するサブクラスとして作ります。`predict()`は`std=None`を明示的に返します（RBF補間は不確実性を提供しません）。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Parameter"
 msgstr "パラメータ"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Values"
 msgstr "値"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Role"
 msgstr "役割"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`polynomial_degree`"
 msgstr "`polynomial_degree`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`-1` (default) / `0` / `1`"
-msgstr "`-1`（既定） / `0` / `1`"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "`\"auto\"` (default) / `None` / `0` / `1`"
+msgstr "`\"auto\"`（既定） / `None` / `0` / `1`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid ""
-"Augments the system with a polynomial term (none / constant / linear); "
-"required for conditionally positive definite kernels like thin-plate-"
-"spline, unneeded for strictly positive definite ones like "
-"`gaussian_kernel`."
+"Augments the system with a polynomial term (from "
+"`kernel.min_polynomial_degree` / none / constant / linear); required for "
+"conditionally positive definite kernels like `ThinPlateSplineKernel`, "
+"unneeded for strictly positive definite ones like `GaussianKernel`."
 msgstr ""
-"補間系を多項式項で拡張します（なし / 定数 / "
-"線形）。薄板スプラインのような条件付き正定値カーネルには必要ですが、`gaussian_kernel`のような狭義正定値カーネルには不要です。"
+"補間系を多項式項で拡張します（`kernel.min_polynomial_degree`から決定 / なし / 定数 / "
+"線形）。`ThinPlateSplineKernel`のような条件付き正定値カーネルには必要ですが、`GaussianKernel`のような狭義正定値カーネルには不要です。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`solver`"
 msgstr "`solver`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`\"solve\"` (default) / `\"lstsq\"` / `\"tikhonov\"`"
 msgstr "`\"solve\"`（既定） / `\"lstsq\"` / `\"tikhonov\"`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid ""
 "How the (possibly augmented) linear system is solved: direct / least "
 "squares (tolerant of rank-deficient systems) / ridge-regularized via "
 "`alpha`."
 msgstr "線形系（多項式項で拡張されている場合を含む）の解法：直接法 / 最小二乗法（ランク落ちした系にも対応） / `alpha`によるリッジ正則化。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`alpha`"
 msgstr "`alpha`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`1e-8` (default)"
 msgstr "`1e-8`（既定）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Ridge regularization strength, used only when `solver=\"tikhonov\"`."
 msgstr "リッジ正則化の強さ。`solver=\"tikhonov\"`の場合だけ使われます。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:55
+#: ../../concepts/surrogate_modeling/surrogate.md:56
 msgid ""
-"All kernels share a `length_scale` keyword argument (in the same distance"
-" units as the input data), interpreted per-kernel as shown below; "
-"`RBFSurrogate` sets it automatically to the median pairwise training-"
-"point distance."
-msgstr "全カーネルは`length_scale`キーワード引数（入力データと同じ距離単位）を共有し、カーネルごとに下表のように解釈される。`RBFSurrogate`は訓練点間のペアワイズ距離の中央値をこの値に自動設定する。"
+"`kernel` and `polynomial_degree` are the values as configured; "
+"`resolved_kernel` and `resolved_polynomial_degree` expose what a `fit()` "
+"call actually resolves and uses, keeping the configured `RBFKernel` "
+"instance itself immutable. Reassigning "
+"`kernel`/`polynomial_degree`/`solver`/`alpha` invalidates any fitted "
+"state; `predict()` then raises `RuntimeError` until the next `fit()`."
+msgstr "`kernel`と`polynomial_degree`は設定した値そのものです。`resolved_kernel`と`resolved_polynomial_degree`は、`fit()`が実際に解決して使う値を公開し、設定した`RBFKernel`インスタンス自体は不変に保ちます。`kernel`/`polynomial_degree`/`solver`/`alpha`を再設定すると、fit済みの状態は無効になり、次の`fit()`まで`predict()`は`RuntimeError`を送出します。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md:59
+msgid ""
+"Kernels carrying a `length_scale` field (in the same distance units as "
+"the input data) resolve it automatically to the median pairwise training-"
+"point distance when left `None`."
+msgstr "`length_scale`フィールドを持つカーネル（入力データと同じ距離単位）は、`None`のままにすると訓練点間のペアワイズ距離の中央値へ自動的に解決されます。"
+
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Kernel"
 msgstr "カーネル"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Formula"
 msgstr "式"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Requires `polynomial_degree`"
 msgstr "必要な`polynomial_degree`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`gaussian_kernel` (default)"
-msgstr "`gaussian_kernel`（既定）"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "`GaussianKernel` (default)"
+msgstr "`GaussianKernel`（既定）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`exp(-r²/(2·length_scale²))`"
-msgstr "`exp(-r²/(2·length_scale²))`"
+#: ../../concepts/surrogate_modeling/surrogate.md
+#, python-brace-format
+msgid "$\\exp\\left(-\\dfrac{r^2}{2\\,\\ell^2}\\right)$"
+msgstr "$\\exp\\left(-\\dfrac{r^2}{2\\,\\ell^2}\\right)$"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`-1` (none)"
-msgstr "`-1`（なし）"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "`None` (none)"
+msgstr "`None`（なし）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`thin_plate_spline_kernel`"
-msgstr "`thin_plate_spline_kernel`"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "`ThinPlateSplineKernel`"
+msgstr "`ThinPlateSplineKernel`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`r² log r` (`length_scale` unused)"
-msgstr "`r² log r`（`length_scale`は未使用）"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "$r^2 \\log r$ (no `length_scale`)"
+msgstr "$r^2 \\log r$（`length_scale`は未使用）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`1` (linear)"
 msgstr "`1`（線形）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`linear_kernel`"
-msgstr "`linear_kernel`"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "`LinearKernel`"
+msgstr "`LinearKernel`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`r` (`length_scale` unused)"
-msgstr "`r`（`length_scale`は未使用）"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "$r$ (no `length_scale`)"
+msgstr "$r$（`length_scale`は未使用）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`0` (constant)"
 msgstr "`0`（定数）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`cubic_kernel`"
-msgstr "`cubic_kernel`"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "`CubicKernel`"
+msgstr "`CubicKernel`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`r³` (`length_scale` unused)"
-msgstr "`r³`（`length_scale`は未使用）"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "$r^3$ (no `length_scale`)"
+msgstr "$r^3$（`length_scale`は未使用）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`multiquadric_kernel`"
-msgstr "`multiquadric_kernel`"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "`MultiquadricKernel`"
+msgstr "`MultiquadricKernel`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`√(r²+length_scale²)`"
-msgstr "`√(r²+length_scale²)`"
+#: ../../concepts/surrogate_modeling/surrogate.md
+#, python-brace-format
+msgid "$\\sqrt{r^2 + \\ell^2}$"
+msgstr "$\\sqrt{r^2 + \\ell^2}$"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "`matern_kernel` (`nu=0.5/1.5/2.5`)"
-msgstr "`matern_kernel`（`nu=0.5/1.5/2.5`）"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "`MaternKernel` (`nu=0.5/1.5/2.5`)"
+msgstr "`MaternKernel`（`nu=0.5/1.5/2.5`）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-msgid "Matérn covariance, `length_scale` = `ℓ`"
-msgstr "Matérn共分散、`length_scale` = `ℓ`"
+#: ../../concepts/surrogate_modeling/surrogate.md
+msgid "Matérn covariance, `length_scale` = $\\ell$"
+msgstr "Matérn共分散。`length_scale` = $\\ell$"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:66
+#: ../../concepts/surrogate_modeling/surrogate.md:70
 msgid ""
 "**`PerObjectiveSurrogate(surrogates)`**: A `RegressionSurrogate` "
 "subclass, a composite class that assigns a different surrogate per "
@@ -325,122 +336,122 @@ msgstr ""
 " `fit`時に`train_y`の列数と`len(surrogates)`が一致しないと`ValueError`になります。 "
 "`provides_uncertainty`は、構成する全サロゲートが`True`の場合のみ`True`を返す複合判定になっています。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:70
+#: ../../concepts/surrogate_modeling/surrogate.md:74
 msgid "External library adapters"
 msgstr "外部ライブラリアダプタ"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:72
+#: ../../concepts/surrogate_modeling/surrogate.md:76
 msgid ""
 "Regression surrogates via a scikit-learn-compatible API carry a `Sklearn`"
 " prefix."
 msgstr "scikit-learn互換API経由の回帰サロゲートには`Sklearn`という接頭辞が付きます。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-#: ../../../concepts/surrogate_modeling/surrogate.md:99
+#: ../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md:103
 msgid "Class"
 msgstr "クラス"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Model"
 msgstr "モデル"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
-#: ../../../concepts/surrogate_modeling/surrogate.md:99
+#: ../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md:103
 msgid "`SklearnGPRSurrogate`"
 msgstr "`SklearnGPRSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 #, python-brace-format
 msgid ""
 "Gaussian Process {cite}`sacks1989dace,rasmussen2006gpml`. The sole "
 "implementation with `provides_uncertainty=True`"
 msgstr "ガウス過程{cite}`sacks1989dace,rasmussen2006gpml`。`provides_uncertainty=True`の唯一の実装"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`SklearnRFRSurrogate`"
 msgstr "`SklearnRFRSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Random Forest regression"
 msgstr "ランダムフォレスト回帰"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`SklearnSVMSurrogate`"
 msgstr "`SklearnSVMSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "SVM"
 msgstr "SVM"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`SklearnNNSurrogate`"
 msgstr "`SklearnNNSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "MLP"
 msgstr "MLP"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`SklearnXGBSurrogate`"
 msgstr "`SklearnXGBSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "XGBoost (the `xgboost` extra)"
 msgstr "XGBoost（`xgboost` 追加機能）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`SklearnLGBMSurrogate`"
 msgstr "`SklearnLGBMSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "LightGBM (the `lightgbm` extra)"
 msgstr "LightGBM（`lightgbm` 追加機能）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`TorchSurrogate`"
 msgstr "`TorchSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "PyTorch-based models (the `torch` extra)"
 msgstr "PyTorchベースのモデル（`torch` 追加機能）"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:84
+#: ../../concepts/surrogate_modeling/surrogate.md:88
 msgid ""
 "`SklearnGPRSurrogate` computes standard deviation from the GP kernel via "
 "`return_std=True`, and returns `provides_uncertainty=True`."
 msgstr "`SklearnGPRSurrogate`は`return_std=True`でGPカーネルから標準偏差を計算し、`provides_uncertainty=True`を返します。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:86
+#: ../../concepts/surrogate_modeling/surrogate.md:90
 msgid ""
 "The following classes are classification surrogates aimed at feasibility "
 "prediction."
 msgstr "実行可能性予測向けの分類サロゲートには次のクラスがあります。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`SklearnClassificationSurrogate`"
 msgstr "`SklearnClassificationSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Classification models compatible with scikit-learn in general"
 msgstr "scikit-learn互換の分類モデル全般"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`SklearnRFCClassificationSurrogate`"
 msgstr "`SklearnRFCClassificationSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "Random Forest classification"
 msgstr "ランダムフォレスト分類"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "`SklearnSVCClassificationSurrogate`"
 msgstr "`SklearnSVCClassificationSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md
+#: ../../concepts/surrogate_modeling/surrogate.md
 msgid "SVM classification"
 msgstr "SVM分類"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:94
+#: ../../concepts/surrogate_modeling/surrogate.md:98
 msgid ""
 "See [TrainingSet](training_set.md)'s `FeasibilityClassificationSet` for "
 "how training data is extracted for these classification surrogates. For "
@@ -453,13 +464,13 @@ msgstr ""
 " "
 "ペア比較には、これらの分類サロゲートではなく`ComparisonSurrogate`系の専用実装を使い、[SurrogateManager](surrogate_manager.md)の`PairwiseSurrogateManager`および`PairwiseComparisonSet`と組み合わせます。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:97
+#: ../../concepts/surrogate_modeling/surrogate.md:101
 msgid ""
 "See [Installation](../../getting_started/installation.md) for how to "
 "install each extra."
 msgstr "各追加機能のインストール方法は[インストール](../../getting_started/installation.md)を参照してください。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:100
+#: ../../concepts/surrogate_modeling/surrogate.md:104
 msgid ""
 "Adapters for BoTorch/SMT surrogates, beyond scikit-"
 "learn/XGBoost/LightGBM/PyTorch, are not currently implemented in "
@@ -473,11 +484,11 @@ msgstr ""
 "に対応する追加機能もありません。pymooにはアダプターがありますが、[Problem](../problem_and_ranking/problem.md)/[Crossover](../search_algorithms/crossover.md)/[Mutation](../search_algorithms/mutation.md)/[Algorithm](../search_algorithms/algorithm.md)"
 " のレベルであり、`Surrogate` としてではありません。pymooはサロゲートモデルを提供しません。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:105
+#: ../../concepts/surrogate_modeling/surrogate.md:109
 msgid "Extension hooks"
 msgstr "拡張フック"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:107
+#: ../../concepts/surrogate_modeling/surrogate.md:111
 msgid ""
 "If you just want to add post-fit processing, you can add it to an "
 "existing `Surrogate` instance with `with_post_fit(fn)` instead of "
@@ -487,15 +498,15 @@ msgstr ""
 "フィット後の後処理だけを足したい場合、サブクラスを新設せずに`with_post_fit(fn)`で既存の`Surrogate`インスタンスへ処理を追加できます。"
 " `with_post_fit`は元のインスタンスを変更せず、`fn`を追加したコピーを返します。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:122
+#: ../../concepts/surrogate_modeling/surrogate.md:126
 msgid "`fn`'s signature is `fn(train_x, train_y, ctx) -> None`."
 msgstr "`fn`のシグネチャは`fn(train_x, train_y, ctx) -> None`です。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:124
+#: ../../concepts/surrogate_modeling/surrogate.md:128
 msgid "Implementing a custom Surrogate"
 msgstr "独自Surrogateの実装方法"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:126
+#: ../../concepts/surrogate_modeling/surrogate.md:130
 msgid ""
 "If you need a custom predictive model, subclass `Surrogate` and implement"
 " `fit()`/`predict()`. Choose `RegressionSurrogate` for regression, or "
@@ -505,32 +516,32 @@ msgstr ""
 "独自の予測モデルが必要な場合は、`Surrogate`を継承して`fit()`/`predict()`を実装します。 "
 "回帰なら`RegressionSurrogate`、比較なら`ComparisonSurrogate`（`predict_proba()`を実装）を継承先に選びます。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:129
+#: ../../concepts/surrogate_modeling/surrogate.md:133
 msgid ""
 "The following example is a simple regression surrogate that returns the "
 "nearest training point's objective value directly as the prediction."
 msgstr "次の例は、最近傍点の目的関数値をそのまま予測値として返す単純な回帰サロゲートです。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:151
+#: ../../concepts/surrogate_modeling/surrogate.md:155
 msgid "Uncertainty support table"
 msgstr "不確実性対応表"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:153
+#: ../../concepts/surrogate_modeling/surrogate.md:157
 msgid ""
 "To use an uncertainty-based "
 "[AcquisitionFunction](acquisition_functions.md), `Surrogate` needs to "
 "return `std`."
 msgstr "不確実性ベースの[AcquisitionFunction](acquisition_functions.md)を使うには、`Surrogate`が`std`を返す必要があります。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:99
+#: ../../concepts/surrogate_modeling/surrogate.md:103
 msgid "`provides_uncertainty`"
 msgstr "`provides_uncertainty`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:99
+#: ../../concepts/surrogate_modeling/surrogate.md:103
 msgid "`True`"
 msgstr "`True`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:99
+#: ../../concepts/surrogate_modeling/surrogate.md:103
 msgid ""
 "`RBFSurrogate` / `SklearnRFRSurrogate` / `SklearnSVMSurrogate` / "
 "`SklearnNNSurrogate` / `SklearnXGBSurrogate` / `SklearnLGBMSurrogate` / "
@@ -540,170 +551,175 @@ msgstr ""
 "`SklearnNNSurrogate` / `SklearnXGBSurrogate` / `SklearnLGBMSurrogate` / "
 "`TorchSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:99
+#: ../../concepts/surrogate_modeling/surrogate.md:103
 msgid "`False`"
 msgstr "`False`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:99
+#: ../../concepts/surrogate_modeling/surrogate.md:103
 msgid "`PerObjectiveSurrogate`"
 msgstr "`PerObjectiveSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:99
+#: ../../concepts/surrogate_modeling/surrogate.md:103
 msgid "`True` only if every constituent surrogate is `True`"
 msgstr "構成する全サロゲートが`True`の場合のみ`True`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:161
+#: ../../concepts/surrogate_modeling/surrogate.md:165
 msgid ""
 "`Optimizer.validate()` detects and warns about a mismatch between "
 "`AcquisitionFunction`'s `requires_uncertainty` and `Surrogate`'s "
 "`provides_uncertainty`."
 msgstr "`Optimizer.validate()`は、`AcquisitionFunction`の`requires_uncertainty`と`Surrogate`の`provides_uncertainty`の不整合を検出して警告します。"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:163
+#: ../../concepts/surrogate_modeling/surrogate.md:167
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:165
+#: ../../concepts/surrogate_modeling/surrogate.md:169
 msgid ""
 "[SurrogateManager](surrogate_manager.md): Coordinates `Surrogate`'s "
 "fit/predict"
 msgstr "[SurrogateManager](surrogate_manager.md)：`Surrogate`のfit/predictを協調させる"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:166
+#: ../../concepts/surrogate_modeling/surrogate.md:170
 msgid ""
 "[TrainingSet](training_set.md): How training data passed to `Surrogate` "
 "is extracted"
 msgstr "[TrainingSet](training_set.md)：`Surrogate`に渡す学習データの抽出方法"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:167
+#: ../../concepts/surrogate_modeling/surrogate.md:171
 msgid ""
 "[AcquisitionFunction](acquisition_functions.md): Converts `predict()`'s "
 "result into a score"
 msgstr "[AcquisitionFunction](acquisition_functions.md)：`predict()`の結果をスコアへ変換する"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:168
+#: ../../concepts/surrogate_modeling/surrogate.md:172
 msgid ""
 "[Surrogate accuracy evaluation and dynamic "
 "switching](surrogate_switching.md): Evaluating a surrogate's "
 "generalization performance"
 msgstr "[サロゲート精度評価と動的切り替え](surrogate_switching.md)：サロゲートの汎化性能の評価"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:169
+#: ../../concepts/surrogate_modeling/surrogate.md:173
 msgid ""
 "[Installation](../../getting_started/installation.md): How to install "
 "each extra"
 msgstr "[インストール](../../getting_started/installation.md)：各追加機能のインストール方法"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:171
+#: ../../concepts/surrogate_modeling/surrogate.md:175
 msgid "References"
 msgstr "参照"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:173
+#: ../../concepts/surrogate_modeling/surrogate.md:177
 #, python-brace-format
 msgid "{py:class}`saealib.Surrogate`"
 msgstr "{py:class}`saealib.Surrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:174
+#: ../../concepts/surrogate_modeling/surrogate.md:178
 #, python-brace-format
 msgid "{py:class}`saealib.RegressionSurrogate`"
 msgstr "{py:class}`saealib.RegressionSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:175
+#: ../../concepts/surrogate_modeling/surrogate.md:179
 #, python-brace-format
 msgid "{py:class}`saealib.ComparisonSurrogate`"
 msgstr "{py:class}`saealib.ComparisonSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:176
+#: ../../concepts/surrogate_modeling/surrogate.md:180
 #, python-brace-format
 msgid "{py:class}`saealib.SurrogatePrediction`"
 msgstr "{py:class}`saealib.SurrogatePrediction`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:177
+#: ../../concepts/surrogate_modeling/surrogate.md:181
 #, python-brace-format
 msgid "{py:class}`saealib.RBFSurrogate`"
 msgstr "{py:class}`saealib.RBFSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:178
+#: ../../concepts/surrogate_modeling/surrogate.md:182
 #, python-brace-format
-msgid "{py:func}`saealib.gaussian_kernel`"
-msgstr "{py:func}`saealib.gaussian_kernel`"
+msgid "{py:class}`saealib.RBFKernel`"
+msgstr "{py:class}`saealib.RBFKernel`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:179
+#: ../../concepts/surrogate_modeling/surrogate.md:183
 #, python-brace-format
-msgid "{py:func}`saealib.thin_plate_spline_kernel`"
-msgstr "{py:func}`saealib.thin_plate_spline_kernel`"
+msgid "{py:class}`saealib.GaussianKernel`"
+msgstr "{py:class}`saealib.GaussianKernel`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:180
+#: ../../concepts/surrogate_modeling/surrogate.md:184
 #, python-brace-format
-msgid "{py:func}`saealib.linear_kernel`"
-msgstr "{py:func}`saealib.linear_kernel`"
+msgid "{py:class}`saealib.ThinPlateSplineKernel`"
+msgstr "{py:class}`saealib.ThinPlateSplineKernel`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:181
+#: ../../concepts/surrogate_modeling/surrogate.md:185
 #, python-brace-format
-msgid "{py:func}`saealib.cubic_kernel`"
-msgstr "{py:func}`saealib.cubic_kernel`"
+msgid "{py:class}`saealib.LinearKernel`"
+msgstr "{py:class}`saealib.LinearKernel`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:182
+#: ../../concepts/surrogate_modeling/surrogate.md:186
 #, python-brace-format
-msgid "{py:func}`saealib.multiquadric_kernel`"
-msgstr "{py:func}`saealib.multiquadric_kernel`"
+msgid "{py:class}`saealib.CubicKernel`"
+msgstr "{py:class}`saealib.CubicKernel`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:183
+#: ../../concepts/surrogate_modeling/surrogate.md:187
 #, python-brace-format
-msgid "{py:func}`saealib.matern_kernel`"
-msgstr "{py:func}`saealib.matern_kernel`"
+msgid "{py:class}`saealib.MultiquadricKernel`"
+msgstr "{py:class}`saealib.MultiquadricKernel`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:184
+#: ../../concepts/surrogate_modeling/surrogate.md:188
+#, python-brace-format
+msgid "{py:class}`saealib.MaternKernel`"
+msgstr "{py:class}`saealib.MaternKernel`"
+
+#: ../../concepts/surrogate_modeling/surrogate.md:189
 #, python-brace-format
 msgid "{py:class}`saealib.PerObjectiveSurrogate`"
 msgstr "{py:class}`saealib.PerObjectiveSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:185
+#: ../../concepts/surrogate_modeling/surrogate.md:190
 #, python-brace-format
 msgid "{py:class}`saealib.SklearnGPRSurrogate`"
 msgstr "{py:class}`saealib.SklearnGPRSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:186
+#: ../../concepts/surrogate_modeling/surrogate.md:191
 #, python-brace-format
 msgid "{py:class}`saealib.SklearnRFRSurrogate`"
 msgstr "{py:class}`saealib.SklearnRFRSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:187
+#: ../../concepts/surrogate_modeling/surrogate.md:192
 #, python-brace-format
 msgid "{py:class}`saealib.SklearnSVMSurrogate`"
 msgstr "{py:class}`saealib.SklearnSVMSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:188
+#: ../../concepts/surrogate_modeling/surrogate.md:193
 #, python-brace-format
 msgid "{py:class}`saealib.SklearnNNSurrogate`"
 msgstr "{py:class}`saealib.SklearnNNSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:189
+#: ../../concepts/surrogate_modeling/surrogate.md:194
 #, python-brace-format
 msgid "{py:class}`saealib.SklearnXGBSurrogate`"
 msgstr "{py:class}`saealib.SklearnXGBSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:190
+#: ../../concepts/surrogate_modeling/surrogate.md:195
 #, python-brace-format
 msgid "{py:class}`saealib.SklearnLGBMSurrogate`"
 msgstr "{py:class}`saealib.SklearnLGBMSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:191
+#: ../../concepts/surrogate_modeling/surrogate.md:196
 #, python-brace-format
 msgid "{py:class}`saealib.TorchSurrogate`"
 msgstr "{py:class}`saealib.TorchSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:192
+#: ../../concepts/surrogate_modeling/surrogate.md:197
 #, python-brace-format
 msgid "{py:class}`saealib.SklearnClassificationSurrogate`"
 msgstr "{py:class}`saealib.SklearnClassificationSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:193
+#: ../../concepts/surrogate_modeling/surrogate.md:198
 #, python-brace-format
 msgid "{py:class}`saealib.SklearnRFCClassificationSurrogate`"
 msgstr "{py:class}`saealib.SklearnRFCClassificationSurrogate`"
 
-#: ../../../concepts/surrogate_modeling/surrogate.md:194
+#: ../../concepts/surrogate_modeling/surrogate.md:199
 #, python-brace-format
 msgid "{py:class}`saealib.SklearnSVCClassificationSurrogate`"
 msgstr "{py:class}`saealib.SklearnSVCClassificationSurrogate`"
@@ -775,4 +791,13 @@ msgstr "{py:class}`saealib.SklearnSVCClassificationSurrogate`"
 
 #~ msgid "`√(r²+γ²)`"
 #~ msgstr "`√(r²+γ²)`"
+
+#~ msgid "`exp(-r²/(2·length_scale²))`"
+#~ msgstr "`exp(-r²/(2·length_scale²))`"
+
+#~ msgid "`r³` (no `length_scale`)"
+#~ msgstr "`r³`（`length_scale`は未使用）"
+
+#~ msgid "`√(r²+length_scale²)`"
+#~ msgstr "`√(r²+length_scale²)`"
 

@@ -35,7 +35,7 @@ from saealib import (
     SequentialSelection,
     TruncationSelection,
     RBFSurrogate,
-    gaussian_kernel,
+    GaussianKernel,
     LocalSurrogateManager,
     MeanPrediction,
     IndividualBasedStrategy,
@@ -77,7 +77,7 @@ def build_optimizer(max_fe_value):
             )
         )
         .set_surrogate_manager(
-            LocalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=DIM))
+            LocalSurrogateManager(RBFSurrogate(kernel=GaussianKernel()))
         )
         .set_acquisition(MeanPrediction())
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.1))

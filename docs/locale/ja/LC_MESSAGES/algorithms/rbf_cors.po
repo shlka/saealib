@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-17 19:57+0900\n"
+"POT-Creation-Date: 2026-08-18 13:33+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -188,10 +188,10 @@ msgstr "サロゲートモデル"
 
 #: ../../algorithms/rbf_cors.md:43
 msgid ""
-"`RBFSurrogate` (RBF interpolation; defaults to `gaussian_kernel` with no "
-"polynomial term, but any kernel and `polynomial_degree` can be injected —"
-" see Differences from the source)"
-msgstr "`RBFSurrogate`（RBF補間。既定では`gaussian_kernel`を使い、多項式項は追加しませんが、任意のカーネルと`polynomial_degree`を注入できます。詳しくは「原法との差分」を参照してください）"
+"`RBFSurrogate` (RBF interpolation; defaults to `GaussianKernel()` with no"
+" polynomial term, but any `RBFKernel` and `polynomial_degree` can be "
+"injected — see Differences from the source)"
+msgstr "`RBFSurrogate`（RBF補間。既定では`GaussianKernel()`を使い、多項式項は追加しませんが、任意の`RBFKernel`と`polynomial_degree`を注入できます。詳しくは「原法との差分」を参照してください）"
 
 #: ../../algorithms/rbf_cors.md:43
 msgid "L2"
@@ -249,16 +249,18 @@ msgid ""
 "of the CORS definition. The paper's numerical experiments use a thin-"
 "plate-spline kernel ($\\phi(r) = r^2 \\log r$) with a first-order "
 "polynomial term $p(x)$. By default, `RBFSurrogate` fits a pure RBF "
-"interpolator without a polynomial term (residuals after subtracting the "
-"training-data mean), so swapping only the kernel does not reproduce the "
-"paper's configuration. Passing `kernel=thin_plate_spline_kernel` together"
-" with `polynomial_degree=1` reproduces it, since a linear polynomial term"
-" is what makes the interpolation system well-posed for a conditionally "
-"positive definite kernel such as thin-plate-spline."
+"interpolator with no polynomial term (`GaussianKernel`'s "
+"`min_polynomial_degree` is `None`, so the default "
+"`polynomial_degree=\"auto\"` resolves to no polynomial term), so swapping"
+" only the kernel does not reproduce the paper's configuration. Passing "
+"`kernel=ThinPlateSplineKernel()` together with `polynomial_degree=1` "
+"reproduces it, since a linear polynomial term is what makes the "
+"interpolation system well-posed for a conditionally positive definite "
+"kernel such as thin-plate-spline."
 msgstr ""
-"CORSの原法は、制約付き予測を最小化して候補点を逐次選びます。一方、saealibは`GA`が生成した候補プールから`CORSDistance`が最大の候補を選び、この最小化を近似します。`IndividualBasedStrategy.evaluation_ratio`を使うと、選択した候補をまとめて真の評価に回すこともできます。例における交叉、突然変異、親選択、環境選択の組み合わせはsaealibの構成上の選択であり、CORSの定義には含まれません。論文の数値実験では、一次多項式項$p(x)$を持つ薄板スプラインカーネル（$\\phi(r)"
+"CORSの原法は、制約付き予測を最小化して候補点を逐次選びます。一方saealibは、`GA`が生成した候補プールから`CORSDistance`が最大の候補を選び、この最小化を近似します。`IndividualBasedStrategy.evaluation_ratio`を使うと、選択した候補をまとめて真の評価に回すこともできます。例における交叉、突然変異、親選択、環境選択の組み合わせはsaealibの構成上の選択であり、CORSの定義には含まれません。論文の数値実験では、一次多項式項$p(x)$を持つ薄板スプラインカーネル（$\\phi(r)"
 " = r^2 \\log "
-"r$）を使います。既定の`RBFSurrogate`は、多項式項を持たない純粋なRBF補間器を適合させます（学習データの平均を差し引いた残差を使います）。そのため、カーネルだけを差し替えても論文の構成は再現できません。`kernel=thin_plate_spline_kernel`と`polynomial_degree=1`を同時に渡すと再現できます。薄板スプラインのような条件付き正定値カーネルでは、線形多項式項が補間系を適切に定めるためです。"
+"r$）を使います。既定の`RBFSurrogate`は多項式項を持たない純粋なRBF補間器を適合させます（`GaussianKernel`の`min_polynomial_degree`は`None`なので、既定の`polynomial_degree=\"auto\"`は多項式項なしに解決されます）。そのため、カーネルだけを差し替えても論文の構成は再現できません。`kernel=ThinPlateSplineKernel()`と`polynomial_degree=1`を同時に渡すと再現できます。薄板スプラインのような条件付き正定値カーネルでは、線形多項式項が補間系を適切に定めるためです。"
 
 #: ../../algorithms/rbf_cors.md:125
 msgid "Parameters and variants"
@@ -266,9 +268,10 @@ msgstr "パラメータと変種"
 
 #: ../../algorithms/rbf_cors.md:127
 msgid ""
-"**kernel (choice of RBF kernel)**: Any kernel function can be injected "
-"via `RBFSurrogate(kernel=...)`. The default is `gaussian_kernel`."
-msgstr "**kernel（RBFカーネルの選択）**：`RBFSurrogate(kernel=...)`で任意のカーネル関数を注入できます。既定値は`gaussian_kernel`です。"
+"**kernel (choice of RBF kernel)**: Any `RBFKernel` instance can be "
+"injected via `RBFSurrogate(kernel=...)`. The default is "
+"`GaussianKernel()`."
+msgstr "**kernel（RBFカーネルの選択）**：`RBFSurrogate(kernel=...)`で任意の`RBFKernel`インスタンスを注入できます。既定値は`GaussianKernel()`です。"
 
 #: ../../algorithms/rbf_cors.md:130
 #, python-brace-format
@@ -293,8 +296,8 @@ msgstr "[文献リファレンス](../references.md)：出典の完全な書誌�
 #: ../../algorithms/rbf_cors.md:136
 msgid ""
 "[Surrogate](../concepts/surrogate_modeling/surrogate.md): List of "
-"surrogate models including `RBFSurrogate`/`gaussian_kernel`"
-msgstr "[Surrogate](../concepts/surrogate_modeling/surrogate.md)：`RBFSurrogate`/`gaussian_kernel`を含むサロゲートモデル一覧"
+"surrogate models including `RBFSurrogate`/`GaussianKernel`"
+msgstr "[Surrogate](../concepts/surrogate_modeling/surrogate.md)：`RBFSurrogate`/`GaussianKernel`を含むサロゲートモデル一覧"
 
 #: ../../algorithms/rbf_cors.md:137
 msgid ""
