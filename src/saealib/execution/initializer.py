@@ -90,6 +90,13 @@ def _resolved_dense_view(problem: Problem) -> DenseNumericView | None:
     )
 
 
+def _defaults_equal(a: object, b: object) -> bool:
+    try:
+        return bool(np.array_equal(np.asarray(a), np.asarray(b), equal_nan=True))
+    except TypeError:
+        return a == b
+
+
 def _merge_required_attrs(
     attrs: list[PopulationAttribute],
     problem: Problem,
@@ -112,6 +119,7 @@ def _merge_required_attrs(
         if (
             np.dtype(existing.dtype) != np.dtype(attr.dtype)
             or existing.shape != attr.shape
+            or not _defaults_equal(existing.default, attr.default)
         ):
             raise ConfigurationError(
                 f"Conflicting PopulationAttribute definitions for {attr.name!r}: "

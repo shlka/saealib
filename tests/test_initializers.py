@@ -259,7 +259,7 @@ def test_genome_initializer_merges_comparator_required_attrs():
 
 def test_compatible_algorithm_and_comparator_attrs_are_deduplicated():
     algorithm_attr = PopulationAttribute("marker", np.float64, (), default=np.nan)
-    comparator_attr = PopulationAttribute("marker", float, (), default=0.0)
+    comparator_attr = PopulationAttribute("marker", float, (), default=np.nan)
     problem = _make_problem(_RequiredAttrsComparator([comparator_attr]))
     provider = _make_required_attrs_provider([algorithm_attr])
 
@@ -274,6 +274,18 @@ def test_compatible_algorithm_and_comparator_attrs_are_deduplicated():
 def test_conflicting_algorithm_and_comparator_attrs_raise_configuration_error():
     algorithm_attr = PopulationAttribute("marker", np.float64, (), default=np.nan)
     comparator_attr = PopulationAttribute("marker", np.int64, (), default=0)
+    problem = _make_problem(_RequiredAttrsComparator([comparator_attr]))
+    provider = _make_required_attrs_provider([algorithm_attr])
+
+    with pytest.raises(ConfigurationError, match="marker"):
+        LHSInitializer(N_ARCHIVE, N_POP, seed=0).initialize(
+            cast(Any, provider), problem
+        )
+
+
+def test_conflicting_default_raises_configuration_error():
+    algorithm_attr = PopulationAttribute("marker", np.float64, (), default=np.nan)
+    comparator_attr = PopulationAttribute("marker", np.float64, (), default=0.0)
     problem = _make_problem(_RequiredAttrsComparator([comparator_attr]))
     provider = _make_required_attrs_provider([algorithm_attr])
 

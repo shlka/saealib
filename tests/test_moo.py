@@ -2099,6 +2099,30 @@ class TestSPEA2Comparator:
         np.testing.assert_array_equal(selected, expected)
         np.testing.assert_allclose(comp._compute_fitness(pool), expected_fitness)
 
+    def test_rank_population_reflects_direction_change_on_schema_less_population(
+        self,
+    ) -> None:
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0]])
+        pool = _make_pop(f)
+        comp = SPEA2Comparator(direction=np.array([-1.0, -1.0]))
+
+        order1 = comp.rank_population(pool)
+        comp.direction = np.array([1.0, 1.0])
+        order2 = comp.rank_population(pool)
+
+        np.testing.assert_array_equal(order1, order2[::-1])
+
+    def test_fallback_cache_is_keyed_by_comparator_parameters(self) -> None:
+        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0]])
+        pool = _make_pop(f)
+
+        minimizing = SPEA2Comparator(direction=np.array([-1.0, -1.0]))
+        order_min = minimizing.sort_population(pool)
+        maximizing = SPEA2Comparator(direction=np.array([1.0, 1.0]))
+        order_max = maximizing.sort_population(pool)
+
+        np.testing.assert_array_equal(order_min, order_max[::-1])
+
     # -----------------------------------------------------------------------
     # 2. Class marker
     # -----------------------------------------------------------------------
