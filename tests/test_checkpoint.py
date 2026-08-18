@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import warnings
 from pathlib import Path
 
@@ -143,6 +144,38 @@ def test_npz_roundtrip(tmp_path):
     np.testing.assert_array_equal(loaded.archive.f, ctx.archive.f)
     np.testing.assert_array_equal(loaded.population.x, ctx.population.x)
     assert loaded.fe == ctx.fe
+    assert loaded.gen == ctx.gen
+    assert ctx.decision_count > 0
+    assert loaded.decision_count == ctx.decision_count
+
+
+def test_npz_load_defaults_decision_count_when_absent(tmp_path):
+    """A pre-decision_count (v3) checkpoint resumes with decision_count == 0."""
+    problem = _make_problem()
+    ctx = _make_optimizer(problem, seed=0, n_gen=2).run()
+    assert ctx.decision_count > 0
+
+    p = tmp_path / "ckpt.npz"
+    ctx.save(p)
+    raw = dict(np.load(p, allow_pickle=False).items())
+    # Rename in place (rather than dropping the list entry) so every other
+    # entry's index-derived "_entry_N__*" array keys stay aligned.
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    for item in entries:
+        if (
+            item["key"]["namespace"] == "runtime"
+            and item["key"]["name"] == "decision_count"
+        ):
+            item["key"]["name"] = "decision_count_absent_in_v3"
+            break
+    else:
+        raise AssertionError("runtime/decision_count entry was not found")
+    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
+    raw["_checkpoint_schema_version"] = np.array(3, dtype=np.int64)
+    np.savez(p, **raw)
+
+    loaded = OptimizationState.load(p, problem)
+    assert loaded.decision_count == 0
     assert loaded.gen == ctx.gen
 
 
