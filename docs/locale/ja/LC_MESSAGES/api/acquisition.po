@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 21:18+0900\n"
+"POT-Creation-Date: 2026-08-18 22:38+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -135,27 +135,35 @@ msgstr "``beta_schedule``に渡す、有限領域向けGP-UCBの``beta_t``スケ
 
 #: of saealib.acquisition.lcb.gp_ucb_beta_schedule:3
 msgid ""
-"``beta_t = 2 log(domain_size * t^2 * pi^2 / (6 * delta))``, the schedule "
-"the cited regret bound uses for a finite search domain of size "
-"``domain_size`` :cite:`srinivas2012gpucb`. For a continuous domain, "
-"``domain_size`` is a discretization-count proxy supplied by the caller; "
-"this function does not derive one."
+"Implements the finite-domain schedule ``beta_t = 2 log(domain_size * t^2 "
+"* pi^2 / (6 * delta))`` :cite:`srinivas2012gpucb`, where ``domain_size`` "
+"is the cardinality ``|D|`` of a finite decision set. This helper does not"
+" implement the cited paper's separate continuous-domain schedule (a "
+"different formula, for a compact domain). Passing a ``domain_size`` for a"
+" continuous search space only substitutes a number into this finite-"
+"domain formula; it does not by itself grant the finite-domain theorem's "
+"regret guarantee -- see the \"GP-UCB\" algorithm page in the docs for the"
+" additional conditions that requires."
 msgstr ""
-"``beta_t = 2 log(domain_size * t^2 * pi^2 / (6 * delta))``は、引用文献 "
-":cite:`srinivas2012gpucb` "
-"の後悔上界がサイズ``domain_size``の有限探索領域に対して用いるスケジュールです。連続領域の場合、``domain_size``は呼び出し側が与える離散化点数の代理値であり、この関数自体はその値を導出しません。"
+"有限の意思決定集合向けのスケジュール``beta_t = 2 log(domain_size * t^2 "
+"* pi^2 / (6 * delta))``を実装します :cite:`srinivas2012gpucb`。ここで "
+"``domain_size``は有限の意思決定集合の要素数``|D|``です。このヘルパーは、"
+"引用文献にある連続領域向けの別のスケジュール（コンパクト領域を対象とする異なる式）を実装しません。"
+"連続探索空間に``domain_size``を渡しても、この有限領域向けの式に数値を代入するだけであり、"
+"それだけで有限領域定理の後悔保証が得られるわけではありません。その保証に必要な追加条件については、"
+"ドキュメントの「GP-UCB」アルゴリズムページを参照してください。"
 
 #: ../../api/acquisition.md
 msgid "Parameters"
 msgstr "パラメータ"
 
-#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:9
+#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:14
 msgid ""
-"Size of the (possibly discretized) search domain (``|D|`` in the cited "
-"bound). Must be positive."
-msgstr "（離散化されている場合を含む）探索領域のサイズ（引用文献の``|D|``）。正の値でなければなりません。"
+"Cardinality ``|D|`` of the finite decision set (the cited bound's "
+"``|D|``). Must be an int and positive."
+msgstr "有限の意思決定集合の要素数``|D|``（引用文献の上界における``|D|``）。int型で正の値でなければなりません。"
 
-#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:12
+#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:17
 msgid "Confidence parameter. Must satisfy ``0 < delta < 1``. Default: 0.1."
 msgstr "信頼度パラメータ。``0 < delta < 1``を満たさなければなりません。既定値は0.1。"
 
@@ -163,14 +171,14 @@ msgstr "信頼度パラメータ。``0 < delta < 1``を満たさなければな�
 msgid "Returns"
 msgstr "返します"
 
-#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:15
+#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:20
 msgid ""
 "A picklable ``schedule(t) -> float``, increasing in the round index ``t``"
-" (``t`` starting at 1; raises "
-":class:`~saealib.exceptions.ValidationError` for ``t < 1``)."
-msgstr ""
-"pickle可能な``schedule(t) -> float``。反復回数``t``（1始まり）に対して増加します。``t < 1``の場合は"
-" :class:`~saealib.exceptions.ValidationError` を送出します。"
+" (``t`` must be an int starting at 1; raises "
+":class:`~saealib.exceptions.ValidationError` for a non-integer ``t`` or "
+"``t < 1``)."
+msgstr "pickle可能な``schedule(t) -> float``。反復回数``t``（int型、1始まり）に対して増加します。``t``が整数でない場合、または``t < 1``の場合は "
+":class:`~saealib.exceptions.ValidationError` を送出します。"
 
 #: ../../api/acquisition.md
 msgid "Return type"
@@ -180,7 +188,31 @@ msgstr "戻り値の型"
 msgid "Raises"
 msgstr "発生する例外"
 
-#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:20
-msgid "If ``domain_size`` is not positive, or ``delta`` is not in ``(0, 1)``."
-msgstr "``domain_size``が正でない場合、または``delta``が``(0, 1)``の範囲外の場合。"
+#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:26
+msgid ""
+"If ``domain_size`` is not an int or positive, or ``delta`` is not in     "
+"``(0, 1)``."
+msgstr "``domain_size``がint型でない場合、または正でない場合、あるいは``delta``が``(0, 1)``の範囲外の場合。"
+
+#~ msgid ""
+#~ "``beta_t = 2 log(domain_size * t^2 "
+#~ "* pi^2 / (6 * delta))``, the "
+#~ "schedule the cited regret bound uses "
+#~ "for a finite search domain of size"
+#~ " ``domain_size`` :cite:`srinivas2012gpucb`. For a"
+#~ " continuous domain, ``domain_size`` is a"
+#~ " discretization-count proxy supplied by "
+#~ "the caller; this function does not "
+#~ "derive one."
+#~ msgstr ""
+#~ "``beta_t = 2 log(domain_size * t^2 "
+#~ "* pi^2 / (6 * delta))``は、引用文献 "
+#~ ":cite:`srinivas2012gpucb` "
+#~ "の後悔上界がサイズ``domain_size``の有限探索領域に対して用いるスケジュールです。連続領域の場合、``domain_size``は呼び出し側が与える離散化点数の代理値であり、この関数自体はその値を導出しません。"
+
+#~ msgid ""
+#~ "Size of the (possibly discretized) "
+#~ "search domain (``|D|`` in the cited "
+#~ "bound). Must be positive."
+#~ msgstr "（離散化されている場合を含む）探索領域のサイズ（引用文献の``|D|``）。正の値でなければなりません。"
 

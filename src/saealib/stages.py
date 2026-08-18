@@ -999,10 +999,12 @@ class EvaluationPlanStage(Stage):
     new plan is confirmed (the branch that calls the planner and builds
     ``pending_evaluations``), never on a continuation of an already-pending
     multi-request plan. One decision covers the whole confirmed
-    ``EvaluationPlan``, however many candidates its requests evaluate.  Only
-    the synchronous path (this method) counts decisions;
-    :meth:`execute_async` does not, so ``decision_count`` does not advance
-    under async/steady-state execution.
+    ``EvaluationPlan``, however many candidates its requests evaluate.
+    ``decision_count`` counts a genuinely new evaluation plan confirmed by
+    the runtime regardless of execution mode: this method increments it for
+    synchronous execution; :class:`AsyncEvaluationSubmitStage` (which
+    :meth:`execute_async` delegates to) increments it the same way for
+    async/steady-state execution.
     """
 
     name = "evaluation_plan"

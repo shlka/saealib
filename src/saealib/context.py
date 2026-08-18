@@ -395,8 +395,11 @@ class OptimizationState:
     decision_count : int
         Number of confirmed evaluation plans (one per infill decision,
         regardless of how many candidates that plan evaluates). Incremented
-        by :class:`~saealib.stages.EvaluationPlanStage` only when a new plan
-        is confirmed. Independent of ``gen``/``fe``.
+        once per genuinely new evaluation plan the runtime confirms --
+        :class:`~saealib.stages.EvaluationPlanStage` for synchronous
+        execution, :class:`~saealib.stages.AsyncEvaluationSubmitStage` for
+        async/steady-state execution -- never on a plan continuation.
+        Independent of ``gen``/``fe``.
     offspring : Population or None
         Candidate population produced by the current generation's ask step.
         Set by :class:`~saealib.stages.AskStage`; consumed and updated by

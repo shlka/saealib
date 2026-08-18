@@ -46,9 +46,9 @@ class LowerConfidenceBound(PointwiseAcquisition):
     beta_schedule : callable or None
         Optional ``beta_t`` schedule ``schedule(t) -> float`` (``kappa``
         corresponds to ``sqrt(beta_t)`` in the cited bound). When set,
-        ``t = ctx.decision_count + 1`` -- the number of evaluation plans
-        :class:`~saealib.stages.EvaluationPlanStage` has confirmed so far,
-        plus one for the decision about to be made -- and
+        ``t = ctx.decision_count + 1`` -- the number of genuinely new
+        evaluation plans the runtime has confirmed so far (synchronous or
+        async), plus one for the decision about to be made -- and
         ``kappa_t = sqrt(schedule(t))`` replaces the fixed ``kappa``. This
         makes ``t`` one full round in the cited paper's sense only under
         synchronous, single-point-per-decision execution; see
@@ -218,17 +218,22 @@ def gp_ucb_beta_schedule(
     """
     Return the finite-domain GP-UCB ``beta_t`` schedule for use with ``beta_schedule``.
 
-    ``beta_t = 2 log(domain_size * t^2 * pi^2 / (6 * delta))``, the schedule
-    the cited regret bound uses for a finite search domain of size
-    ``domain_size`` :cite:`srinivas2012gpucb`. For a continuous domain,
-    ``domain_size`` is a discretization-count proxy supplied by the caller;
-    this function does not derive one.
+    Implements the finite-domain schedule
+    ``beta_t = 2 log(domain_size * t^2 * pi^2 / (6 * delta))``
+    :cite:`srinivas2012gpucb`, where ``domain_size`` is the cardinality
+    ``|D|`` of a finite decision set. This helper does not implement the
+    cited paper's separate continuous-domain schedule (a different
+    formula, for a compact domain). Passing a ``domain_size`` for a
+    continuous search space only substitutes a number into this
+    finite-domain formula; it does not by itself grant the finite-domain
+    theorem's regret guarantee -- see the "GP-UCB" algorithm page in the
+    docs for the additional conditions that requires.
 
     Parameters
     ----------
     domain_size : int
-        Size of the (possibly discretized) search domain (``|D|`` in the
-        cited bound). Must be an int and positive.
+        Cardinality ``|D|`` of the finite decision set (the cited bound's
+        ``|D|``). Must be an int and positive.
     delta : float
         Confidence parameter. Must satisfy ``0 < delta < 1``. Default: 0.1.
 
