@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.acquisition.lcb &#8212; saealib 0.1.0b5.dev82+ga38da46e2 documentation</title>
+    <title>saealib.acquisition.lcb &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=0b801eb7"></script>
+    <script src="../../../_static/documentation_options.js?v=8506a0c3"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -960,15 +960,20 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PointwiseAcquisition</span><span class="p">,</span> <span class="n">direction_to_minimize_sign</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">lower_confidence_bound_kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogatePrediction</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span>
 
 
@@ -992,11 +997,23 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    kappa : float</span>
-<span class="sd">        Exploration-exploitation trade-off parameter. Higher values</span>
-<span class="sd">        encourage more exploration. Default: 2.0.</span>
+<span class="sd">        Exploration-exploitation trade-off parameter used when</span>
+<span class="sd">        ``beta_schedule`` is ``None``. Higher values encourage more</span>
+<span class="sd">        exploration. Default: 2.0.</span>
 <span class="sd">    obj_idx : int</span>
 <span class="sd">        Index of the objective to optimize. Used for multi-objective</span>
 <span class="sd">        problems where LCB is applied to a single objective. Default: 0.</span>
+<span class="sd">    beta_schedule : callable or None</span>
+<span class="sd">        Optional ``beta_t`` schedule ``schedule(t) -&gt; float`` (``kappa``</span>
+<span class="sd">        corresponds to ``sqrt(beta_t)`` in the cited bound). When set,</span>
+<span class="sd">        ``t = ctx.decision_count + 1`` -- the number of genuinely new</span>
+<span class="sd">        evaluation plans the runtime has confirmed so far (synchronous or</span>
+<span class="sd">        async), plus one for the decision about to be made -- and</span>
+<span class="sd">        ``kappa_t = sqrt(schedule(t))`` replaces the fixed ``kappa``. This</span>
+<span class="sd">        makes ``t`` one full round in the cited paper&#39;s sense only under</span>
+<span class="sd">        synchronous, single-point-per-decision execution; see</span>
+<span class="sd">        :func:`gp_ucb_beta_schedule`. ``None`` (default) keeps ``kappa``</span>
+<span class="sd">        fixed.</span>
 <span class="sd">    direction : np.ndarray or None</span>
 <span class="sd">        Per-objective optimization direction (+1 = maximize, -1 = minimize).</span>
 <span class="sd">        shape: (n_obj,). The predicted mean is converted to minimize-space</span>
@@ -1020,12 +1037,12 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">kappa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
         <span class="n">obj_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">reference</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">beta_schedule</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">kappa</span> <span class="o">=</span> <span class="n">kappa</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span> <span class="o">=</span> <span class="n">obj_idx</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta_schedule</span> <span class="o">=</span> <span class="n">beta_schedule</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">direction</span> <span class="o">=</span> <span class="n">direction</span></div>
 
 
@@ -1034,8 +1051,54 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_reference</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return fixed reference if set, otherwise None.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span></div>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;LowerConfidenceBound uses no reference value; always returns None.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="LowerConfidenceBound.prepare">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.LowerConfidenceBound.html#saealib.LowerConfidenceBound.prepare">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve the ``beta_schedule``-driven ``kappa`` for this decision, if set.</span>
+
+<span class="sd">        Overrides :meth:`PointwiseAcquisition.prepare` (rather than only</span>
+<span class="sd">        ``compute_reference()``) because resolving ``beta_schedule`` needs</span>
+<span class="sd">        ``ctx.decision_count``, which ``compute_reference()`` has no access</span>
+<span class="sd">        to. When ``beta_schedule`` is ``None``, delegates to</span>
+<span class="sd">        ``compute_reference()`` unchanged.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Any</span>
+<span class="sd">            ``None`` when ``beta_schedule`` is unset; otherwise the resolved</span>
+<span class="sd">            ``kappa_t`` float, passed to :meth:`score` as ``reference``.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValidationError</span>
+<span class="sd">            If ``beta_schedule`` is set but ``ctx`` is ``None`` (``t`` has no</span>
+<span class="sd">            source). Call via ``evaluate()`` with a real ``ctx``, not</span>
+<span class="sd">            ``score()`` directly.</span>
+<span class="sd">            If ``beta_schedule`` returns a non-finite or negative value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_schedule</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_reference</span><span class="p">(</span>
+                <span class="n">archive</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">rng</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;LowerConfidenceBound.beta_schedule requires ctx.decision_count; &quot;</span>
+                <span class="s2">&quot;call evaluate() with a real OptimizationState, not score() &quot;</span>
+                <span class="s2">&quot;directly with no ctx.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">decision_count</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_schedule</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="ow">or</span> <span class="n">beta</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;LowerConfidenceBound.beta_schedule(</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">) returned </span><span class="si">{</span><span class="n">beta</span><span class="si">!r}</span><span class="s2">; &quot;</span>
+                <span class="s2">&quot;expected a finite, non-negative beta_t.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LowerConfidenceBound.score">
@@ -1054,7 +1117,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        prediction : SurrogatePrediction</span>
 <span class="sd">            Surrogate predictions. Must have std (has_uncertainty == True).</span>
 <span class="sd">        reference : Any</span>
-<span class="sd">            Not used. Accepted for interface compatibility.</span>
+<span class="sd">            The ``kappa_t`` resolved by :meth:`prepare` when ``beta_schedule``</span>
+<span class="sd">            is set (``None`` otherwise). Passing ``None`` here while</span>
+<span class="sd">            ``beta_schedule`` is set is a caller error (see raises below);</span>
+<span class="sd">            it never silently falls back to the fixed ``kappa``.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -1065,6 +1131,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ------</span>
 <span class="sd">        TypeError</span>
 <span class="sd">            If prediction does not contain uncertainty estimates.</span>
+<span class="sd">        ValidationError</span>
+<span class="sd">            If ``beta_schedule`` is set but ``reference`` is ``None`` (i.e.</span>
+<span class="sd">            ``score()`` was called directly, bypassing ``prepare()``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">prediction</span><span class="o">.</span><span class="n">has_uncertainty</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
@@ -1072,12 +1141,92 @@ window.runMermaid = runMermaid;</script>
                 <span class="s2">&quot;estimates (prediction.std must not be None).&quot;</span>
             <span class="p">)</span>
         <span class="k">assert</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta_schedule</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="s2">&quot;LowerConfidenceBound.beta_schedule is set but score() was &quot;</span>
+                    <span class="s2">&quot;called without a prepare()-resolved reference; call &quot;</span>
+                    <span class="s2">&quot;evaluate() with a real ctx, not score() directly.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">kappa</span> <span class="o">=</span> <span class="n">reference</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kappa</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kappa</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">direction_to_minimize_sign</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
         <span class="n">s_idx</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="k">else</span> <span class="n">s</span>
         <span class="n">mu</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">value</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">s_idx</span>  <span class="c1"># (n_samples,)</span>
         <span class="n">sigma</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">std</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_idx</span><span class="p">]</span>  <span class="c1"># (n_samples,)</span>
-        <span class="k">return</span> <span class="o">-</span><span class="n">lower_confidence_bound_kernel</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kappa</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="o">-</span><span class="n">lower_confidence_bound_kernel</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">kappa</span><span class="p">)</span></div>
 </div>
+
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_GPUCBBetaSchedule</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Picklable ``t -&gt; beta_t`` callable for the finite-domain GP-UCB bound.&quot;&quot;&quot;</span>
+
+    <span class="n">domain_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;gp_ucb_beta_schedule: domain_size must be an int&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;gp_ucb_beta_schedule: domain_size must be positive&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mf">0.0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;gp_ucb_beta_schedule: delta must satisfy 0 &lt; delta &lt; 1&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;gp_ucb_beta_schedule: t must be an int&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;gp_ucb_beta_schedule: t must be &gt;= 1&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_size</span> <span class="o">*</span> <span class="n">t</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mf">6.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="gp_ucb_beta_schedule">
+<a class="viewcode-back" href="../../../api/acquisition.html#saealib.gp_ucb_beta_schedule">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gp_ucb_beta_schedule</span><span class="p">(</span>
+    <span class="n">domain_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the finite-domain GP-UCB ``beta_t`` schedule for use with ``beta_schedule``.</span>
+
+<span class="sd">    Implements the finite-domain schedule</span>
+<span class="sd">    ``beta_t = 2 log(domain_size * t^2 * pi^2 / (6 * delta))``</span>
+<span class="sd">    :cite:`srinivas2012gpucb`, where ``domain_size`` is the cardinality</span>
+<span class="sd">    ``|D|`` of a finite decision set. This helper does not implement the</span>
+<span class="sd">    cited paper&#39;s separate continuous-domain schedule (a different</span>
+<span class="sd">    formula, for a compact domain). Passing a ``domain_size`` for a</span>
+<span class="sd">    continuous search space only substitutes a number into this</span>
+<span class="sd">    finite-domain formula; it does not by itself grant the finite-domain</span>
+<span class="sd">    theorem&#39;s regret guarantee -- see the &quot;GP-UCB&quot; algorithm page in the</span>
+<span class="sd">    docs for the additional conditions that requires.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    domain_size : int</span>
+<span class="sd">        Cardinality ``|D|`` of the finite decision set (the cited bound&#39;s</span>
+<span class="sd">        ``|D|``). Must be an int and positive.</span>
+<span class="sd">    delta : float</span>
+<span class="sd">        Confidence parameter. Must satisfy ``0 &lt; delta &lt; 1``. Default: 0.1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    callable</span>
+<span class="sd">        A picklable ``schedule(t) -&gt; float``, increasing in the round index</span>
+<span class="sd">        ``t`` (``t`` must be an int starting at 1; raises</span>
+<span class="sd">        :class:`~saealib.exceptions.ValidationError` for a non-integer ``t``</span>
+<span class="sd">        or ``t &lt; 1``).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValidationError</span>
+<span class="sd">        If ``domain_size`` is not an int or positive, or ``delta`` is not in</span>
+<span class="sd">        ``(0, 1)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_GPUCBBetaSchedule</span><span class="p">(</span><span class="n">domain_size</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span></div>
 
 </pre></div>
 

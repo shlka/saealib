@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>AcquisitionFunction &#8212; saealib 0.1.0b5.dev82+ga38da46e2 documentation</title>
+    <title>AcquisitionFunction &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0b801eb7"></script>
+    <script src="../../_static/documentation_options.js?v=8506a0c3"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -600,6 +600,7 @@ For pointwise criteria, the <code class="docutils literal notranslate"><span cla
 An acquisition function that doesn’t use a reference value may return <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">score(prediction,</span> <span class="pre">reference,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></strong>: On <code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code>, computes a score from <code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code> and the reference value.
 As with saealib’s overall convention, a higher score is better.</p>
+<p><code class="docutils literal notranslate"><span class="pre">compute_reference()</span></code> receives no <code class="docutils literal notranslate"><span class="pre">ctx</span></code>, so a subclass that needs runtime state (such as <code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code>’s optional <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code>, which reads <code class="docutils literal notranslate"><span class="pre">ctx.decision_count</span></code>) overrides <code class="docutils literal notranslate"><span class="pre">prepare(archive,</span> <span class="pre">ctx=None)</span></code> directly instead; whatever it returns still flows into <code class="docutils literal notranslate"><span class="pre">score()</span></code> as <code class="docutils literal notranslate"><span class="pre">reference</span></code>.</p>
 <p>The class attribute <code class="docutils literal notranslate"><span class="pre">requires_uncertainty:</span> <span class="pre">bool</span></code> indicates whether this acquisition function needs <code class="docutils literal notranslate"><span class="pre">SurrogatePrediction.std</span></code> (uncertainty).
 <code class="docutils literal notranslate"><span class="pre">direction_sensitive:</span> <span class="pre">bool</span></code> (default <code class="docutils literal notranslate"><span class="pre">True</span></code>) indicates whether <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> automatically injects <code class="docutils literal notranslate"><span class="pre">problem.direction</span></code> into this acquisition function at the start of a run.
 Acquisition functions with no notion of objective direction, such as feasibility probability, set <code class="docutils literal notranslate"><span class="pre">direction_sensitive</span> <span class="pre">=</span> <span class="pre">False</span></code> to disable this auto-injection.</p>
@@ -752,6 +753,7 @@ This warning will catch you if you pair an acquisition function with <code class
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.ParEGOAcquisition.html#saealib.ParEGOAcquisition" title="saealib.ParEGOAcquisition"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ParEGOAcquisition</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility" title="saealib.ProbabilityOfFeasibility"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ProbabilityOfFeasibility</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility" title="saealib.ProductOfFeasibility"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ProductOfFeasibility</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/acquisition.html#saealib.gp_ucb_beta_schedule" title="saealib.gp_ucb_beta_schedule"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.gp_ucb_beta_schedule()</span></code></a></p></li>
 </ul>
 </section>
 </section>

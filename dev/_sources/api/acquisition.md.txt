@@ -33,3 +33,7 @@ related_layers: [layer3]
    saealib.ParEGOAcquisition
    saealib.SMSEGOAcquisition
 ```
+
+```{eval-rst}
+.. autofunction:: saealib.gp_ucb_beta_schedule
+```

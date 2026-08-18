@@ -19,6 +19,8 @@ An acquisition function that doesn't use a reference value may return `None`.
 **`score(prediction, reference, rng=None) -> np.ndarray`**: On `PointwiseAcquisition`, computes a score from `SurrogatePrediction` and the reference value.
 As with saealib's overall convention, a higher score is better.
 
+`compute_reference()` receives no `ctx`, so a subclass that needs runtime state (such as `LowerConfidenceBound`'s optional `beta_schedule`, which reads `ctx.decision_count`) overrides `prepare(archive, ctx=None)` directly instead; whatever it returns still flows into `score()` as `reference`.
+
 The class attribute `requires_uncertainty: bool` indicates whether this acquisition function needs `SurrogatePrediction.std` (uncertainty).
 `direction_sensitive: bool` (default `True`) indicates whether `Optimizer` automatically injects `problem.direction` into this acquisition function at the start of a run.
 Acquisition functions with no notion of objective direction, such as feasibility probability, set `direction_sensitive = False` to disable this auto-injection.
@@ -127,3 +129,4 @@ This warning will catch you if you pair an acquisition function with `requires_u
 - {py:class}`saealib.ParEGOAcquisition`
 - {py:class}`saealib.ProbabilityOfFeasibility`
 - {py:class}`saealib.ProductOfFeasibility`
+- {py:func}`saealib.gp_ucb_beta_schedule`

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>獲得関数 &#8212; saealib 0.1.0b5.dev82+ga38da46e2 ドキュメント</title>
+    <title>獲得関数 &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=929aa519"></script>
+    <script src="../../_static/documentation_options.js?v=1c1c1b6d"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -597,6 +597,7 @@
 <p><code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>が実装するメソッドは<code class="docutils literal notranslate"><span class="pre">evaluate(candidates_x,</span> <span class="pre">prediction,</span> <span class="pre">archive,</span> <span class="pre">ctx=None,</span> <span class="pre">*,</span> <span class="pre">prepared=...)</span> <span class="pre">-&gt;</span> <span class="pre">AcquisitionResult</span></code>です。 点ごとの基準には、便利な基底クラス<code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code>がこの処理を2つのメソッドに分けます。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">compute_reference(archive,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">Any</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code>で、スコアリングに使う参照値（現在の最良値など）をアーカイブから計算します。 参照値を使わない獲得関数は<code class="docutils literal notranslate"><span class="pre">None</span></code>を返してよいです。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">score(prediction,</span> <span class="pre">reference,</span> <span class="pre">rng=None)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code>で、<code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code>と参照値からスコアを計算します。 saealib全体の規約どおり、スコアは高いほど良いです。</p>
+<p><code class="docutils literal notranslate"><span class="pre">compute_reference()</span></code>は<code class="docutils literal notranslate"><span class="pre">ctx</span></code>を受け取らないため、実行時状態が必要なサブクラス（<code class="docutils literal notranslate"><span class="pre">ctx.decision_count</span></code>を読む<code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code>の <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code>など）は代わりに<code class="docutils literal notranslate"><span class="pre">prepare(archive,</span> <span class="pre">ctx=None)</span></code>を直接オーバーライドします。その戻り値は<code class="docutils literal notranslate"><span class="pre">reference</span></code>として<code class="docutils literal notranslate"><span class="pre">score()</span></code>にそのまま渡されます。</p>
 <p>クラス属性<code class="docutils literal notranslate"><span class="pre">requires_uncertainty:</span> <span class="pre">bool</span></code>は、この獲得関数が<code class="docutils literal notranslate"><span class="pre">SurrogatePrediction.std</span></code>（不確実性）を必要とするかを示します。 <code class="docutils literal notranslate"><span class="pre">direction_sensitive:</span> <span class="pre">bool</span></code>（既定<code class="docutils literal notranslate"><span class="pre">True</span></code>）は、<code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>が実行開始時に<code class="docutils literal notranslate"><span class="pre">problem.direction</span></code>をこの獲得関数へ自動注入する対象かどうかを示します。 実行可能性確率のように目的の方向という概念を持たない獲得関数は、<code class="docutils literal notranslate"><span class="pre">direction_sensitive</span> <span class="pre">=</span> <span class="pre">False</span></code>にしてこの自動注入を無効化します。</p>
 </section>
 <section id="built-in-acquisitionfunctions">
@@ -737,6 +738,7 @@
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.ParEGOAcquisition.html#saealib.ParEGOAcquisition" title="saealib.ParEGOAcquisition"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ParEGOAcquisition</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility" title="saealib.ProbabilityOfFeasibility"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ProbabilityOfFeasibility</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility" title="saealib.ProductOfFeasibility"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ProductOfFeasibility</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/acquisition.html#saealib.gp_ucb_beta_schedule" title="saealib.gp_ucb_beta_schedule"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.gp_ucb_beta_schedule()</span></code></a></p></li>
 </ul>
 </section>
 </section>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.AcquisitionStage &#8212; saealib 0.1.0b5.dev82+ga38da46e2 ドキュメント</title>
+    <title>saealib.AcquisitionStage &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=929aa519"></script>
+    <script src="../../_static/documentation_options.js?v=1c1c1b6d"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -903,11 +903,14 @@
 <p>Reads <code class="docutils literal notranslate"><span class="pre">state.offspring</span></code>/<code class="docutils literal notranslate"><span class="pre">state.predictions</span></code>, writes the resulting
 score array to <code class="docutils literal notranslate"><span class="pre">state.scores</span></code>.</p>
 <p>Caches <code class="docutils literal notranslate"><span class="pre">acquisition.prepare()</span></code>'s result per <code class="docutils literal notranslate"><span class="pre">(acquisition</span> <span class="pre">instance</span>
-<span class="pre">identity,</span> <span class="pre">generation,</span> <span class="pre">archive.value_version,</span> <span class="pre">archive.structure_version)</span></code>
-A stage instance running the same acquisition
-against an unchanged archive within one generation does not recompute the
-reference, while a mid-generation archive append (structure_version bump)
-or value-only mutation (value_version bump) correctly invalidates it.</p>
+<span class="pre">identity,</span> <span class="pre">generation,</span> <span class="pre">decision_count,</span> <span class="pre">archive.value_version,</span>
+<span class="pre">archive.structure_version)</span></code>. A stage instance running the same
+acquisition against an unchanged archive within one generation does not
+recompute the reference, while a mid-generation archive append
+(structure_version bump), value-only mutation (value_version bump), or a
+newly confirmed evaluation plan (<code class="docutils literal notranslate"><span class="pre">decision_count</span></code> bump -- relevant to
+async steady-state refill, where <code class="docutils literal notranslate"><span class="pre">gen</span></code> can stay fixed across several
+confirmed plans) correctly invalidates it.</p>
 <p>Empty candidate input (<code class="docutils literal notranslate"><span class="pre">len(state.offspring)</span> <span class="pre">==</span> <span class="pre">0</span></code>) skips straight to
 an empty <code class="docutils literal notranslate"><span class="pre">AcquisitionResult</span></code> without touching the cache or calling
 <code class="docutils literal notranslate"><span class="pre">prepare()</span></code>/<code class="docutils literal notranslate"><span class="pre">evaluate()</span></code>, so it never advances RNG state.</p>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>獲得関数 &#8212; saealib 0.1.0b5.dev82+ga38da46e2 ドキュメント</title>
+    <title>獲得関数 &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=929aa519"></script>
+    <script src="../_static/documentation_options.js?v=1c1c1b6d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -940,6 +940,30 @@
 </tbody>
 </table>
 </div>
+<dl class="py function">
+<dt class="sig sig-object py" id="saealib.gp_ucb_beta_schedule">
+<span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">gp_ucb_beta_schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saealib/acquisition/lcb.html#gp_ucb_beta_schedule"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.gp_ucb_beta_schedule" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code>に渡す、有限領域向けGP-UCBの<code class="docutils literal notranslate"><span class="pre">beta_t</span></code>スケジュールを返します。</p>
+<p>有限の意思決定集合向けのスケジュール<code class="docutils literal notranslate"><span class="pre">beta_t</span> <span class="pre">=</span> <span class="pre">2</span> <span class="pre">log(domain_size</span> <span class="pre">*</span> <span class="pre">t^2</span> <span class="pre">*</span> <span class="pre">pi^2</span> <span class="pre">/</span> <span class="pre">(6</span> <span class="pre">*</span> <span class="pre">delta))</span></code>を実装します :cite:<code class="docutils literal notranslate"><span class="pre">srinivas2012gpucb</span></code>。ここで <code class="docutils literal notranslate"><span class="pre">domain_size</span></code>は有限の意思決定集合の要素数<code class="docutils literal notranslate"><span class="pre">|D|</span></code>です。このヘルパーは、引用文献にある連続領域向けの別のスケジュール（コンパクト領域を対象とする異なる式）を実装しません。連続探索空間に<code class="docutils literal notranslate"><span class="pre">domain_size</span></code>を渡しても、この有限領域向けの式に数値を代入するだけであり、それだけで有限領域定理の後悔保証が得られるわけではありません。その保証に必要な追加条件については、ドキュメントの「GP-UCB」アルゴリズムページを参照してください。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>domain_size</strong> (<em>int</em>) -- 有限の意思決定集合の要素数<code class="docutils literal notranslate"><span class="pre">|D|</span></code>（引用文献の上界における<code class="docutils literal notranslate"><span class="pre">|D|</span></code>）。int型で正の値でなければなりません。</p></li>
+<li><p><strong>delta</strong> (<em>float</em>) -- 信頼度パラメータ。<code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">&lt;</span> <span class="pre">delta</span> <span class="pre">&lt;</span> <span class="pre">1</span></code>を満たさなければなりません。既定値は0.1。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>pickle可能な<code class="docutils literal notranslate"><span class="pre">schedule(t)</span> <span class="pre">-&gt;</span> <span class="pre">float</span></code>。反復回数<code class="docutils literal notranslate"><span class="pre">t</span></code>（int型、1始まり）に対して増加します。<code class="docutils literal notranslate"><span class="pre">t</span></code>が整数でない場合、または<code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">&lt;</span> <span class="pre">1</span></code>の場合は :class:<code class="docutils literal notranslate"><span class="pre">~saealib.exceptions.ValidationError</span></code> を送出します。</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>callable</p>
+</dd>
+<dt class="field-even">例外<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="_autosummary/saealib.ValidationError.html#saealib.ValidationError" title="saealib.ValidationError"><strong>ValidationError</strong></a> -- <code class="docutils literal notranslate"><span class="pre">domain_size</span></code>がint型でない場合、または正でない場合、あるいは<code class="docutils literal notranslate"><span class="pre">delta</span></code>が<code class="docutils literal notranslate"><span class="pre">(0,</span> <span class="pre">1)</span></code>の範囲外の場合。</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -991,7 +1015,10 @@
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#base">基底</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementations">実装</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementations">実装</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.gp_ucb_beta_schedule"><code class="docutils literal notranslate"><span class="pre">gp_ucb_beta_schedule()</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

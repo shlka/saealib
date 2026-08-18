@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.EvaluationPlanStage &#8212; saealib 0.1.0b5.dev82+ga38da46e2 documentation</title>
+    <title>saealib.EvaluationPlanStage &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0b801eb7"></script>
+    <script src="../../_static/documentation_options.js?v=8506a0c3"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -899,6 +899,16 @@
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">EvaluationPlanStage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_eval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/stages.html#EvaluationPlanStage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.EvaluationPlanStage" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="saealib.Stage.html#saealib.Stage" title="saealib.pipeline.Stage"><code class="xref py py-class docutils literal notranslate"><span class="pre">Stage</span></code></a></p>
 <p>Create an owned request and pending record.</p>
+<p>Increments <code class="docutils literal notranslate"><span class="pre">state.decision_count</span></code> by exactly one whenever a genuinely
+new plan is confirmed (the branch that calls the planner and builds
+<code class="docutils literal notranslate"><span class="pre">pending_evaluations</span></code>), never on a continuation of an already-pending
+multi-request plan. One decision covers the whole confirmed
+<code class="docutils literal notranslate"><span class="pre">EvaluationPlan</span></code>, however many candidates its requests evaluate.
+<code class="docutils literal notranslate"><span class="pre">decision_count</span></code> counts a genuinely new evaluation plan confirmed by
+the runtime regardless of execution mode: this method increments it for
+synchronous execution; <a class="reference internal" href="saealib.AsyncEvaluationSubmitStage.html#saealib.AsyncEvaluationSubmitStage" title="saealib.AsyncEvaluationSubmitStage"><code class="xref py py-class docutils literal notranslate"><span class="pre">AsyncEvaluationSubmitStage</span></code></a> (which
+<a class="reference internal" href="#saealib.EvaluationPlanStage.execute_async" title="saealib.EvaluationPlanStage.execute_async"><code class="xref py py-meth docutils literal notranslate"><span class="pre">execute_async()</span></code></a> delegates to) increments it the same way for
+async/steady-state execution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>planner</strong> (<a class="reference internal" href="saealib.EvaluationPlanner.html#saealib.EvaluationPlanner" title="saealib.EvaluationPlanner"><em>EvaluationPlanner</em></a><em> | </em><em>None</em>)</p>

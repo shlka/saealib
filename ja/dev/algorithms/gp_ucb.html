@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>GP-UCB（ガウス過程上側信頼限界） &#8212; saealib 0.1.0b5.dev82+ga38da46e2 ドキュメント</title>
+    <title>GP-UCB（ガウス過程上側信頼限界） &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=929aa519"></script>
+    <script src="../_static/documentation_options.js?v=1c1c1b6d"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1110,15 +1110,39 @@ window.runMermaid = runMermaid;</script>
 </section>
 <section id="differences-from-the-source">
 <h2>文献との差分<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
-<p>GP-UCBの原法は反復ごとにUCB最大点を求めます。saealibでは<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成した候補プールからUCB上位候補を選び、<code class="docutils literal notranslate"><span class="pre">argmax</span> <span class="pre">UCB</span></code>を近似します。<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code>により複数候補をまとめて真の評価に回せます。<code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound.kappa</span></code>は固定値で、原法の反復数に応じた<span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span>スケジュールは実装しません。有限集合<span class="math notranslate nohighlight">\(D\)</span>では、原法は累積リグレットの理論上限のため次の<span class="math notranslate nohighlight">\(\beta_t\)</span>を選びます。</p>
+<p>GP-UCBの原法は反復ごとにUCB最大点を求めます。saealibは<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成した候補プールからUCB上位候補を選ぶことで、この<code class="docutils literal notranslate"><span class="pre">argmax</span> <span class="pre">UCB</span></code>を近似します。<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code>は、選ばれた候補の複数個をまとめて真の評価に回します。</p>
+<p>有限集合<span class="math notranslate nohighlight">\(D\)</span>の場合、原法は累積リグレットの理論的上限を得るために、反復回数<span class="math notranslate nohighlight">\(t\)</span>に対して対数的に増加する次の<span class="math notranslate nohighlight">\(\beta_t\)</span>を選びます。</p>
 <div class="math notranslate nohighlight">
 \[::\]</div>
-<p>この式では<span class="math notranslate nohighlight">\(t\)</span>に伴って探索の重みが対数的に増加します。 原論文は実験で、理論上のスケジュールをそのまま使うと探索的すぎるため、交差検証で係数を1/5に縮小した方がよい場合も報告しています。 saealibの既定値<code class="docutils literal notranslate"><span class="pre">kappa=2.0</span></code>は、<span class="math notranslate nohighlight">\(\beta_t=4.0\)</span>に相当する固定値です。 固定<code class="docutils literal notranslate"><span class="pre">kappa</span></code>は理論上のリグレット保証を持つスケジュールではありません。 コード例の交叉、突然変異、親選択、環境選択の組み合わせはGP-UCBの定義に含まれないため、saealibでの一例です。</p>
+<p>原論文は、理論どおりのスケジュールをそのまま使うと探索的すぎる場合があるとして、係数を交差検証で1/5に縮小した方がよい結果を報告しています。saealibの既定値（<code class="docutils literal notranslate"><span class="pre">kappa=2.0</span></code>、<span class="math notranslate nohighlight">\(t\)</span>によらず固定）はこのスケジュールに従わず、この保証を持ちません。</p>
 </section>
 <section id="parameters-and-variants">
 <h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
 <p><strong>κ（探索と活用のトレードオフ）</strong>：<code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound(kappa=...)</span></code>で調整します。既定値は<code class="docutils literal notranslate"><span class="pre">2.0</span></code>。</p>
-<p><code class="docutils literal notranslate"><span class="pre">kappa</span></code>を<span class="math notranslate nohighlight">\(t\)</span>に応じて動的に変更する場合は、世代コールバックからオプティマイザーの獲得関数を更新します。</p>
+<p><strong>β_tスケジュール</strong>：固定<code class="docutils literal notranslate"><span class="pre">kappa</span></code>の代わりに<code class="docutils literal notranslate"><span class="pre">beta_schedule=gp_ucb_beta_schedule(domain_size,</span> <span class="pre">delta)</span></code>を渡すと、「文献との差分」節の<span class="math notranslate nohighlight">\(\beta_t\)</span>の式を再現します。<code class="docutils literal notranslate"><span class="pre">domain_size</span></code>は有限の意思決定集合の要素数<span class="math notranslate nohighlight">\(|D|\)</span>であり、saealibの連続探索空間に対する離散化点数の代理値ではありません（以下を参照）。<code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">ctx.decision_count</span> <span class="pre">+</span> <span class="pre">1</span></code>で、これはランタイムがこれまでに（同期または非同期で）確定した新規の評価計画の数に、これから下す決定の分の1を加えた値です。確定した評価計画1件が何個の候補を評価するかによらず1決定として数えるため、この例の<code class="docutils literal notranslate"><span class="pre">GA</span></code>＋<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>構成では、<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>が1世代につき複数候補を選ぶ場合に<code class="docutils literal notranslate"><span class="pre">t</span></code>は論文の観測ごとの反復回数と一致しません。<code class="docutils literal notranslate"><span class="pre">t</span></code>が論文の反復回数と一致するのは、確定した評価計画がすべて1候補だけを評価する場合（同期実行、1決定につき1回の真の評価）に限られますが、<code class="docutils literal notranslate"><span class="pre">t</span></code>が一致するだけでは引用文献のリグレット上限は再現されません。定理1は、実際の有限集合<span class="math notranslate nohighlight">\(D\)</span>上で<span class="math notranslate nohighlight">\(\mu_{t-1}(x) + \sqrt{\beta_t}\,\sigma_{t-1}(x)\)</span>を網羅的に最適化することを仮定しています。saealibの<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成する候補プールは、各世代で再サンプリングされた部分集合上でこのargmaxを近似するだけであり、<code class="docutils literal notranslate"><span class="pre">gp_ucb_beta_schedule(domain_size=...)</span></code>に整数を渡しても連続探索空間がその有限集合<span class="math notranslate nohighlight">\(D\)</span>になるわけではなく、式に数値を代入するだけです。定理の保証を再現するには、文字どおりの有限集合<span class="math notranslate nohighlight">\(D\)</span>上で網羅的に最適化するコンポーネント（saealib組み込みの<code class="docutils literal notranslate"><span class="pre">GA</span></code>/<code class="docutils literal notranslate"><span class="pre">PSO</span></code>アルゴリズムには含まれません）に加え、論文のノイズとカーネルの仮定に一致するGPモデルが必要です。saealibはそのようなコンポーネントを提供していません。したがって、以下の表は各設定における<code class="docutils literal notranslate"><span class="pre">t</span></code>と<code class="docutils literal notranslate"><span class="pre">kappa</span></code>の挙動だけを示すものであり、引用文献のリグレット上限が成り立つかどうかを示すものではありません。</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>設定</p></th>
+<th class="head"><p>使用する<code class="docutils literal notranslate"><span class="pre">kappa</span></code></p></th>
+<th class="head"><p>論文の反復回数に対する<code class="docutils literal notranslate"><span class="pre">t</span></code></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">beta_schedule=None</span></code>（既定）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">2.0</span></code>固定</p></td>
+<td><p>該当なし（スケジュールなし、リグレット保証もまったくなし）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">beta_schedule=gp_ucb_beta_schedule(domain_size,</span> <span class="pre">delta)</span></code>、バッチ決定</p></td>
+<td><p>上記スケジュールに基づく<span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">t</span></code>が観測数を過小に数える</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">beta_schedule=gp_ucb_beta_schedule(domain_size,</span> <span class="pre">delta)</span></code>、1決定1候補</p></td>
+<td><p>上記スケジュールに基づく<span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span></p></td>
+<td><p>一致</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 </section>
 <section id="related">
 <h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>

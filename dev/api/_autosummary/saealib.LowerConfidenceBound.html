@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.LowerConfidenceBound &#8212; saealib 0.1.0b5.dev82+ga38da46e2 documentation</title>
+    <title>saealib.LowerConfidenceBound &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0b801eb7"></script>
+    <script src="../../_static/documentation_options.js?v=8506a0c3"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -896,7 +896,7 @@
 <h1>saealib.LowerConfidenceBound<a class="headerlink" href="#saealib-lowerconfidencebound" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.LowerConfidenceBound">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">LowerConfidenceBound</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kappa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/acquisition/lcb.html#LowerConfidenceBound"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.LowerConfidenceBound" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">LowerConfidenceBound</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kappa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta_schedule</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/acquisition/lcb.html#LowerConfidenceBound"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.LowerConfidenceBound" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PointwiseAcquisition</span></code></p>
 <p>Lower Confidence Bound (LCB) acquisition function.</p>
 <p>LCB trades off exploitation (low predicted mean) and exploration
@@ -911,16 +911,26 @@ consistent with the convention used by other acquisition functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kappa</strong> (<em>float</em>) – Exploration-exploitation trade-off parameter. Higher values
-encourage more exploration. Default: 2.0.</p></li>
+<li><p><strong>kappa</strong> (<em>float</em>) – Exploration-exploitation trade-off parameter used when
+<code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>. Higher values encourage more
+exploration. Default: 2.0.</p></li>
 <li><p><strong>obj_idx</strong> (<em>int</em>) – Index of the objective to optimize. Used for multi-objective
 problems where LCB is applied to a single objective. Default: 0.</p></li>
+<li><p><strong>beta_schedule</strong> (<em>callable</em><em> or </em><em>None</em>) – Optional <code class="docutils literal notranslate"><span class="pre">beta_t</span></code> schedule <code class="docutils literal notranslate"><span class="pre">schedule(t)</span> <span class="pre">-&gt;</span> <span class="pre">float</span></code> (<code class="docutils literal notranslate"><span class="pre">kappa</span></code>
+corresponds to <code class="docutils literal notranslate"><span class="pre">sqrt(beta_t)</span></code> in the cited bound). When set,
+<code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">ctx.decision_count</span> <span class="pre">+</span> <span class="pre">1</span></code> – the number of genuinely new
+evaluation plans the runtime has confirmed so far (synchronous or
+async), plus one for the decision about to be made – and
+<code class="docutils literal notranslate"><span class="pre">kappa_t</span> <span class="pre">=</span> <span class="pre">sqrt(schedule(t))</span></code> replaces the fixed <code class="docutils literal notranslate"><span class="pre">kappa</span></code>. This
+makes <code class="docutils literal notranslate"><span class="pre">t</span></code> one full round in the cited paper’s sense only under
+synchronous, single-point-per-decision execution; see
+<a class="reference internal" href="../acquisition.html#saealib.gp_ucb_beta_schedule" title="saealib.gp_ucb_beta_schedule"><code class="xref py py-func docutils literal notranslate"><span class="pre">gp_ucb_beta_schedule()</span></code></a>. <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) keeps <code class="docutils literal notranslate"><span class="pre">kappa</span></code>
+fixed.</p></li>
 <li><p><strong>direction</strong> (<em>np.ndarray</em><em> or </em><em>None</em>) – Per-objective optimization direction (+1 = maximize, -1 = minimize).
 shape: (n_obj,). The predicted mean is converted to minimize-space
 via <code class="docutils literal notranslate"><span class="pre">direction_to_minimize_sign</span></code> before the (minimize-only) LCB
 formula above runs. <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) means already-minimize; when
 unset, it is auto-injected from <code class="docutils literal notranslate"><span class="pre">problem.direction</span></code> at run start.</p></li>
-<li><p><strong>reference</strong> (<em>Any</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -938,7 +948,7 @@ Information Theory</em>, 58(5), 3250-3265.</p>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.LowerConfidenceBound.compute_reference" title="saealib.LowerConfidenceBound.compute_reference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_reference</span></code></a></p></td>
-<td><p>Return fixed reference if set, otherwise None.</p></td>
+<td><p>LowerConfidenceBound uses no reference value; always returns None.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.LowerConfidenceBound.contract" title="saealib.LowerConfidenceBound.contract"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contract</span></code></a></p></td>
 <td><p>Return the pointwise acquisition contract.</p></td>
@@ -947,7 +957,7 @@ Information Theory</em>, 58(5), 3250-3265.</p>
 <td><p>Reject <code class="docutils literal notranslate"><span class="pre">prediction</span> <span class="pre">is</span> <span class="pre">None</span></code>, resolve the reference, then <code class="docutils literal notranslate"><span class="pre">score()</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.LowerConfidenceBound.prepare" title="saealib.LowerConfidenceBound.prepare"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare</span></code></a></p></td>
-<td><p>Delegate to <code class="docutils literal notranslate"><span class="pre">compute_reference(archive,</span> <span class="pre">rng=ctx.rng</span> <span class="pre">if</span> <span class="pre">ctx</span> <span class="pre">else</span> <span class="pre">None)</span></code>.</p></td>
+<td><p>Resolve the <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code>-driven <code class="docutils literal notranslate"><span class="pre">kappa</span></code> for this decision, if set.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#saealib.LowerConfidenceBound.score" title="saealib.LowerConfidenceBound.score"><code class="xref py py-obj docutils literal notranslate"><span class="pre">score</span></code></a></p></td>
 <td><p>Compute negated LCB scores (higher is better).</p></td>
@@ -958,13 +968,13 @@ Information Theory</em>, 58(5), 3250-3265.</p>
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.LowerConfidenceBound.__init__">
-<span class="sig-prename descclassname"><span class="pre">LowerConfidenceBound.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kappa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/acquisition/lcb.html#LowerConfidenceBound.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.LowerConfidenceBound.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">LowerConfidenceBound.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kappa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta_schedule</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/acquisition/lcb.html#LowerConfidenceBound.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.LowerConfidenceBound.__init__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kappa</strong> (<em>float</em>)</p></li>
 <li><p><strong>obj_idx</strong> (<em>int</em>)</p></li>
-<li><p><strong>reference</strong> (<em>Any</em>)</p></li>
+<li><p><strong>beta_schedule</strong> (<em>Callable</em><em>[</em><em>[</em><em>int</em><em>]</em><em>, </em><em>float</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>direction</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -974,7 +984,7 @@ Information Theory</em>, 58(5), 3250-3265.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.LowerConfidenceBound.compute_reference">
 <span class="sig-prename descclassname"><span class="pre">LowerConfidenceBound.</span></span><span class="sig-name descname"><span class="pre">compute_reference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/acquisition/lcb.html#LowerConfidenceBound.compute_reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.LowerConfidenceBound.compute_reference" title="Link to this definition">#</a></dt>
-<dd><p>Return fixed reference if set, otherwise None.</p>
+<dd><p>LowerConfidenceBound uses no reference value; always returns None.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1024,17 +1034,32 @@ distinction.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.LowerConfidenceBound.prepare">
-<span class="sig-prename descclassname"><span class="pre">LowerConfidenceBound.</span></span><span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.LowerConfidenceBound.prepare" title="Link to this definition">#</a></dt>
-<dd><p>Delegate to <code class="docutils literal notranslate"><span class="pre">compute_reference(archive,</span> <span class="pre">rng=ctx.rng</span> <span class="pre">if</span> <span class="pre">ctx</span> <span class="pre">else</span> <span class="pre">None)</span></code>.</p>
+<span class="sig-prename descclassname"><span class="pre">LowerConfidenceBound.</span></span><span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">archive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/acquisition/lcb.html#LowerConfidenceBound.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.LowerConfidenceBound.prepare" title="Link to this definition">#</a></dt>
+<dd><p>Resolve the <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code>-driven <code class="docutils literal notranslate"><span class="pre">kappa</span></code> for this decision, if set.</p>
+<p>Overrides <code class="xref py py-meth docutils literal notranslate"><span class="pre">PointwiseAcquisition.prepare()</span></code> (rather than only
+<code class="docutils literal notranslate"><span class="pre">compute_reference()</span></code>) because resolving <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code> needs
+<code class="docutils literal notranslate"><span class="pre">ctx.decision_count</span></code>, which <code class="docutils literal notranslate"><span class="pre">compute_reference()</span></code> has no access
+to. When <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, delegates to
+<code class="docutils literal notranslate"><span class="pre">compute_reference()</span></code> unchanged.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>archive</strong> (<a class="reference internal" href="saealib.Archive.html#saealib.Archive" title="saealib.Archive"><em>Archive</em></a>)</p></li>
-<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> | </em><em>None</em>)</p></li>
-</ul>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code> when <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code> is unset; otherwise the resolved
+<code class="docutils literal notranslate"><span class="pre">kappa_t</span></code> float, passed to <a class="reference internal" href="#saealib.LowerConfidenceBound.score" title="saealib.LowerConfidenceBound.score"><code class="xref py py-meth docutils literal notranslate"><span class="pre">score()</span></code></a> as <code class="docutils literal notranslate"><span class="pre">reference</span></code>.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>Any</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="saealib.ValidationError.html#saealib.ValidationError" title="saealib.ValidationError"><strong>ValidationError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code> is set but <code class="docutils literal notranslate"><span class="pre">ctx</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> (<code class="docutils literal notranslate"><span class="pre">t</span></code> has no
+    source). Call via <code class="docutils literal notranslate"><span class="pre">evaluate()</span></code> with a real <code class="docutils literal notranslate"><span class="pre">ctx</span></code>, not
+    <code class="docutils literal notranslate"><span class="pre">score()</span></code> directly.
+    If <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code> returns a non-finite or negative value.</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>archive</strong> (<a class="reference internal" href="saealib.Archive.html#saealib.Archive" title="saealib.Archive"><em>Archive</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<em>OptimizationState</em><em> | </em><em>None</em>)</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -1047,7 +1072,10 @@ distinction.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>prediction</strong> (<a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction"><em>SurrogatePrediction</em></a>) – Surrogate predictions. Must have std (has_uncertainty == True).</p></li>
-<li><p><strong>reference</strong> (<em>Any</em>) – Not used. Accepted for interface compatibility.</p></li>
+<li><p><strong>reference</strong> (<em>Any</em>) – The <code class="docutils literal notranslate"><span class="pre">kappa_t</span></code> resolved by <a class="reference internal" href="#saealib.LowerConfidenceBound.prepare" title="saealib.LowerConfidenceBound.prepare"><code class="xref py py-meth docutils literal notranslate"><span class="pre">prepare()</span></code></a> when <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code>
+is set (<code class="docutils literal notranslate"><span class="pre">None</span></code> otherwise). Passing <code class="docutils literal notranslate"><span class="pre">None</span></code> here while
+<code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code> is set is a caller error (see raises below);
+it never silently falls back to the fixed <code class="docutils literal notranslate"><span class="pre">kappa</span></code>.</p></li>
 <li><p><strong>rng</strong> (<em>Generator</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
@@ -1058,7 +1086,11 @@ distinction.</p>
 <dd class="field-odd"><p>np.ndarray</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>TypeError</strong> – If prediction does not contain uncertainty estimates.</p>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If prediction does not contain uncertainty estimates.</p></li>
+<li><p><a class="reference internal" href="saealib.ValidationError.html#saealib.ValidationError" title="saealib.ValidationError"><strong>ValidationError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code> is set but <code class="docutils literal notranslate"><span class="pre">reference</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> (i.e.
+    <code class="docutils literal notranslate"><span class="pre">score()</span></code> was called directly, bypassing <code class="docutils literal notranslate"><span class="pre">prepare()</span></code>).</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

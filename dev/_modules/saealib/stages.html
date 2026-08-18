@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.stages &#8212; saealib 0.1.0b5.dev82+ga38da46e2 documentation</title>
+    <title>saealib.stages &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=0b801eb7"></script>
+    <script src="../../_static/documentation_options.js?v=8506a0c3"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1033,6 +1033,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">PROPOSALS_OFFSPRING</span><span class="p">,</span>
     <span class="n">RUNTIME_ASYNC_FATAL</span><span class="p">,</span>
     <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">,</span>
+    <span class="n">RUNTIME_DECISION_COUNT</span><span class="p">,</span>
     <span class="n">RUNTIME_GENERATION</span><span class="p">,</span>
     <span class="n">RUNTIME_REQUEST_ID_ALLOCATOR</span><span class="p">,</span>
     <span class="n">RUNTIME_RNG</span><span class="p">,</span>
@@ -1274,6 +1275,7 @@ window.runMermaid = runMermaid;</script>
     <span class="s2">&quot;request_id_allocator&quot;</span><span class="p">:</span> <span class="n">RUNTIME_REQUEST_ID_ALLOCATOR</span><span class="p">,</span>
     <span class="s2">&quot;fe&quot;</span><span class="p">:</span> <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
     <span class="s2">&quot;gen&quot;</span><span class="p">:</span> <span class="n">RUNTIME_GENERATION</span><span class="p">,</span>
+    <span class="s2">&quot;decision_count&quot;</span><span class="p">:</span> <span class="n">RUNTIME_DECISION_COUNT</span><span class="p">,</span>
     <span class="s2">&quot;async_fatal&quot;</span><span class="p">:</span> <span class="n">RUNTIME_ASYNC_FATAL</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">USER_DATA</span><span class="p">,</span>
     <span class="s2">&quot;proposal_id&quot;</span><span class="p">:</span> <span class="n">PROPOSALS_CURRENT</span><span class="p">,</span>
@@ -1756,11 +1758,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    score array to ``state.scores``.</span>
 
 <span class="sd">    Caches ``acquisition.prepare()``&#39;s result per ``(acquisition instance</span>
-<span class="sd">    identity, generation, archive.value_version, archive.structure_version)``</span>
-<span class="sd">    A stage instance running the same acquisition</span>
-<span class="sd">    against an unchanged archive within one generation does not recompute the</span>
-<span class="sd">    reference, while a mid-generation archive append (structure_version bump)</span>
-<span class="sd">    or value-only mutation (value_version bump) correctly invalidates it.</span>
+<span class="sd">    identity, generation, decision_count, archive.value_version,</span>
+<span class="sd">    archive.structure_version)``. A stage instance running the same</span>
+<span class="sd">    acquisition against an unchanged archive within one generation does not</span>
+<span class="sd">    recompute the reference, while a mid-generation archive append</span>
+<span class="sd">    (structure_version bump), value-only mutation (value_version bump), or a</span>
+<span class="sd">    newly confirmed evaluation plan (``decision_count`` bump -- relevant to</span>
+<span class="sd">    async steady-state refill, where ``gen`` can stay fixed across several</span>
+<span class="sd">    confirmed plans) correctly invalidates it.</span>
 
 <span class="sd">    Empty candidate input (``len(state.offspring) == 0``) skips straight to</span>
 <span class="sd">    an empty ``AcquisitionResult`` without touching the cache or calling</span>
@@ -1792,6 +1797,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">SURROGATES_PREDICTIONS</span><span class="p">,</span>
                 <span class="n">ARCHIVES_MAIN</span><span class="p">,</span>
                 <span class="n">RUNTIME_GENERATION</span><span class="p">,</span>
+                <span class="n">RUNTIME_DECISION_COUNT</span><span class="p">,</span>
                 <span class="n">RUNTIME_RNG</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">writes</span><span class="o">=</span><span class="p">(</span><span class="n">SCORES</span><span class="p">,</span> <span class="n">ACQUISITION_RESULT</span><span class="p">),</span>
@@ -1810,11 +1816,11 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_acquisition</span> <span class="o">=</span> <span class="n">acquisition</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cbmanager</span> <span class="o">=</span> <span class="n">cbmanager</span>
         <span class="c1"># Single-entry cache: id(self._acquisition) is constant for the life</span>
-        <span class="c1"># of this stage instance, so only (gen, value_version,</span>
-        <span class="c1"># structure_version) actually varies -- a growing dict would retain</span>
-        <span class="c1"># every past generation&#39;s prepared reference for as long as this</span>
-        <span class="c1"># stage instance is reused.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_prepared_cache_key</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># of this stage instance, so only (gen, decision_count,</span>
+        <span class="c1"># value_version, structure_version) actually varies -- a growing</span>
+        <span class="c1"># dict would retain every past generation&#39;s prepared reference for</span>
+        <span class="c1"># as long as this stage instance is reused.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prepared_cache_key</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_prepared_cache_value</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
@@ -1836,6 +1842,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">key</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_acquisition</span><span class="p">),</span>
                 <span class="n">state</span><span class="o">.</span><span class="n">gen</span><span class="p">,</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">decision_count</span><span class="p">,</span>
                 <span class="n">archive</span><span class="o">.</span><span class="n">value_version</span><span class="p">,</span>
                 <span class="n">archive</span><span class="o">.</span><span class="n">structure_version</span><span class="p">,</span>
             <span class="p">)</span>
@@ -2006,7 +2013,19 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="EvaluationPlanStage">
 <a class="viewcode-back" href="../../api/_autosummary/saealib.EvaluationPlanStage.html#saealib.EvaluationPlanStage">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationPlanStage</span><span class="p">(</span><span class="n">Stage</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an owned request and pending record.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an owned request and pending record.</span>
+
+<span class="sd">    Increments ``state.decision_count`` by exactly one whenever a genuinely</span>
+<span class="sd">    new plan is confirmed (the branch that calls the planner and builds</span>
+<span class="sd">    ``pending_evaluations``), never on a continuation of an already-pending</span>
+<span class="sd">    multi-request plan. One decision covers the whole confirmed</span>
+<span class="sd">    ``EvaluationPlan``, however many candidates its requests evaluate.</span>
+<span class="sd">    ``decision_count`` counts a genuinely new evaluation plan confirmed by</span>
+<span class="sd">    the runtime regardless of execution mode: this method increments it for</span>
+<span class="sd">    synchronous execution; :class:`AsyncEvaluationSubmitStage` (which</span>
+<span class="sd">    :meth:`execute_async` delegates to) increments it the same way for</span>
+<span class="sd">    async/steady-state execution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;evaluation_plan&quot;</span>
     <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Plan evaluation&quot;</span>
@@ -2030,6 +2049,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">SCORES</span><span class="p">,</span>
                 <span class="n">SURROGATES_PREDICTIONS</span><span class="p">,</span>
                 <span class="n">RUNTIME_REQUEST_ID_ALLOCATOR</span><span class="p">,</span>
+                <span class="n">RUNTIME_DECISION_COUNT</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">writes</span><span class="o">=</span><span class="p">(</span>
                 <span class="n">EVALUATION_REQUEST</span><span class="p">,</span>
@@ -2043,6 +2063,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">EVALUATION_HANDLES</span><span class="p">,</span>
                 <span class="n">EVALUATIONS_OWNERS</span><span class="p">,</span>
                 <span class="n">RUNTIME_REQUEST_ID_ALLOCATOR</span><span class="p">,</span>
+                <span class="n">RUNTIME_DECISION_COUNT</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">components</span><span class="o">=</span><span class="p">((</span><span class="s2">&quot;_planner&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_planner</span><span class="p">),),</span>
             <span class="n">reads_enumerable</span><span class="o">=</span><span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_eval</span><span class="p">),</span>
@@ -2135,6 +2156,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">evaluation_update_new_ids</span><span class="o">=</span><span class="p">[],</span>
             <span class="n">evaluation_plan_updates</span><span class="o">=</span><span class="p">{},</span>
             <span class="n">evaluation_new_ids</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+            <span class="n">decision_count</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">decision_count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -2234,6 +2256,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">EVALUATIONS_PENDING</span><span class="p">,</span>
                 <span class="n">EVALUATION_HANDLES</span><span class="p">,</span>
                 <span class="n">RUNTIME_REQUEST_ID_ALLOCATOR</span><span class="p">,</span>
+                <span class="n">RUNTIME_DECISION_COUNT</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">writes</span><span class="o">=</span><span class="p">(</span>
                 <span class="n">EVALUATION_REQUEST</span><span class="p">,</span>
@@ -2242,6 +2265,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">EVALUATIONS_PLAN_UPDATES</span><span class="p">,</span>
                 <span class="n">EVALUATIONS_PENDING</span><span class="p">,</span>
                 <span class="n">RUNTIME_REQUEST_ID_ALLOCATOR</span><span class="p">,</span>
+                <span class="n">RUNTIME_DECISION_COUNT</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">components</span><span class="o">=</span><span class="p">(</span>
                 <span class="p">(</span><span class="s2">&quot;_planner&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_planner</span><span class="p">),</span>
@@ -2294,6 +2318,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">plan</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">plan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_planner</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">acquisition</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">decision_count</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">decision_count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">EvaluationPlan</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span>
                 <span class="s2">&quot;evaluation planner must return EvaluationPlan&quot;</span>
