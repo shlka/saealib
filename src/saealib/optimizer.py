@@ -51,7 +51,7 @@ from saealib.surrogate.manager import (
     PairwiseSurrogateManager,
     SurrogateManager,
 )
-from saealib.surrogate.rbf import gaussian_kernel
+from saealib.surrogate.rbf_kernels import GaussianKernel
 from saealib.termination import Termination
 from saealib.termination import max_fe as max_fe_cond
 
@@ -868,7 +868,10 @@ class Optimizer:
         params = manager_spec.setdefault("params", {})
         params.setdefault(
             "surrogate",
-            {"type": "RBFSurrogate", "params": {"kernel": gaussian_kernel, "dim": dim}},
+            {
+                "type": "RBFSurrogate",
+                "params": {"kernel": GaussianKernel()},
+            },
         )
         acquisition_spec = params.pop("acquisition", None)
         if acquisition_spec is None:
@@ -898,7 +901,10 @@ class Optimizer:
         params = spec.setdefault("params", {})
         params.setdefault(
             "surrogate",
-            {"type": "RBFSurrogate", "params": {"kernel": gaussian_kernel, "dim": dim}},
+            {
+                "type": "RBFSurrogate",
+                "params": {"kernel": GaussianKernel()},
+            },
         )
         params.pop("acquisition", None)
         spec = _inject_params(spec, dim=dim, direction=direction)

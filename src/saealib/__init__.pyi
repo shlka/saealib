@@ -267,6 +267,7 @@ from saealib.surrogate import PairwiseSurrogateManager as PairwiseSurrogateManag
 from saealib.surrogate import PerObjectiveSurrogate as PerObjectiveSurrogate
 from saealib.surrogate import PredictionChannel as PredictionChannel
 from saealib.surrogate import R2Score as R2Score
+from saealib.surrogate import RBFKernel as RBFKernel
 from saealib.surrogate import RBFSurrogate as RBFSurrogate
 from saealib.surrogate import ReferencePointComparisonSet as ReferencePointComparisonSet
 from saealib.surrogate import RegressionSurrogate as RegressionSurrogate
@@ -299,9 +300,14 @@ from saealib.surrogate import TrainingData as TrainingData
 from saealib.surrogate import TrainingSet as TrainingSet
 from saealib.surrogate import product_combine as product_combine
 from saealib.surrogate import rank_weighted_combine as rank_weighted_combine
-
-# utils
-from saealib.surrogate.rbf import gaussian_kernel as gaussian_kernel
+from saealib.surrogate.rbf_kernels import CubicKernel as CubicKernel
+from saealib.surrogate.rbf_kernels import GaussianKernel as GaussianKernel
+from saealib.surrogate.rbf_kernels import LinearKernel as LinearKernel
+from saealib.surrogate.rbf_kernels import MaternKernel as MaternKernel
+from saealib.surrogate.rbf_kernels import MultiquadricKernel as MultiquadricKernel
+from saealib.surrogate.rbf_kernels import (
+    ThinPlateSplineKernel as ThinPlateSplineKernel,
+)
 from saealib.termination import Termination as Termination
 from saealib.termination import TerminationCondition as TerminationCondition
 from saealib.termination import f_target as f_target

@@ -20,6 +20,7 @@ from saealib import (
     GA,
     CrossoverBLXAlpha,
     DirectStrategy,
+    GaussianKernel,
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
@@ -33,7 +34,6 @@ from saealib import (
     WeightedSumComparator,
     crowding_distance,
     crowding_distance_all_fronts,
-    gaussian_kernel,
     max_fe,
     max_gen,
     non_dominated_sort,
@@ -902,7 +902,7 @@ class TestMOOIntegration:
             survivor_selection=TruncationSelection(),
         )
         termination = Termination(max_fe(80 * dim))
-        surrogate = RBFSurrogate(gaussian_kernel, dim)
+        surrogate = RBFSurrogate(GaussianKernel())
         strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
 
         opt = (

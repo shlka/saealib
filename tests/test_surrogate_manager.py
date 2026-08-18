@@ -49,7 +49,8 @@ from saealib.surrogate.manager import (
     rank_weighted_combine,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import GaussianKernel
 from saealib.surrogate.sklearn_surrogate import SklearnRFCClassificationSurrogate
 from saealib.surrogate.training_set import KNNObjectiveSet, PairwiseComparisonSet
 
@@ -106,12 +107,12 @@ def candidates() -> np.ndarray:
 
 @pytest.fixture
 def surrogate_1obj() -> RBFSurrogate:
-    return RBFSurrogate(gaussian_kernel, DIM)
+    return RBFSurrogate(GaussianKernel())
 
 
 @pytest.fixture
 def surrogate_2obj() -> RBFSurrogate:
-    return RBFSurrogate(gaussian_kernel, DIM)
+    return RBFSurrogate(GaussianKernel())
 
 
 # ===========================================================================
@@ -516,17 +517,17 @@ class TestCompositeSurrogateManager:
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
         """Each sub-manager contributes its own named PredictionChannel."""
-        m1 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        m1 = GlobalSurrogateManager(RBFSurrogate(GaussianKernel()))
         m2 = LocalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM),
+            RBFSurrogate(GaussianKernel()),
             training_set=KNNObjectiveSet(5),
         )
         mgr = CompositeSurrogateManager({"a": m1, "b": m2})
         composite_pred = mgr.predict(candidates, archive_1obj)
 
-        m1_standalone = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        m1_standalone = GlobalSurrogateManager(RBFSurrogate(GaussianKernel()))
         m2_standalone = LocalSurrogateManager(
-            RBFSurrogate(gaussian_kernel, DIM),
+            RBFSurrogate(GaussianKernel()),
             training_set=KNNObjectiveSet(5),
         )
         m1_pred = m1_standalone.predict(candidates, archive_1obj)
@@ -558,8 +559,8 @@ class TestCompositeSurrogateManager:
     def test_product_combine_scores_shape(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        m1 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
-        m2 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        m1 = GlobalSurrogateManager(RBFSurrogate(GaussianKernel()))
+        m2 = GlobalSurrogateManager(RBFSurrogate(GaussianKernel()))
         composite_acq = CompositeAcquisition(
             {"a": MeanPrediction(), "b": MeanPrediction()}, combine_fn=product_combine
         )
@@ -571,8 +572,8 @@ class TestCompositeSurrogateManager:
     def test_rank_weighted_combine_scores_in_0_1(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        m1 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
-        m2 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        m1 = GlobalSurrogateManager(RBFSurrogate(GaussianKernel()))
+        m2 = GlobalSurrogateManager(RBFSurrogate(GaussianKernel()))
         composite_acq = CompositeAcquisition(
             {"a": MeanPrediction(), "b": MeanPrediction()},
             combine_fn=rank_weighted_combine(),
@@ -586,8 +587,8 @@ class TestCompositeSurrogateManager:
     def test_rank_weighted_combine_custom_weights(
         self, archive_1obj: Archive, candidates: np.ndarray
     ) -> None:
-        m1 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
-        m2 = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        m1 = GlobalSurrogateManager(RBFSurrogate(GaussianKernel()))
+        m2 = GlobalSurrogateManager(RBFSurrogate(GaussianKernel()))
         composite_acq = CompositeAcquisition(
             {"a": MeanPrediction(), "b": MeanPrediction()},
             combine_fn=rank_weighted_combine(np.array([1.0, 3.0])),
@@ -1075,7 +1076,7 @@ class TestLocalSurrogateManagerAccuracy:
         manager_with = LocalSurrogateManager(
             surrogate_1obj, accuracy_evaluator=evaluator
         )
-        manager_without = LocalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM))
+        manager_without = LocalSurrogateManager(RBFSurrogate(GaussianKernel()))
         rng = np.random.default_rng(99)
         candidates = rng.uniform(-2.0, 2.0, size=(5, DIM))
         pred_with = manager_with.predict(candidates, archive_1obj)

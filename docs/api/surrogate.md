@@ -44,8 +44,20 @@ related_layers: [layer3]
    saealib.RBFSurrogate
 ```
 
+## RBF Kernels
+
 ```{eval-rst}
-.. autofunction:: saealib.gaussian_kernel
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.RBFKernel
+   saealib.GaussianKernel
+   saealib.ThinPlateSplineKernel
+   saealib.LinearKernel
+   saealib.CubicKernel
+   saealib.MultiquadricKernel
+   saealib.MaternKernel
 ```
 
 ## Scikit-learn / External Library Adapters

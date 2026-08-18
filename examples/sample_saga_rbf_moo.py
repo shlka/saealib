@@ -22,6 +22,7 @@ import numpy as np
 from saealib import (
     GA,
     CrossoverBLXAlpha,
+    GaussianKernel,
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
@@ -31,7 +32,6 @@ from saealib import (
     SequentialSelection,
     Termination,
     TruncationSelection,
-    gaussian_kernel,
     max_fe,
     non_dominated_sort,
 )
@@ -79,7 +79,7 @@ def main():
         survivor_selection=TruncationSelection(),
     )
     termination = Termination(max_fe(200 * dim))
-    surrogate = RBFSurrogate(gaussian_kernel, dim)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
     strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
 
     opt = (

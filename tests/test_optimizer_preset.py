@@ -26,6 +26,7 @@ from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.surrogate.manager import LocalSurrogateManager
 from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import RBFKernel
 from saealib.termination import Termination, max_fe
 
 
@@ -108,7 +109,6 @@ class TestRoundTripAcrossProblems:
         manager = opt5.surrogate_manager
         assert isinstance(manager, LocalSurrogateManager)
         assert isinstance(manager.surrogate, RBFSurrogate)
-        assert manager.surrogate.dim == 5
         assert isinstance(opt5.acquisition, MeanPrediction)
         np.testing.assert_array_equal(opt5.acquisition.direction, problem5.direction)
 
@@ -196,8 +196,9 @@ class TestPresetSmokeRun:
 
 class TestPresetEndToEndRun:
     """Regression for the string-kernel bug: saved presets must run, not just
-    round-trip type/dim, since ``kernel`` is a function serialized via
-    ``to_spec()``/``build()`` alongside the rest of the surrogate manager."""
+    round-trip type/dim, since ``kernel`` is an ``RBFKernel`` object
+    serialized via ``to_spec()``/``build()`` alongside the rest of the
+    surrogate manager."""
 
     def test_save_reload_across_dims_and_run(self, tmp_path):
         problem2 = _problem(dim=2)
@@ -215,8 +216,8 @@ class TestPresetEndToEndRun:
         manager = opt5.surrogate_manager
         assert isinstance(manager, LocalSurrogateManager)
         assert isinstance(manager.surrogate, RBFSurrogate)
-        assert manager.surrogate.dim == 5
-        assert callable(manager.surrogate.kernel)
+        assert manager.surrogate.n_features_in_ == 5
+        assert isinstance(manager.surrogate.kernel, RBFKernel)
 
 
 def test_legacy_feedback_key_is_rejected() -> None:

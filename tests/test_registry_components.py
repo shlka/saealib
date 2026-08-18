@@ -15,7 +15,8 @@ from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.manager import LocalSurrogateManager
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import GaussianKernel
 from saealib.surrogate.training_set import KNNObjectiveSet
 
 
@@ -78,7 +79,7 @@ class TestBuildMatchesApiResolvers:
             "params": {
                 "surrogate": {
                     "type": "RBFSurrogate",
-                    "params": {"kernel": gaussian_kernel, "dim": 5},
+                    "params": {"kernel": GaussianKernel()},
                 },
                 "acquisition": {
                     "type": "MeanPrediction",

@@ -45,7 +45,8 @@ from saealib.islands import IslandModel
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
 from saealib.strategies.direct import DirectStrategy
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import GaussianKernel
 
 
 @dataclass(frozen=True)
@@ -333,9 +334,7 @@ def test_five_actual_configurations_have_zero_compile_errors() -> None:
     problem = _problem()
     configurations: dict[str, list[Optimizer]] = {
         "default": [Optimizer(problem)],
-        "surrogate": [
-            Optimizer(problem).set_surrogate(RBFSurrogate(gaussian_kernel, problem.dim))
-        ],
+        "surrogate": [Optimizer(problem).set_surrogate(RBFSurrogate(GaussianKernel()))],
         "async": [
             Optimizer(problem).set_async_evaluation_scheduler(
                 AsyncEvaluationScheduler(SerialEvaluator())

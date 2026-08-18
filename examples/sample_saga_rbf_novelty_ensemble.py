@@ -16,6 +16,7 @@ from saealib import (
     GA,
     CompositeSurrogateManager,
     CrossoverBLXAlpha,
+    GaussianKernel,
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
@@ -26,7 +27,6 @@ from saealib import (
     SequentialSelection,
     Termination,
     TruncationSelection,
-    gaussian_kernel,
     max_fe,
 )
 from saealib.acquisition import CompositeAcquisition, MeanPrediction
@@ -74,8 +74,8 @@ def main():
 
     surrogate_manager = CompositeSurrogateManager(
         managers={
-            "objective": GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, dim)),
-            "novelty": GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, dim)),
+            "objective": GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel())),
+            "novelty": GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel())),
         }
     )
     acquisition = CompositeAcquisition(

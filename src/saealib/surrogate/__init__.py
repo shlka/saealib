@@ -21,7 +21,16 @@ from saealib.surrogate.manager import (
 )
 from saealib.surrogate.per_objective import PerObjectiveSurrogate
 from saealib.surrogate.prediction import PredictionChannel, SurrogatePrediction
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import (
+    CubicKernel,
+    GaussianKernel,
+    LinearKernel,
+    MaternKernel,
+    MultiquadricKernel,
+    RBFKernel,
+    ThinPlateSplineKernel,
+)
 from saealib.surrogate.sklearn_surrogate import (
     SklearnClassificationSurrogate,
     SklearnGPRSurrogate,
@@ -63,7 +72,9 @@ __all__ = [
     "ComparisonSurrogate",
     "CompositeSurrogateManager",
     "ConstraintObjectiveSet",
+    "CubicKernel",
     "FeasibilityClassificationSet",
+    "GaussianKernel",
     "GenCtrlSwitcher",
     "GlobalSurrogateManager",
     "HeldOutAccuracyEvaluator",
@@ -72,13 +83,17 @@ __all__ = [
     "KNNObjectiveSet",
     "LOOAccuracyEvaluator",
     "LevelBasedSet",
+    "LinearKernel",
     "LocalSurrogateManager",
     "ManagerSwitcher",
+    "MaternKernel",
+    "MultiquadricKernel",
     "PairwiseComparisonSet",
     "PairwiseSurrogateManager",
     "PerObjectiveSurrogate",
     "PredictionChannel",
     "R2Score",
+    "RBFKernel",
     "RBFSurrogate",
     "ReferencePointComparisonSet",
     "RegressionSurrogate",
@@ -99,11 +114,11 @@ __all__ = [
     "SurrogateAccuracyMetric",
     "SurrogateManager",
     "SurrogatePrediction",
+    "ThinPlateSplineKernel",
     "TopKBipartitionSet",
     "TorchSurrogate",
     "TrainingData",
     "TrainingSet",
-    "gaussian_kernel",
     "product_combine",
     "rank_weighted_combine",
 ]

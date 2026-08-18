@@ -12,6 +12,7 @@ from saealib import (
     GA,
     CheckpointCallback,
     CrossoverBLXAlpha,
+    GaussianKernel,
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
@@ -20,7 +21,6 @@ from saealib import (
     SequentialSelection,
     Termination,
     TruncationSelection,
-    gaussian_kernel,
     max_gen,
 )
 from saealib.comparators import SingleObjectiveComparator
@@ -67,7 +67,7 @@ def _make_optimizer(
                 survivor_selection=TruncationSelection(),
             )
         )
-        .set_surrogate(RBFSurrogate(gaussian_kernel, DIM), n_neighbors=5)
+        .set_surrogate(RBFSurrogate(GaussianKernel()), n_neighbors=5)
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.5))
         .set_termination(Termination(max_gen(n_gen)))
     )
@@ -114,7 +114,7 @@ def test_lhs_uses_optimizer_seed_over_own():
                 survivor_selection=TruncationSelection(),
             )
         )
-        .set_surrogate(RBFSurrogate(gaussian_kernel, DIM), n_neighbors=5)
+        .set_surrogate(RBFSurrogate(GaussianKernel()), n_neighbors=5)
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.5))
         .set_termination(Termination(max_gen(2)))
     )

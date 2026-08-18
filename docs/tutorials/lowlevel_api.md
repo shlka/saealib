@@ -74,7 +74,7 @@ from saealib.operators import (
     SequentialSelection,
     TruncationSelection,
 )
-from saealib.surrogate import LocalSurrogateManager, RBFSurrogate, gaussian_kernel
+from saealib.surrogate import GaussianKernel, LocalSurrogateManager, RBFSurrogate
 
 DIM = 10
 SEED = 0
@@ -96,7 +96,7 @@ algorithm = GA(
 )
 
 surrogate_manager = LocalSurrogateManager(
-    RBFSurrogate(gaussian_kernel, dim=DIM),
+    RBFSurrogate(kernel=GaussianKernel()),
 )
 strategy = IndividualBasedStrategy(evaluation_ratio=0.1)
 initializer = LHSInitializer(
