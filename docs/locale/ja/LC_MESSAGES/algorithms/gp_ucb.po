@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 21:18+0900\n"
+"POT-Creation-Date: 2026-08-18 21:56+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -283,6 +283,7 @@ msgid ""
 msgstr "**κ（探索と活用のトレードオフ）**：`LowerConfidenceBound(kappa=...)`で調整します。既定値は`2.0`。"
 
 #: ../../algorithms/gp_ucb.md:127
+#, python-brace-format
 msgid ""
 "**β_t schedule**: Pass `beta_schedule=gp_ucb_beta_schedule(domain_size, "
 "delta)` to reproduce the $\\beta_t$ formula from \"Differences from the "
@@ -296,13 +297,29 @@ msgid ""
 "observation round index whenever `evaluation_ratio` selects more than one"
 " candidate per generation. `t` matches the paper's round index only when "
 "every confirmed plan evaluates exactly one candidate (synchronous "
-"execution, one true evaluation per decision)."
+"execution, one true evaluation per decision) -- but a matching `t` alone "
+"does not reproduce the cited regret bound. Theorem 1 assumes exhaustively"
+" optimizing $\\mu_{t-1}(x) + \\sqrt{\\beta_t}\\,\\sigma_{t-1}(x)$ over an"
+" actual finite set $D$; saealib's `GA`-generated candidate pool only "
+"approximates this argmax over a resampled subset each generation, and "
+"passing an integer to `gp_ucb_beta_schedule(domain_size=...)` does not "
+"turn the continuous search space into that finite $D$ -- it only "
+"substitutes a number into the formula. Reproducing the theorem's "
+"guarantee additionally requires a component that optimizes exhaustively "
+"over a literal finite $D$ (not part of saealib's built-in `GA`/`PSO` "
+"algorithms) and a GP model matching the paper's noise and kernel "
+"assumptions; saealib does not ship such a component. The table below "
+"therefore describes only how `t` and `kappa` behave under each setting, "
+"not whether the cited regret bound holds."
 msgstr ""
-"**β_tスケジュール**：固定`kappa`の代わりに`beta_schedule=gp_ucb_beta_schedule(domain_size,"
-" delta)`を渡すと、「文献との差分」節の$\\beta_t$の式を再現します。saealibの探索空間は連続なので、`domain_size`は論文の$|D|$の代わりに使います。"
+"**β_tスケジュール**：固定`kappa`の代わりに`beta_schedule=gp_ucb_beta_schedule(domain_size, "
+"delta)`を渡すと、「文献との差分」節の$\\beta_t$の式を再現します。saealibの探索空間は連続なので、`domain_size`は論文の$|D|$の代わりに使います。"
 "`t = ctx.decision_count + 1`で、これは`EvaluationPlanStage`がこれまでに確定した評価計画の数に、これから下す決定の分の1を加えた値です。"
 "確定した評価計画1件が何個の候補を評価するかによらず1決定として数えるため、この例の`GA`＋`evaluation_ratio`構成では、`evaluation_ratio`が1世代につき複数候補を選ぶ場合に`t`は論文の観測ごとの反復回数と一致しません。"
-"`t`が論文の反復回数と一致するのは、確定した評価計画がすべて1候補だけを評価する場合（同期実行、1決定につき1回の真の評価）に限られます。"
+"`t`が論文の反復回数と一致するのは、確定した評価計画がすべて1候補だけを評価する場合（同期実行、1決定につき1回の真の評価）に限られますが、`t`が一致するだけでは引用文献のリグレット上限は再現されません。"
+"定理1は、実際の有限集合$D$上で$\\mu_{t-1}(x) + \\sqrt{\\beta_t}\\,\\sigma_{t-1}(x)$を網羅的に最適化することを仮定しています。saealibの`GA`が生成する候補プールは、各世代で再サンプリングされた部分集合上でこのargmaxを近似するだけであり、`gp_ucb_beta_schedule(domain_size=...)`に整数を渡しても連続探索空間がその有限集合$D$になるわけではなく、式に数値を代入するだけです。"
+"定理の保証を再現するには、文字どおりの有限集合$D$上で網羅的に最適化するコンポーネント（saealib組み込みの`GA`/`PSO`アルゴリズムには含まれません）に加え、論文のノイズとカーネルの仮定に一致するGPモデルが必要です。saealibはそのようなコンポーネントを提供していません。"
+"したがって、以下の表は各設定における`t`と`kappa`の挙動だけを示すものであり、引用文献のリグレット上限が成り立つかどうかを示すものではありません。"
 
 #: ../../algorithms/gp_ucb.md:39
 msgid "Setting"
@@ -313,8 +330,8 @@ msgid "`kappa` used"
 msgstr "使用する`kappa`"
 
 #: ../../algorithms/gp_ucb.md:39
-msgid "Regret guarantee"
-msgstr "リグレット保証"
+msgid "`t` vs. the paper's round index"
+msgstr "論文の反復回数に対する`t`"
 
 #: ../../algorithms/gp_ucb.md:39
 msgid "`beta_schedule=None` (default)"
@@ -325,8 +342,8 @@ msgid "fixed `2.0`"
 msgstr "`2.0`固定"
 
 #: ../../algorithms/gp_ucb.md:39
-msgid "none (fixed-weight heuristic)"
-msgstr "なし（固定重みのヒューリスティック）"
+msgid "n/a -- no schedule, no regret guarantee at all"
+msgstr "該当なし（スケジュールなし、リグレット保証もまったくなし）"
 
 #: ../../algorithms/gp_ucb.md:39
 msgid "`beta_schedule=gp_ucb_beta_schedule(domain_size, delta)`, batch decisions"
@@ -338,8 +355,8 @@ msgid "$\\sqrt{\\beta_t}$, per the schedule above"
 msgstr "上記スケジュールに基づく$\\sqrt{\\beta_t}$"
 
 #: ../../algorithms/gp_ucb.md:39
-msgid "none -- `t` undercounts observations"
-msgstr "なし（`t`が観測数を過小に数える）"
+msgid "undercounts observations"
+msgstr "`t`が観測数を過小に数える"
 
 #: ../../algorithms/gp_ucb.md:39
 msgid ""
@@ -348,26 +365,26 @@ msgid ""
 msgstr "`beta_schedule=gp_ucb_beta_schedule(domain_size, delta)`、1決定1候補"
 
 #: ../../algorithms/gp_ucb.md:39
-msgid "reproduces the cited bound"
-msgstr "引用文献の上限を再現"
+msgid "matches"
+msgstr "一致"
 
-#: ../../algorithms/gp_ucb.md:138
+#: ../../algorithms/gp_ucb.md:141
 msgid "Related"
 msgstr "関連"
 
-#: ../../algorithms/gp_ucb.md:140
+#: ../../algorithms/gp_ucb.md:143
 msgid ""
 "[References](../references.md): Full bibliographic details for the "
 "source, and a list of sources for acquisition functions other than LCB"
 msgstr "[文献リファレンス](../references.md)：出典の完全な書誌情報とLCB以外の獲得関数の出典一覧"
 
-#: ../../algorithms/gp_ucb.md:141
+#: ../../algorithms/gp_ucb.md:144
 msgid ""
 "[SurrogateManager](../concepts/surrogate_modeling/surrogate_manager.md): "
 "Detailed usage of `GlobalSurrogateManager`"
 msgstr "[SurrogateManager](../concepts/surrogate_modeling/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方"
 
-#: ../../algorithms/gp_ucb.md:142
+#: ../../algorithms/gp_ucb.md:145
 msgid ""
 "[AcquisitionFunction](../concepts/surrogate_modeling/acquisition_functions.md):"
 " List of acquisition functions including `LowerConfidenceBound`"
@@ -375,14 +392,14 @@ msgstr ""
 "[AcquisitionFunction](../concepts/surrogate_modeling/acquisition_functions.md):"
 " `LowerConfidenceBound`を含む獲得関数の一覧"
 
-#: ../../algorithms/gp_ucb.md:143
+#: ../../algorithms/gp_ucb.md:146
 msgid ""
 "[Surrogate](../concepts/surrogate_modeling/surrogate.md): List of "
 "surrogate models including `SklearnGPRSurrogate`, and an explanation of "
 "the `sklearn` extra"
 msgstr "[Surrogate](../concepts/surrogate_modeling/surrogate.md)：`SklearnGPRSurrogate`を含むサロゲートモデルの一覧と、`sklearn`追加機能の説明"
 
-#: ../../algorithms/gp_ucb.md:144
+#: ../../algorithms/gp_ucb.md:147
 msgid ""
 "[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
 " List of strategies including `IndividualBasedStrategy`'s "
@@ -391,7 +408,7 @@ msgstr ""
 "[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
 " `IndividualBasedStrategy`の`evaluation_ratio`を含む戦略の一覧"
 
-#: ../../algorithms/gp_ucb.md:145
+#: ../../algorithms/gp_ucb.md:148
 msgid ""
 "[EGO](ego.md): A method with the same GP surrogate model + "
 "`IndividualBasedStrategy` configuration, replacing the acquisition "
@@ -442,4 +459,13 @@ msgstr "[EGO](ego.md)：同じGPサロゲートモデル＋`IndividualBasedStrat
 #~ "**β_tスケジュール**：固定`kappa`の代わりに`beta_schedule=gp_ucb_beta_schedule(domain_size,"
 #~ " "
 #~ "delta)`を渡すと、「文献との差分」節の$\\beta_t$の式を再現します。saealibの探索空間は連続なので、`domain_size`は論文の$|D|$の代わりに使います。"
+
+#~ msgid "Regret guarantee"
+#~ msgstr "リグレット保証"
+
+#~ msgid "none (fixed-weight heuristic)"
+#~ msgstr "なし（固定重みのヒューリスティック）"
+
+#~ msgid "reproduces the cited bound"
+#~ msgstr "引用文献の上限を再現"
 

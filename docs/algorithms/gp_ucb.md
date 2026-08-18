@@ -127,13 +127,16 @@ saealib's default (`kappa=2.0`, fixed regardless of $t$) does not follow this sc
 **β_t schedule**: Pass `beta_schedule=gp_ucb_beta_schedule(domain_size, delta)` to reproduce the $\beta_t$ formula from "Differences from the source" above instead of a fixed `kappa`; `domain_size` stands in for the paper's $|D|$, since saealib's search space is continuous.
 `t = ctx.decision_count + 1`: the number of evaluation plans `EvaluationPlanStage` has confirmed so far, plus one for the decision about to be made.
 One confirmed plan is one decision regardless of how many candidates it evaluates, so under the `GA` + `evaluation_ratio` configuration in this page's own example, `t` is not the paper's per-observation round index whenever `evaluation_ratio` selects more than one candidate per generation.
-`t` matches the paper's round index only when every confirmed plan evaluates exactly one candidate (synchronous execution, one true evaluation per decision).
+`t` matches the paper's round index only when every confirmed plan evaluates exactly one candidate (synchronous execution, one true evaluation per decision) -- but a matching `t` alone does not reproduce the cited regret bound.
+Theorem 1 assumes exhaustively optimizing $\mu_{t-1}(x) + \sqrt{\beta_t}\,\sigma_{t-1}(x)$ over an actual finite set $D$; saealib's `GA`-generated candidate pool only approximates this argmax over a resampled subset each generation, and passing an integer to `gp_ucb_beta_schedule(domain_size=...)` does not turn the continuous search space into that finite $D$ -- it only substitutes a number into the formula.
+Reproducing the theorem's guarantee additionally requires a component that optimizes exhaustively over a literal finite $D$ (not part of saealib's built-in `GA`/`PSO` algorithms) and a GP model matching the paper's noise and kernel assumptions; saealib does not ship such a component.
+The table below therefore describes only how `t` and `kappa` behave under each setting, not whether the cited regret bound holds.
 
-| Setting | `kappa` used | Regret guarantee |
+| Setting | `kappa` used | `t` vs. the paper's round index |
 |---|---|---|
-| `beta_schedule=None` (default) | fixed `2.0` | none (fixed-weight heuristic) |
-| `beta_schedule=gp_ucb_beta_schedule(domain_size, delta)`, batch decisions | $\sqrt{\beta_t}$, per the schedule above | none -- `t` undercounts observations |
-| `beta_schedule=gp_ucb_beta_schedule(domain_size, delta)`, one candidate per decision | $\sqrt{\beta_t}$, per the schedule above | reproduces the cited bound |
+| `beta_schedule=None` (default) | fixed `2.0` | n/a -- no schedule, no regret guarantee at all |
+| `beta_schedule=gp_ucb_beta_schedule(domain_size, delta)`, batch decisions | $\sqrt{\beta_t}$, per the schedule above | undercounts observations |
+| `beta_schedule=gp_ucb_beta_schedule(domain_size, delta)`, one candidate per decision | $\sqrt{\beta_t}$, per the schedule above | matches |
 
 ## Related
 
