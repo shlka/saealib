@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from saealib.acquisition.base import PointwiseAcquisition, direction_to_minimize_sign
 from saealib.acquisition.kernels import lower_confidence_bound_kernel
+from saealib.exceptions import ValidationError
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
+    from saealib.context import OptimizationState
     from saealib.population import Archive
 
 
@@ -42,11 +45,15 @@ class LowerConfidenceBound(PointwiseAcquisition):
         problems where LCB is applied to a single objective. Default: 0.
     beta_schedule : callable or None
         Optional ``beta_t`` schedule ``schedule(t) -> float`` (``kappa``
-        corresponds to ``sqrt(beta_t)`` in the cited bound). When set, each
-        ``score()`` call increments an internal round index ``t`` (starting
-        at 1) and uses ``kappa_t = sqrt(schedule(t))`` instead of the fixed
-        ``kappa``. See :func:`gp_ucb_beta_schedule` for the cited
-        finite-domain schedule. ``None`` (default) keeps ``kappa`` fixed.
+        corresponds to ``sqrt(beta_t)`` in the cited bound). When set,
+        ``t = ctx.decision_count + 1`` -- the number of evaluation plans
+        :class:`~saealib.stages.EvaluationPlanStage` has confirmed so far,
+        plus one for the decision about to be made -- and
+        ``kappa_t = sqrt(schedule(t))`` replaces the fixed ``kappa``. This
+        makes ``t`` one full round in the cited paper's sense only under
+        synchronous, single-point-per-decision execution; see
+        :func:`gp_ucb_beta_schedule`. ``None`` (default) keeps ``kappa``
+        fixed.
     direction : np.ndarray or None
         Per-objective optimization direction (+1 = maximize, -1 = minimize).
         shape: (n_obj,). The predicted mean is converted to minimize-space
@@ -75,13 +82,48 @@ class LowerConfidenceBound(PointwiseAcquisition):
         self.obj_idx = obj_idx
         self.beta_schedule = beta_schedule
         self.direction = direction
-        self._t = 0
 
     def compute_reference(
         self, archive: Archive, rng: np.random.Generator | None = None
     ) -> Any:
         """LowerConfidenceBound uses no reference value; always returns None."""
         return None
+
+    def prepare(self, archive: Archive, ctx: OptimizationState | None = None) -> Any:
+        """
+        Resolve the ``beta_schedule``-driven ``kappa`` for this decision, if set.
+
+        Overrides :meth:`PointwiseAcquisition.prepare` (rather than only
+        ``compute_reference()``) because resolving ``beta_schedule`` needs
+        ``ctx.decision_count``, which ``compute_reference()`` has no access
+        to. When ``beta_schedule`` is ``None``, delegates to
+        ``compute_reference()`` unchanged.
+
+        Returns
+        -------
+        Any
+            ``None`` when ``beta_schedule`` is unset; otherwise the resolved
+            ``kappa_t`` float, passed to :meth:`score` as ``reference``.
+
+        Raises
+        ------
+        ValidationError
+            If ``beta_schedule`` is set but ``ctx`` is ``None`` (``t`` has no
+            source). Call via ``evaluate()`` with a real ``ctx``, not
+            ``score()`` directly.
+        """
+        if self.beta_schedule is None:
+            return self.compute_reference(
+                archive, rng=ctx.rng if ctx is not None else None
+            )
+        if ctx is None:
+            raise ValidationError(
+                "LowerConfidenceBound.beta_schedule requires ctx.decision_count; "
+                "call evaluate() with a real OptimizationState, not score() "
+                "directly with no ctx."
+            )
+        t = ctx.decision_count + 1
+        return math.sqrt(self.beta_schedule(t))
 
     def score(
         self,
@@ -97,7 +139,10 @@ class LowerConfidenceBound(PointwiseAcquisition):
         prediction : SurrogatePrediction
             Surrogate predictions. Must have std (has_uncertainty == True).
         reference : Any
-            Not used. Accepted for interface compatibility.
+            The ``kappa_t`` resolved by :meth:`prepare` when ``beta_schedule``
+            is set (``None`` otherwise). Passing ``None`` here while
+            ``beta_schedule`` is set is a caller error (see raises below);
+            it never silently falls back to the fixed ``kappa``.
 
         Returns
         -------
@@ -108,6 +153,9 @@ class LowerConfidenceBound(PointwiseAcquisition):
         ------
         TypeError
             If prediction does not contain uncertainty estimates.
+        ValidationError
+            If ``beta_schedule`` is set but ``reference`` is ``None`` (i.e.
+            ``score()`` was called directly, bypassing ``prepare()``).
         """
         if not prediction.has_uncertainty:
             raise TypeError(
@@ -115,15 +163,42 @@ class LowerConfidenceBound(PointwiseAcquisition):
                 "estimates (prediction.std must not be None)."
             )
         assert prediction.std is not None
-        self._t += 1
-        kappa = (
-            math.sqrt(self.beta_schedule(self._t)) if self.beta_schedule else self.kappa
-        )
+        if self.beta_schedule is not None:
+            if reference is None:
+                raise ValidationError(
+                    "LowerConfidenceBound.beta_schedule is set but score() was "
+                    "called without a prepare()-resolved reference; call "
+                    "evaluate() with a real ctx, not score() directly."
+                )
+            kappa = reference
+        else:
+            kappa = self.kappa
         s = direction_to_minimize_sign(self.direction)
         s_idx = s[self.obj_idx] if isinstance(s, np.ndarray) else s
         mu = prediction.value[:, self.obj_idx] * s_idx  # (n_samples,)
         sigma = prediction.std[:, self.obj_idx]  # (n_samples,)
         return -lower_confidence_bound_kernel(mu, sigma, kappa)
+
+
+@dataclass(frozen=True)
+class _GPUCBBetaSchedule:
+    """Picklable ``t -> beta_t`` callable for the finite-domain GP-UCB bound."""
+
+    domain_size: int
+    delta: float = 0.1
+
+    def __post_init__(self) -> None:
+        if self.domain_size <= 0:
+            raise ValidationError("gp_ucb_beta_schedule: domain_size must be positive")
+        if not (0.0 < self.delta < 1.0):
+            raise ValidationError(
+                "gp_ucb_beta_schedule: delta must satisfy 0 < delta < 1"
+            )
+
+    def __call__(self, t: int) -> float:
+        if t < 1:
+            raise ValidationError("gp_ucb_beta_schedule: t must be >= 1")
+        return 2.0 * math.log(self.domain_size * t**2 * math.pi**2 / (6.0 * self.delta))
 
 
 def gp_ucb_beta_schedule(
@@ -142,18 +217,20 @@ def gp_ucb_beta_schedule(
     ----------
     domain_size : int
         Size of the (possibly discretized) search domain (``|D|`` in the
-        cited bound).
+        cited bound). Must be positive.
     delta : float
-        Confidence parameter (``0 < delta < 1``). Default: 0.1.
+        Confidence parameter. Must satisfy ``0 < delta < 1``. Default: 0.1.
 
     Returns
     -------
     callable
-        ``schedule(t) -> float``, increasing in the round index ``t``
-        (``t`` starting at 1).
+        A picklable ``schedule(t) -> float``, increasing in the round index
+        ``t`` (``t`` starting at 1; raises :class:`~saealib.exceptions.ValidationError`
+        for ``t < 1``).
+
+    Raises
+    ------
+    ValidationError
+        If ``domain_size`` is not positive, or ``delta`` is not in ``(0, 1)``.
     """
-
-    def _schedule(t: int) -> float:
-        return 2.0 * math.log(domain_size * t**2 * math.pi**2 / (6.0 * delta))
-
-    return _schedule
+    return _GPUCBBetaSchedule(domain_size, delta)
