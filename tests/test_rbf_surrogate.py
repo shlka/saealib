@@ -177,6 +177,22 @@ def test_nonpositive_alpha_raises_validation_error(solver, alpha):
 
 
 @pytest.mark.parametrize(
+    "alpha",
+    [0, -1, float("nan"), float("inf"), float("-inf"), True, False, "0.1", None],
+)
+def test_invalid_alpha_values_raise_validation_error(alpha):
+    with pytest.raises(ValidationError):
+        RBFSurrogate(kernel=GaussianKernel(), alpha=alpha)
+
+
+@pytest.mark.parametrize("alpha", [1e-8, 1, np.float32(1e-8), np.int32(2)])
+def test_valid_numeric_alpha_types_are_accepted(alpha):
+    surrogate = RBFSurrogate(kernel=GaussianKernel(), alpha=alpha)
+
+    assert surrogate.alpha == alpha
+
+
+@pytest.mark.parametrize(
     ("kernel", "polynomial_degree"),
     [
         (LinearKernel(), 0),
@@ -215,6 +231,63 @@ def test_matern_kernels_interpolate_training_points_without_polynomial_term(nu):
 def test_matern_kernel_rejects_invalid_nu_at_construction_time():
     with pytest.raises(ValidationError, match=r"nu must be 0\.5, 1\.5, or 2\.5"):
         MaternKernel(nu=1.0)
+
+
+def test_repeated_singular_fits_warn_only_once(caplog):
+    duplicate_x = np.array([[0.0], [0.0], [0.0]])
+    duplicate_y = np.array([1.0, 2.0, 3.0])
+    surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0), solver="solve")
+
+    with caplog.at_level("WARNING", logger="saealib.surrogate.rbf"):
+        surrogate.fit(duplicate_x, duplicate_y)
+        surrogate.fit(duplicate_x, duplicate_y)
+        surrogate.fit(duplicate_x, duplicate_y)
+
+    warnings = [r for r in caplog.records if r.levelname == "WARNING"]
+    assert len(warnings) == 1
+
+
+def test_singular_fit_after_clean_fit_warns_again(caplog):
+    duplicate_x = np.array([[0.0], [0.0], [0.0]])
+    duplicate_y = np.array([1.0, 2.0, 3.0])
+    surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0), solver="solve")
+
+    with caplog.at_level("WARNING", logger="saealib.surrogate.rbf"):
+        surrogate.fit(duplicate_x, duplicate_y)
+        surrogate.fit(TRAIN_X, TRAIN_Y)
+        surrogate.fit(duplicate_x, duplicate_y)
+
+    warnings = [r for r in caplog.records if r.levelname == "WARNING"]
+    assert len(warnings) == 2
+
+
+def test_singular_fit_after_failed_fit_warns_again(caplog):
+    # RBF kernel block is rank-deficient (duplicate x=0.0 rows) while the
+    # median pairwise distance is nonzero, so kernel.resolve() succeeds and
+    # the singularity surfaces at the linear-solve step instead.
+    train_x = np.array([[-1.0], [0.0], [0.0], [1.0]])
+    train_y = np.array([1.0, 2.0, 2.0, 3.0])
+    surrogate = RBFSurrogate(kernel=GaussianKernel(), solver="solve")
+
+    with caplog.at_level("WARNING", logger="saealib.surrogate.rbf"):
+        surrogate.fit(train_x, train_y)
+        # A single training point makes kernel.resolve()'s auto length_scale
+        # heuristic fail (no pairwise distance to take a median of) — an
+        # internal fit failure that goes through _invalidate_fit(), unlike a
+        # public-boundary validation failure which leaves prior state alone.
+        with pytest.raises(ValidationError):
+            surrogate.fit(np.array([[0.0]]), np.array([5.0]))
+        # Pin the precondition this test depends on: the failure above must
+        # actually invalidate fitted state (and thus _last_singular) via the
+        # atomic-fit except branch, not merely raise. If a future change made
+        # this an early boundary-validation rejection instead, prior state
+        # (including _last_singular) would survive and this test would keep
+        # passing at 2 warnings for the wrong reason.
+        assert surrogate._models is None
+        surrogate.fit(train_x, train_y)
+
+    warnings = [r for r in caplog.records if r.levelname == "WARNING"]
+    assert len(warnings) == 2
 
 
 def test_explicit_none_disables_polynomial_term_for_kernel_without_requirement():
@@ -353,9 +426,19 @@ def test_configuration_replacement_invalidates_fitted_state(attribute, value):
     surrogate.predict(TRAIN_X)
 
 
+def _old_style_callable_kernel(x1, x2):
+    return np.exp(-np.linalg.norm(x1 - x2))
+
+
 @pytest.mark.parametrize(
     ("attribute", "value"),
-    [("polynomial_degree", 2), ("solver", "bad"), ("alpha", 0.0)],
+    [
+        ("polynomial_degree", 2),
+        ("solver", "bad"),
+        ("alpha", 0.0),
+        ("kernel", _old_style_callable_kernel),
+        ("kernel", object()),
+    ],
 )
 def test_invalid_configuration_replacement_preserves_fitted_state(attribute, value):
     surrogate = RBFSurrogate(kernel=GaussianKernel())
@@ -365,6 +448,12 @@ def test_invalid_configuration_replacement_preserves_fitted_state(attribute, val
         setattr(surrogate, attribute, value)
 
     surrogate.predict(TRAIN_X)
+
+
+@pytest.mark.parametrize("kernel", [_old_style_callable_kernel, object(), "gaussian"])
+def test_non_rbf_kernel_rejected_at_construction(kernel):
+    with pytest.raises(ValidationError, match="RBFKernel"):
+        RBFSurrogate(kernel=kernel)
 
 
 def test_incompatible_kernel_swap_preserves_fitted_state():
@@ -418,6 +507,8 @@ def test_failed_fit_clears_previous_fitted_state():
         (TRAIN_X, np.array([1.0, np.nan, 3.0])),
         (TRAIN_X, np.array([1.0, np.inf, 3.0])),
         (TRAIN_X, np.ones(2)),
+        (np.empty((3, 0)), TRAIN_Y),
+        (TRAIN_X, np.empty((3, 0))),
     ],
     ids=[
         "train_x_1d",
@@ -427,6 +518,8 @@ def test_failed_fit_clears_previous_fitted_state():
         "train_y_nan",
         "train_y_inf",
         "sample_count_mismatch",
+        "train_x_zero_features",
+        "train_y_zero_objectives",
     ],
 )
 def test_fit_rejects_invalid_training_inputs(train_x, train_y):

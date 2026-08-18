@@ -39,14 +39,23 @@ def _resolve_polynomial_degree(
     return polynomial_degree
 
 
+def _validate_kernel(value: RBFKernel) -> None:
+    if not isinstance(value, RBFKernel):
+        raise ValidationError("kernel must be an RBFKernel")
+
+
 def _validate_solver(value: str) -> None:
     if value not in ("solve", "lstsq", "tikhonov"):
         raise ValidationError("solver must be 'solve', 'lstsq', or 'tikhonov'")
 
 
 def _validate_alpha(value: float) -> None:
-    if value <= 0:
-        raise ValidationError("alpha must be greater than 0")
+    if isinstance(value, (bool, np.bool_)) or not isinstance(
+        value, (int, float, np.integer, np.floating)
+    ):
+        raise ValidationError("alpha must be a real number")
+    if not np.isfinite(value) or value <= 0:
+        raise ValidationError("alpha must be finite and greater than 0")
 
 
 class _RBFModel:
@@ -135,17 +144,11 @@ class _RBFModel:
                 solution = np.linalg.solve(a, rhs)
         except np.linalg.LinAlgError:
             logger.debug(f"Kernel matrix solve failed (singular). RCOND: {rcond}")
-            if not self._last_singular:
-                logger.warning(
-                    "Failed to solve linear system (Kernel matrix might be singular)."
-                )
             self._last_singular = True
             # Deliberate recoverable surrogate failure: expose NaN predictions
             # so downstream acquisition/feedback code can handle this candidate.
             solution = np.nan * np.ones(a.shape[0])
         else:
-            if self._last_singular:
-                logger.debug("Kernel matrix solve recovered from singularity.")
             self._last_singular = False
 
         self.weights = solution[:n_samples]
@@ -240,6 +243,7 @@ class RBFSurrogate(RegressionSurrogate):
         solver: str = "solve",
         alpha: float = 1e-8,
     ) -> None:
+        _validate_kernel(kernel)
         _validate_solver(solver)
         _validate_alpha(alpha)
         self._kernel = kernel
@@ -253,12 +257,14 @@ class RBFSurrogate(RegressionSurrogate):
         self._models: list[_RBFModel] | None = None
         self._resolved_kernel: RBFKernel | None = None
         self.n_features_in_: int | None = None
+        self._last_singular = False
 
     def _invalidate_fit(self) -> None:
         self._models = None
         self.n_obj = None
         self._resolved_kernel = None
         self.n_features_in_ = None
+        self._last_singular = False
 
     @property
     def kernel(self) -> RBFKernel:
@@ -267,6 +273,7 @@ class RBFSurrogate(RegressionSurrogate):
 
     @kernel.setter
     def kernel(self, value: RBFKernel) -> None:
+        _validate_kernel(value)
         resolved = _resolve_polynomial_degree(value, self._polynomial_degree)
         self._kernel = value
         self._resolved_polynomial_degree = resolved
@@ -338,6 +345,8 @@ class RBFSurrogate(RegressionSurrogate):
             raise ValidationError("train_x must be a 2-D array")
         if train_x_arr.shape[0] == 0:
             raise ValidationError("train_x must contain at least one sample")
+        if train_x_arr.shape[1] == 0:
+            raise ValidationError("train_x must have at least one feature")
         if not np.all(np.isfinite(train_x_arr)):
             raise ValidationError("train_x must contain only finite values")
 
@@ -353,6 +362,8 @@ class RBFSurrogate(RegressionSurrogate):
             raise ValidationError("train_y must contain only finite values")
         if arr.ndim == 1:
             arr = arr.reshape(-1, 1)  # (n_samples,) -> (n_samples, 1)
+        if arr.shape[1] == 0:
+            raise ValidationError("train_y must have at least one objective")
         if arr.shape[0] != train_x_arr.shape[0]:
             raise ValidationError(
                 "train_x and train_y must contain the same number of samples"
@@ -380,6 +391,24 @@ class RBFSurrogate(RegressionSurrogate):
         self.n_obj = n_obj
         self._resolved_kernel = resolved_kernel
         self.n_features_in_ = train_x_arr.shape[1]
+
+        # _RBFModel instances are rebuilt fresh on every fit() (Item B), so
+        # per-model singularity suppression can't persist across calls;
+        # aggregate and suppress repeat warnings here instead, at the
+        # RBFSurrogate level, which does persist across successive fit()s
+        # (e.g. one per candidate in LocalSurrogateManager.predict()).
+        any_singular = any(model._last_singular for model in new_models)
+        if any_singular:
+            if not self._last_singular:
+                logger.warning(
+                    "Failed to solve linear system for at least one objective "
+                    "(kernel matrix might be singular)."
+                )
+            else:
+                logger.debug(
+                    "Kernel matrix solve still singular for at least one objective."
+                )
+        self._last_singular = any_singular
 
     def predict(self, test_x: np.ndarray) -> SurrogatePrediction:
         """
