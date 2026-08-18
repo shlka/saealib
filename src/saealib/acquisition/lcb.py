@@ -111,6 +111,7 @@ class LowerConfidenceBound(PointwiseAcquisition):
             If ``beta_schedule`` is set but ``ctx`` is ``None`` (``t`` has no
             source). Call via ``evaluate()`` with a real ``ctx``, not
             ``score()`` directly.
+            If ``beta_schedule`` returns a non-finite or negative value.
         """
         if self.beta_schedule is None:
             return self.compute_reference(
@@ -123,7 +124,13 @@ class LowerConfidenceBound(PointwiseAcquisition):
                 "directly with no ctx."
             )
         t = ctx.decision_count + 1
-        return math.sqrt(self.beta_schedule(t))
+        beta = self.beta_schedule(t)
+        if not math.isfinite(beta) or beta < 0:
+            raise ValidationError(
+                f"LowerConfidenceBound.beta_schedule({t}) returned {beta!r}; "
+                "expected a finite, non-negative beta_t."
+            )
+        return math.sqrt(beta)
 
     def score(
         self,
@@ -188,6 +195,8 @@ class _GPUCBBetaSchedule:
     delta: float = 0.1
 
     def __post_init__(self) -> None:
+        if not isinstance(self.domain_size, int) or isinstance(self.domain_size, bool):
+            raise ValidationError("gp_ucb_beta_schedule: domain_size must be an int")
         if self.domain_size <= 0:
             raise ValidationError("gp_ucb_beta_schedule: domain_size must be positive")
         if not (0.0 < self.delta < 1.0):
@@ -196,6 +205,8 @@ class _GPUCBBetaSchedule:
             )
 
     def __call__(self, t: int) -> float:
+        if not isinstance(t, int) or isinstance(t, bool):
+            raise ValidationError("gp_ucb_beta_schedule: t must be an int")
         if t < 1:
             raise ValidationError("gp_ucb_beta_schedule: t must be >= 1")
         return 2.0 * math.log(self.domain_size * t**2 * math.pi**2 / (6.0 * self.delta))
@@ -217,7 +228,7 @@ def gp_ucb_beta_schedule(
     ----------
     domain_size : int
         Size of the (possibly discretized) search domain (``|D|`` in the
-        cited bound). Must be positive.
+        cited bound). Must be an int and positive.
     delta : float
         Confidence parameter. Must satisfy ``0 < delta < 1``. Default: 0.1.
 
@@ -225,12 +236,14 @@ def gp_ucb_beta_schedule(
     -------
     callable
         A picklable ``schedule(t) -> float``, increasing in the round index
-        ``t`` (``t`` starting at 1; raises :class:`~saealib.exceptions.ValidationError`
-        for ``t < 1``).
+        ``t`` (``t`` must be an int starting at 1; raises
+        :class:`~saealib.exceptions.ValidationError` for a non-integer ``t``
+        or ``t < 1``).
 
     Raises
     ------
     ValidationError
-        If ``domain_size`` is not positive, or ``delta`` is not in ``(0, 1)``.
+        If ``domain_size`` is not an int or positive, or ``delta`` is not in
+        ``(0, 1)``.
     """
     return _GPUCBBetaSchedule(domain_size, delta)

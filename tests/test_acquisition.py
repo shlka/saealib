@@ -341,6 +341,24 @@ class TestLowerConfidenceBound:
         archive = _archive_x([0.0])
         assert af.prepare(archive, _decision_ctx(0)) == pytest.approx(2.0)  # sqrt(4.0)
 
+    def test_prepare_raises_when_beta_schedule_returns_negative(self) -> None:
+        af = LowerConfidenceBound(beta_schedule=lambda t: -1.0)
+        archive = _archive_x([0.0])
+        with pytest.raises(ValidationError, match="beta_schedule"):
+            af.prepare(archive, _decision_ctx(0))
+
+    def test_prepare_raises_when_beta_schedule_returns_nan(self) -> None:
+        af = LowerConfidenceBound(beta_schedule=lambda t: float("nan"))
+        archive = _archive_x([0.0])
+        with pytest.raises(ValidationError, match="beta_schedule"):
+            af.prepare(archive, _decision_ctx(0))
+
+    def test_prepare_raises_when_beta_schedule_returns_inf(self) -> None:
+        af = LowerConfidenceBound(beta_schedule=lambda t: float("inf"))
+        archive = _archive_x([0.0])
+        with pytest.raises(ValidationError, match="beta_schedule"):
+            af.prepare(archive, _decision_ctx(0))
+
     def test_prepare_passes_decision_count_plus_one_as_t(self) -> None:
         seen: list[int] = []
 
@@ -425,6 +443,24 @@ class TestGpUcbBetaSchedule:
             gp_ucb_beta_schedule(domain_size=0)
         with pytest.raises(ValidationError, match="domain_size"):
             gp_ucb_beta_schedule(domain_size=-1)
+
+    def test_rejects_non_integer_domain_size(self) -> None:
+        with pytest.raises(ValidationError, match="domain_size"):
+            gp_ucb_beta_schedule(domain_size=100.0)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+
+    def test_rejects_bool_domain_size(self) -> None:
+        with pytest.raises(ValidationError, match="domain_size"):
+            gp_ucb_beta_schedule(domain_size=True)
+
+    def test_rejects_non_integer_round_index(self) -> None:
+        schedule = gp_ucb_beta_schedule(domain_size=100)
+        with pytest.raises(ValidationError, match="t"):
+            schedule(1.5)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+
+    def test_rejects_bool_round_index(self) -> None:
+        schedule = gp_ucb_beta_schedule(domain_size=100)
+        with pytest.raises(ValidationError, match="t"):
+            schedule(True)
 
     def test_rejects_delta_outside_open_unit_interval(self) -> None:
         with pytest.raises(ValidationError, match="delta"):
