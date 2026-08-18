@@ -371,6 +371,7 @@ _LAZY_EXPORTS: dict[str, str] = {
     "ProductOfFeasibility": "saealib.acquisition",
     "SMSEGOAcquisition": "saealib.acquisition",
     "WinRateAcquisition": "saealib.acquisition",
+    "gp_ucb_beta_schedule": "saealib.acquisition",
     # surrogate (specialized)
     "CompositeSurrogateManager": "saealib.surrogate",
     "GlobalSurrogateManager": "saealib.surrogate",

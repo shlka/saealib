@@ -26,6 +26,7 @@ from saealib.core.state import (
     PROPOSALS_CURRENT,
     PROPOSALS_OFFSPRING,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
     RUNTIME_RNG,
@@ -158,6 +159,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 SURROGATES_PREDICTIONS,
                 ARCHIVES_MAIN,
                 RUNTIME_GENERATION,
+                RUNTIME_DECISION_COUNT,
                 RUNTIME_RNG,
             },
             {SCORES, ACQUISITION_RESULT},
@@ -181,6 +183,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 SCORES,
                 SURROGATES_PREDICTIONS,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             },
             {
                 EVALUATION_REQUEST,
@@ -194,6 +197,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATION_HANDLES,
                 EVALUATIONS_OWNERS,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             },
         ),
         AsyncEvaluationSubmitStage: (
@@ -206,6 +210,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATIONS_PENDING,
                 EVALUATION_HANDLES,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             },
             {
                 EVALUATION_REQUEST,
@@ -214,6 +219,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATIONS_PLAN_UPDATES,
                 EVALUATIONS_PENDING,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             },
         ),
         EvaluationSubmitStage: (

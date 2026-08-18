@@ -75,6 +75,7 @@ from saealib.core.state import (
     PROPOSALS_OFFSPRING,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
     RUNTIME_RNG,
@@ -316,6 +317,7 @@ _STATE_FIELD_KEYS: dict[str, Any] = {
     "request_id_allocator": RUNTIME_REQUEST_ID_ALLOCATOR,
     "fe": EVALUATIONS_COUNT,
     "gen": RUNTIME_GENERATION,
+    "decision_count": RUNTIME_DECISION_COUNT,
     "async_fatal": RUNTIME_ASYNC_FATAL,
     "data": USER_DATA,
     "proposal_id": PROPOSALS_CURRENT,
@@ -760,11 +762,14 @@ class AcquisitionStage(Stage):
     score array to ``state.scores``.
 
     Caches ``acquisition.prepare()``'s result per ``(acquisition instance
-    identity, generation, archive.value_version, archive.structure_version)``
-    A stage instance running the same acquisition
-    against an unchanged archive within one generation does not recompute the
-    reference, while a mid-generation archive append (structure_version bump)
-    or value-only mutation (value_version bump) correctly invalidates it.
+    identity, generation, decision_count, archive.value_version,
+    archive.structure_version)``. A stage instance running the same
+    acquisition against an unchanged archive within one generation does not
+    recompute the reference, while a mid-generation archive append
+    (structure_version bump), value-only mutation (value_version bump), or a
+    newly confirmed evaluation plan (``decision_count`` bump -- relevant to
+    async steady-state refill, where ``gen`` can stay fixed across several
+    confirmed plans) correctly invalidates it.
 
     Empty candidate input (``len(state.offspring) == 0``) skips straight to
     an empty ``AcquisitionResult`` without touching the cache or calling
@@ -794,6 +799,7 @@ class AcquisitionStage(Stage):
                 SURROGATES_PREDICTIONS,
                 ARCHIVES_MAIN,
                 RUNTIME_GENERATION,
+                RUNTIME_DECISION_COUNT,
                 RUNTIME_RNG,
             ),
             writes=(SCORES, ACQUISITION_RESULT),
@@ -809,11 +815,11 @@ class AcquisitionStage(Stage):
         self._acquisition = acquisition
         self._cbmanager = cbmanager
         # Single-entry cache: id(self._acquisition) is constant for the life
-        # of this stage instance, so only (gen, value_version,
-        # structure_version) actually varies -- a growing dict would retain
-        # every past generation's prepared reference for as long as this
-        # stage instance is reused.
-        self._prepared_cache_key: tuple[int, int, int, int] | None = None
+        # of this stage instance, so only (gen, decision_count,
+        # value_version, structure_version) actually varies -- a growing
+        # dict would retain every past generation's prepared reference for
+        # as long as this stage instance is reused.
+        self._prepared_cache_key: tuple[int, int, int, int, int] | None = None
         self._prepared_cache_value: object = None
 
     def execute(self, state: OptimizationState) -> OptimizationState:
@@ -832,6 +838,7 @@ class AcquisitionStage(Stage):
             key = (
                 id(self._acquisition),
                 state.gen,
+                state.decision_count,
                 archive.value_version,
                 archive.structure_version,
             )
@@ -986,7 +993,19 @@ class SortByScoreStage(Stage):
 
 
 class EvaluationPlanStage(Stage):
-    """Create an owned request and pending record."""
+    """Create an owned request and pending record.
+
+    Increments ``state.decision_count`` by exactly one whenever a genuinely
+    new plan is confirmed (the branch that calls the planner and builds
+    ``pending_evaluations``), never on a continuation of an already-pending
+    multi-request plan. One decision covers the whole confirmed
+    ``EvaluationPlan``, however many candidates its requests evaluate.
+    ``decision_count`` counts a genuinely new evaluation plan confirmed by
+    the runtime regardless of execution mode: this method increments it for
+    synchronous execution; :class:`AsyncEvaluationSubmitStage` (which
+    :meth:`execute_async` delegates to) increments it the same way for
+    async/steady-state execution.
+    """
 
     name = "evaluation_plan"
     label = "Plan evaluation"
@@ -1008,6 +1027,7 @@ class EvaluationPlanStage(Stage):
                 SCORES,
                 SURROGATES_PREDICTIONS,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             ),
             writes=(
                 EVALUATION_REQUEST,
@@ -1021,6 +1041,7 @@ class EvaluationPlanStage(Stage):
                 EVALUATION_HANDLES,
                 EVALUATIONS_OWNERS,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             ),
             components=(("_planner", self._planner),),
             reads_enumerable=not callable(self._n_eval),
@@ -1107,6 +1128,7 @@ class EvaluationPlanStage(Stage):
             evaluation_update_new_ids=[],
             evaluation_plan_updates={},
             evaluation_new_ids=np.empty(0, dtype=np.int64),
+            decision_count=state.decision_count + 1,
         )
 
     def execute_async(
@@ -1194,6 +1216,7 @@ class AsyncEvaluationSubmitStage(Stage):
                 EVALUATIONS_PENDING,
                 EVALUATION_HANDLES,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             ),
             writes=(
                 EVALUATION_REQUEST,
@@ -1202,6 +1225,7 @@ class AsyncEvaluationSubmitStage(Stage):
                 EVALUATIONS_PLAN_UPDATES,
                 EVALUATIONS_PENDING,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             ),
             components=(
                 ("_planner", self._planner),
@@ -1248,6 +1272,7 @@ class AsyncEvaluationSubmitStage(Stage):
                 plan = None
         if plan is None:
             plan = self._planner.plan(candidates, acquisition, state)
+            state = state.replace(decision_count=state.decision_count + 1)
         if not isinstance(plan, EvaluationPlan):
             raise EvaluationProtocolError(
                 "evaluation planner must return EvaluationPlan"

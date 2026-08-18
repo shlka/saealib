@@ -6,11 +6,17 @@ Tests cover:
 - MaxUncertainty: no weights (mean std), with weights, requires uncertainty
 - ExpectedImprovement: basic EI formula, xi parameter, requires uncertainty
 - LowerConfidenceBound: negated LCB, kappa parameter, requires uncertainty
+- LowerConfidenceBound beta_schedule: round-index-based kappa, gp_ucb_beta_schedule
 - ProbabilityOfFeasibility: P(g<=0), requires uncertainty
 - CORSDistance: distance-constrained mean prediction, beta_i cycling
 - AcquisitionFunction: abstract base class cannot be instantiated
 - direction-aware minimize-space conversion for EI/LCB
 """
+
+import math
+import pickle
+from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import pytest
@@ -24,6 +30,7 @@ from saealib.acquisition import (
     MeanPrediction,
     ProbabilityOfFeasibility,
     ProductOfFeasibility,
+    gp_ucb_beta_schedule,
 )
 from saealib.acquisition.mean import CORSDistance
 from saealib.exceptions import ValidationError
@@ -69,6 +76,11 @@ def _archive_x(xs):
     for x_val in xs:
         arc.add(x=np.array([float(x_val)]), f=np.array([0.0]))
     return arc
+
+
+def _decision_ctx(decision_count: int) -> Any:
+    """Minimal duck-typed OptimizationState stand-in exposing ctx.decision_count/rng."""
+    return SimpleNamespace(decision_count=decision_count, rng=np.random.default_rng(0))
 
 
 # ===========================================================================
@@ -311,6 +323,160 @@ class TestLowerConfidenceBound:
         s1 = LowerConfidenceBound(kappa=0.0, obj_idx=1).score(pred, reference=None)
         assert s0[0] == pytest.approx(-1.0)
         assert s1[0] == pytest.approx(-5.0)
+
+    def test_compute_reference_returns_none(self) -> None:
+        archive = _archive_x([0.0])
+        assert LowerConfidenceBound().compute_reference(archive) is None
+
+    def test_fixed_kappa_unaffected_by_repeated_calls(self) -> None:
+        af = LowerConfidenceBound(kappa=2.0)
+        pred = _pred(value=[[1.0]], std=[[0.1]])
+        first = af.score(pred, reference=None)
+        af.score(pred, reference=None)
+        third = af.score(pred, reference=None)
+        np.testing.assert_array_almost_equal(first, third)
+
+    def test_prepare_resolves_kappa_from_decision_count(self) -> None:
+        af = LowerConfidenceBound(beta_schedule=lambda t: 4.0)
+        archive = _archive_x([0.0])
+        assert af.prepare(archive, _decision_ctx(0)) == pytest.approx(2.0)  # sqrt(4.0)
+
+    def test_prepare_raises_when_beta_schedule_returns_negative(self) -> None:
+        af = LowerConfidenceBound(beta_schedule=lambda t: -1.0)
+        archive = _archive_x([0.0])
+        with pytest.raises(ValidationError, match="beta_schedule"):
+            af.prepare(archive, _decision_ctx(0))
+
+    def test_prepare_raises_when_beta_schedule_returns_nan(self) -> None:
+        af = LowerConfidenceBound(beta_schedule=lambda t: float("nan"))
+        archive = _archive_x([0.0])
+        with pytest.raises(ValidationError, match="beta_schedule"):
+            af.prepare(archive, _decision_ctx(0))
+
+    def test_prepare_raises_when_beta_schedule_returns_inf(self) -> None:
+        af = LowerConfidenceBound(beta_schedule=lambda t: float("inf"))
+        archive = _archive_x([0.0])
+        with pytest.raises(ValidationError, match="beta_schedule"):
+            af.prepare(archive, _decision_ctx(0))
+
+    def test_prepare_passes_decision_count_plus_one_as_t(self) -> None:
+        seen: list[int] = []
+
+        def schedule(t: int) -> float:
+            seen.append(t)
+            return 4.0
+
+        af = LowerConfidenceBound(beta_schedule=schedule)
+        archive = _archive_x([0.0])
+        af.prepare(archive, _decision_ctx(0))
+        af.prepare(archive, _decision_ctx(5))
+        af.prepare(archive, _decision_ctx(5))
+        assert seen == [1, 6, 6]
+
+    def test_prepare_raises_without_ctx_when_beta_schedule_set(self) -> None:
+        af = LowerConfidenceBound(beta_schedule=lambda t: 4.0)
+        archive = _archive_x([0.0])
+        with pytest.raises(ValidationError, match="beta_schedule"):
+            af.prepare(archive, None)
+
+    def test_prepare_delegates_to_compute_reference_without_beta_schedule(
+        self,
+    ) -> None:
+        af = LowerConfidenceBound()
+        archive = _archive_x([0.0])
+        assert af.prepare(archive, None) is None
+        assert af.prepare(archive, _decision_ctx(3)) is None
+
+    def test_score_raises_when_beta_schedule_set_and_reference_is_none(self) -> None:
+        af = LowerConfidenceBound(beta_schedule=lambda t: 4.0)
+        pred = _pred(value=[[1.0]], std=[[0.1]])
+        with pytest.raises(ValidationError, match="beta_schedule"):
+            af.score(pred, reference=None)
+
+    def test_score_uses_reference_as_kappa_when_beta_schedule_set(self) -> None:
+        pred = _pred(value=[[2.0]], std=[[0.5]])
+        scores_fixed = LowerConfidenceBound(kappa=2.0).score(pred, reference=None)
+        scores_schedule = LowerConfidenceBound(
+            kappa=999.0, beta_schedule=lambda t: 4.0
+        ).score(pred, reference=2.0)
+        assert scores_schedule[0] == pytest.approx(scores_fixed[0])
+
+    def test_repeated_evaluate_with_unchanged_ctx_does_not_advance_t(self) -> None:
+        seen: list[int] = []
+
+        def schedule(t: int) -> float:
+            seen.append(t)
+            return 4.0
+
+        af = LowerConfidenceBound(beta_schedule=schedule)
+        pred = _pred(value=[[1.0]], std=[[0.1]])
+        candidates_x = np.zeros((1, 1))
+        archive = _archive_x([0.0])
+        ctx = _decision_ctx(2)
+
+        first = af.evaluate(candidates_x, pred, archive, ctx)
+        second = af.evaluate(candidates_x, pred, archive, ctx)
+
+        assert seen == [3, 3]
+        assert first.scores is not None
+        assert second.scores is not None
+        np.testing.assert_array_almost_equal(first.scores, second.scores)
+
+
+class TestGpUcbBetaSchedule:
+    def test_matches_theorem1_formula(self) -> None:
+        assert gp_ucb_beta_schedule(domain_size=1000, delta=0.1)(5) == pytest.approx(
+            2.0 * math.log(1000 * 5**2 * math.pi**2 / (6.0 * 0.1))
+        )
+
+    def test_increasing_in_round_index(self) -> None:
+        schedule = gp_ucb_beta_schedule(domain_size=100)
+        assert schedule(1) < schedule(2) < schedule(10)
+
+    def test_default_delta_is_point_one(self) -> None:
+        assert gp_ucb_beta_schedule(domain_size=100)(3) == pytest.approx(
+            gp_ucb_beta_schedule(domain_size=100, delta=0.1)(3)
+        )
+
+    def test_rejects_non_positive_domain_size(self) -> None:
+        with pytest.raises(ValidationError, match="domain_size"):
+            gp_ucb_beta_schedule(domain_size=0)
+        with pytest.raises(ValidationError, match="domain_size"):
+            gp_ucb_beta_schedule(domain_size=-1)
+
+    def test_rejects_non_integer_domain_size(self) -> None:
+        with pytest.raises(ValidationError, match="domain_size"):
+            gp_ucb_beta_schedule(domain_size=100.0)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+
+    def test_rejects_bool_domain_size(self) -> None:
+        with pytest.raises(ValidationError, match="domain_size"):
+            gp_ucb_beta_schedule(domain_size=True)
+
+    def test_rejects_non_integer_round_index(self) -> None:
+        schedule = gp_ucb_beta_schedule(domain_size=100)
+        with pytest.raises(ValidationError, match="t"):
+            schedule(1.5)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+
+    def test_rejects_bool_round_index(self) -> None:
+        schedule = gp_ucb_beta_schedule(domain_size=100)
+        with pytest.raises(ValidationError, match="t"):
+            schedule(True)
+
+    def test_rejects_delta_outside_open_unit_interval(self) -> None:
+        with pytest.raises(ValidationError, match="delta"):
+            gp_ucb_beta_schedule(domain_size=100, delta=0.0)
+        with pytest.raises(ValidationError, match="delta"):
+            gp_ucb_beta_schedule(domain_size=100, delta=1.0)
+
+    def test_rejects_round_index_below_one(self) -> None:
+        schedule = gp_ucb_beta_schedule(domain_size=100)
+        with pytest.raises(ValidationError, match="t"):
+            schedule(0)
+
+    def test_is_picklable(self) -> None:
+        schedule = gp_ucb_beta_schedule(domain_size=100, delta=0.05)
+        restored = pickle.loads(pickle.dumps(schedule))
+        assert restored(5) == pytest.approx(schedule(5))
 
 
 # ===========================================================================

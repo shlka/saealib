@@ -32,6 +32,7 @@ from saealib.acquisition import ProbabilityOfFeasibility as ProbabilityOfFeasibi
 from saealib.acquisition import ProductOfFeasibility as ProductOfFeasibility
 from saealib.acquisition import SMSEGOAcquisition as SMSEGOAcquisition
 from saealib.acquisition import WinRateAcquisition as WinRateAcquisition
+from saealib.acquisition import gp_ucb_beta_schedule as gp_ucb_beta_schedule
 from saealib.algorithms import GA as GA
 from saealib.algorithms import PSO as PSO
 from saealib.algorithms import Algorithm as Algorithm

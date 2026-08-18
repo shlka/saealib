@@ -15,7 +15,7 @@ from saealib import (
 from saealib.acquisition import MeanPrediction
 from saealib.callback import CallbackManager, PostEvaluationEvent
 from saealib.comparators import SingleObjectiveComparator
-from saealib.context import OptimizationState
+from saealib.context import EvaluationPlanState, OptimizationState
 from saealib.exceptions import EvaluationProtocolError
 from saealib.execution.evaluator import (
     EvaluationRequest,
@@ -169,6 +169,73 @@ class TestEvaluationPlanStage:
             EvaluationPlanStage(cast(Any, _Planner(_plan_with_request()))).execute(
                 state
             )
+
+    def test_new_plan_confirmation_increments_decision_count(self):
+        state = _state_with_plannable_offspring()
+        assert state.decision_count == 0
+        planned = EvaluationPlanStage(planner=None).execute(state)
+        assert planned.decision_count == 1
+
+    def test_multi_request_plan_still_counts_as_one_decision(self):
+        state = _state_with_plannable_offspring()
+        plan = EvaluationPlan(
+            (
+                EvaluationRequest(
+                    np.int64(0),
+                    np.array([0], dtype=np.int64),
+                    np.zeros((1, DIM), dtype=np.float64),
+                ),
+                EvaluationRequest(
+                    np.int64(1),
+                    np.array([1], dtype=np.int64),
+                    np.zeros((1, DIM), dtype=np.float64),
+                ),
+            )
+        )
+        planned = EvaluationPlanStage(cast(Any, _Planner(plan))).execute(state)
+        assert planned.evaluation_plan is not None
+        assert len(planned.evaluation_plan.requests) == 2
+        assert planned.decision_count == 1
+
+    def test_plan_continuation_does_not_increment_decision_count(self):
+        state = _state_with_plannable_offspring()
+        plan = EvaluationPlan(
+            (
+                EvaluationRequest(
+                    np.int64(0),
+                    np.array([0], dtype=np.int64),
+                    np.zeros((1, DIM), dtype=np.float64),
+                ),
+                EvaluationRequest(
+                    np.int64(1),
+                    np.array([1], dtype=np.int64),
+                    np.zeros((1, DIM), dtype=np.float64),
+                ),
+            )
+        )
+        state = state.replace(
+            evaluation_plan=plan,
+            evaluation_plan_state=EvaluationPlanState(
+                submitted=(0,), completed=(0,), deferred=(1,)
+            ),
+            evaluation_request=None,
+            decision_count=5,
+        )
+        continued = EvaluationPlanStage(planner=None).execute(state)
+        assert continued.evaluation_request is plan.requests[1]
+        assert continued.decision_count == 5
+
+    def test_plan_continuation_passthrough_does_not_increment_decision_count(self):
+        state = _state_with_plannable_offspring()
+        plan = _plan_with_request()
+        state = state.replace(
+            evaluation_plan=plan,
+            evaluation_plan_state=EvaluationPlanState(deferred=(0,)),
+            evaluation_request=plan.requests[0],
+            decision_count=5,
+        )
+        unchanged = EvaluationPlanStage(planner=None).execute(state)
+        assert unchanged.decision_count == 5
 
 
 # ---------------------------------------------------------------------------
