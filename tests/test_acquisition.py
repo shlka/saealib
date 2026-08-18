@@ -12,6 +12,8 @@ Tests cover:
 - direction-aware minimize-space conversion for EI/LCB
 """
 
+import math
+
 import numpy as np
 import pytest
 from scipy.stats import norm
@@ -24,6 +26,7 @@ from saealib.acquisition import (
     MeanPrediction,
     ProbabilityOfFeasibility,
     ProductOfFeasibility,
+    gp_ucb_beta_schedule,
 )
 from saealib.acquisition.mean import CORSDistance
 from saealib.exceptions import ValidationError
@@ -311,6 +314,56 @@ class TestLowerConfidenceBound:
         s1 = LowerConfidenceBound(kappa=0.0, obj_idx=1).score(pred, reference=None)
         assert s0[0] == pytest.approx(-1.0)
         assert s1[0] == pytest.approx(-5.0)
+
+    def test_compute_reference_returns_none(self) -> None:
+        archive = _archive_x([0.0])
+        assert LowerConfidenceBound().compute_reference(archive) is None
+
+    def test_beta_schedule_overrides_kappa(self) -> None:
+        pred = _pred(value=[[2.0]], std=[[0.5]])
+        scores_fixed = LowerConfidenceBound(kappa=2.0).score(pred, reference=None)
+        scores_schedule = LowerConfidenceBound(
+            kappa=999.0, beta_schedule=lambda t: 4.0
+        ).score(pred, reference=None)
+        assert scores_schedule[0] == pytest.approx(scores_fixed[0])
+
+    def test_beta_schedule_receives_incrementing_round_index(self) -> None:
+        seen: list[int] = []
+
+        def schedule(t: int) -> float:
+            seen.append(t)
+            return 4.0
+
+        af = LowerConfidenceBound(beta_schedule=schedule)
+        pred = _pred(value=[[1.0]], std=[[0.1]])
+        af.score(pred, reference=None)
+        af.score(pred, reference=None)
+        af.score(pred, reference=None)
+        assert seen == [1, 2, 3]
+
+    def test_fixed_kappa_unaffected_by_call_count(self) -> None:
+        af = LowerConfidenceBound(kappa=2.0)
+        pred = _pred(value=[[1.0]], std=[[0.1]])
+        first = af.score(pred, reference=None)
+        af.score(pred, reference=None)
+        third = af.score(pred, reference=None)
+        np.testing.assert_array_almost_equal(first, third)
+
+
+class TestGpUcbBetaSchedule:
+    def test_matches_theorem1_formula(self) -> None:
+        assert gp_ucb_beta_schedule(domain_size=1000, delta=0.1)(5) == pytest.approx(
+            2.0 * math.log(1000 * 5**2 * math.pi**2 / (6.0 * 0.1))
+        )
+
+    def test_increasing_in_round_index(self) -> None:
+        schedule = gp_ucb_beta_schedule(domain_size=100)
+        assert schedule(1) < schedule(2) < schedule(10)
+
+    def test_default_delta_is_point_one(self) -> None:
+        assert gp_ucb_beta_schedule(domain_size=100)(3) == pytest.approx(
+            gp_ucb_beta_schedule(domain_size=100, delta=0.1)(3)
+        )
 
 
 # ===========================================================================
