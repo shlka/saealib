@@ -688,6 +688,38 @@ def test_async_chunk_ids_are_owned_by_the_plan_until_all_complete(tmp_path):
     assert state.evaluation_plan_state.completed == (0, 1)
 
 
+def test_async_new_plan_increments_decision_count():
+    state = make_state()
+    assert state.decision_count == 0
+    evaluator = ControlledReplicateEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=2)
+    state = AsyncEvaluationSubmitStage(scheduler, EvaluateAll()).execute(state)
+    assert state.decision_count == 1
+
+
+def test_async_repeated_execute_on_same_plan_does_not_increment_decision_count():
+    state = make_state()
+    evaluator = ControlledReplicateEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=1)
+    stage = AsyncEvaluationSubmitStage(scheduler, RepeatedEvaluation(2))
+
+    state = stage.execute(state)
+    assert state.decision_count == 1
+    state = scheduler.poll(state, wait=True)
+    assert state.evaluation_plan is not None
+    assert state.evaluation_plan_state is not None
+    terminal = set(state.evaluation_plan_state.completed) | set(
+        state.evaluation_plan_state.acknowledged
+    )
+    assert not all(
+        int(request.request_id) in terminal
+        for request in state.evaluation_plan.requests
+    )
+
+    state = stage.execute(state)
+    assert state.decision_count == 1
+
+
 def test_deferred_replicate_split_preserves_completed_plan_history(tmp_path):
     state = make_state()
     evaluator = ControlledReplicateEvaluator()

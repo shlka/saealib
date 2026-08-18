@@ -210,6 +210,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATIONS_PENDING,
                 EVALUATION_HANDLES,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             },
             {
                 EVALUATION_REQUEST,
@@ -218,6 +219,7 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATIONS_PLAN_UPDATES,
                 EVALUATIONS_PENDING,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             },
         ),
         EvaluationSubmitStage: (

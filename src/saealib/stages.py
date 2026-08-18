@@ -1214,6 +1214,7 @@ class AsyncEvaluationSubmitStage(Stage):
                 EVALUATIONS_PENDING,
                 EVALUATION_HANDLES,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             ),
             writes=(
                 EVALUATION_REQUEST,
@@ -1222,6 +1223,7 @@ class AsyncEvaluationSubmitStage(Stage):
                 EVALUATIONS_PLAN_UPDATES,
                 EVALUATIONS_PENDING,
                 RUNTIME_REQUEST_ID_ALLOCATOR,
+                RUNTIME_DECISION_COUNT,
             ),
             components=(
                 ("_planner", self._planner),
@@ -1268,6 +1270,7 @@ class AsyncEvaluationSubmitStage(Stage):
                 plan = None
         if plan is None:
             plan = self._planner.plan(candidates, acquisition, state)
+            state = state.replace(decision_count=state.decision_count + 1)
         if not isinstance(plan, EvaluationPlan):
             raise EvaluationProtocolError(
                 "evaluation planner must return EvaluationPlan"
