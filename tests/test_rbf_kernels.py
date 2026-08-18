@@ -209,6 +209,27 @@ def test_unresolved_length_scale_pairwise_raises_validation_error(kernel):
         kernel.pairwise(x, x)
 
 
+@pytest.mark.parametrize(
+    "name",
+    [
+        "gaussian_kernel",
+        "thin_plate_spline_kernel",
+        "linear_kernel",
+        "cubic_kernel",
+        "multiquadric_kernel",
+        "matern_kernel",
+    ],
+)
+def test_old_kernel_functions_are_not_importable(name):
+    import saealib
+    import saealib.surrogate
+    import saealib.surrogate.rbf
+
+    assert not hasattr(saealib, name)
+    assert not hasattr(saealib.surrogate, name)
+    assert not hasattr(saealib.surrogate.rbf, name)
+
+
 def test_pairwise_returns_cross_kernel_matrix_shape():
     x1 = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
     x2 = np.array(

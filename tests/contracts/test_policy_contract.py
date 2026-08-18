@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from saealib.acquisition import AcquisitionResult
+from saealib.acquisition.mean import MeanPrediction
 from saealib.context import OptimizationState
 from saealib.exceptions import ValidationError
 from saealib.execution.evaluator import EvaluationResult
@@ -32,6 +33,8 @@ from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate import PredictionChannel, SurrogatePrediction
+from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import GaussianKernel
 
 
 def _state() -> OptimizationState:
@@ -95,6 +98,31 @@ def test_selection_boundaries_and_empty():
         _state(),
     )
     np.testing.assert_array_equal(plan.requests[0].candidate_ids, [10])
+
+
+def test_rbf_singular_solve_nan_flows_through_sanitized_evaluation_planning():
+    """RBFSurrogate's singular-solve NaN is a recoverable failure, not an
+    abort: it reaches RatioEvaluation(sanitize_nonfinite=True) as a
+    non-finite acquisition score and gets planned around rather than
+    raising."""
+    train_x = np.array([[-1.0], [0.0], [0.0], [1.0]])
+    train_y = np.array([1.0, 2.0, 2.0, 3.0])
+    surrogate = RBFSurrogate(kernel=GaussianKernel(), solver="solve")
+    surrogate.fit(train_x, train_y)
+
+    state = _state()
+    assert state.offspring is not None
+    prediction = surrogate.predict(state.offspring.x)
+    assert np.all(np.isnan(prediction.value))
+
+    scores = MeanPrediction(direction=np.array([-1.0])).score(prediction)
+    assert np.all(np.isnan(scores))
+
+    plan = RatioEvaluation(0.5, sanitize_nonfinite=True).plan(
+        state.offspring, AcquisitionResult(scores), state
+    )
+
+    assert len(plan.requests[0].candidate_ids) >= 1
 
 
 def test_plan_and_score_validation_covers_invalid_policy_inputs():
