@@ -156,6 +156,26 @@ def test_resolve_returns_kernels_without_length_scale_unchanged():
     )
 
 
+class _EagerlyInvalidKernel(RBFKernel):
+    """Custom subclass that skips dataclass ``__post_init__``, so
+    ``validate()`` is never called at construction — only ``resolve()`` (the
+    default implementation) can catch it."""
+
+    def evaluate(self, r: np.ndarray) -> np.ndarray:
+        return r
+
+    def validate(self) -> None:
+        raise ValidationError("always invalid")
+
+
+def test_default_resolve_calls_validate_for_custom_subclass():
+    kernel = _EagerlyInvalidKernel()
+    train_x = np.array([[0.0], [1.0]])
+
+    with pytest.raises(ValidationError, match="always invalid"):
+        kernel.resolve(train_x)
+
+
 @pytest.mark.parametrize(
     "kernel_cls", [GaussianKernel, MultiquadricKernel, MaternKernel]
 )

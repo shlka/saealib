@@ -60,7 +60,13 @@ class RBFKernel(ABC):
         return None
 
     def resolve(self, train_x: np.ndarray) -> Self:
-        """Return a kernel whose data-dependent parameters are resolved."""
+        """Return a kernel whose data-dependent parameters are resolved.
+
+        Calls :meth:`validate` before returning, so a custom subclass that
+        overrides ``validate()`` but not ``resolve()`` still gets its
+        configuration checked at resolve time.
+        """
+        self.validate()
         return self
 
     def pairwise(self, x1: np.ndarray, x2: np.ndarray) -> np.ndarray:
