@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>CORS-RBF (Constrained Optimization using Response Surfaces) &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
+    <title>CORS-RBF (Constrained Optimization using Response Surfaces) &#8212; saealib 0.1.0b5.dev82+ga38da46e2 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=512d92dd"></script>
+    <script src="../_static/documentation_options.js?v=0b801eb7"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1051,7 +1051,7 @@ It has been proven that, as long as the search pattern contains at least one non
 <td><p>L3</p></td>
 </tr>
 <tr class="row-odd"><td><p>Surrogate model</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code> (RBF interpolation; defaults to <code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code>, but any kernel function can be injected)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code> (RBF interpolation; this example uses <code class="docutils literal notranslate"><span class="pre">GaussianKernel()</span></code> with no polynomial term, but <code class="docutils literal notranslate"><span class="pre">kernel</span></code> is a required argument and any <code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>/<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code> can be injected — see Differences from the source)</p></td>
 <td><p>L2</p></td>
 </tr>
 <tr class="row-even"><td><p>Acquisition function</p></td>
@@ -1072,11 +1072,11 @@ It has been proven that, as long as the search pattern contains at least one non
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GA</span><span class="p">,</span>
+    <span class="n">GaussianKernel</span><span class="p">,</span>
     <span class="n">Optimizer</span><span class="p">,</span>
     <span class="n">Problem</span><span class="p">,</span>
     <span class="n">IndividualBasedStrategy</span><span class="p">,</span>
     <span class="n">RBFSurrogate</span><span class="p">,</span>
-    <span class="n">gaussian_kernel</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSDistance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverBLXAlpha</span>
@@ -1100,7 +1100,7 @@ It has been proven that, as long as the search pattern contains at least one non
     <span class="n">SequentialSelection</span><span class="p">(),</span>
     <span class="n">TruncationSelection</span><span class="p">(),</span>
 <span class="p">)</span>
-<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">GaussianKernel</span><span class="p">()))</span>
 <span class="n">delta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">))</span>
 <span class="n">acquisition</span> <span class="o">=</span> <span class="n">CORSDistance</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
@@ -1123,13 +1123,13 @@ It has been proven that, as long as the search pattern contains at least one non
 <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code> also allows the selected candidates to receive true evaluations as a batch.
 The crossover, mutation, parent-selection, and environmental-selection combination in the example is an saealib configuration choice, not part of the CORS definition.
 The paper’s numerical experiments use a thin-plate-spline kernel (<span class="math notranslate nohighlight">\(\phi(r) = r^2 \log r\)</span>) with a first-order polynomial term <span class="math notranslate nohighlight">\(p(x)\)</span>.
-saealib’s <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code> is a pure RBF interpolator without a polynomial term; it fits residuals after subtracting the training-data mean.
-Therefore, swapping only the kernel cannot fully reproduce the paper’s configuration.</p>
+With the <code class="docutils literal notranslate"><span class="pre">kernel=GaussianKernel()</span></code> used above, <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>’s default <code class="docutils literal notranslate"><span class="pre">polynomial_degree=&quot;auto&quot;</span></code> resolves to no polynomial term (<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>’s <code class="docutils literal notranslate"><span class="pre">min_polynomial_degree</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>), so swapping only the kernel does not reproduce the paper’s configuration.
+Passing <code class="docutils literal notranslate"><span class="pre">kernel=ThinPlateSplineKernel()</span></code> together with <code class="docutils literal notranslate"><span class="pre">polynomial_degree=1</span></code> reproduces it, since a linear polynomial term is what makes the interpolation system well-posed for a conditionally positive definite kernel such as thin-plate-spline.</p>
 </section>
 <section id="parameters-and-variants">
 <h2>Parameters and variants<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong>kernel (choice of RBF kernel)</strong>: Any kernel function can be injected via <code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel=...)</span></code>.
-The default is <code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code>.</p>
+<p><strong>kernel (choice of RBF kernel)</strong>: <code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel=...)</span></code> requires an <code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code> instance; there is no default.
+The example above passes <code class="docutils literal notranslate"><span class="pre">GaussianKernel()</span></code>.</p>
 <p><strong>delta</strong>: Pass the diagonal length of the design-space box bounds to <code class="docutils literal notranslate"><span class="pre">CORSDistance(delta=...)</span></code>.
 This example uses <span class="math notranslate nohighlight">\(\mathrm{norm}(ub-lb)\)</span> and applies <span class="math notranslate nohighlight">\(\beta_i\Delta_i\)</span> as the distance threshold from previously evaluated points.</p>
 </section>
@@ -1137,7 +1137,7 @@ This example uses <span class="math notranslate nohighlight">\(\mathrm{norm}(ub-
 <h2>Related<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">References</span></a>: Full bibliographic details for the source</p></li>
-<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>: List of surrogate models including <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>/<code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>: List of surrogate models including <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>/<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code></p></li>
 <li><p><a class="reference internal" href="../concepts/surrogate_modeling/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>: List of acquisition functions including distance-constrained <code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code> for CORS</p></li>
 <li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code></p></li>
 <li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: List of strategies including <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>’s <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code></p></li>

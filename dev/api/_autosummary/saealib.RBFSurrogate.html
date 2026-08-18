@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.RBFSurrogate &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
+    <title>saealib.RBFSurrogate &#8212; saealib 0.1.0b5.dev82+ga38da46e2 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=512d92dd"></script>
+    <script src="../../_static/documentation_options.js?v=0b801eb7"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -64,7 +64,7 @@
     <link rel="icon" href="../../_static/icon.svg"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="saealib.SklearnSurrogate" href="saealib.SklearnSurrogate.html" />
+    <link rel="next" title="saealib.RBFKernel" href="saealib.RBFKernel.html" />
     <link rel="prev" title="saealib.rank_weighted_combine" href="saealib.rank_weighted_combine.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -672,6 +672,13 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.product_combine.html">saealib.product_combine</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.rank_weighted_combine.html">saealib.rank_weighted_combine</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">saealib.RBFSurrogate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RBFKernel.html">saealib.RBFKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.GaussianKernel.html">saealib.GaussianKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ThinPlateSplineKernel.html">saealib.ThinPlateSplineKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.LinearKernel.html">saealib.LinearKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.CubicKernel.html">saealib.CubicKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.MultiquadricKernel.html">saealib.MultiquadricKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.MaternKernel.html">saealib.MaternKernel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SklearnSurrogate.html">saealib.SklearnSurrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SklearnGPRSurrogate.html">saealib.SklearnGPRSurrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SklearnRFRSurrogate.html">saealib.SklearnRFRSurrogate</a></li>
@@ -889,38 +896,43 @@
 <h1>saealib.RBFSurrogate<a class="headerlink" href="#saealib-rbfsurrogate" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.RBFSurrogate">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">RBFSurrogate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/rbf.html#RBFSurrogate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.RBFSurrogate" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">RBFSurrogate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polynomial_degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'solve'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/rbf.html#RBFSurrogate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.RBFSurrogate" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="saealib.RegressionSurrogate.html#saealib.RegressionSurrogate" title="saealib.surrogate.base.RegressionSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">RegressionSurrogate</span></code></a></p>
 <p>Radial Basis Function interpolation surrogate model.</p>
 <p>Supports multi-objective problems with one independent model per
-objective. The number of objectives is inferred from <code class="docutils literal notranslate"><span class="pre">train_y</span></code> on the
-first call to <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
+objective. The number of objectives is inferred from <code class="docutils literal notranslate"><span class="pre">train_y</span></code> on
+the first call to <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kernel</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p></li>
-<li><p><strong>dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>kernel</strong> (<a class="reference internal" href="saealib.RBFKernel.html#saealib.RBFKernel" title="saealib.surrogate.rbf_kernels.RBFKernel"><em>RBFKernel</em></a>)</p></li>
+<li><p><strong>polynomial_degree</strong> (<em>Literal</em><em>[</em><em>'auto'</em><em>, </em><em>0</em><em>, </em><em>1</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>solver</strong> (<em>str</em>)</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="saealib.RBFSurrogate.kernel">
 <span class="sig-name descname"><span class="pre">kernel</span></span><a class="headerlink" href="#saealib.RBFSurrogate.kernel" title="Link to this definition">#</a></dt>
-<dd><p>Kernel function (e.g. gaussian_kernel).</p>
+<dd><p>Kernel object (e.g. <code class="docutils literal notranslate"><span class="pre">GaussianKernel()</span></code>). Reassigning this
+property invalidates any fitted state; call <code class="docutils literal notranslate"><span class="pre">fit()</span></code> again before
+the next <code class="docutils literal notranslate"><span class="pre">predict()</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>callable</p>
+<dd class="field-odd"><p><a class="reference internal" href="saealib.RBFKernel.html#saealib.RBFKernel" title="saealib.RBFKernel">RBFKernel</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="saealib.RBFSurrogate.dim">
-<span class="sig-name descname"><span class="pre">dim</span></span><a class="headerlink" href="#saealib.RBFSurrogate.dim" title="Link to this definition">#</a></dt>
-<dd><p>Dimensionality of the input data.</p>
+<dt class="sig sig-object py" id="saealib.RBFSurrogate.n_features_in_">
+<span class="sig-name descname"><span class="pre">n_features_in_</span></span><a class="headerlink" href="#saealib.RBFSurrogate.n_features_in_" title="Link to this definition">#</a></dt>
+<dd><p>Number of input features seen by the most recent successful <code class="docutils literal notranslate"><span class="pre">fit()</span></code>;
+<code class="docutils literal notranslate"><span class="pre">None</span></code> before the first successful fit.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>int</p>
+<dd class="field-odd"><p>int or None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -936,6 +948,64 @@ first call to <code class="docutils literal notranslate"><span class="pre">fit</
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saealib.RBFSurrogate.polynomial_degree">
+<span class="sig-name descname"><span class="pre">polynomial_degree</span></span><a class="headerlink" href="#saealib.RBFSurrogate.polynomial_degree" title="Link to this definition">#</a></dt>
+<dd><p>Configured polynomial degree. <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code> resolves from
+<code class="docutils literal notranslate"><span class="pre">kernel.min_polynomial_degree</span></code> and <code class="docutils literal notranslate"><span class="pre">None</span></code> disables the polynomial
+term.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>{“auto”, None, 0, 1}</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saealib.RBFSurrogate.resolved_polynomial_degree">
+<span class="sig-name descname"><span class="pre">resolved_polynomial_degree</span></span><a class="headerlink" href="#saealib.RBFSurrogate.resolved_polynomial_degree" title="Link to this definition">#</a></dt>
+<dd><p>Concrete polynomial degree used by the next or most recent fit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saealib.RBFSurrogate.resolved_kernel">
+<span class="sig-name descname"><span class="pre">resolved_kernel</span></span><a class="headerlink" href="#saealib.RBFSurrogate.resolved_kernel" title="Link to this definition">#</a></dt>
+<dd><p>Kernel instance used by the most recent successful fit, or <code class="docutils literal notranslate"><span class="pre">None</span></code>
+before fitting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="saealib.RBFKernel.html#saealib.RBFKernel" title="saealib.RBFKernel">RBFKernel</a> or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saealib.RBFSurrogate.solver">
+<span class="sig-name descname"><span class="pre">solver</span></span><a class="headerlink" href="#saealib.RBFSurrogate.solver" title="Link to this definition">#</a></dt>
+<dd><p>Linear system solver used during fitting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saealib.RBFSurrogate.alpha">
+<span class="sig-name descname"><span class="pre">alpha</span></span><a class="headerlink" href="#saealib.RBFSurrogate.alpha" title="Link to this definition">#</a></dt>
+<dd><p>Tikhonov regularization strength.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
 <p class="rubric">References</p>
 <p>Origin of RBF interpolation: Hardy (1971).</p>
 <p><span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id37" title="Hans-Martin Gutmann. A radial basis function method for global optimization. Journal of Global Optimization, 19(3):201–227, 2001. doi:10.1023/A:1011255519438.">16</a>]</span>: Gutmann, H.-M. (2001). A radial basis function
@@ -945,6 +1015,8 @@ method for global optimization. <em>Journal of Global Optimization</em>,
 Constrained global optimization of expensive black box functions using
 radial basis functions. <em>Journal of Global Optimization</em>, 31(1),
 153-171.</p>
+<p><span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../references.html#id40" title="Carl Edward Rasmussen and Christopher K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006.">18</a>]</span>: Rasmussen, C. E., &amp; Williams, C. K. I. (2006).
+Gaussian processes for machine learning. MIT Press.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -974,13 +1046,18 @@ radial basis functions. <em>Journal of Global Optimization</em>, 31(1),
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.RBFSurrogate.__init__">
-<span class="sig-prename descclassname"><span class="pre">RBFSurrogate.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/rbf.html#RBFSurrogate.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.RBFSurrogate.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">RBFSurrogate.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polynomial_degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'solve'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/surrogate/rbf.html#RBFSurrogate.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.RBFSurrogate.__init__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kernel</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p></li>
-<li><p><strong>dim</strong> (<em>int</em>)</p></li>
+<li><p><strong>kernel</strong> (<a class="reference internal" href="saealib.RBFKernel.html#saealib.RBFKernel" title="saealib.surrogate.rbf_kernels.RBFKernel"><em>RBFKernel</em></a>)</p></li>
+<li><p><strong>polynomial_degree</strong> (<em>Literal</em><em>[</em><em>'auto'</em><em>, </em><em>0</em><em>, </em><em>1</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>solver</strong> (<em>str</em>)</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>)</p></li>
 </ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1052,6 +1129,10 @@ no other channel to the points being scored (e.g. CORSDistance).</p>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction">SurrogatePrediction</a></p>
 </dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – If the surrogate has not been fitted, or <code class="docutils literal notranslate"><span class="pre">kernel</span></code> was
+    reassigned since the last <code class="docutils literal notranslate"><span class="pre">fit()</span></code> call.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -1094,11 +1175,11 @@ no other channel to the points being scored (e.g. CORSDistance).</p>
       </div>
     </a>
     <a class="right-next"
-       href="saealib.SklearnSurrogate.html"
+       href="saealib.RBFKernel.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">saealib.SklearnSurrogate</p>
+        <p class="prev-next-title">saealib.RBFKernel</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -1123,8 +1204,13 @@ no other channel to the points being scored (e.g. CORSDistance).</p>
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate.kernel"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate.kernel</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate.dim"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate.dim</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate.n_features_in_"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate.n_features_in_</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate.n_obj"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate.n_obj</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate.polynomial_degree"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate.polynomial_degree</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate.resolved_polynomial_degree"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate.resolved_polynomial_degree</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate.resolved_kernel"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate.resolved_kernel</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate.solver"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate.solver</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate.alpha"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate.alpha</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.RBFSurrogate.__init__"><code class="docutils literal notranslate"><span class="pre">RBFSurrogate.__init__()</span></code></a></li>

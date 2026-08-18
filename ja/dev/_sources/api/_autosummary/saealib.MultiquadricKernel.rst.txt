@@ -1,0 +1,47 @@
+﻿saealib.MultiquadricKernel
+==========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: MultiquadricKernel
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~MultiquadricKernel.__init__
+   ~MultiquadricKernel.evaluate
+   ~MultiquadricKernel.pairwise
+   ~MultiquadricKernel.resolve
+   ~MultiquadricKernel.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.MultiquadricKernel.__init__
+
+
+.. automethod:: saealib.MultiquadricKernel.evaluate
+
+
+.. automethod:: saealib.MultiquadricKernel.pairwise
+
+
+.. automethod:: saealib.MultiquadricKernel.resolve
+
+
+.. automethod:: saealib.MultiquadricKernel.validate
+
+
+

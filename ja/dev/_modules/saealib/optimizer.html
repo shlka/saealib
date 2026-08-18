@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
+    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev82+ga38da46e2 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=c8372973"></script>
+    <script src="../../_static/documentation_options.js?v=929aa519"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1010,7 +1010,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">PairwiseSurrogateManager</span><span class="p">,</span>
     <span class="n">SurrogateManager</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.rbf</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.rbf_kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianKernel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">max_fe</span> <span class="k">as</span> <span class="n">max_fe_cond</span>
 
@@ -1892,7 +1892,10 @@ window.runMermaid = runMermaid;</script>
         <span class="n">params</span> <span class="o">=</span> <span class="n">manager_spec</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="p">{})</span>
         <span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
             <span class="s2">&quot;surrogate&quot;</span><span class="p">,</span>
-            <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;RBFSurrogate&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="n">gaussian_kernel</span><span class="p">,</span> <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="p">}},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;RBFSurrogate&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="n">GaussianKernel</span><span class="p">()},</span>
+            <span class="p">},</span>
         <span class="p">)</span>
         <span class="n">acquisition_spec</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;acquisition&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">acquisition_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1922,7 +1925,10 @@ window.runMermaid = runMermaid;</script>
         <span class="n">params</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="p">{})</span>
         <span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
             <span class="s2">&quot;surrogate&quot;</span><span class="p">,</span>
-            <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;RBFSurrogate&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="n">gaussian_kernel</span><span class="p">,</span> <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="p">}},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;RBFSurrogate&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="n">GaussianKernel</span><span class="p">()},</span>
+            <span class="p">},</span>
         <span class="p">)</span>
         <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;acquisition&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="n">_inject_params</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">)</span>

@@ -70,7 +70,7 @@ For example, `set_surrogate_manager()` and `set_acquisition()` are separate call
 ```python
 import numpy as np
 from saealib import MeanPrediction, Optimizer, Problem
-from saealib.surrogate import GlobalSurrogateManager, RBFSurrogate, gaussian_kernel
+from saealib.surrogate import GaussianKernel, GlobalSurrogateManager, RBFSurrogate
 
 
 def objective(x):
@@ -85,7 +85,7 @@ problem = Problem(
     lb=[-5.0] * 3,
     ub=[5.0] * 3,
 )
-manager = GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, dim=3))
+manager = GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel()))
 
 optimizer = (
     Optimizer(problem, seed=0)

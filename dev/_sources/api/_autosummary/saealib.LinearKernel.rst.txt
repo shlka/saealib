@@ -1,0 +1,47 @@
+﻿saealib.LinearKernel
+====================
+
+.. currentmodule:: saealib
+
+.. autoclass:: LinearKernel
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~LinearKernel.__init__
+   ~LinearKernel.evaluate
+   ~LinearKernel.pairwise
+   ~LinearKernel.resolve
+   ~LinearKernel.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.LinearKernel.__init__
+
+
+.. automethod:: saealib.LinearKernel.evaluate
+
+
+.. automethod:: saealib.LinearKernel.pairwise
+
+
+.. automethod:: saealib.LinearKernel.resolve
+
+
+.. automethod:: saealib.LinearKernel.validate
+
+
+

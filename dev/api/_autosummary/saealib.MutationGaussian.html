@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.MutationGaussian &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
+    <title>saealib.MutationGaussian &#8212; saealib 0.1.0b5.dev82+ga38da46e2 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=512d92dd"></script>
+    <script src="../../_static/documentation_options.js?v=0b801eb7"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -672,6 +672,13 @@
 <li class="toctree-l2"><a class="reference internal" href="saealib.product_combine.html">saealib.product_combine</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.rank_weighted_combine.html">saealib.rank_weighted_combine</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.RBFSurrogate.html">saealib.RBFSurrogate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.RBFKernel.html">saealib.RBFKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.GaussianKernel.html">saealib.GaussianKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.ThinPlateSplineKernel.html">saealib.ThinPlateSplineKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.LinearKernel.html">saealib.LinearKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.CubicKernel.html">saealib.CubicKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.MultiquadricKernel.html">saealib.MultiquadricKernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saealib.MaternKernel.html">saealib.MaternKernel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SklearnSurrogate.html">saealib.SklearnSurrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SklearnGPRSurrogate.html">saealib.SklearnGPRSurrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saealib.SklearnRFRSurrogate.html">saealib.SklearnRFRSurrogate</a></li>
@@ -1003,7 +1010,7 @@ Computing</em>, 1, 3-52.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.MutationGaussian.mutate">
-<span class="sig-prename descclassname"><span class="pre">MutationGaussian.</span></span><span class="sig-name descname"><span class="pre">mutate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FBE0A381D20</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.MutationGaussian.mutate" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">MutationGaussian.</span></span><span class="sig-name descname"><span class="pre">mutate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FE44095F680</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.MutationGaussian.mutate" title="Link to this definition">#</a></dt>
 <dd><p>Execute mutation for one candidate.</p>
 <p>This method is derived from <a class="reference internal" href="#saealib.MutationGaussian.mutate_batch" title="saealib.MutationGaussian.mutate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mutate_batch()</span></code></a> by passing a
 single-row batch.</p>
@@ -1035,7 +1042,7 @@ internally; the result does not preserve the input’s dtype.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.MutationGaussian.mutate_batch">
-<span class="sig-prename descclassname"><span class="pre">MutationGaussian.</span></span><span class="sig-name descname"><span class="pre">mutate_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FBE0A381EE0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/mutation.html#MutationGaussian.mutate_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.MutationGaussian.mutate_batch" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">MutationGaussian.</span></span><span class="sig-name descname"><span class="pre">mutate_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates_batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mutate_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng=Generator(PCG64)</span> <span class="pre">at</span> <span class="pre">0x7FE44095F840</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/operators/mutation.html#MutationGaussian.mutate_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.MutationGaussian.mutate_batch" title="Link to this definition">#</a></dt>
 <dd><p>Execute Gaussian mutation on a batch of candidates at once.</p>
 <p>This is the primary Gaussian mutation implementation. An
 individual-level <code class="docutils literal notranslate"><span class="pre">prob</span></code> gate (one Bernoulli draw per row via

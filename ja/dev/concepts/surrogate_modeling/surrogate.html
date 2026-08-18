@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Surrogate &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
+    <title>Surrogate &#8212; saealib 0.1.0b5.dev82+ga38da46e2 ドキュメント</title>
   
   
   
@@ -42,13 +42,15 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=c8372973"></script>
+    <script src="../../_static/documentation_options.js?v=929aa519"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
     <script src="../../_static/translations.js?v=4755f45a"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'concepts/surrogate_modeling/surrogate';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
@@ -631,7 +633,67 @@
 </section>
 <section id="built-in-surrogates">
 <h2>組み込みSurrogate<a class="headerlink" href="#built-in-surrogates" title="Link to this heading">#</a></h2>
-<p><strong><code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel,</span> <span class="pre">dim)</span></code></strong>：RBF補間によるサロゲート<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id37" title="Hans-Martin Gutmann. A radial basis function method for global optimization. Journal of Global Optimization, 19(3):201–227, 2001. doi:10.1023/A:1011255519438.">16</a>, <a class="reference internal" href="../../references.html#id38" title="Rommel G. Regis and Christine A. Shoemaker. Constrained global optimization of expensive black box functions using radial basis functions. Journal of Global Optimization, 31(1):153–171, 2005. doi:10.1007/s10898-004-0570-0.">17</a>]</span>（RBF補間自体の起源はHardy, 1971）。 <code class="docutils literal notranslate"><span class="pre">gaussian_kernel(x1,</span> <span class="pre">x2,</span> <span class="pre">sigma=2.0)</span></code>が既定で使われるカーネルですが、<code class="docutils literal notranslate"><span class="pre">kernel</span></code>引数はカーネル関数を公開APIとして受け取る設計であり、ユーザーが任意のカーネルを注入できます。 <code class="docutils literal notranslate"><span class="pre">predict()</span></code>は<code class="docutils literal notranslate"><span class="pre">std=None</span></code>を明示的に返します（RBF補間は不確実性を提供しません）。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel,</span> <span class="pre">polynomial_degree=&quot;auto&quot;,</span> <span class="pre">solver=&quot;solve&quot;,</span> <span class="pre">alpha=1e-8)</span></code></strong>：RBF補間によるサロゲートです<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id37" title="Hans-Martin Gutmann. A radial basis function method for global optimization. Journal of Global Optimization, 19(3):201–227, 2001. doi:10.1023/A:1011255519438.">16</a>, <a class="reference internal" href="../../references.html#id38" title="Rommel G. Regis and Christine A. Shoemaker. Constrained global optimization of expensive black box functions using radial basis functions. Journal of Global Optimization, 31(1):153–171, 2005. doi:10.1007/s10898-004-0570-0.">17</a>, <a class="reference internal" href="../../references.html#id40" title="Carl Edward Rasmussen and Christopher K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006.">18</a>]</span>（RBF補間自体の起源はHardy, 1971）。<code class="docutils literal notranslate"><span class="pre">kernel</span></code>は既定値を持たない必須の<code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>オブジェクトです（組み込みカーネルは以下に示します）。カスタムカーネルは<code class="docutils literal notranslate"><span class="pre">evaluate(r)</span></code>を実装するサブクラスとして作ります。<code class="docutils literal notranslate"><span class="pre">predict()</span></code>は<code class="docutils literal notranslate"><span class="pre">std=None</span></code>を明示的に返します（RBF補間は不確実性を提供しません）。</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>パラメータ</p></th>
+<th class="head"><p>値</p></th>
+<th class="head"><p>役割</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>（既定） / <code class="docutils literal notranslate"><span class="pre">None</span></code> / <code class="docutils literal notranslate"><span class="pre">0</span></code> / <code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>補間系を多項式項で拡張します（<code class="docutils literal notranslate"><span class="pre">kernel.min_polynomial_degree</span></code>から決定 / なし / 定数 / 線形）。<code class="docutils literal notranslate"><span class="pre">ThinPlateSplineKernel</span></code>のような条件付き正定値カーネルには必要ですが、<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>のような狭義正定値カーネルには不要です。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">solver</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;solve&quot;</span></code>（既定） / <code class="docutils literal notranslate"><span class="pre">&quot;lstsq&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">&quot;tikhonov&quot;</span></code></p></td>
+<td><p>線形系（多項式項で拡張されている場合を含む）の解法：直接法 / 最小二乗法（ランク落ちした系にも対応） / <code class="docutils literal notranslate"><span class="pre">alpha</span></code>によるリッジ正則化。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1e-8</span></code>（既定）</p></td>
+<td><p>リッジ正則化の強さ。<code class="docutils literal notranslate"><span class="pre">solver=&quot;tikhonov&quot;</span></code>の場合だけ使われます。</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">kernel</span></code>と<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code>は設定した値そのものです。<code class="docutils literal notranslate"><span class="pre">resolved_kernel</span></code>と<code class="docutils literal notranslate"><span class="pre">resolved_polynomial_degree</span></code>は、<code class="docutils literal notranslate"><span class="pre">fit()</span></code>が実際に解決して使う値を公開し、設定した<code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>インスタンス自体は不変に保ちます。<code class="docutils literal notranslate"><span class="pre">kernel</span></code>/<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code>/<code class="docutils literal notranslate"><span class="pre">solver</span></code>/<code class="docutils literal notranslate"><span class="pre">alpha</span></code>を再設定すると、fit済みの状態は無効になり、次の<code class="docutils literal notranslate"><span class="pre">fit()</span></code>まで<code class="docutils literal notranslate"><span class="pre">predict()</span></code>は<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code>を送出します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">length_scale</span></code>フィールドを持つカーネル（入力データと同じ距離単位）は、<code class="docutils literal notranslate"><span class="pre">None</span></code>のままにすると訓練点間のペアワイズ距離の中央値へ自動的に解決されます。</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>カーネル</p></th>
+<th class="head"><p>式</p></th>
+<th class="head"><p>必要な<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\exp\left(-\dfrac{r^2}{2\,\ell^2}\right)\)</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code>（なし）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ThinPlateSplineKernel</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(r^2 \log r\)</span>（<code class="docutils literal notranslate"><span class="pre">length_scale</span></code>は未使用）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code>（線形）</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LinearKernel</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(r\)</span>（<code class="docutils literal notranslate"><span class="pre">length_scale</span></code>は未使用）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code>（定数）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CubicKernel</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(r^3\)</span>（<code class="docutils literal notranslate"><span class="pre">length_scale</span></code>は未使用）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code>（線形）</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MultiquadricKernel</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(\sqrt{r^2 + \ell^2}\)</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code>（定数）</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MaternKernel</span></code>（<code class="docutils literal notranslate"><span class="pre">nu=0.5/1.5/2.5</span></code>）</p></td>
+<td><p>Matérn共分散。<code class="docutils literal notranslate"><span class="pre">length_scale</span></code> = <span class="math notranslate nohighlight">\(\ell\)</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code>（なし）</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p><strong><code class="docutils literal notranslate"><span class="pre">PerObjectiveSurrogate(surrogates)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">RegressionSurrogate</span></code>のサブクラスで、目的ごとに異なるサロゲートを割り当てる合成クラス。 <code class="docutils literal notranslate"><span class="pre">fit</span></code>時に<code class="docutils literal notranslate"><span class="pre">train_y</span></code>の列数と<code class="docutils literal notranslate"><span class="pre">len(surrogates)</span></code>が一致しないと<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>になります。 <code class="docutils literal notranslate"><span class="pre">provides_uncertainty</span></code>は、構成する全サロゲートが<code class="docutils literal notranslate"><span class="pre">True</span></code>の場合のみ<code class="docutils literal notranslate"><span class="pre">True</span></code>を返す複合判定になっています。</p>
 <section id="external-library-adapters">
 <h3>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>
@@ -644,7 +706,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code></p></td>
-<td><p>ガウス過程<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id39" title="Jerome Sacks, William J. Welch, Toby J. Mitchell, and Henry P. Wynn. Design and analysis of computer experiments. Statistical Science, 4(4):409–423, 1989. doi:10.1214/ss/1177012413.">18</a>, <a class="reference internal" href="../../references.html#id40" title="Carl Edward Rasmussen and Christopher K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006.">19</a>]</span>。<code class="docutils literal notranslate"><span class="pre">provides_uncertainty=True</span></code>の唯一の実装</p></td>
+<td><p>ガウス過程<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id40" title="Carl Edward Rasmussen and Christopher K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006.">18</a>, <a class="reference internal" href="../../references.html#id39" title="Jerome Sacks, William J. Welch, Toby J. Mitchell, and Henry P. Wynn. Design and analysis of computer experiments. Statistical Science, 4(4):409–423, 1989. doi:10.1214/ss/1177012413.">19</a>]</span>。<code class="docutils literal notranslate"><span class="pre">provides_uncertainty=True</span></code>の唯一の実装</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SklearnRFRSurrogate</span></code></p></td>
 <td><p>ランダムフォレスト回帰</p></td>
@@ -699,14 +761,14 @@
 <section id="extension-hooks">
 <h2>拡張フック<a class="headerlink" href="#extension-hooks" title="Link to this heading">#</a></h2>
 <p>フィット後の後処理だけを足したい場合、サブクラスを新設せずに<code class="docutils literal notranslate"><span class="pre">with_post_fit(fn)</span></code>で既存の<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>インスタンスへ処理を追加できます。 <code class="docutils literal notranslate"><span class="pre">with_post_fit</span></code>は元のインスタンスを変更せず、<code class="docutils literal notranslate"><span class="pre">fn</span></code>を追加したコピーを返します。</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">RBFSurrogate</span><span class="p">,</span> <span class="n">gaussian_kernel</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianKernel</span><span class="p">,</span> <span class="n">RBFSurrogate</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">log_fit</span><span class="p">(</span><span class="n">train_x</span><span class="p">,</span> <span class="n">train_y</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fit on </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples&quot;</span><span class="p">)</span>
 
 
-<span class="n">base</span> <span class="o">=</span> <span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">base</span> <span class="o">=</span> <span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">GaussianKernel</span><span class="p">())</span>
 <span class="n">logged</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">with_post_fit</span><span class="p">(</span><span class="n">log_fit</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -778,7 +840,13 @@
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.ComparisonSurrogate.html#saealib.ComparisonSurrogate" title="saealib.ComparisonSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ComparisonSurrogate</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.SurrogatePrediction.html#saealib.SurrogatePrediction" title="saealib.SurrogatePrediction"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SurrogatePrediction</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.RBFSurrogate.html#saealib.RBFSurrogate" title="saealib.RBFSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.RBFSurrogate</span></code></a></p></li>
-<li><p><a class="reference internal" href="../../api/surrogate.html#saealib.gaussian_kernel" title="saealib.gaussian_kernel"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.gaussian_kernel()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.RBFKernel.html#saealib.RBFKernel" title="saealib.RBFKernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.RBFKernel</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.GaussianKernel.html#saealib.GaussianKernel" title="saealib.GaussianKernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GaussianKernel</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.ThinPlateSplineKernel.html#saealib.ThinPlateSplineKernel" title="saealib.ThinPlateSplineKernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ThinPlateSplineKernel</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.LinearKernel.html#saealib.LinearKernel" title="saealib.LinearKernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.LinearKernel</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.CubicKernel.html#saealib.CubicKernel" title="saealib.CubicKernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CubicKernel</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.MultiquadricKernel.html#saealib.MultiquadricKernel" title="saealib.MultiquadricKernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MultiquadricKernel</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.MaternKernel.html#saealib.MaternKernel" title="saealib.MaternKernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MaternKernel</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.PerObjectiveSurrogate.html#saealib.PerObjectiveSurrogate" title="saealib.PerObjectiveSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PerObjectiveSurrogate</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate" title="saealib.SklearnGPRSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SklearnGPRSurrogate</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate" title="saealib.SklearnRFRSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SklearnRFRSurrogate</span></code></a></p></li>

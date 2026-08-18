@@ -1,0 +1,47 @@
+﻿saealib.MaternKernel
+====================
+
+.. currentmodule:: saealib
+
+.. autoclass:: MaternKernel
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~MaternKernel.__init__
+   ~MaternKernel.evaluate
+   ~MaternKernel.pairwise
+   ~MaternKernel.resolve
+   ~MaternKernel.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.MaternKernel.__init__
+
+
+.. automethod:: saealib.MaternKernel.evaluate
+
+
+.. automethod:: saealib.MaternKernel.pairwise
+
+
+.. automethod:: saealib.MaternKernel.resolve
+
+
+.. automethod:: saealib.MaternKernel.validate
+
+
+

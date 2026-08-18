@@ -55,7 +55,7 @@ from saealib import (
     SequentialSelection,
     TruncationSelection,
     RBFSurrogate,
-    gaussian_kernel,
+    GaussianKernel,
     LocalSurrogateManager,
     MeanPrediction,
     LHSInitializer,
@@ -81,7 +81,7 @@ algorithm = GA(
 )
 
 surrogate_manager = LocalSurrogateManager(
-    RBFSurrogate(gaussian_kernel, dim=DIM),
+    RBFSurrogate(kernel=GaussianKernel()),
     accuracy_evaluator=LOOAccuracyEvaluator(),
 )
 

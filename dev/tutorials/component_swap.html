@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Choose and swap built-in components &#8212; saealib 0.1.0b5.dev81+g236465a5b documentation</title>
+    <title>Choose and swap built-in components &#8212; saealib 0.1.0b5.dev82+ga38da46e2 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=512d92dd"></script>
+    <script src="../_static/documentation_options.js?v=0b801eb7"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -645,7 +645,7 @@ Use <code class="docutils literal notranslate"><span class="pre">Optimizer</span
 For example, <code class="docutils literal notranslate"><span class="pre">set_surrogate_manager()</span></code> and <code class="docutils literal notranslate"><span class="pre">set_acquisition()</span></code> are separate calls.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanPrediction</span><span class="p">,</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">Problem</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate</span><span class="w"> </span><span class="kn">import</span> <span class="n">GlobalSurrogateManager</span><span class="p">,</span> <span class="n">RBFSurrogate</span><span class="p">,</span> <span class="n">gaussian_kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianKernel</span><span class="p">,</span> <span class="n">GlobalSurrogateManager</span><span class="p">,</span> <span class="n">RBFSurrogate</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
@@ -660,7 +660,7 @@ For example, <code class="docutils literal notranslate"><span class="pre">set_su
     <span class="n">lb</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">5.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span>
     <span class="n">ub</span><span class="o">=</span><span class="p">[</span><span class="mf">5.0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+<span class="n">manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">GaussianKernel</span><span class="p">()))</span>
 
 <span class="n">optimizer</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>

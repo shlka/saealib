@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>CORS-RBF（Constrained Optimization using Response Surfaces） &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
+    <title>CORS-RBF（Constrained Optimization using Response Surfaces） &#8212; saealib 0.1.0b5.dev82+ga38da46e2 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=c8372973"></script>
+    <script src="../_static/documentation_options.js?v=929aa519"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1046,7 +1046,7 @@ window.runMermaid = runMermaid;</script>
 <td><p>手順 L3</p></td>
 </tr>
 <tr class="row-odd"><td><p>サロゲートモデル</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>（RBF補間。既定は<code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code>だが、任意のカーネル関数を注入できる）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>（RBF補間。この例では多項式項なしの<code class="docutils literal notranslate"><span class="pre">GaussianKernel()</span></code>を使いますが、<code class="docutils literal notranslate"><span class="pre">kernel</span></code>は必須引数であり、任意の<code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>と<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code>を注入できます。詳しくは「原法との差分」を参照してください）</p></td>
 <td><p>手順 L2</p></td>
 </tr>
 <tr class="row-even"><td><p>獲得関数</p></td>
@@ -1067,11 +1067,11 @@ window.runMermaid = runMermaid;</script>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GA</span><span class="p">,</span>
+    <span class="n">GaussianKernel</span><span class="p">,</span>
     <span class="n">Optimizer</span><span class="p">,</span>
     <span class="n">Problem</span><span class="p">,</span>
     <span class="n">IndividualBasedStrategy</span><span class="p">,</span>
     <span class="n">RBFSurrogate</span><span class="p">,</span>
-    <span class="n">gaussian_kernel</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSDistance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverBLXAlpha</span>
@@ -1095,7 +1095,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">SequentialSelection</span><span class="p">(),</span>
     <span class="n">TruncationSelection</span><span class="p">(),</span>
 <span class="p">)</span>
-<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">GaussianKernel</span><span class="p">()))</span>
 <span class="n">delta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">))</span>
 <span class="n">acquisition</span> <span class="o">=</span> <span class="n">CORSDistance</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
@@ -1114,18 +1114,18 @@ window.runMermaid = runMermaid;</script>
 </section>
 <section id="differences-from-the-source">
 <h2>原法との差分<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
-<p>CORSの原法は制約付き予測を最小化して候補点を逐次選びますが、saealibでは<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成した候補プールから<code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code>が最大の候補を選ぶことでこの最小化を近似します。<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code>により、選択した候補をまとめて真の評価に回すこともできます。例における交叉、突然変異、親選択、環境選択の組み合わせはsaealibの構成上の選択であり、CORSの定義の一部ではありません。論文の数値実験では、一次多項式項<span class="math notranslate nohighlight">\(p(x)\)</span>を持つ薄板スプラインカーネル（<span class="math notranslate nohighlight">\(\phi(r) = r^2 \log r\)</span>）を使います。saealibの<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>は多項式項を持たない純粋なRBF補間器で、学習データの平均を差し引いた残差を適合させます。そのため、カーネルだけを差し替えても論文の構成を完全には再現できません。</p>
+<p>CORSの原法は、制約付き予測を最小化して候補点を逐次選びます。一方saealibは、<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成した候補プールから<code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code>が最大の候補を選び、この最小化を近似します。<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code>を使うと、選択した候補をまとめて真の評価に回すこともできます。例における交叉、突然変異、親選択、環境選択の組み合わせはsaealibの構成上の選択であり、CORSの定義には含まれません。論文の数値実験では、一次多項式項<span class="math notranslate nohighlight">\(p(x)\)</span>を持つ薄板スプラインカーネル（<span class="math notranslate nohighlight">\(\phi(r) = r^2 \log r\)</span>）を使います。上記で使った<code class="docutils literal notranslate"><span class="pre">kernel=GaussianKernel()</span></code>に対しては、<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>の既定値<code class="docutils literal notranslate"><span class="pre">polynomial_degree=&quot;auto&quot;</span></code>が多項式項なしに解決されます（<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>の<code class="docutils literal notranslate"><span class="pre">min_polynomial_degree</span></code>は<code class="docutils literal notranslate"><span class="pre">None</span></code>のため）。そのため、カーネルだけを差し替えても論文の構成は再現できません。<code class="docutils literal notranslate"><span class="pre">kernel=ThinPlateSplineKernel()</span></code>と<code class="docutils literal notranslate"><span class="pre">polynomial_degree=1</span></code>を同時に渡すと再現できます。薄板スプラインのような条件付き正定値カーネルでは、線形多項式項が補間系を適切に定めるためです。</p>
 </section>
 <section id="parameters-and-variants">
 <h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<p><strong>kernel（RBFカーネルの選択）</strong>：<code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel=...)</span></code>で任意のカーネル関数を注入できます。既定値は<code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code>です。</p>
+<p><strong>kernel（RBFカーネルの選択）</strong>：<code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel=...)</span></code>は<code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>インスタンスを要求する必須引数であり、既定値はありません。上記の例では<code class="docutils literal notranslate"><span class="pre">GaussianKernel()</span></code>を渡しています。</p>
 <p><strong>delta</strong>：<code class="docutils literal notranslate"><span class="pre">CORSDistance(delta=...)</span></code>には設計空間のbox boundsの対角長を渡します。この例では<span class="math notranslate nohighlight">\(\mathrm{norm}(ub-lb)\)</span>を使い、既評価点からの距離しきい値を<span class="math notranslate nohighlight">\(\beta_i\Delta_i\)</span>として適用します。</p>
 </section>
 <section id="related">
 <h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>：出典の完全な書誌情報</p></li>
-<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>：<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>/<code class="docutils literal notranslate"><span class="pre">gaussian_kernel</span></code>を含むサロゲートモデル一覧</p></li>
+<li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>：<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>/<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>を含むサロゲートモデル一覧</p></li>
 <li><p><a class="reference internal" href="../concepts/surrogate_modeling/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>：CORSの距離制約付き<code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code>を含む獲得関数一覧</p></li>
 <li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>の詳しい使い方</p></li>
 <li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>の<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>を含む戦略の一覧</p></li>

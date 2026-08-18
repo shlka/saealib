@@ -43,9 +43,29 @@ Archive-based criteria such as `NoveltyAcquisition` instead receive candidate an
 
 ## Built-in Surrogates
 
-**`RBFSurrogate(kernel, dim)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors` (the origin of RBF interpolation itself is Hardy, 1971).
-`gaussian_kernel(x1, x2, sigma=2.0)` is the default kernel used, but the `kernel` argument is designed as a public API accepting a kernel function, so users can inject any kernel.
-`predict()` explicitly returns `std=None` (RBF interpolation doesn't provide uncertainty).
+**`RBFSurrogate(kernel, polynomial_degree="auto", solver="solve", alpha=1e-8)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml` (the origin of RBF interpolation itself is Hardy, 1971).
+`kernel` is a required `RBFKernel` object with no default (built-in kernels are listed below); a custom kernel is a subclass implementing `evaluate(r)`.
+`predict()` explicitly returns `std=None` (RBF interpolation provides no uncertainty).
+
+| Parameter | Values | Role |
+|---|---|---|
+| `polynomial_degree` | `"auto"` (default) / `None` / `0` / `1` | Augments the system with a polynomial term (from `kernel.min_polynomial_degree` / none / constant / linear); required for conditionally positive definite kernels like `ThinPlateSplineKernel`, unneeded for strictly positive definite ones like `GaussianKernel`. |
+| `solver` | `"solve"` (default) / `"lstsq"` / `"tikhonov"` | How the (possibly augmented) linear system is solved: direct / least squares (tolerant of rank-deficient systems) / ridge-regularized via `alpha`. |
+| `alpha` | `1e-8` (default) | Ridge regularization strength, used only when `solver="tikhonov"`. |
+
+`kernel` and `polynomial_degree` are the values as configured; `resolved_kernel` and `resolved_polynomial_degree` expose what a `fit()` call actually resolves and uses, keeping the configured `RBFKernel` instance itself immutable.
+Reassigning `kernel`/`polynomial_degree`/`solver`/`alpha` invalidates any fitted state; `predict()` then raises `RuntimeError` until the next `fit()`.
+
+Kernels carrying a `length_scale` field (in the same distance units as the input data) resolve it automatically to the median pairwise training-point distance when left `None`.
+
+| Kernel | Formula | Requires `polynomial_degree` |
+|---|---|---|
+| `GaussianKernel` | $\exp\left(-\dfrac{r^2}{2\,\ell^2}\right)$ | `None` (none) |
+| `ThinPlateSplineKernel` | $r^2 \log r$ (no `length_scale`) | `1` (linear) |
+| `LinearKernel` | $r$ (no `length_scale`) | `0` (constant) |
+| `CubicKernel` | $r^3$ (no `length_scale`) | `1` (linear) |
+| `MultiquadricKernel` | $\sqrt{r^2 + \ell^2}$ | `0` (constant) |
+| `MaternKernel` (`nu=0.5/1.5/2.5`) | Matérn covariance, `length_scale` = $\ell$ | `None` (none) |
 
 **`PerObjectiveSurrogate(surrogates)`**: A `RegressionSurrogate` subclass, a composite class that assigns a different surrogate per objective.
 Raises `ValueError` at `fit` time if `train_y`'s column count doesn't match `len(surrogates)`.
@@ -92,14 +112,14 @@ If you just want to add post-fit processing, you can add it to an existing `Surr
 `with_post_fit` doesn't modify the original instance — it returns a copy with `fn` added.
 
 ```python
-from saealib import RBFSurrogate, gaussian_kernel
+from saealib import GaussianKernel, RBFSurrogate
 
 
 def log_fit(train_x, train_y, ctx=None):
     print(f"fit on {len(train_x)} samples")
 
 
-base = RBFSurrogate(gaussian_kernel, dim=2)
+base = RBFSurrogate(kernel=GaussianKernel())
 logged = base.with_post_fit(log_fit)
 ```
 
@@ -159,7 +179,13 @@ To use an uncertainty-based [AcquisitionFunction](acquisition_functions.md), `Su
 - {py:class}`saealib.ComparisonSurrogate`
 - {py:class}`saealib.SurrogatePrediction`
 - {py:class}`saealib.RBFSurrogate`
-- {py:func}`saealib.gaussian_kernel`
+- {py:class}`saealib.RBFKernel`
+- {py:class}`saealib.GaussianKernel`
+- {py:class}`saealib.ThinPlateSplineKernel`
+- {py:class}`saealib.LinearKernel`
+- {py:class}`saealib.CubicKernel`
+- {py:class}`saealib.MultiquadricKernel`
+- {py:class}`saealib.MaternKernel`
 - {py:class}`saealib.PerObjectiveSurrogate`
 - {py:class}`saealib.SklearnGPRSurrogate`
 - {py:class}`saealib.SklearnRFRSurrogate`

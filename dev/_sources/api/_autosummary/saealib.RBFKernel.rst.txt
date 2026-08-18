@@ -1,0 +1,47 @@
+﻿saealib.RBFKernel
+=================
+
+.. currentmodule:: saealib
+
+.. autoclass:: RBFKernel
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~RBFKernel.__init__
+   ~RBFKernel.evaluate
+   ~RBFKernel.pairwise
+   ~RBFKernel.resolve
+   ~RBFKernel.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.RBFKernel.__init__
+
+
+.. automethod:: saealib.RBFKernel.evaluate
+
+
+.. automethod:: saealib.RBFKernel.pairwise
+
+
+.. automethod:: saealib.RBFKernel.resolve
+
+
+.. automethod:: saealib.RBFKernel.validate
+
+
+

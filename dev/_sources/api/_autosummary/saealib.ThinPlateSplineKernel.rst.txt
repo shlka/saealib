@@ -1,0 +1,47 @@
+﻿saealib.ThinPlateSplineKernel
+=============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ThinPlateSplineKernel
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ThinPlateSplineKernel.__init__
+   ~ThinPlateSplineKernel.evaluate
+   ~ThinPlateSplineKernel.pairwise
+   ~ThinPlateSplineKernel.resolve
+   ~ThinPlateSplineKernel.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ThinPlateSplineKernel.__init__
+
+
+.. automethod:: saealib.ThinPlateSplineKernel.evaluate
+
+
+.. automethod:: saealib.ThinPlateSplineKernel.pairwise
+
+
+.. automethod:: saealib.ThinPlateSplineKernel.resolve
+
+
+.. automethod:: saealib.ThinPlateSplineKernel.validate
+
+
+

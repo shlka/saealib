@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>サロゲート精度に応じた動的な切り替え &#8212; saealib 0.1.0b5.dev81+g236465a5b ドキュメント</title>
+    <title>サロゲート精度に応じた動的な切り替え &#8212; saealib 0.1.0b5.dev82+ga38da46e2 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=c8372973"></script>
+    <script src="../_static/documentation_options.js?v=929aa519"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -598,7 +598,7 @@
     <span class="n">SequentialSelection</span><span class="p">,</span>
     <span class="n">TruncationSelection</span><span class="p">,</span>
     <span class="n">RBFSurrogate</span><span class="p">,</span>
-    <span class="n">gaussian_kernel</span><span class="p">,</span>
+    <span class="n">GaussianKernel</span><span class="p">,</span>
     <span class="n">LocalSurrogateManager</span><span class="p">,</span>
     <span class="n">MeanPrediction</span><span class="p">,</span>
     <span class="n">LHSInitializer</span><span class="p">,</span>
@@ -624,7 +624,7 @@
 <span class="p">)</span>
 
 <span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">LocalSurrogateManager</span><span class="p">(</span>
-    <span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">gaussian_kernel</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">DIM</span><span class="p">),</span>
+    <span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">GaussianKernel</span><span class="p">()),</span>
     <span class="n">accuracy_evaluator</span><span class="o">=</span><span class="n">LOOAccuracyEvaluator</span><span class="p">(),</span>
 <span class="p">)</span>
 
