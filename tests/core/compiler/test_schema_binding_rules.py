@@ -50,7 +50,8 @@ from saealib.optimizer import Optimizer
 from saealib.problem import Problem
 from saealib.space import ObjectSpace
 from saealib.strategies.direct import DirectStrategy
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import GaussianKernel
 
 
 @dataclass(frozen=True)
@@ -422,7 +423,9 @@ def test_actual_graph_configurations_have_no_compile_errors() -> None:
     configurations: dict[str, list[Optimizer]] = {
         "default": [Optimizer(problem)],
         "surrogate": [
-            Optimizer(problem).set_surrogate(RBFSurrogate(gaussian_kernel, problem.dim))
+            Optimizer(problem).set_surrogate(
+                RBFSurrogate(GaussianKernel(), problem.dim)
+            )
         ],
         "async": [
             Optimizer(problem).set_async_evaluation_scheduler(

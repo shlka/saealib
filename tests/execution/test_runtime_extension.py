@@ -49,7 +49,8 @@ from saealib.strategies.direct import DirectStrategy, SteadyStateStrategy
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import GaussianKernel
 from saealib.termination import Termination, max_gen
 
 
@@ -266,7 +267,7 @@ def test_real_strategy_graphs_compile_and_initialize_selected_runtimes() -> None
     configurations = {
         "default": [Optimizer(_problem())],
         "surrogate": [
-            Optimizer(_problem()).set_surrogate(RBFSurrogate(gaussian_kernel, dim=3))
+            Optimizer(_problem()).set_surrogate(RBFSurrogate(GaussianKernel(), dim=3))
         ],
         "async": [
             Optimizer(_problem()).set_async_evaluation_scheduler(

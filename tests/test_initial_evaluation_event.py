@@ -15,6 +15,7 @@ import numpy as np
 from saealib import (
     GA,
     CrossoverBLXAlpha,
+    GaussianKernel,
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
@@ -24,7 +25,6 @@ from saealib import (
     SequentialSelection,
     Termination,
     TruncationSelection,
-    gaussian_kernel,
     max_fe,
 )
 from saealib.callback import (
@@ -72,7 +72,7 @@ def _make_optimizer(problem: Problem | None = None) -> Optimizer:
                 survivor_selection=TruncationSelection(),
             )
         )
-        .set_surrogate(RBFSurrogate(gaussian_kernel, DIM), n_neighbors=5)
+        .set_surrogate(RBFSurrogate(GaussianKernel(), DIM), n_neighbors=5)
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.5))
         .set_termination(Termination(max_fe(50)))
     )
@@ -314,7 +314,7 @@ class TestInitialEvaluationEndEventMutation:
                     survivor_selection=TruncationSelection(),
                 )
             )
-            .set_surrogate(RBFSurrogate(gaussian_kernel, DIM), n_neighbors=5)
+            .set_surrogate(RBFSurrogate(GaussianKernel(), DIM), n_neighbors=5)
             .set_strategy(IndividualBasedStrategy(evaluation_ratio=0.5))
             .set_termination(Termination(max_fe(50)))
         )

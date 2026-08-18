@@ -444,13 +444,15 @@ _LAZY_EXPORTS: dict[str, str] = {
     "logging_generation_hv": "saealib.callback",
     # stages (less common)
     "stage_component": "saealib.stages",
+    # surrogate (RBF kernels)
+    "RBFKernel": "saealib.surrogate.rbf_kernels",
+    "GaussianKernel": "saealib.surrogate.rbf_kernels",
+    "ThinPlateSplineKernel": "saealib.surrogate.rbf_kernels",
+    "LinearKernel": "saealib.surrogate.rbf_kernels",
+    "CubicKernel": "saealib.surrogate.rbf_kernels",
+    "MultiquadricKernel": "saealib.surrogate.rbf_kernels",
+    "MaternKernel": "saealib.surrogate.rbf_kernels",
     # utils
-    "gaussian_kernel": "saealib.surrogate.rbf",
-    "thin_plate_spline_kernel": "saealib.surrogate.rbf",
-    "linear_kernel": "saealib.surrogate.rbf",
-    "cubic_kernel": "saealib.surrogate.rbf",
-    "multiquadric_kernel": "saealib.surrogate.rbf",
-    "matern_kernel": "saealib.surrogate.rbf",
     "uniform_weight_vectors": "saealib.utils.weight_vectors",
 }
 

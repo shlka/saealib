@@ -7,192 +7,34 @@ independent RBF model per objective (ensemble approach).
 """
 
 import logging
-from collections.abc import Callable
-from typing import Any
 
 import numpy as np
-import scipy.spatial
 
 from saealib.exceptions import ValidationError
 from saealib.registry import register
 from saealib.surrogate.base import RegressionSurrogate
 from saealib.surrogate.prediction import SurrogatePrediction
+from saealib.surrogate.rbf_kernels import RBFKernel
 
 logger = logging.getLogger(__name__)
 
 
-def gaussian_kernel(x1: np.ndarray, x2: np.ndarray, length_scale=2.0) -> np.ndarray:
-    """
-    Gaussian radial basis function kernel.
-
-    Uses the ``exp(-r^2 / (2 * length_scale^2))`` parameterization;
-    equivalent to the papers' ``exp(-gamma * r^2)`` form with
-    ``gamma = 1 / (2 * length_scale^2)``. Based on
-    :cite:`gutmann2001rbf,regis2005cors`.
-
-    Parameters
-    ----------
-    x1 : np.ndarray
-        Input data 1.
-    x2 : np.ndarray
-        Input data 2.
-    length_scale : float
-        Kernel width parameter, in the same distance units as the input
-        data.
-
-    Returns
-    -------
-    np.ndarray
-        Matrix of kernel evaluations between x1 and x2. shape: (len(x1), len(x2))
-    """
-    sq_dist = scipy.spatial.distance.cdist(x1, x2, "sqeuclidean")
-    return np.exp(-sq_dist / (2 * (length_scale**2)))
-
-
-def thin_plate_spline_kernel(
-    x1: np.ndarray, x2: np.ndarray, length_scale: float | None = None
-) -> np.ndarray:
-    """Thin-plate spline radial basis function kernel.
-
-    Parameters
-    ----------
-    x1 : np.ndarray
-        Input data 1.
-    x2 : np.ndarray
-        Input data 2.
-    length_scale : float or None
-        Unused length-scale parameter accepted for kernel compatibility.
-
-    Returns
-    -------
-    np.ndarray
-        Matrix of kernel evaluations between x1 and x2. shape: (len(x1), len(x2))
-    """
-    r = scipy.spatial.distance.cdist(x1, x2, "euclidean")
-    with np.errstate(divide="ignore", invalid="ignore"):
-        out = r**2 * np.log(r)
-    return np.nan_to_num(out, nan=0.0)
-
-
-def linear_kernel(
-    x1: np.ndarray, x2: np.ndarray, length_scale: float | None = None
-) -> np.ndarray:
-    """Linear radial basis function kernel.
-
-    This conditionally positive definite kernel has order 0 and requires a
-    constant polynomial term for a well-posed system. Based on
-    :cite:`gutmann2001rbf`.
-
-    Parameters
-    ----------
-    x1 : np.ndarray
-        Input data 1.
-    x2 : np.ndarray
-        Input data 2.
-    length_scale : float or None
-        Unused length-scale parameter accepted for kernel compatibility.
-
-    Returns
-    -------
-    np.ndarray
-        Matrix of kernel evaluations between x1 and x2. shape: (len(x1), len(x2))
-    """
-    return scipy.spatial.distance.cdist(x1, x2, "euclidean")
-
-
-def cubic_kernel(
-    x1: np.ndarray, x2: np.ndarray, length_scale: float | None = None
-) -> np.ndarray:
-    """Cubic radial basis function kernel.
-
-    This conditionally positive definite kernel has order 1 and requires a
-    linear polynomial term for a well-posed system. Based on
-    :cite:`gutmann2001rbf`.
-
-    Parameters
-    ----------
-    x1 : np.ndarray
-        Input data 1.
-    x2 : np.ndarray
-        Input data 2.
-    length_scale : float or None
-        Unused length-scale parameter accepted for kernel compatibility.
-
-    Returns
-    -------
-    np.ndarray
-        Matrix of kernel evaluations between x1 and x2. shape: (len(x1), len(x2))
-    """
-    return scipy.spatial.distance.cdist(x1, x2, "euclidean") ** 3
-
-
-def multiquadric_kernel(
-    x1: np.ndarray, x2: np.ndarray, length_scale: float = 2.0
-) -> np.ndarray:
-    """Multiquadric radial basis function kernel.
-
-    This conditionally positive definite kernel has order 0 and requires a
-    constant polynomial term for a well-posed system. Based on
-    :cite:`gutmann2001rbf`.
-
-    Parameters
-    ----------
-    x1 : np.ndarray
-        Input data 1.
-    x2 : np.ndarray
-        Input data 2.
-    length_scale : float
-        Shape parameter (denoted ``gamma`` in the paper), in the same
-        distance units as the input data.
-
-    Returns
-    -------
-    np.ndarray
-        Matrix of kernel evaluations between x1 and x2. shape: (len(x1), len(x2))
-    """
-    sq_dist = scipy.spatial.distance.cdist(x1, x2, "sqeuclidean")
-    return np.sqrt(sq_dist + length_scale**2)
-
-
-def matern_kernel(
-    x1: np.ndarray, x2: np.ndarray, length_scale: float = 2.0, nu: float = 1.5
-) -> np.ndarray:
-    """Matérn radial basis function kernel.
-
-    The supported cases are strictly positive definite and do not require a
-    polynomial term. Based on :cite:`rasmussen2006gpml`.
-
-    Parameters
-    ----------
-    x1 : np.ndarray
-        Input data 1.
-    x2 : np.ndarray
-        Input data 2.
-    length_scale : float
-        Length-scale parameter (denoted ``ell`` in the paper).
-    nu : float
-        Smoothness parameter. Must be 0.5, 1.5, or 2.5.
-
-    Returns
-    -------
-    np.ndarray
-        Matrix of kernel evaluations between x1 and x2. shape: (len(x1), len(x2))
-
-    Raises
-    ------
-    ValidationError
-        If ``nu`` is not 0.5, 1.5, or 2.5.
-    """
-    if nu not in (0.5, 1.5, 2.5):
-        raise ValidationError("nu must be 0.5, 1.5, or 2.5")
-    r = scipy.spatial.distance.cdist(x1, x2, "euclidean")
-    if nu == 0.5:
-        return np.exp(-r / length_scale)
-    if nu == 1.5:
-        scaled = np.sqrt(3) * r / length_scale
-        return (1 + scaled) * np.exp(-scaled)
-    scaled = np.sqrt(5) * r / length_scale
-    return (1 + scaled + scaled**2 / 3) * np.exp(-scaled)
+def _resolve_polynomial_degree(kernel: RBFKernel, polynomial_degree: int | None) -> int:
+    if polynomial_degree is None:
+        return (
+            -1 if kernel.min_polynomial_degree is None else kernel.min_polynomial_degree
+        )
+    if polynomial_degree not in (-1, 0, 1):
+        raise ValidationError("polynomial_degree must be -1, 0, or 1")
+    if (
+        kernel.min_polynomial_degree is not None
+        and polynomial_degree < kernel.min_polynomial_degree
+    ):
+        raise ValidationError(
+            f"{type(kernel).__name__} requires polynomial_degree >= "
+            f"{kernel.min_polynomial_degree}, got {polynomial_degree}"
+        )
+    return polynomial_degree
 
 
 class _RBFModel:
@@ -205,7 +47,7 @@ class _RBFModel:
 
     def __init__(
         self,
-        kernel: Callable[..., Any],
+        kernel: RBFKernel,
         dim: int,
         polynomial_degree: int,
         solver: str,
@@ -221,7 +63,6 @@ class _RBFModel:
         self.weights: np.ndarray | None = None
         self.poly_coeffs: np.ndarray | None = None
         self.kernel_matrix: np.ndarray | None = None
-        self.length_scale: np.floating[Any] | float | None = None
         self._last_ill_conditioned = False
         self._last_singular = False
 
@@ -239,8 +80,7 @@ class _RBFModel:
         self.train_x = np.asarray(train_x)
         self.train_y = np.asarray(train_y_1d)
         n_samples = len(self.train_x)
-        self.length_scale = np.median(scipy.spatial.distance.pdist(self.train_x))
-        phi = self.kernel(self.train_x, self.train_x, length_scale=self.length_scale)
+        phi = self.kernel.pairwise(self.train_x, self.train_x)
 
         if self.polynomial_degree == -1:
             target = self.train_y - np.mean(self.train_y)
@@ -312,7 +152,7 @@ class _RBFModel:
             test = test.reshape(1, -1)
         assert self.train_x is not None
         assert self.weights is not None and self.train_y is not None
-        k = self.kernel(self.train_x, test, length_scale=self.length_scale)
+        k = self.kernel.pairwise(self.train_x, test)
         if self.polynomial_degree == -1:
             preds = k.T.dot(self.weights) + np.mean(self.train_y)
         else:
@@ -330,19 +170,23 @@ class RBFSurrogate(RegressionSurrogate):
     """Radial Basis Function interpolation surrogate model.
 
     Supports multi-objective problems with one independent model per
-    objective. The number of objectives is inferred from ``train_y`` on the
-    first call to ``fit``.
+    objective. The number of objectives is inferred from ``train_y`` on
+    the first call to ``fit``.
 
     Attributes
     ----------
-    kernel : callable
-        Kernel function (e.g. gaussian_kernel).
+    kernel : RBFKernel
+        Kernel object (e.g. ``GaussianKernel()``). Reassigning this
+        property invalidates any fitted state; call ``fit()`` again before
+        the next ``predict()``.
     dim : int
         Dimensionality of the input data.
     n_obj : int or None
         Number of objectives. Set on first fit call.
     polynomial_degree : int
-        Degree of the optional polynomial term, or ``-1`` to disable it.
+        Resolved degree of the optional polynomial term (``-1`` disables
+        it). When the constructor argument is ``None``, this is resolved
+        from ``kernel.min_polynomial_degree``.
     solver : str
         Linear system solver used during fitting.
     alpha : float
@@ -367,26 +211,39 @@ class RBFSurrogate(RegressionSurrogate):
 
     def __init__(
         self,
-        kernel: Callable[..., Any],
+        kernel: RBFKernel,
         dim: int,
-        polynomial_degree: int = -1,
+        polynomial_degree: int | None = None,
         solver: str = "solve",
         alpha: float = 1e-8,
     ) -> None:
-        if polynomial_degree not in (-1, 0, 1):
-            raise ValidationError("polynomial_degree must be -1, 0, or 1")
         if solver not in ("solve", "lstsq", "tikhonov"):
             raise ValidationError("solver must be 'solve', 'lstsq', or 'tikhonov'")
         if alpha <= 0:
             raise ValidationError("alpha must be greater than 0")
 
-        self.kernel = kernel
+        self._polynomial_degree_arg = polynomial_degree
+        self.polynomial_degree = _resolve_polynomial_degree(kernel, polynomial_degree)
+        self._kernel = kernel
         self.dim = dim
-        self.polynomial_degree = polynomial_degree
         self.solver = solver
         self.alpha = alpha
         self.n_obj: int | None = None
         self._models: list[_RBFModel] | None = None
+
+    @property
+    def kernel(self) -> RBFKernel:
+        """Return the configured RBF kernel."""
+        return self._kernel
+
+    @kernel.setter
+    def kernel(self, value: RBFKernel) -> None:
+        self.polynomial_degree = _resolve_polynomial_degree(
+            value, self._polynomial_degree_arg
+        )
+        self._kernel = value
+        self._models = None
+        self.n_obj = None
 
     def fit(self, train_x: np.ndarray, train_y: np.ndarray) -> None:
         """
@@ -405,12 +262,14 @@ class RBFSurrogate(RegressionSurrogate):
             arr = arr.reshape(-1, 1)  # (n_samples,) -> (n_samples, 1)
         n_obj = arr.shape[1]
 
+        resolved_kernel = self._kernel.resolve(np.asarray(train_x, dtype=float))
+
         # (Re-)initialize models when n_obj changes or on first fit
         if self._models is None or n_obj != self.n_obj:
             self.n_obj = n_obj
             self._models = [
                 _RBFModel(
-                    self.kernel,
+                    resolved_kernel,
                     self.dim,
                     self.polynomial_degree,
                     self.solver,
@@ -418,6 +277,9 @@ class RBFSurrogate(RegressionSurrogate):
                 )
                 for _ in range(n_obj)
             ]
+        else:
+            for model in self._models:
+                model.kernel = resolved_kernel
 
         for i, model in enumerate(self._models):
             model.fit(train_x, arr[:, i])
@@ -441,8 +303,18 @@ class RBFSurrogate(RegressionSurrogate):
             stage, holdout/archive points when called for
             accuracy evaluation), needed by acquisition functions that have
             no other channel to the points being scored (e.g. CORSDistance).
+
+        Raises
+        ------
+        RuntimeError
+            If the surrogate has not been fitted, or ``kernel`` was
+            reassigned since the last ``fit()`` call.
         """
-        assert self._models is not None
+        if self._models is None:
+            raise RuntimeError(
+                "RBFSurrogate must be fitted before predict() can be called, "
+                "or re-fitted after changing kernel configuration."
+            )
         test = np.atleast_2d(np.asarray(test_x, dtype=float))
         preds = [m.predict(test) for m in self._models]
         value = np.column_stack(preds)  # (n_samples, n_obj)

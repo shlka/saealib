@@ -37,7 +37,8 @@ from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import GaussianKernel
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -310,7 +311,7 @@ class TestEventClasses:
 
     def test_post_surrogate_fit_event_fields(self) -> None:
         ctx = _make_ctx()
-        surrogate = RBFSurrogate(gaussian_kernel, DIM)
+        surrogate = RBFSurrogate(GaussianKernel(), DIM)
         train_x = np.zeros((10, DIM))
         train_f = np.zeros((10, N_OBJ))
         e = PostSurrogateFitEvent(
@@ -471,7 +472,7 @@ class TestPostEvaluationDispatch:
                     survivor_selection=TruncationSelection(),
                 )
             )
-            .set_surrogate(RBFSurrogate(gaussian_kernel, dim), n_neighbors=10)
+            .set_surrogate(RBFSurrogate(GaussianKernel(), dim), n_neighbors=10)
             .set_strategy(IndividualBasedStrategy(evaluation_ratio=evaluation_ratio))
             .set_termination(Termination(max_fe(100)))
         )

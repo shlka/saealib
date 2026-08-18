@@ -42,7 +42,8 @@ from saealib.surrogate.manager import (
     SurrogateManager,
 )
 from saealib.surrogate.prediction import SurrogatePrediction
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import GaussianKernel
 from saealib.termination import Termination, max_gen
 
 # ---------------------------------------------------------------------------
@@ -195,7 +196,7 @@ class TestGenerationBasedStrategy:
     def test_gen_ctrl_zero_skips_surrogate_fit(self):
         fit_count = [0]
         ctx = _make_ctx()
-        surrogate = RBFSurrogate(gaussian_kernel, DIM).with_post_fit(
+        surrogate = RBFSurrogate(GaussianKernel(), DIM).with_post_fit(
             lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
         )
         provider = _MockProvider(
@@ -218,7 +219,7 @@ class TestGenerationBasedStrategy:
         fit_count = [0]
 
         ctx = _make_ctx()
-        surrogate = RBFSurrogate(gaussian_kernel, DIM).with_post_fit(
+        surrogate = RBFSurrogate(GaussianKernel(), DIM).with_post_fit(
             lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
         )
         manager = GlobalSurrogateManager(surrogate)
@@ -234,7 +235,7 @@ class TestGenerationBasedStrategy:
         fit_count = [0]
 
         ctx = _make_ctx()
-        surrogate = RBFSurrogate(gaussian_kernel, DIM).with_post_fit(
+        surrogate = RBFSurrogate(GaussianKernel(), DIM).with_post_fit(
             lambda tx, ty, c: operator.setitem(fit_count, 0, fit_count[0] + 1)
         )
         manager = LocalSurrogateManager(surrogate)
@@ -332,14 +333,14 @@ class TestPreSelectionStrategy:
 
 def _make_novelty_manager() -> tuple[GlobalSurrogateManager, AcquisitionFunction]:
     return (
-        GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM)),
+        GlobalSurrogateManager(RBFSurrogate(GaussianKernel(), DIM)),
         NoveltyAcquisition(k=3),
     )
 
 
 def _make_density_manager() -> tuple[GlobalSurrogateManager, AcquisitionFunction]:
     return (
-        GlobalSurrogateManager(RBFSurrogate(gaussian_kernel, DIM)),
+        GlobalSurrogateManager(RBFSurrogate(GaussianKernel(), DIM)),
         InverseDensityAcquisition(eps=1.0),
     )
 

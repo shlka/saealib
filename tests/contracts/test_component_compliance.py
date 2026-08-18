@@ -63,7 +63,7 @@ from saealib.stages import (
     TopKSelectionStage,
     TrueEvaluationStage,
 )
-from saealib.surrogate.rbf import gaussian_kernel
+from saealib.surrogate.rbf_kernels import GaussianKernel
 
 _REGISTRY = saealib.registry._REGISTRY
 _NON_CLASS_REGISTRY_NAMES = frozenset({"max_fe", "max_gen", "f_target", "stalled"})
@@ -203,7 +203,7 @@ def _recipe_local_surrogate_manager() -> Any:
             "params": {
                 "surrogate": {
                     "type": "RBFSurrogate",
-                    "params": {"kernel": gaussian_kernel, "dim": 5},
+                    "params": {"kernel": GaussianKernel(), "dim": 5},
                 },
                 "training_set": {
                     "type": "KNNObjectiveSet",
@@ -218,7 +218,7 @@ def _recipe_rbf_surrogate() -> Any:
     return build(
         {
             "type": "RBFSurrogate",
-            "params": {"kernel": gaussian_kernel, "dim": 5},
+            "params": {"kernel": GaussianKernel(), "dim": 5},
         }
     )
 

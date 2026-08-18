@@ -204,7 +204,8 @@ def _make_optimizer(problem, n_gen: int):
         TruncationSelection,
         max_gen,
     )
-    from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+    from saealib.surrogate.rbf import RBFSurrogate
+    from saealib.surrogate.rbf_kernels import GaussianKernel
 
     return (
         Optimizer(problem)
@@ -217,7 +218,7 @@ def _make_optimizer(problem, n_gen: int):
                 survivor_selection=TruncationSelection(),
             )
         )
-        .set_surrogate(RBFSurrogate(gaussian_kernel, problem.dim), n_neighbors=5)
+        .set_surrogate(RBFSurrogate(GaussianKernel(), problem.dim), n_neighbors=5)
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=1.0))
         .set_termination(Termination(max_gen(n_gen)))
     )

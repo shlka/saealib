@@ -21,7 +21,8 @@ from saealib.islands import IslandModel
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
 from saealib.strategies.direct import DirectStrategy
-from saealib.surrogate.rbf import RBFSurrogate, gaussian_kernel
+from saealib.surrogate.rbf import RBFSurrogate
+from saealib.surrogate.rbf_kernels import GaussianKernel
 from saealib.termination import Termination, max_fe
 
 
@@ -121,7 +122,7 @@ def test_supported_component_configurations_have_no_diagnostics(kind: str) -> No
     optimizer = Optimizer(_problem())
     if kind == "surrogate":
         optimizer.set_surrogate(
-            RBFSurrogate(kernel=gaussian_kernel, dim=optimizer.problem.dim)
+            RBFSurrogate(kernel=GaussianKernel(), dim=optimizer.problem.dim)
         )
     elif kind == "async":
         optimizer.set_async_evaluation_scheduler(
