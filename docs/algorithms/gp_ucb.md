@@ -113,7 +113,7 @@ ctx = opt.run()
 
 The original GP-UCB procedure finds the UCB maximizer at every iteration. saealib approximates this `argmax UCB` by selecting the top UCB candidates from the pool `GA` generates; `IndividualBasedStrategy.evaluation_ratio` lets several of the selected candidates receive true evaluation together.
 
-For a finite set $D$, the original method chooses the following $\beta_t$, increasing logarithmically in the round index $t$ (starting at 1, incrementing once per `score()` call), to obtain a theoretical upper bound on cumulative regret:
+For a finite set $D$, the original method chooses the following $\beta_t$, increasing logarithmically in the round index $t$, to obtain a theoretical upper bound on cumulative regret:
 
 $$\beta_t = 2 \log\left(\frac{|D|\, t^2 \pi^2}{6\delta}\right)$$
 
@@ -125,11 +125,15 @@ saealib's default (`kappa=2.0`, fixed regardless of $t$) does not follow this sc
 **κ (exploration–exploitation trade-off)**: Adjusted via `LowerConfidenceBound(kappa=...)`. The default is `2.0`.
 
 **β_t schedule**: Pass `beta_schedule=gp_ucb_beta_schedule(domain_size, delta)` to reproduce the $\beta_t$ formula from "Differences from the source" above instead of a fixed `kappa`; `domain_size` stands in for the paper's $|D|$, since saealib's search space is continuous.
+`t = ctx.decision_count + 1`: the number of evaluation plans `EvaluationPlanStage` has confirmed so far, plus one for the decision about to be made.
+One confirmed plan is one decision regardless of how many candidates it evaluates, so under the `GA` + `evaluation_ratio` configuration in this page's own example, `t` is not the paper's per-observation round index whenever `evaluation_ratio` selects more than one candidate per generation.
+`t` matches the paper's round index only when every confirmed plan evaluates exactly one candidate (synchronous execution, one true evaluation per decision).
 
 | Setting | `kappa` used | Regret guarantee |
 |---|---|---|
 | `beta_schedule=None` (default) | fixed `2.0` | none (fixed-weight heuristic) |
-| `beta_schedule=gp_ucb_beta_schedule(domain_size, delta)` | $\sqrt{\beta_t}$, per the schedule above | reproduces the cited bound |
+| `beta_schedule=gp_ucb_beta_schedule(domain_size, delta)`, batch decisions | $\sqrt{\beta_t}$, per the schedule above | none -- `t` undercounts observations |
+| `beta_schedule=gp_ucb_beta_schedule(domain_size, delta)`, one candidate per decision | $\sqrt{\beta_t}$, per the schedule above | reproduces the cited bound |
 
 ## Related
 
