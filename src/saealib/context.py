@@ -1219,7 +1219,10 @@ class OptimizationState:
         np.savez(p, **cast(Any, arrays))
 
     def save(self, path: str | Path) -> None:
-        """Save a portable schema-v3 checkpoint."""
+        """Save a portable checkpoint using the current schema version.
+
+        The current schema version is ``CURRENT_CHECKPOINT_SCHEMA_VERSION``.
+        """
         self._save_v3(path)
 
     def _save_v2(self, path: str | Path) -> None:
