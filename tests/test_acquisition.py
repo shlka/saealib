@@ -6,6 +6,7 @@ Tests cover:
 - MaxUncertainty: no weights (mean std), with weights, requires uncertainty
 - ExpectedImprovement: basic EI formula, xi parameter, requires uncertainty
 - LowerConfidenceBound: negated LCB, kappa parameter, requires uncertainty
+- LowerConfidenceBound beta_schedule: round-index-based kappa, gp_ucb_beta_schedule
 - ProbabilityOfFeasibility: P(g<=0), requires uncertainty
 - CORSDistance: distance-constrained mean prediction, beta_i cycling
 - AcquisitionFunction: abstract base class cannot be instantiated

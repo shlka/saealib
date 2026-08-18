@@ -41,14 +41,12 @@ class LowerConfidenceBound(PointwiseAcquisition):
         Index of the objective to optimize. Used for multi-objective
         problems where LCB is applied to a single objective. Default: 0.
     beta_schedule : callable or None
-        Optional ``beta_t`` schedule ``schedule(t) -> float``, in the
-        notation of the cited GP-UCB regret bound (``kappa`` corresponds to
-        ``sqrt(beta_t)``). When set, ``score()`` counts its own calls as the
-        round index ``t`` (1 on the first call, incrementing by 1 per call)
-        and uses ``kappa_t = sqrt(schedule(t))`` in place of the fixed
-        ``kappa``. See :func:`gp_ucb_beta_schedule` for the schedule from the
-        cited finite-domain regret bound. ``None`` (default) keeps ``kappa``
-        fixed.
+        Optional ``beta_t`` schedule ``schedule(t) -> float`` (``kappa``
+        corresponds to ``sqrt(beta_t)`` in the cited bound). When set, each
+        ``score()`` call increments an internal round index ``t`` (starting
+        at 1) and uses ``kappa_t = sqrt(schedule(t))`` instead of the fixed
+        ``kappa``. See :func:`gp_ucb_beta_schedule` for the cited
+        finite-domain schedule. ``None`` (default) keeps ``kappa`` fixed.
     direction : np.ndarray or None
         Per-objective optimization direction (+1 = maximize, -1 = minimize).
         shape: (n_obj,). The predicted mean is converted to minimize-space

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-15 10:57+0900\n"
+"POT-Creation-Date: 2026-08-18 19:12+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -126,3 +126,50 @@ msgstr "{py:obj}`saealib.SMSEGOAcquisition <saealib.SMSEGOAcquisition>`・獲得
 #: ../../api/acquisition.md:34:<autosummary>:1
 msgid "SMS-EGO acquisition function for multi-objective Bayesian optimisation."
 msgstr "多目的ベイズ最適化用のSMS-EGO獲得関数です。"
+
+#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:1
+msgid ""
+"Return the finite-domain GP-UCB ``beta_t`` schedule for use with "
+"``beta_schedule``."
+msgstr "``beta_schedule``に渡す、有限領域向けGP-UCBの``beta_t``スケジュールを返します。"
+
+#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:3
+msgid ""
+"``beta_t = 2 log(domain_size * t^2 * pi^2 / (6 * delta))``, the schedule "
+"the cited regret bound uses for a finite search domain of size "
+"``domain_size`` :cite:`srinivas2012gpucb`. For a continuous domain, "
+"``domain_size`` is a discretization-count proxy supplied by the caller; "
+"this function does not derive one."
+msgstr ""
+"``beta_t = 2 log(domain_size * t^2 * pi^2 / (6 * "
+"delta))``は、引用文献 :cite:`srinivas2012gpucb` "
+"の後悔上界がサイズ``domain_size``の有限探索領域に対して用いるスケジュールです。連続領域の場合、``domain_size``は呼び出し側が与える離散化点数の代理値であり、この関数自体はその値を導出しません。"
+
+#: ../../api/acquisition.md
+msgid "Parameters"
+msgstr "パラメータ"
+
+#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:9
+msgid ""
+"Size of the (possibly discretized) search domain (``|D|`` in the cited "
+"bound)."
+msgstr "（離散化されている場合を含む）探索領域のサイズ（引用文献の``|D|``）。"
+
+#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:12
+msgid "Confidence parameter (``0 < delta < 1``). Default: 0.1."
+msgstr "信頼度パラメータ（``0 < delta < 1``）。既定値は0.1。"
+
+#: ../../api/acquisition.md
+msgid "Returns"
+msgstr "返します"
+
+#: of saealib.acquisition.lcb.gp_ucb_beta_schedule:15
+msgid ""
+"``schedule(t) -> float``, increasing in the round index ``t`` (``t`` "
+"starting at 1)."
+msgstr "``schedule(t) -> float``。反復回数``t``（1始まり）に対して増加します。"
+
+#: ../../api/acquisition.md
+msgid "Return type"
+msgstr "戻り値の型"
+

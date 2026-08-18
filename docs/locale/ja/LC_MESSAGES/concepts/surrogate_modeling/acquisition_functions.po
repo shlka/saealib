@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"POT-Creation-Date: 2026-08-18 19:12+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -411,3 +411,9 @@ msgstr "{py:class}`saealib.ProbabilityOfFeasibility`"
 #, python-brace-format
 msgid "{py:class}`saealib.ProductOfFeasibility`"
 msgstr "{py:class}`saealib.ProductOfFeasibility`"
+
+#: ../../concepts/surrogate_modeling/acquisition_functions.md:130
+#, python-brace-format
+msgid "{py:func}`saealib.gp_ucb_beta_schedule`"
+msgstr "{py:func}`saealib.gp_ucb_beta_schedule`"
+

@@ -127,3 +127,4 @@ This warning will catch you if you pair an acquisition function with `requires_u
 - {py:class}`saealib.ParEGOAcquisition`
 - {py:class}`saealib.ProbabilityOfFeasibility`
 - {py:class}`saealib.ProductOfFeasibility`
+- {py:func}`saealib.gp_ucb_beta_schedule`
