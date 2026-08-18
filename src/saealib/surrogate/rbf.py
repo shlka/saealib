@@ -7,6 +7,7 @@ independent RBF model per objective (ensemble approach).
 """
 
 import logging
+from typing import Literal
 
 import numpy as np
 
@@ -19,20 +20,21 @@ from saealib.surrogate.rbf_kernels import RBFKernel
 logger = logging.getLogger(__name__)
 
 
-def _resolve_polynomial_degree(kernel: RBFKernel, polynomial_degree: int | None) -> int:
-    if polynomial_degree is None:
-        return (
-            -1 if kernel.min_polynomial_degree is None else kernel.min_polynomial_degree
-        )
-    if polynomial_degree not in (-1, 0, 1):
-        raise ValidationError("polynomial_degree must be -1, 0, or 1")
-    if (
-        kernel.min_polynomial_degree is not None
-        and polynomial_degree < kernel.min_polynomial_degree
+def _resolve_polynomial_degree(
+    kernel: RBFKernel, polynomial_degree: Literal["auto", 0, 1] | None
+) -> int | None:
+    if type(polynomial_degree) is bool:
+        raise ValidationError("polynomial_degree must be 'auto', None, 0, or 1")
+    if polynomial_degree == "auto":
+        return kernel.min_polynomial_degree
+    if polynomial_degree not in (None, 0, 1):
+        raise ValidationError("polynomial_degree must be 'auto', None, 0, or 1")
+    if kernel.min_polynomial_degree is not None and (
+        polynomial_degree is None or polynomial_degree < kernel.min_polynomial_degree
     ):
         raise ValidationError(
             f"{type(kernel).__name__} requires polynomial_degree >= "
-            f"{kernel.min_polynomial_degree}, got {polynomial_degree}"
+            f"{kernel.min_polynomial_degree}, got {polynomial_degree!r}"
         )
     return polynomial_degree
 
@@ -59,7 +61,7 @@ class _RBFModel:
         self,
         kernel: RBFKernel,
         dim: int,
-        polynomial_degree: int,
+        polynomial_degree: int | None,
         solver: str,
         alpha: float,
     ) -> None:
@@ -92,12 +94,11 @@ class _RBFModel:
         n_samples = len(self.train_x)
         phi = self.kernel.pairwise(self.train_x, self.train_x)
 
-        if self.polynomial_degree == -1:
-            target = self.train_y - np.mean(self.train_y)
+        target = self.train_y
+        if self.polynomial_degree is None:
             n_poly = 0
             a = np.array(phi, copy=True)
         else:
-            target = self.train_y
             if self.polynomial_degree == 0:
                 polynomial_basis = np.ones((n_samples, 1))
             else:
@@ -172,8 +173,8 @@ class _RBFModel:
         assert self.train_x is not None
         assert self.weights is not None and self.train_y is not None
         k = self.kernel.pairwise(self.train_x, test)
-        if self.polynomial_degree == -1:
-            preds = k.T.dot(self.weights) + np.mean(self.train_y)
+        if self.polynomial_degree is None:
+            preds = k.T.dot(self.weights)
         else:
             assert self.poly_coeffs is not None
             if self.polynomial_degree == 0:
@@ -202,10 +203,15 @@ class RBFSurrogate(RegressionSurrogate):
         Dimensionality of the input data.
     n_obj : int or None
         Number of objectives. Set on first fit call.
-    polynomial_degree : int
-        Resolved degree of the optional polynomial term (``-1`` disables
-        it). When the constructor argument is ``None``, this is resolved
-        from ``kernel.min_polynomial_degree``.
+    polynomial_degree : {"auto", None, 0, 1}
+        Configured polynomial degree. ``"auto"`` resolves from
+        ``kernel.min_polynomial_degree`` and ``None`` disables the polynomial
+        term.
+    resolved_polynomial_degree : int or None
+        Concrete polynomial degree used by the next or most recent fit.
+    resolved_kernel : RBFKernel or None
+        Kernel instance used by the most recent successful fit, or ``None``
+        before fitting.
     solver : str
         Linear system solver used during fitting.
     alpha : float
@@ -232,24 +238,28 @@ class RBFSurrogate(RegressionSurrogate):
         self,
         kernel: RBFKernel,
         dim: int,
-        polynomial_degree: int | None = None,
+        polynomial_degree: Literal["auto", 0, 1] | None = "auto",
         solver: str = "solve",
         alpha: float = 1e-8,
     ) -> None:
         _validate_solver(solver)
         _validate_alpha(alpha)
         self._kernel = kernel
-        self._polynomial_degree_arg = polynomial_degree
-        self._polynomial_degree = _resolve_polynomial_degree(kernel, polynomial_degree)
+        self._polynomial_degree = polynomial_degree
+        self._resolved_polynomial_degree = _resolve_polynomial_degree(
+            kernel, polynomial_degree
+        )
         self.dim = dim
         self._solver = solver
         self._alpha = alpha
         self.n_obj: int | None = None
         self._models: list[_RBFModel] | None = None
+        self._resolved_kernel: RBFKernel | None = None
 
     def _invalidate_fit(self) -> None:
         self._models = None
         self.n_obj = None
+        self._resolved_kernel = None
 
     @property
     def kernel(self) -> RBFKernel:
@@ -258,24 +268,32 @@ class RBFSurrogate(RegressionSurrogate):
 
     @kernel.setter
     def kernel(self, value: RBFKernel) -> None:
-        polynomial_degree = _resolve_polynomial_degree(
-            value, self._polynomial_degree_arg
-        )
+        resolved = _resolve_polynomial_degree(value, self._polynomial_degree)
         self._kernel = value
-        self._polynomial_degree = polynomial_degree
+        self._resolved_polynomial_degree = resolved
         self._invalidate_fit()
 
     @property
-    def polynomial_degree(self) -> int:
-        """Return the resolved polynomial degree."""
+    def polynomial_degree(self) -> Literal["auto", 0, 1] | None:
+        """Return the configured polynomial degree."""
         return self._polynomial_degree
 
     @polynomial_degree.setter
-    def polynomial_degree(self, value: int | None) -> None:
-        polynomial_degree = _resolve_polynomial_degree(self._kernel, value)
-        self._polynomial_degree_arg = value
-        self._polynomial_degree = polynomial_degree
+    def polynomial_degree(self, value: Literal["auto", 0, 1] | None) -> None:
+        resolved = _resolve_polynomial_degree(self._kernel, value)
+        self._polynomial_degree = value
+        self._resolved_polynomial_degree = resolved
         self._invalidate_fit()
+
+    @property
+    def resolved_polynomial_degree(self) -> int | None:
+        """Return the next or most recent ``fit()`` degree; always available."""
+        return self._resolved_polynomial_degree
+
+    @property
+    def resolved_kernel(self) -> RBFKernel | None:
+        """Return the kernel used by the most recent successful fit."""
+        return self._resolved_kernel
 
     @property
     def solver(self) -> str:
@@ -348,7 +366,7 @@ class RBFSurrogate(RegressionSurrogate):
                 _RBFModel(
                     resolved_kernel,
                     self.dim,
-                    self.polynomial_degree,
+                    self._resolved_polynomial_degree,
                     self.solver,
                     self.alpha,
                 )
@@ -362,6 +380,7 @@ class RBFSurrogate(RegressionSurrogate):
 
         self._models = new_models
         self.n_obj = n_obj
+        self._resolved_kernel = resolved_kernel
 
     def predict(self, test_x: np.ndarray) -> SurrogatePrediction:
         """

@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from saealib.exceptions import ValidationError
+from saealib.registry import build, to_spec
 from saealib.surrogate.rbf import RBFSurrogate
 from saealib.surrogate.rbf_kernels import (
     CubicKernel,
@@ -135,7 +136,7 @@ def test_lstsq_returns_finite_values_for_rank_deficient_training_data():
     assert np.isfinite(surrogate.predict(test_x).value).all()
 
 
-@pytest.mark.parametrize("polynomial_degree", [-2, 2, 0.5])
+@pytest.mark.parametrize("polynomial_degree", [-1, 2, 0.5, True, False])
 def test_invalid_polynomial_degree_raises_validation_error(polynomial_degree):
     with pytest.raises(ValidationError):
         RBFSurrogate(
@@ -143,6 +144,16 @@ def test_invalid_polynomial_degree_raises_validation_error(polynomial_degree):
             dim=1,
             polynomial_degree=polynomial_degree,
         )
+
+
+@pytest.mark.parametrize("polynomial_degree", [-1, 2, 0.5, True, False])
+def test_invalid_polynomial_degree_assignment_raises_validation_error(
+    polynomial_degree,
+):
+    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+
+    with pytest.raises(ValidationError):
+        surrogate.polynomial_degree = polynomial_degree
 
 
 @pytest.mark.parametrize("solver", ["invalid", "qr"])
@@ -200,32 +211,90 @@ def test_matern_kernel_rejects_invalid_nu_at_construction_time():
         MaternKernel(nu=1.0)
 
 
-def test_multiquadric_without_required_constant_term_rejects_construction():
-    with pytest.raises(
-        ValidationError,
-        match=r"MultiquadricKernel requires polynomial_degree >= 0, got -1",
-    ):
-        RBFSurrogate(
-            kernel=MultiquadricKernel(),
-            dim=1,
-            polynomial_degree=-1,
-        )
+def test_explicit_none_disables_polynomial_term_for_kernel_without_requirement():
+    surrogate = RBFSurrogate(
+        kernel=GaussianKernel(),
+        dim=1,
+        polynomial_degree=None,
+    )
+
+    assert surrogate.polynomial_degree is None
+    assert surrogate.resolved_polynomial_degree is None
 
 
 @pytest.mark.parametrize(
     ("kernel", "expected_degree"),
     [
-        (GaussianKernel(), -1),
+        (GaussianKernel(), None),
         (LinearKernel(), 0),
         (CubicKernel(), 1),
         (ThinPlateSplineKernel(), 1),
         (MultiquadricKernel(), 0),
+        (MaternKernel(), None),
     ],
 )
 def test_auto_polynomial_degree_resolution(kernel, expected_degree):
     surrogate = RBFSurrogate(kernel=kernel, dim=1)
 
-    assert surrogate.polynomial_degree == expected_degree
+    assert surrogate.polynomial_degree == "auto"
+    assert surrogate.resolved_polynomial_degree == expected_degree
+
+
+def test_polynomial_degree_exposes_configured_value_separately():
+    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+
+    assert surrogate.polynomial_degree == "auto"
+    assert surrogate.resolved_polynomial_degree is None
+
+    surrogate.polynomial_degree = 1
+    assert surrogate.polynomial_degree == 1
+    assert surrogate.resolved_polynomial_degree == 1
+
+    surrogate.polynomial_degree = None
+    assert surrogate.polynomial_degree is None
+    assert surrogate.resolved_polynomial_degree is None
+
+
+def test_default_polynomial_degree_round_trips_through_registry():
+    rebuilt = build(to_spec(RBFSurrogate(kernel=GaussianKernel(), dim=1)))
+
+    assert rebuilt.polynomial_degree == "auto"
+    assert rebuilt.resolved_polynomial_degree is None
+
+
+def test_resolved_kernel_tracks_fit_and_clears_after_failed_fit():
+    configured_kernel = GaussianKernel()
+    surrogate = RBFSurrogate(kernel=configured_kernel, dim=1)
+
+    assert surrogate.resolved_kernel is None
+    expected_kernel = surrogate.kernel.resolve(TRAIN_X)
+    surrogate.fit(TRAIN_X, TRAIN_Y)
+
+    assert surrogate.resolved_kernel == expected_kernel
+    assert surrogate.resolved_kernel is not configured_kernel
+    assert configured_kernel.length_scale is None
+    assert surrogate.resolved_kernel.length_scale == expected_kernel.length_scale
+
+    degenerate_x = np.array([[1.0], [1.0], [1.0]])
+    with pytest.raises(ValidationError):
+        surrogate.fit(degenerate_x, np.ones(3))
+
+    assert surrogate.resolved_kernel is None
+
+
+def test_no_polynomial_term_fits_large_offset_without_centering():
+    train_x = np.linspace(-20.0, 20.0, 40).reshape(-1, 1)
+    train_y = 1e8 + train_x[:, 0] ** 2
+    surrogate = RBFSurrogate(
+        kernel=GaussianKernel(length_scale=2.0),
+        dim=1,
+        polynomial_degree=None,
+    )
+
+    surrogate.fit(train_x, train_y)
+    prediction = surrogate.predict(train_x).value[:, 0]
+
+    np.testing.assert_allclose(prediction, train_y, rtol=1e-6)
 
 
 @pytest.mark.parametrize(
@@ -233,9 +302,10 @@ def test_auto_polynomial_degree_resolution(kernel, expected_degree):
     [
         (CubicKernel(), 0),
         (ThinPlateSplineKernel(), 0),
-        (ThinPlateSplineKernel(), -1),
-        (LinearKernel(), -1),
-        (MultiquadricKernel(), -1),
+        (ThinPlateSplineKernel(), None),
+        (LinearKernel(), None),
+        (CubicKernel(), None),
+        (MultiquadricKernel(), None),
     ],
 )
 def test_invalid_polynomial_degree_kernel_combinations_raise_validation_error(
@@ -295,6 +365,31 @@ def test_invalid_configuration_replacement_preserves_fitted_state(attribute, val
     surrogate.predict(TRAIN_X)
 
 
+def test_incompatible_kernel_swap_preserves_fitted_state():
+    surrogate = RBFSurrogate(
+        kernel=GaussianKernel(),
+        dim=1,
+        polynomial_degree=None,
+    )
+    surrogate.fit(TRAIN_X, TRAIN_Y)
+
+    with pytest.raises(ValidationError):
+        surrogate.kernel = ThinPlateSplineKernel()
+
+    assert isinstance(surrogate.kernel, GaussianKernel)
+    surrogate.predict(TRAIN_X)
+
+
+def test_auto_polynomial_degree_reresolves_on_kernel_swap():
+    surrogate = RBFSurrogate(kernel=GaussianKernel(), dim=1)
+    assert surrogate.resolved_polynomial_degree is None
+
+    surrogate.kernel = LinearKernel()
+
+    assert surrogate.polynomial_degree == "auto"
+    assert surrogate.resolved_polynomial_degree == 0
+
+
 def test_failed_fit_clears_previous_fitted_state():
     surrogate = RBFSurrogate(
         kernel=GaussianKernel(length_scale=1.0),
@@ -307,6 +402,7 @@ def test_failed_fit_clears_previous_fitted_state():
     with pytest.raises(ValidationError, match=r"rank|degenerate"):
         surrogate.fit(degenerate_x, np.ones(3))
 
+    assert surrogate.resolved_kernel is None
     with pytest.raises(RuntimeError):
         surrogate.predict(TRAIN_X)
 
