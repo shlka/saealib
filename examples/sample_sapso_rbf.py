@@ -13,13 +13,13 @@ import numpy as np
 
 from saealib import (
     PSO,
+    GaussianKernel,
     IndividualBasedStrategy,
     LHSInitializer,
     Optimizer,
     Problem,
     RBFSurrogate,
     Termination,
-    gaussian_kernel,
     max_fe,
 )
 
@@ -57,7 +57,7 @@ def main():
     )
     algorithm = PSO(w=0.7, c1=1.5, c2=1.5)
     termination = Termination(max_fe(200 * dim))
-    surrogate = RBFSurrogate(gaussian_kernel, dim)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
     strategy = IndividualBasedStrategy(evaluation_ratio=rsm)
 
     opt = (

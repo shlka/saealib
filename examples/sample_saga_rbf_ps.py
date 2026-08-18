@@ -6,6 +6,7 @@ from opfunu.cec_based import cec2015
 from saealib import (
     GA,
     CrossoverBLXAlpha,
+    GaussianKernel,
     LHSInitializer,
     MutationUniform,
     Optimizer,
@@ -15,7 +16,6 @@ from saealib import (
     SequentialSelection,
     Termination,
     TruncationSelection,
-    gaussian_kernel,
     max_fe,
 )
 
@@ -55,7 +55,7 @@ def main():
         survivor_selection=TruncationSelection(),
     )
     termination = Termination(max_fe(200 * dim))
-    surrogate = RBFSurrogate(gaussian_kernel, dim)
+    surrogate = RBFSurrogate(kernel=GaussianKernel())
     # n_candidates=40: screen 40 candidates with surrogate each generation
     # n_select=5: evaluate only the top 5 with the true objective
     strategy = PreSelectionStrategy(n_candidates=n_candidates, n_select=n_select)

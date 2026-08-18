@@ -20,6 +20,7 @@ from opfunu.cec_based import cec2015
 from saealib import (
     GA,
     CrossoverBLXAlpha,
+    GaussianKernel,
     IndividualBasedStrategy,
     LHSInitializer,
     MutationUniform,
@@ -29,7 +30,6 @@ from saealib import (
     SequentialSelection,
     Termination,
     TruncationSelection,
-    gaussian_kernel,
     max_fe,
 )
 from saealib.callback import InitialEvaluationEndEvent, InitialEvaluationStartEvent
@@ -113,7 +113,7 @@ def main():
             )
         )
         .set_termination(Termination(max_fe(200 * dim)))
-        .set_surrogate(RBFSurrogate(gaussian_kernel, dim), n_neighbors=knn)
+        .set_surrogate(RBFSurrogate(kernel=GaussianKernel()), n_neighbors=knn)
         .set_strategy(IndividualBasedStrategy(evaluation_ratio=rsm))
         .set_evaluator(JoblibEvaluator())
     )
