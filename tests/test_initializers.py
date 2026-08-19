@@ -170,6 +170,24 @@ class TestInitializerContract:
         assert isinstance(initializer, Initializer)
 
 
+@pytest.mark.parametrize(
+    "initializer_class",
+    [RandomInitializer, SobolInitializer, LHSInitializer],
+    ids=["random", "sobol", "lhs"],
+)
+class TestInitializerSizeValidation:
+    def test_population_larger_than_archive_raises(self, initializer_class):
+        with pytest.raises(ValueError, match="n_init_population"):
+            initializer_class(3, 5)
+
+    def test_negative_sizes_raise(self, initializer_class):
+        with pytest.raises(ValueError, match="non-negative"):
+            initializer_class(-1, 0)
+
+    def test_equal_sizes_are_allowed(self, initializer_class):
+        initializer_class(5, 5)
+
+
 # ---------------------------------------------------------------------------
 # Importability
 # ---------------------------------------------------------------------------

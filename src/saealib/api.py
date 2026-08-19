@@ -236,7 +236,7 @@ def _run(
         max_fe = 200 * dim
 
     initializer = LHSInitializer(
-        n_init_archive=5 * dim,
+        n_init_archive=max(5 * dim, pop_size),
         n_init_population=pop_size,
         seed=seed,
     )

@@ -67,7 +67,7 @@ def test_only_partial_feedback_runtime_capability_is_registered() -> None:
 
 
 def test_initializer_contract_declares_population_and_rng_effects() -> None:
-    contract = LHSInitializer(3, 5).contract()
+    contract = LHSInitializer(5, 5).contract()
     output = contract.ports["initializer"].outputs[0]
 
     assert output.name == "population"
@@ -86,11 +86,11 @@ def test_initializer_contract_declares_population_and_rng_effects() -> None:
         ),
     )
     for initializer in (
-        RandomInitializer(3, 5),
-        SobolInitializer(3, 5),
+        RandomInitializer(5, 5),
+        SobolInitializer(5, 5),
     ):
         assert initializer.contract().state == contract.state
-    base_contract = Initializer.contract(LHSInitializer(3, 5))
+    base_contract = Initializer.contract(LHSInitializer(5, 5))
     assert base_contract.ports["initializer"].outputs[0].data.bindings[
         "candidate_count"
     ] == Var(name="N")

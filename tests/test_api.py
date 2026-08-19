@@ -146,3 +146,20 @@ class TestMaximizePreset:
         )
         assert isinstance(result.x, np.ndarray)
         assert result.fe > 0
+
+
+class TestPopSizeExceedsDefaultArchive:
+    def test_minimize_accepts_pop_size_larger_than_default_archive(self):
+        dim = 2
+        result = minimize(
+            lambda x: np.sum(x**2),
+            dim=dim,
+            lb=[-1] * dim,
+            ub=[1] * dim,
+            pop_size=5 * dim + 1,
+            max_fe=30,
+            seed=0,
+            verbose=False,
+        )
+        assert isinstance(result.x, np.ndarray)
+        assert result.fe > 0
