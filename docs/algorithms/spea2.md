@@ -50,7 +50,7 @@ The source is {cite}`zitzler2001spea2`. The concrete procedure is shown in the p
 
 ```{mermaid}
 flowchart TD
-    INIT["LHSInitializer<br/>Sample n_init_archive individuals (≈ literature P0) →<br/>rank_population() ranks them<br/>(fitness assignment + environmental selection) →<br/>take top n_init_population as P̄0<br/>(L1, L2, L3)"] --> GEN
+    INIT["LHSInitializer<br/>Sample n_init_archive individuals (≈ literature P0) →<br/>rank_population() ranks them<br/>(fitness assignment + environmental selection) →<br/>take top n_init_population as<br/>initial ctx.population (≈ literature P̄1)<br/>(L1, L2, L3)"] --> GEN
     subgraph GEN["One generation (DirectStrategy.step)"]
         direction TB
         ASK["GA.ask()<br/>Binary tournament selection →<br/>SBX crossover →<br/>Polynomial mutation to generate<br/>N offspring<br/>(L5, L6)"] --> EVAL["True evaluation<br/>(no surrogate involved;<br/>no independent pseudocode step)"]
@@ -113,11 +113,11 @@ The `problem.comparator = SPEA2Comparator()` line cannot be omitted.
 In NSGA-II, `NSGA2Comparator` is the default for `n_obj > 1`, so the same line could be omitted, but this is not the case for SPEA2.
 
 `ctx.pareto_archive` is saealib's own cumulative non-dominated archive, tracked across the entire run independently of any specific algorithm; it is not the same state container as SPEA2's external archive, which corresponds to `ctx.population`.
-For most converged runs the two are very similar, but they are not guaranteed to be identical — read `ctx.population` directly if the paper's output $A$ (the final $\bar P_T$) is specifically what's needed.
+Read `ctx.population` directly if the paper's output $A$ (the non-dominated solutions in the final external archive $\bar P_{t+1}$) is specifically what's needed.
 
 ## Differences from the source
 
-saealib reproduces SPEA2's core selection semantics — the strength/raw-fitness/density fitness assignment and the truncation-based environmental selection — exactly as described in the paper.
+With the default `ParetoDominator` on an unconstrained problem, saealib reproduces SPEA2's core selection semantics — the strength/raw-fitness/density fitness assignment and the truncation-based environmental selection — as described in the paper.
 Two aspects of the execution structure differ from the source.
 
 **Initialization**: the paper generates an initial population $P_0$ (size $N$) and starts with an empty archive $\bar P_0 = \emptyset$; the first fitness assignment and environmental selection (L2, L3) only happen once the main loop begins at $t=0$.
@@ -135,7 +135,7 @@ Fitness computation ($S(i)$/$R(i)$/$D(i)$) is $O(M^2)$ ($M=N+\bar N$), or $O(M^2
 The truncation operator is $O(M^3)$ in the worst case and $O(M^2\log M)$ on average {cite}`zitzler2001spea2`.
 
 **Sizing $N$ and $\bar N$ independently**: `ctx.population` plays the role of SPEA2's archive $\bar P$ — `GA.tell()` merges it with the offspring, and `TruncationSelection` (using the `SPEA2Comparator` configured via `problem.comparator`) performs environmental selection on the result — so `LHSInitializer(n_init_population=...)` sets $\bar N$, and `DirectStrategy(n_offspring=...)` sets the number of offspring generated (and true-evaluated) per generation, $N$.
-`LHSInitializer`'s other size parameter, `n_init_archive`, sizes saealib's own cumulative `Archive` (`ctx.archive`) — a different, longer-lived container than SPEA2's external archive.
+`LHSInitializer`'s other size parameter, `n_init_archive`, sets the number of initially evaluated entries in saealib's own cumulative `Archive` (`ctx.archive`) — a different, longer-lived container than SPEA2's external archive, which keeps growing with every subsequent generation's evaluations.
 At $t=0$ specifically it also sizes the candidate pool subjected to the first fitness assignment and environmental selection (see *Differences from the source* above), so a literature-faithful initialization sets `n_init_archive=N`.
 Built-in initializers require `n_init_population <= n_init_archive`, so an initial state with $\bar N > N$ cannot be constructed directly.
 
