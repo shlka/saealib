@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 11:41+0900\n"
+"POT-Creation-Date: 2026-08-19 13:06+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -186,19 +186,38 @@ msgid "Corresponding step"
 msgstr "対応ステップ"
 
 #: ../../algorithms/spea2.md:51
+msgid "Initialization"
+msgstr "初期化"
+
+#: ../../algorithms/spea2.md:51
+msgid ""
+"`LHSInitializer` (samples `n_init_archive` individuals, true-evaluates "
+"them, and calls `rank_population()` — folding the paper's initial fitness"
+" assignment and first environmental selection into initialization — then "
+"hands the top `n_init_population` to the initial population)"
+msgstr ""
+"`LHSInitializer`（`n_init_archive`個体をサンプルし真の評価を行い、`rank_population()`を呼ぶ——原論文の初期fitness"
+" assignmentと最初のenvironmental "
+"selectionを初期化に畳み込んでいる——その後上位`n_init_population`個体を初期populationへ渡す）"
+
+#: ../../algorithms/spea2.md:51
+msgid "L1, L2, L3"
+msgstr "「L1, L2, L3」"
+
+#: ../../algorithms/spea2.md:51
 msgid "Search algorithm"
 msgstr "探索アルゴリズム本体"
 
 #: ../../algorithms/spea2.md:51
 msgid ""
-"`GA` (`ask()` performs crossover and mutation; `tell()` combines the "
-"population and offspring into a single pool and performs survivor "
-"selection)"
-msgstr "`GA`（`ask()`で交叉と突然変異、`tell()`で個体群と子個体を単一プールに結合し生存選択を実行）"
+"`GA` (`ask()` performs mating selection and variation; `tell()` combines "
+"the population and offspring into a single pool and performs "
+"environmental selection)"
+msgstr "`GA`（`ask()`が交配選択と変異を行い、`tell()`が個体群と子個体を1つのプールに統合し環境選択を行う）"
 
 #: ../../algorithms/spea2.md:51
-msgid "L1, L6"
-msgstr "「L1, L6」"
+msgid "L3, L5, L6"
+msgstr "「L3, L5, L6」"
 
 #: ../../algorithms/spea2.md:51
 msgid "Parent selection"
@@ -265,10 +284,10 @@ msgid ""
 msgstr "`DirectStrategy`（サロゲートを介さず、`GA.ask()`が生成した候補を全て真の目的関数で評価する）"
 
 #: ../../algorithms/spea2.md:51
-msgid "L2 (in-generation evaluation)"
-msgstr "L2（世代内の評価）"
+msgid "No independent step (occurs after L6, before the next L2)"
+msgstr "独立したステップ番号なし（L6の後、次のL2の前に発生）"
 
-#: ../../algorithms/spea2.md:107
+#: ../../algorithms/spea2.md:112
 msgid ""
 "The `problem.comparator = SPEA2Comparator()` line cannot be omitted. In "
 "NSGA-II, `NSGA2Comparator` is the default for `n_obj > 1`, so the same "
@@ -277,23 +296,78 @@ msgstr ""
 "`problem.comparator = SPEA2Comparator()`の行は省略できません。 NSGA-"
 "IIでは`NSGA2Comparator`が`n_obj > 1`のときの既定値なので同じ行を省略できましたが、SPEA2ではそうではありません。"
 
-#: ../../algorithms/spea2.md:110
+#: ../../algorithms/spea2.md:115
+msgid ""
+"`ctx.pareto_archive` is saealib's own cumulative non-dominated archive, "
+"tracked across the entire run independently of any specific algorithm; it"
+" is not the same state container as SPEA2's external archive, which "
+"corresponds to `ctx.population`. For most converged runs the two are very"
+" similar, but they are not guaranteed to be identical — read "
+"`ctx.population` directly if the paper's output $A$ (the final $\\bar "
+"P_T$) is specifically what's needed."
+msgstr ""
+"`ctx.pareto_archive`はsaealib独自の累積非劣解アーカイブであり、特定のアルゴリズムとは独立に実行全体を通じて追跡されます。SPEA2の外部アーカイブ（`ctx.population`に対応）と同じ状態コンテナではありません。"
+" 収束した実行の多くでは両者は非常に近い値になりますが、一致は保証されません——原論文の出力$A$（最終的な$\\bar "
+"P_T$）そのものが必要な場合は`ctx.population`を直接参照してください。"
+
+#: ../../algorithms/spea2.md:118
 msgid "Differences from the source"
 msgstr "文献との差分"
 
-#: ../../algorithms/spea2.md:112
-msgid "No significant differences from the source algorithm."
-msgstr "文献との有意な差分はありません。"
+#: ../../algorithms/spea2.md:120
+msgid ""
+"saealib reproduces SPEA2's core selection semantics — the strength/raw-"
+"fitness/density fitness assignment and the truncation-based environmental"
+" selection — exactly as described in the paper. Two aspects of the "
+"execution structure differ from the source."
+msgstr ""
+"saealibはSPEA2のselection semantics——strength/raw "
+"fitness/densityによる適応度割り当てと打ち切りベースの環境選択——を原論文の記述通りに再現しています。 "
+"実行構造については、文献と異なる点が2箇所あります。"
 
-#: ../../algorithms/spea2.md:114
+#: ../../algorithms/spea2.md:123
+msgid ""
+"**Initialization**: the paper generates an initial population $P_0$ (size"
+" $N$) and starts with an empty archive $\\bar P_0 = \\emptyset$; the "
+"first fitness assignment and environmental selection (L2, L3) only happen"
+" once the main loop begins at $t=0$. saealib's `LHSInitializer` folds "
+"this initial fitness assignment and environmental selection into "
+"construction itself: it samples `n_init_archive` individuals (playing the"
+" role of the paper's $P_0$), true-evaluates them, and calls "
+"`rank_population()` to rank them before handing the top "
+"`n_init_population` to the initial `ctx.population`. The resulting "
+"`ctx.population` at $t=0$ therefore already corresponds to the paper's "
+"post-selection archive $\\bar P_1$, not to the empty $\\bar P_0$."
+msgstr ""
+"**初期化**：原論文は初期個体群$P_0$（サイズ$N$）を生成し、空のアーカイブ$\\bar P_0 = "
+"\\emptyset$から始めます。最初の適応度割り当てと環境選択（L2, L3）は、メインループが$t=0$で始まって初めて実行されます。 "
+"saealibの`LHSInitializer`は、この最初の適応度割り当てと環境選択を構築処理そのものに畳み込みます。`n_init_archive`個体をサンプルし（原論文の$P_0$の役割を担う）、真の評価を行い、`rank_population()`を呼んでランク付けした上で、上位`n_init_population`個体を初期`ctx.population`へ渡します。"
+" したがって$t=0$時点の`ctx.population`は、空の$\\bar P_0$ではなく、原論文の選択後のアーカイブ$\\bar "
+"P_1$に既に対応しています。"
+
+#: ../../algorithms/spea2.md:127
+#, python-brace-format
+msgid ""
+"**Constraint handling**: for constrained problems, `SPEA2Comparator` "
+"additionally applies Deb (2000)'s feasibility-first rule "
+"{cite}`deb2000feasibility` — feasible individuals always outrank "
+"infeasible ones, and infeasible individuals are ordered by ascending "
+"constraint violation. The SPEA2 algorithm as published does not address "
+"constraint handling; this is a saealib-side extension."
+msgstr ""
+"**制約処理**：制約付き問題に対して、`SPEA2Comparator`はさらにDeb (2000)のfeasibility-"
+"firstルール{cite}`deb2000feasibility`を適用します——feasible個体は常にinfeasible個体より優先され、infeasible個体同士は制約違反量の昇順で並びます。"
+" 発表されたSPEA2アルゴリズムは制約処理を扱っておらず、これはsaealib側の拡張です。"
+
+#: ../../algorithms/spea2.md:130
 msgid "Parameters and variants"
 msgstr "パラメータと変種"
 
-#: ../../algorithms/spea2.md:116
+#: ../../algorithms/spea2.md:132
 msgid "Complexity"
 msgstr "計算量"
 
-#: ../../algorithms/spea2.md:118
+#: ../../algorithms/spea2.md:134
 #, python-brace-format
 msgid ""
 "Fitness computation ($S(i)$/$R(i)$/$D(i)$) is $O(M^2)$ ($M=N+\\bar N$), "
@@ -305,26 +379,34 @@ msgstr ""
 "N$）で、密度推定のための距離ソートを含めると$O(M^2\\log M)$になります。 "
 "打ち切り演算子は最悪$O(M^3)$、平均では$O(M^2\\log M)$です{cite}`zitzler2001spea2`。"
 
-#: ../../algorithms/spea2.md:121
+#: ../../algorithms/spea2.md:137
 msgid ""
 "**Sizing $N$ and $\\bar N$ independently**: `ctx.population` plays the "
 "role of SPEA2's archive $\\bar P$ — `GA.tell()` merges it with the "
-"offspring and `TruncationSelection(SPEA2Comparator)` performs "
-"environmental selection on the result — so "
-"`LHSInitializer(n_init_population=...)` sets $\\bar N$, and "
-"`DirectStrategy(n_offspring=...)` sets the number of offspring generated "
-"(and true-evaluated) per generation, $N$. `LHSInitializer`'s other size "
-"parameter, `n_init_archive`, sizes saealib's own cumulative `Archive` "
-"(`ctx.archive`); it is unrelated to SPEA2's external archive and should "
-"not be confused with $\\bar N$."
+"offspring, and `TruncationSelection` (using the `SPEA2Comparator` "
+"configured via `problem.comparator`) performs environmental selection on "
+"the result — so `LHSInitializer(n_init_population=...)` sets $\\bar N$, "
+"and `DirectStrategy(n_offspring=...)` sets the number of offspring "
+"generated (and true-evaluated) per generation, $N$. `LHSInitializer`'s "
+"other size parameter, `n_init_archive`, sizes saealib's own cumulative "
+"`Archive` (`ctx.archive`) — a different, longer-lived container than "
+"SPEA2's external archive. At $t=0$ specifically it also sizes the "
+"candidate pool subjected to the first fitness assignment and "
+"environmental selection (see *Differences from the source* above), so a "
+"literature-faithful initialization sets `n_init_archive=N`. Built-in "
+"initializers require `n_init_population <= n_init_archive`, so an initial"
+" state with $\\bar N > N$ cannot be constructed directly."
 msgstr ""
 "**$N$と$\\bar N$の独立設定**：`ctx.population`はSPEA2のアーカイブ$\\bar "
-"P$の役割を担います——`GA.tell()`がこれを子個体群と統合し、`TruncationSelection(SPEA2Comparator)`がその結果に対して環境選択を行います——そのため`LHSInitializer(n_init_population=...)`が$\\bar"
-" "
-"N$を、`DirectStrategy(n_offspring=...)`が各世代で生成（かつ真の評価が行われる）子個体数$N$を設定します。`LHSInitializer`のもう一方のサイズパラメータ`n_init_archive`は、saealib自身の累積`Archive`（`ctx.archive`）のサイズを指定するものであり、SPEA2の外部アーカイブとは無関係なので、$\\bar"
-" N$と混同しないでください。"
+"P$の役割を担います——`GA.tell()`がこれを子個体群と統合し、`TruncationSelection`（`problem.comparator`で設定された`SPEA2Comparator`を利用）がその結果に対して環境選択を行います——そのため`LHSInitializer(n_init_population=...)`が$\\bar"
+" N$を、`DirectStrategy(n_offspring=...)`が各世代で生成（かつ真の評価が行われる）子個体数$N$を設定します。 "
+"`LHSInitializer`のもう一方のサイズパラメータ`n_init_archive`は、saealib自身の累積`Archive`（`ctx.archive`）——SPEA2の外部アーカイブとは異なる、より長命なコンテナ——のサイズを指定します。"
+" $t=0$時点に限っては、これは最初の適応度割り当てと環境選択の対象となる候補プールのサイズも兼ねるため（前述の*Differences "
+"from the source*参照）、文献に忠実な初期化では`n_init_archive=N`とします。 "
+"組み込みのInitializerは`n_init_population <= n_init_archive`を前提とするため、$\\bar N >"
+" N$という初期状態を直接構成することはできません。"
 
-#: ../../algorithms/spea2.md:124
+#: ../../algorithms/spea2.md:142
 msgid ""
 "**Swapping the dominator (dominance predicate)**: "
 "`SPEA2Comparator(dominator=...)` lets you inject a "
@@ -333,21 +415,21 @@ msgid ""
 " on this dominance predicate, swapping it changes SPEA2's fitness itself."
 msgstr "**支配述語の差し替え**：`SPEA2Comparator(dominator=...)`では、既定の`ParetoDominator`以外の[Dominator](../concepts/problem_and_ranking/dominance.md)を注入できます。$S(i)$/$R(i)$の計算はこの支配述語に依存するため、差し替えるとSPEA2の適応度自体が変わります。"
 
-#: ../../algorithms/spea2.md:127
+#: ../../algorithms/spea2.md:145
 msgid "Related"
 msgstr "関連"
 
-#: ../../algorithms/spea2.md:129
+#: ../../algorithms/spea2.md:147
 msgid "[References](../references.md): Full bibliographic details for the source"
 msgstr "[文献リファレンス](../references.md)：出典の完全な書誌情報"
 
-#: ../../algorithms/spea2.md:130
+#: ../../algorithms/spea2.md:148
 msgid ""
 "[Comparator](../concepts/problem_and_ranking/comparators.md): Detailed "
 "specification of `SPEA2Comparator`"
 msgstr "[Comparator](../concepts/problem_and_ranking/comparators.md)：`SPEA2Comparator`の詳細仕様"
 
-#: ../../algorithms/spea2.md:131
+#: ../../algorithms/spea2.md:149
 msgid ""
 "[Crossover](../concepts/search_algorithms/crossover.md): List of "
 "crossover operators including `CrossoverSBX`"
@@ -355,7 +437,7 @@ msgstr ""
 "[Crossover](../concepts/search_algorithms/crossover.md): "
 "`CrossoverSBX`を含む交叉演算子の一覧"
 
-#: ../../algorithms/spea2.md:132
+#: ../../algorithms/spea2.md:150
 msgid ""
 "[Mutation](../concepts/search_algorithms/mutation.md): List of mutation "
 "operators including `MutationPolynomial`"
@@ -363,19 +445,19 @@ msgstr ""
 "[Mutation](../concepts/search_algorithms/mutation.md): "
 "`MutationPolynomial`を含む突然変異演算子の一覧"
 
-#: ../../algorithms/spea2.md:133
+#: ../../algorithms/spea2.md:151
 msgid ""
 "[ParentSelection](../concepts/search_algorithms/parent_selection.md): "
 "Detailed usage of `TournamentSelection`"
 msgstr "[ParentSelection](../concepts/search_algorithms/parent_selection.md)：`TournamentSelection`の詳しい使い方"
 
-#: ../../algorithms/spea2.md:134
+#: ../../algorithms/spea2.md:152
 msgid ""
 "[SurvivorSelection](../concepts/search_algorithms/survivor_selection.md):"
 " Detailed usage of `TruncationSelection`"
 msgstr "[SurvivorSelection](../concepts/search_algorithms/survivor_selection.md)：`TruncationSelection`の詳しい使い方"
 
-#: ../../algorithms/spea2.md:135
+#: ../../algorithms/spea2.md:153
 msgid ""
 "[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
 " List of strategies including `DirectStrategy`"
@@ -383,13 +465,13 @@ msgstr ""
 "[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
 " `DirectStrategy`を含む戦略の一覧"
 
-#: ../../algorithms/spea2.md:136
+#: ../../algorithms/spea2.md:154
 msgid ""
 "[Dominator](../concepts/problem_and_ranking/dominance.md): List of "
 "dominance predicates that can be swapped in via the `dominator` argument"
 msgstr "[Dominator](../concepts/problem_and_ranking/dominance.md)：`dominator`引数で差し替えられる支配述語の一覧"
 
-#: ../../algorithms/spea2.md:137
+#: ../../algorithms/spea2.md:155
 msgid ""
 "[Initializer](../concepts/execution_and_evaluation/initialization.md): "
 "How `LHSInitializer`'s `n_init_archive`/`n_init_population` parameters "
@@ -432,4 +514,10 @@ msgstr "[Initializer](../concepts/execution_and_evaluation/initialization.md)：
 #~ msgstr ""
 #~ "SPEA2の原法は個体群サイズ$N$とアーカイブサイズ$\\bar "
 #~ "N$を独立に指定しますが、saealibの`GA.tell()`は個体群と子個体を一つのプールにまとめるため、両者に同じ値を使います。"
+
+#~ msgid "L2 (in-generation evaluation)"
+#~ msgstr "L2（世代内の評価）"
+
+#~ msgid "No significant differences from the source algorithm."
+#~ msgstr "文献との有意な差分はありません。"
 

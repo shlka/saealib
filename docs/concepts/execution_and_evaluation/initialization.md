@@ -49,7 +49,7 @@ The three classes' implementations are nearly identical except for the one line 
 The `Initializer` base provides two helper methods reusable in custom implementations.
 
 **`_create_attrs(problem, provider)`**: Builds the `PopulationAttribute` values for `Population` and `Archive`.
-The legacy vector path uses `x`, `f`, `g`, and `cv`, and adds auxiliary attributes required by the Algorithm.
+The legacy vector path uses `x`, `f`, `g`, `cv`, and `id`, then merges in auxiliary attributes required by both the Algorithm (`Algorithm.get_required_attrs`) and the Comparator (`Comparator.get_required_attrs`) — this is how, for example, `SPEA2Comparator`'s `spea2_fitness` attribute ends up in the schema.
 `GenomeInitializer` manages Genomes in a dedicated column, so its standard attributes do not include `x`.
 
 **`_create_context(problem, archive, pareto_archive, population, rng)`**: Builds the `OptimizationState`.

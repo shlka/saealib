@@ -21,13 +21,16 @@ Pass it via `Problem`'s `comparator` argument.
 Having `__init__` be an abstract method is different from other components.
 Subclasses implementing a custom `Comparator` must always call `super().__init__(weights, eps_cv, eps_obj, direction=...)`.
 
-It also has three concrete methods with a no-op default, for ranking state that must persist across selections rather than being derived fresh from `f`/`cv` each time:
+It also provides three concrete methods for population-relative ranking state that must persist across selections rather than being derived fresh from `f`/`cv` each time.
+`get_required_attrs` and `prepare_population` have an empty/no-op default; `rank_population` composes the other two and is not itself a no-op:
 
 - **`get_required_attrs(problem) -> list[PopulationAttribute]`**: Declares the `PopulationAttribute`s the comparator needs `Population`/`Archive` to carry. Empty by default
 - **`prepare_population(population) -> None`**: Freshly recomputes and writes those attributes for the given population. No-op by default
 - **`rank_population(population) -> np.ndarray`**: `prepare_population` followed by `sort_population`. Environmental selection on a freshly merged pool should call this instead of `sort_population` directly, so persisted state is recomputed for the new set before ranking
 
-A `Comparator` that ranks purely from per-individual `f`/`cv` (`SingleObjectiveComparator`, `ParetoComparator`, `NSGA2Comparator`, ...) needs none of the three — `rank_population` then behaves identically to `sort_population`. `SPEA2Comparator` is the built-in example that overrides all three.
+A `Comparator` that can derive its full ranking from the population currently being ranked, without needing to carry state across population extraction, needs none of the three — `rank_population` then behaves identically to `sort_population`.
+This covers every built-in comparator except `SPEA2Comparator`: even `NSGA2Comparator`'s crowding distance, which depends on the whole population, is recomputed fresh from whatever `f`/`cv` values the given `Population` currently holds.
+`SPEA2Comparator` is the built-in example where ranking state must survive environmental selection, because mating selection on the next generation's (smaller) population must reuse fitness computed on the earlier merged pool, not recompute it from scratch.
 
 ## Built-in Comparators
 
@@ -125,8 +128,8 @@ class RandomComparator(Comparator):
         return 0
 ```
 
-When implementing a metric that depends on the entire population, as `SPEA2Comparator`/`HypervolumeComparator` do, you can use the design pattern of setting the class attribute `is_population_relative = True` and having `compare()` raise a `NotImplementedError` explaining why.
-If that metric also needs to survive being carried into a smaller population — as SPEA2 fitness must survive truncation to remain valid for the next generation's mating selection — override `get_required_attrs` to declare where it's stored and `prepare_population` to recompute it fresh; without that, a later read sees a value computed for a different-sized population.
+Set the class attribute `is_population_relative = True` and have `compare()` raise a `NotImplementedError` explaining why when the metric's pairwise ordering genuinely cannot be defined from two isolated objective/CV tuples — as with SPEA2 fitness or exclusive hypervolume contribution — not merely because the metric happens to depend on the whole population (`NSGA2Comparator`'s crowding distance also does, yet its `compare()` is well-defined via plain Pareto dominance).
+Separately, if that metric also needs to survive being carried into a smaller population — as SPEA2 fitness must survive truncation to remain valid for the next generation's mating selection — override `get_required_attrs` to declare where it's stored and `prepare_population` to recompute it fresh; without that, a later read sees a value computed for a different-sized population.
 
 ## Related components
 
