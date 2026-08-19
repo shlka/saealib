@@ -18,6 +18,9 @@
    ~SingleObjectiveComparator.__init__
    ~SingleObjectiveComparator.compare
    ~SingleObjectiveComparator.compare_population
+   ~SingleObjectiveComparator.get_required_attrs
+   ~SingleObjectiveComparator.prepare_population
+   ~SingleObjectiveComparator.rank_population
    ~SingleObjectiveComparator.sort_population
 
 
@@ -35,6 +38,15 @@
 
 
 .. automethod:: saealib.SingleObjectiveComparator.compare_population
+
+
+.. automethod:: saealib.SingleObjectiveComparator.get_required_attrs
+
+
+.. automethod:: saealib.SingleObjectiveComparator.prepare_population
+
+
+.. automethod:: saealib.SingleObjectiveComparator.rank_population
 
 
 .. automethod:: saealib.SingleObjectiveComparator.sort_population

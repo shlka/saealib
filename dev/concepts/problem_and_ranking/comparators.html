@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Comparator &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 documentation</title>
+    <title>Comparator &#8212; saealib 0.1.0b5.dev84+gec6002047 documentation</title>
   
   
   
@@ -42,12 +42,14 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=8506a0c3"></script>
+    <script src="../../_static/documentation_options.js?v=dc44e4d1"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'concepts/problem_and_ranking/comparators';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
@@ -594,7 +596,7 @@
 Pass it via <code class="docutils literal notranslate"><span class="pre">Problem</span></code>’s <code class="docutils literal notranslate"><span class="pre">comparator</span></code> argument.</p>
 <section id="comparator-s-role">
 <h2>Comparator’s role<a class="headerlink" href="#comparator-s-role" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Comparator</span></code> has four methods that are all abstract, including <code class="docutils literal notranslate"><span class="pre">__init__</span></code> itself.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Comparator</span></code> has four abstract methods, including <code class="docutils literal notranslate"><span class="pre">__init__</span></code> itself.</p>
 <ul class="simple">
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">__init__(weights,</span> <span class="pre">eps_cv,</span> <span class="pre">eps_obj,</span> <span class="pre">direction=None)</span></code></strong>: Holds <code class="docutils literal notranslate"><span class="pre">weights</span></code>/<code class="docutils literal notranslate"><span class="pre">eps_cv</span></code>/<code class="docutils literal notranslate"><span class="pre">eps_obj</span></code>/<code class="docutils literal notranslate"><span class="pre">direction</span></code></p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">sort_population(population)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></strong>: Returns an index array ordering the entire population from best to worst</p></li>
@@ -603,6 +605,16 @@ Pass it via <code class="docutils literal notranslate"><span class="pre">Problem
 </ul>
 <p>Having <code class="docutils literal notranslate"><span class="pre">__init__</span></code> be an abstract method is different from other components.
 Subclasses implementing a custom <code class="docutils literal notranslate"><span class="pre">Comparator</span></code> must always call <code class="docutils literal notranslate"><span class="pre">super().__init__(weights,</span> <span class="pre">eps_cv,</span> <span class="pre">eps_obj,</span> <span class="pre">direction=...)</span></code>.</p>
+<p>It also provides three concrete methods for population-relative ranking state that must persist across selections rather than being derived fresh from <code class="docutils literal notranslate"><span class="pre">f</span></code>/<code class="docutils literal notranslate"><span class="pre">cv</span></code> each time.
+<code class="docutils literal notranslate"><span class="pre">get_required_attrs</span></code> and <code class="docutils literal notranslate"><span class="pre">prepare_population</span></code> have an empty/no-op default; <code class="docutils literal notranslate"><span class="pre">rank_population</span></code> composes the other two and is not itself a no-op:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">get_required_attrs(problem)</span> <span class="pre">-&gt;</span> <span class="pre">list[PopulationAttribute]</span></code></strong>: Declares the <code class="docutils literal notranslate"><span class="pre">PopulationAttribute</span></code>s the comparator needs <code class="docutils literal notranslate"><span class="pre">Population</span></code>/<code class="docutils literal notranslate"><span class="pre">Archive</span></code> to carry. Empty by default</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">prepare_population(population)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></strong>: Freshly recomputes and writes those attributes for the given population. No-op by default</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">rank_population(population)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></strong>: <code class="docutils literal notranslate"><span class="pre">prepare_population</span></code> followed by <code class="docutils literal notranslate"><span class="pre">sort_population</span></code>. Environmental selection on a freshly merged pool should call this instead of <code class="docutils literal notranslate"><span class="pre">sort_population</span></code> directly, so persisted state is recomputed for the new set before ranking</p></li>
+</ul>
+<p>A <code class="docutils literal notranslate"><span class="pre">Comparator</span></code> that can derive its full ranking from the population currently being ranked, without needing to carry state across population extraction, needs none of the three — <code class="docutils literal notranslate"><span class="pre">rank_population</span></code> then behaves identically to <code class="docutils literal notranslate"><span class="pre">sort_population</span></code>.
+This covers every built-in comparator except <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>: even <code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>’s crowding distance, which depends on the whole population, is recomputed fresh from whatever <code class="docutils literal notranslate"><span class="pre">f</span></code>/<code class="docutils literal notranslate"><span class="pre">cv</span></code> values the given <code class="docutils literal notranslate"><span class="pre">Population</span></code> currently holds.
+<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code> is the built-in example where ranking state must survive environmental selection, because mating selection on the next generation’s (smaller) population must reuse fitness computed on the earlier merged pool, not recompute it from scratch.</p>
 </section>
 <section id="built-in-comparators">
 <h2>Built-in Comparators<a class="headerlink" href="#built-in-comparators" title="Link to this heading">#</a></h2>
@@ -660,6 +672,8 @@ This is not a bug but an intentional design, marked by the class attribute <code
 <p>These Comparators can’t be used in situations that need a two-point comparison (<code class="docutils literal notranslate"><span class="pre">compare()</span></code>) alone, such as PSO’s pbest update or <code class="docutils literal notranslate"><span class="pre">PairwiseComparisonSet</span></code>.
 Use <code class="docutils literal notranslate"><span class="pre">ParetoComparator</span></code> instead in such situations.
 <code class="docutils literal notranslate"><span class="pre">compare_population()</span></code> (comparison via population indices) is defined on both classes, so things like tournament selection work as-is.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code> additionally uses the <code class="docutils literal notranslate"><span class="pre">get_required_attrs</span></code>/<code class="docutils literal notranslate"><span class="pre">prepare_population</span></code> pair described above: <code class="docutils literal notranslate"><span class="pre">get_required_attrs</span></code> declares a persistent <code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code> attribute, and <code class="docutils literal notranslate"><span class="pre">prepare_population</span></code> recomputes <span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>/<span class="math notranslate nohighlight">\(F(i)\)</span> over the population it’s given and writes them there.
+Environmental selection (<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code> calling <code class="docutils literal notranslate"><span class="pre">rank_population</span></code>) recomputes fitness fresh over the merged population-and-offspring pool; the individuals that survive truncation carry their fitness values with them, so <code class="docutils literal notranslate"><span class="pre">compare_population()</span></code> calls during the next generation’s mating selection reuse the persisted values instead of recomputing over a different-sized set.</p>
 <p><code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>’s HV computation performs O(N) leave-one-out evaluations per front.
 For problems with many objectives, this computational cost grows large.</p>
 <div class="admonition note">
@@ -684,7 +698,7 @@ See that page for details.</p>
 </section>
 <section id="implementing-a-custom-comparator">
 <h2>Implementing a custom Comparator<a class="headerlink" href="#implementing-a-custom-comparator" title="Link to this heading">#</a></h2>
-<p>If you need a custom ranking scheme, subclass <code class="docutils literal notranslate"><span class="pre">Comparator</span></code> and implement all four methods.
+<p>If you need a custom ranking scheme, subclass <code class="docutils literal notranslate"><span class="pre">Comparator</span></code> and implement all four abstract methods.
 <code class="docutils literal notranslate"><span class="pre">__init__</span></code> must always call <code class="docutils literal notranslate"><span class="pre">super().__init__(weights,</span> <span class="pre">eps_cv,</span> <span class="pre">eps_obj,</span> <span class="pre">direction=...)</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Comparator</span>
@@ -712,7 +726,8 @@ See that page for details.</p>
         <span class="k">return</span> <span class="mi">0</span>
 </pre></div>
 </div>
-<p>When implementing a metric that depends on the entire population, as <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>/<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code> do, you can use the design pattern of setting the class attribute <code class="docutils literal notranslate"><span class="pre">is_population_relative</span> <span class="pre">=</span> <span class="pre">True</span></code> and having <code class="docutils literal notranslate"><span class="pre">compare()</span></code> raise a <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> explaining why.</p>
+<p>Set the class attribute <code class="docutils literal notranslate"><span class="pre">is_population_relative</span> <span class="pre">=</span> <span class="pre">True</span></code> and have <code class="docutils literal notranslate"><span class="pre">compare()</span></code> raise a <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> explaining why when the metric’s pairwise ordering genuinely cannot be defined from two isolated objective/CV tuples — as with SPEA2 fitness or exclusive hypervolume contribution — not merely because the metric happens to depend on the whole population (<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>’s crowding distance also does, yet its <code class="docutils literal notranslate"><span class="pre">compare()</span></code> is well-defined via plain Pareto dominance).
+Separately, if that metric also needs to survive being carried into a smaller population — as SPEA2 fitness must survive truncation to remain valid for the next generation’s mating selection — override <code class="docutils literal notranslate"><span class="pre">get_required_attrs</span></code> to declare where it’s stored and <code class="docutils literal notranslate"><span class="pre">prepare_population</span></code> to recompute it fresh; without that, a later read sees a value computed for a different-sized population.</p>
 </section>
 <section id="related-components">
 <h2>Related components<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
@@ -722,6 +737,7 @@ See that page for details.</p>
 <li><p><a class="reference internal" href="decomposition.html"><span class="std std-doc">Decomposition</span></a>: The scalarization functions used by <code class="docutils literal notranslate"><span class="pre">DecompositionComparator</span></code></p></li>
 <li><p><a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a>: How to pass the <code class="docutils literal notranslate"><span class="pre">comparator</span></code> argument, and the default-selection rules</p></li>
 <li><p><a class="reference internal" href="../search_algorithms/parent_selection.html"><span class="std std-doc">ParentSelection</span></a> / <a class="reference internal" href="../search_algorithms/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>: Operators that use <code class="docutils literal notranslate"><span class="pre">Comparator</span></code> to select individuals</p></li>
+<li><p><a class="reference internal" href="../observation_and_state/population.html"><span class="std std-doc">Population</span></a>: The <code class="docutils literal notranslate"><span class="pre">PopulationAttribute</span></code> schema that <code class="docutils literal notranslate"><span class="pre">get_required_attrs</span></code> extends</p></li>
 </ul>
 </section>
 <section id="references">

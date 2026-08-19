@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SurvivorSelection &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 documentation</title>
+    <title>SurvivorSelection &#8212; saealib 0.1.0b5.dev84+gec6002047 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=8506a0c3"></script>
+    <script src="../../_static/documentation_options.js?v=dc44e4d1"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -613,13 +613,13 @@ To change the generational-replacement scheme, you only need to swap out this <c
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">randomize_ties=False</span></code></p></td>
-<td><p>Truncation selection: sorts via <code class="docutils literal notranslate"><span class="pre">ctx.comparator.sort_population(pool)</span></code> and takes the top <code class="docutils literal notranslate"><span class="pre">n_survivors</span></code></p></td>
+<td><p>Truncation selection: ranks via <code class="docutils literal notranslate"><span class="pre">ctx.comparator.rank_population(pool)</span></code> and takes the top <code class="docutils literal notranslate"><span class="pre">n_survivors</span></code></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <p>Setting <code class="docutils literal notranslate"><span class="pre">randomize_ties=True</span></code> shuffles individuals tied at the truncation boundary (where <code class="docutils literal notranslate"><span class="pre">compare_population</span></code> returns <code class="docutils literal notranslate"><span class="pre">0</span></code>) before truncating.
-With the default <code class="docutils literal notranslate"><span class="pre">False</span></code>, it’s a deterministic truncation that uses the order returned by <code class="docutils literal notranslate"><span class="pre">sort_population</span></code> as-is.
+With the default <code class="docutils literal notranslate"><span class="pre">False</span></code>, it’s a deterministic truncation that uses the order returned by <code class="docutils literal notranslate"><span class="pre">rank_population</span></code> as-is.
 Because this tie-breaking consumes <code class="docutils literal notranslate"><span class="pre">ctx.rng</span></code>, note that using <code class="docutils literal notranslate"><span class="pre">randomize_ties=True</span></code> also affects the random state at checkpoint resumption.</p>
 <p><code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code> is <code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>ed.</p>
 </section>
@@ -635,20 +635,21 @@ The following example is a survivor selection that always keeps the single best 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Always keeps the single best individual, choosing the rest at random.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">select</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">pool</span><span class="p">,</span> <span class="n">n_survivors</span><span class="p">):</span>
-        <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">sort_population</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+        <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">rank_population</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
         <span class="n">best</span> <span class="o">=</span> <span class="n">sorted_idx</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">rest_pool</span> <span class="o">=</span> <span class="n">sorted_idx</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
         <span class="n">rest</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">rest_pool</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_survivors</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">best</span><span class="p">,</span> <span class="n">rest</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>Schemes that don’t assume a ranking from <code class="docutils literal notranslate"><span class="pre">sort_population</span></code>, such as tournament-style survivor selection or age-based replacement, can also be implemented within the same <code class="docutils literal notranslate"><span class="pre">select()</span></code> signature.</p>
+<p><code class="docutils literal notranslate"><span class="pre">pool</span></code> is freshly assembled by <code class="docutils literal notranslate"><span class="pre">Algorithm</span></code> on every call, so a custom <code class="docutils literal notranslate"><span class="pre">select()</span></code> should rank it via <code class="docutils literal notranslate"><span class="pre">rank_population</span></code>, not <code class="docutils literal notranslate"><span class="pre">sort_population</span></code> directly — see <a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a> for why.
+Schemes that don’t assume a ranking at all, such as tournament-style survivor selection or age-based replacement, can also be implemented within the same <code class="docutils literal notranslate"><span class="pre">select()</span></code> signature.</p>
 </section>
 <section id="related-components">
 <h2>Related components<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="algorithm.html"><span class="std std-doc">Algorithm</span></a>: How <code class="docutils literal notranslate"><span class="pre">GA.tell()</span></code> builds <code class="docutils literal notranslate"><span class="pre">pool</span></code> and calls <code class="docutils literal notranslate"><span class="pre">SurvivorSelection</span></code></p></li>
-<li><p><a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>: Ranking individuals via <code class="docutils literal notranslate"><span class="pre">sort_population</span></code>/<code class="docutils literal notranslate"><span class="pre">compare_population</span></code></p></li>
+<li><p><a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>: Ranking individuals via <code class="docutils literal notranslate"><span class="pre">rank_population</span></code>/<code class="docutils literal notranslate"><span class="pre">compare_population</span></code></p></li>
 </ul>
 </section>
 <section id="references">

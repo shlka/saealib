@@ -18,6 +18,9 @@
    ~ParetoComparator.__init__
    ~ParetoComparator.compare
    ~ParetoComparator.compare_population
+   ~ParetoComparator.get_required_attrs
+   ~ParetoComparator.prepare_population
+   ~ParetoComparator.rank_population
    ~ParetoComparator.sort_population
 
 
@@ -35,6 +38,15 @@
 
 
 .. automethod:: saealib.ParetoComparator.compare_population
+
+
+.. automethod:: saealib.ParetoComparator.get_required_attrs
+
+
+.. automethod:: saealib.ParetoComparator.prepare_population
+
+
+.. automethod:: saealib.ParetoComparator.rank_population
 
 
 .. automethod:: saealib.ParetoComparator.sort_population

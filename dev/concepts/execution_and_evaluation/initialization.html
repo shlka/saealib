@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Initializer &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 documentation</title>
+    <title>Initializer &#8212; saealib 0.1.0b5.dev84+gec6002047 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=8506a0c3"></script>
+    <script src="../../_static/documentation_options.js?v=dc44e4d1"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -626,21 +626,23 @@ To change the sampling method, swap the Initializer rather than the entire Optim
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">GenomeInitializer</span></code> registers the Genomes provided by SearchSpace directly in the Archive.
 The other three share the constructor <code class="docutils literal notranslate"><span class="pre">(n_init_archive,</span> <span class="pre">n_init_population,</span> <span class="pre">seed=None)</span></code> and generate initial points in vector form.
-All four evaluate the initial Archive, sort it with the Comparator, and pass the top candidates to the initial Population.</p>
+All four evaluate the initial Archive, rank it with the Comparator, and pass the top candidates to the initial Population.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Sample</span> <span class="p">(</span><span class="n">n_init_archive</span> <span class="n">points</span><span class="p">)</span>
   <span class="o">-&gt;</span> <span class="n">Evaluate</span> <span class="n">via</span> <span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_batch</span>
   <span class="o">-&gt;</span> <span class="n">add</span> <span class="n">to</span> <span class="n">archive</span> <span class="o">/</span> <span class="n">pareto_archive</span>
-  <span class="o">-&gt;</span> <span class="n">Sort</span> <span class="n">via</span> <span class="n">problem</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">sort_population</span>
+  <span class="o">-&gt;</span> <span class="n">Rank</span> <span class="n">via</span> <span class="n">problem</span><span class="o">.</span><span class="n">comparator</span><span class="o">.</span><span class="n">rank_population</span>
   <span class="o">-&gt;</span> <span class="n">Feed</span> <span class="n">the</span> <span class="n">top</span> <span class="n">n_init_population</span> <span class="n">into</span> <span class="n">population</span>
 </pre></div>
 </div>
+<p>Because this ranks a freshly assembled Archive rather than reusing state from a prior selection, it calls <code class="docutils literal notranslate"><span class="pre">rank_population</span></code> rather than <code class="docutils literal notranslate"><span class="pre">sort_population</span></code> directly — see <a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a> for the distinction.
+For a Comparator like <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>, this is also what first populates its persisted ranking state (<code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code>) on the initial Population.</p>
 <p>The three classes’ implementations are nearly identical except for the one line doing the sampling — this is a deliberate choice for simplicity, a design that doesn’t over-abstract the shared processing.</p>
 </section>
 <section id="base-class-helper-methods">
 <h2>Base-class helper methods<a class="headerlink" href="#base-class-helper-methods" title="Link to this heading">#</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">Initializer</span></code> base provides two helper methods reusable in custom implementations.</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">_create_attrs(problem,</span> <span class="pre">provider)</span></code></strong>: Builds the <code class="docutils literal notranslate"><span class="pre">PopulationAttribute</span></code> values for <code class="docutils literal notranslate"><span class="pre">Population</span></code> and <code class="docutils literal notranslate"><span class="pre">Archive</span></code>.
-The legacy vector path uses <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">g</span></code>, and <code class="docutils literal notranslate"><span class="pre">cv</span></code>, and adds auxiliary attributes required by the Algorithm.
+The legacy vector path uses <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">g</span></code>, <code class="docutils literal notranslate"><span class="pre">cv</span></code>, and <code class="docutils literal notranslate"><span class="pre">id</span></code>, then merges in auxiliary attributes required by both the Algorithm (<code class="docutils literal notranslate"><span class="pre">Algorithm.get_required_attrs</span></code>) and the Comparator (<code class="docutils literal notranslate"><span class="pre">Comparator.get_required_attrs</span></code>) — this is how, for example, <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>’s <code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code> attribute ends up in the schema.
 <code class="docutils literal notranslate"><span class="pre">GenomeInitializer</span></code> manages Genomes in a dedicated column, so its standard attributes do not include <code class="docutils literal notranslate"><span class="pre">x</span></code>.</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">_create_context(problem,</span> <span class="pre">archive,</span> <span class="pre">pareto_archive,</span> <span class="pre">population,</span> <span class="pre">rng)</span></code></strong>: Builds the <code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code>.
 When the Comparator is an <code class="docutils literal notranslate"><span class="pre">NSGA3Comparator</span></code> without an internal random generator, this sets <code class="docutils literal notranslate"><span class="pre">rng.spawn(1)[0]</span></code>.</p>
@@ -680,6 +682,7 @@ Because the evaluation Request must preserve candidate IDs and Genomes, do not m
 <li><p><a class="reference internal" href="../observation_and_state/population.html"><span class="std std-doc">Population</span></a>: The <code class="docutils literal notranslate"><span class="pre">Population</span></code>/<code class="docutils literal notranslate"><span class="pre">Archive</span></code>/<code class="docutils literal notranslate"><span class="pre">ParetoArchive</span></code> being constructed</p></li>
 <li><p><a class="reference internal" href="evaluation.html"><span class="std std-doc">Evaluator</span></a>: Used to evaluate the initial samples</p></li>
 <li><p><a class="reference internal" href="../observation_and_state/callbacks.html"><span class="std std-doc">CallbackManager</span></a>: Observing <code class="docutils literal notranslate"><span class="pre">InitialEvaluationStartEvent</span></code>/<code class="docutils literal notranslate"><span class="pre">InitialEvaluationEndEvent</span></code></p></li>
+<li><p><a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>: <code class="docutils literal notranslate"><span class="pre">rank_population</span></code>, used to rank the initial Archive</p></li>
 </ul>
 </section>
 <section id="references">

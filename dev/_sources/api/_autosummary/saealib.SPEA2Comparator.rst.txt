@@ -18,6 +18,9 @@
    ~SPEA2Comparator.__init__
    ~SPEA2Comparator.compare
    ~SPEA2Comparator.compare_population
+   ~SPEA2Comparator.get_required_attrs
+   ~SPEA2Comparator.prepare_population
+   ~SPEA2Comparator.rank_population
    ~SPEA2Comparator.sort_population
 
 
@@ -35,6 +38,15 @@
 
 
 .. automethod:: saealib.SPEA2Comparator.compare_population
+
+
+.. automethod:: saealib.SPEA2Comparator.get_required_attrs
+
+
+.. automethod:: saealib.SPEA2Comparator.prepare_population
+
+
+.. automethod:: saealib.SPEA2Comparator.rank_population
 
 
 .. automethod:: saealib.SPEA2Comparator.sort_population

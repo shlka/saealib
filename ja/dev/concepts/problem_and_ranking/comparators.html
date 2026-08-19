@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>比較器 &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 ドキュメント</title>
+    <title>比較器 &#8212; saealib 0.1.0b5.dev84+gec6002047 ドキュメント</title>
   
   
   
@@ -42,13 +42,15 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=1c1c1b6d"></script>
+    <script src="../../_static/documentation_options.js?v=455e5f7f"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
     <script src="../../_static/translations.js?v=4755f45a"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'concepts/problem_and_ranking/comparators';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
@@ -594,7 +596,7 @@
 <div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p><code class="docutils literal notranslate"><span class="pre">Problem</span></code>は、解の優劣を判断する処理を<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>という差し替え可能なトップレベルコンポーネントに委ねています。 <code class="docutils literal notranslate"><span class="pre">Problem</span></code>の<code class="docutils literal notranslate"><span class="pre">comparator</span></code>引数で渡します。</p>
 <section id="comparator-s-role">
 <h2>Comparatorの役割<a class="headerlink" href="#comparator-s-role" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Comparator</span></code>は、<code class="docutils literal notranslate"><span class="pre">__init__</span></code>自体を含めて4つのメソッド全てが抽象メソッドです。</p>
+<p><code class="docutils literal notranslate"><span class="pre">Comparator</span></code>には<code class="docutils literal notranslate"><span class="pre">__init__</span></code>自身を含め、4つの抽象メソッドがあります。</p>
 <ul class="simple">
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">__init__(weights,</span> <span class="pre">eps_cv,</span> <span class="pre">eps_obj,</span> <span class="pre">direction=None)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">weights</span></code>/<code class="docutils literal notranslate"><span class="pre">eps_cv</span></code>/<code class="docutils literal notranslate"><span class="pre">eps_obj</span></code>/<code class="docutils literal notranslate"><span class="pre">direction</span></code>を保持します</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">sort_population(population)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></strong>：個体群全体を優劣順に並べたインデックス配列を返します</p></li>
@@ -602,6 +604,13 @@
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">compare(fa,</span> <span class="pre">cv_a,</span> <span class="pre">fb,</span> <span class="pre">cv_b)</span> <span class="pre">-&gt;</span> <span class="pre">int</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">Population</span></code>を介さず、目的関数値と制約違反から直接2点を比較する軽量版</p></li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">__init__</span></code>が抽象メソッドである点は他のコンポーネントと異なります。 独自の<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>を実装するサブクラスは、必ず<code class="docutils literal notranslate"><span class="pre">super().__init__(weights,</span> <span class="pre">eps_cv,</span> <span class="pre">eps_obj,</span> <span class="pre">direction=...)</span></code>を呼ばなければなりません。</p>
+<p>また、選択をまたいで永続化すべきpopulation相対的なランキング状態——<code class="docutils literal notranslate"><span class="pre">f</span></code>/<code class="docutils literal notranslate"><span class="pre">cv</span></code>から毎回新しく導出するのではないもの——のために、3つの具象メソッドを提供します。<code class="docutils literal notranslate"><span class="pre">get_required_attrs</span></code>と<code class="docutils literal notranslate"><span class="pre">prepare_population</span></code>は既定で空/no-opですが、<code class="docutils literal notranslate"><span class="pre">rank_population</span></code>はこの2つを組み合わせるものであり、それ自体はno-opではありません。</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">get_required_attrs(problem)</span> <span class="pre">-&gt;</span> <span class="pre">list[PopulationAttribute]</span></code></strong>：Comparatorが<code class="docutils literal notranslate"><span class="pre">Population</span></code>/<code class="docutils literal notranslate"><span class="pre">Archive</span></code>に保持させたい<code class="docutils literal notranslate"><span class="pre">PopulationAttribute</span></code>を宣言します。既定では空です</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">prepare_population(population)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></strong>：与えられた個体群に対してそれらの属性を新しく再計算し書き込みます。既定ではno-opです</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">rank_population(population)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">prepare_population</span></code>に続けて<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>を呼びます。新しく統合されたプールに対する環境選択は、<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>を直接呼ぶのではなくこちらを呼ぶべきです。そうすることで、順位付けの前に永続化された状態が新しい集合に対して再計算されます</p></li>
+</ul>
+<p>state を population extraction をまたいで持ち越す必要がなく、現在ランク付け対象になっている個体群だけから完全なランキングを導出できるComparatorは、この3つのいずれも必要としません——その場合<code class="docutils literal notranslate"><span class="pre">rank_population</span></code>は<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>と全く同じ挙動になります。 これは<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>を除く組み込みComparatorすべてに当てはまります。個体群全体に依存する<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>の混雑度距離でさえ、与えられた<code class="docutils literal notranslate"><span class="pre">Population</span></code>が現在保持する<code class="docutils literal notranslate"><span class="pre">f</span></code>/<code class="docutils literal notranslate"><span class="pre">cv</span></code>の値から毎回新しく再計算されます。 <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>は、ランキング状態が環境選択を生き延びる必要がある組み込みの例です。次世代の（より小さい）個体群における交配選択が、以前の統合プールで計算された適応度をゼロから再計算するのではなく再利用しなければならないためです。</p>
 </section>
 <section id="built-in-comparators">
 <h2>組み込みComparator<a class="headerlink" href="#built-in-comparators" title="Link to this heading">#</a></h2>
@@ -650,6 +659,7 @@
 <h3>個体群相対的なComparator<a class="headerlink" href="#population-relative-comparators" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>と<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>は、いずれも<code class="docutils literal notranslate"><span class="pre">compare()</span></code>を呼ぶと<code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>を送出します。 SPEA2のfitnessも排他的HV寄与度も、個体群全体に依存する指標であり、2点だけからは計算できないためです。 これはバグではなく意図した設計であり、<code class="docutils literal notranslate"><span class="pre">is_population_relative=True</span></code>というクラス属性がその旨を示すマーカーになっています。</p>
 <p>PSOのpbest更新や<code class="docutils literal notranslate"><span class="pre">PairwiseComparisonSet</span></code>のように、2点だけの比較（<code class="docutils literal notranslate"><span class="pre">compare()</span></code>）が必要な場面でこれらのComparatorは使えません。 そのような場面では代わりに<code class="docutils literal notranslate"><span class="pre">ParetoComparator</span></code>を使います。 <code class="docutils literal notranslate"><span class="pre">compare_population()</span></code>（個体群のインデックスを介した比較）はどちらのクラスでも定義されているため、トーナメント選択などはそのまま使えます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>はさらに、前述の<code class="docutils literal notranslate"><span class="pre">get_required_attrs</span></code>/<code class="docutils literal notranslate"><span class="pre">prepare_population</span></code>の組を使います。<code class="docutils literal notranslate"><span class="pre">get_required_attrs</span></code>が永続的な<code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code>属性を宣言し、<code class="docutils literal notranslate"><span class="pre">prepare_population</span></code>が与えられた個体群に対して<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>/<span class="math notranslate nohighlight">\(F(i)\)</span>を再計算してそこに書き込みます。環境選択（<code class="docutils literal notranslate"><span class="pre">rank_population</span></code>を呼ぶ<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code>）は、個体群と子個体を統合したプール全体に対して適応度を新しく再計算します。打ち切りを生き残った個体はその適応度の値を保持したまま次世代に持ち越されるため、次世代の交配選択における<code class="docutils literal notranslate"><span class="pre">compare_population()</span></code>呼び出しは、サイズの異なる集合に対して再計算するのではなく、永続化された値をそのまま再利用します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>のHV計算は、フロントごとにO(N)回のleave-one-out評価を行います。 目的数が多い問題では、この計算コストが大きくなります。</p>
 <div class="admonition note">
 <p class="admonition-title">注釈</p>
@@ -666,7 +676,7 @@
 </section>
 <section id="implementing-a-custom-comparator">
 <h2>独自Comparatorの実装方法<a class="headerlink" href="#implementing-a-custom-comparator" title="Link to this heading">#</a></h2>
-<p>独自の順位付け方式が必要な場合は、<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>を継承して4つのメソッド全てを実装します。 <code class="docutils literal notranslate"><span class="pre">__init__</span></code>は必ず<code class="docutils literal notranslate"><span class="pre">super().__init__(weights,</span> <span class="pre">eps_cv,</span> <span class="pre">eps_obj,</span> <span class="pre">direction=...)</span></code>を呼びます。</p>
+<p>独自のランキング方式が必要な場合は、<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>をサブクラス化し、4つの抽象メソッドすべてを実装します。<code class="docutils literal notranslate"><span class="pre">__init__</span></code>は必ず<code class="docutils literal notranslate"><span class="pre">super().__init__(weights,</span> <span class="pre">eps_cv,</span> <span class="pre">eps_obj,</span> <span class="pre">direction=...)</span></code>を呼び出さなければなりません。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Comparator</span>
 
@@ -693,7 +703,7 @@
         <span class="k">return</span> <span class="mi">0</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>/<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>のように、個体群全体に依存する指標を実装する場合は、<code class="docutils literal notranslate"><span class="pre">is_population_relative</span> <span class="pre">=</span> <span class="pre">True</span></code>というクラス属性を立て、<code class="docutils literal notranslate"><span class="pre">compare()</span></code>で理由を説明する<code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>を送出する設計パターンが使えます。</p>
+<p>クラス属性<code class="docutils literal notranslate"><span class="pre">is_population_relative</span> <span class="pre">=</span> <span class="pre">True</span></code>を立て、<code class="docutils literal notranslate"><span class="pre">compare()</span></code>が理由を説明する<code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>を送出するようにするのは、その指標のペア単位の順序が2つの独立した目的値/制約違反量のペアからは本質的に定義できない場合です——SPEA2の適応度や排他的HV寄与度がその例です。単に指標が個体群全体に依存するというだけでは該当しません（<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>の混雑度距離も個体群全体に依存しますが、その<code class="docutils literal notranslate"><span class="pre">compare()</span></code>は素のPareto支配関係により well-defined です）。 別軸として、その指標がさらに、より小さな個体群へ持ち越されても有効であり続ける必要がある場合——SPEA2の適応度が打ち切りを生き残った後も次世代の交配選択で有効であり続ける必要があるように——<code class="docutils literal notranslate"><span class="pre">get_required_attrs</span></code>をオーバーライドして保存先を宣言し、<code class="docutils literal notranslate"><span class="pre">prepare_population</span></code>をオーバーライドして新しく再計算してください。そうしないと、後の読み取りは異なるサイズの個体群に対して計算された値を目にすることになります。</p>
 </section>
 <section id="related-components">
 <h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
@@ -703,6 +713,7 @@
 <li><p><a class="reference internal" href="decomposition.html"><span class="std std-doc">Decomposition</span></a>：<code class="docutils literal notranslate"><span class="pre">DecompositionComparator</span></code>が使うスカラー化関数</p></li>
 <li><p><a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a>：<code class="docutils literal notranslate"><span class="pre">comparator</span></code>引数の渡し方、既定選択のルール</p></li>
 <li><p><a class="reference internal" href="../search_algorithms/parent_selection.html"><span class="std std-doc">ParentSelection</span></a> / <a class="reference internal" href="../search_algorithms/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">Comparator</span></code> を使って個体を選択するオペレータ</p></li>
+<li><p><a class="reference internal" href="../observation_and_state/population.html"><span class="std std-doc">Population</span></a>：<code class="docutils literal notranslate"><span class="pre">get_required_attrs</span></code>が拡張する<code class="docutils literal notranslate"><span class="pre">PopulationAttribute</span></code>スキーマ</p></li>
 </ul>
 </section>
 <section id="references">

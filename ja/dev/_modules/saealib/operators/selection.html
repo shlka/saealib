@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.operators.selection &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 ドキュメント</title>
+    <title>saealib.operators.selection &#8212; saealib 0.1.0b5.dev84+gec6002047 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=1c1c1b6d"></script>
+    <script src="../../../_static/documentation_options.js?v=455e5f7f"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1394,7 +1394,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ``comparator.compare_population``) are shuffled before truncating,</span>
 <span class="sd">        matching pymoo&#39;s ``randomized_argsort`` treatment of the splitting</span>
 <span class="sd">        front. When False (default), ties keep the order returned by</span>
-<span class="sd">        ``comparator.sort_population`` (deterministic).</span>
+<span class="sd">        ``comparator.rank_population`` (deterministic).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="TruncationSelection.__init__">
@@ -1468,7 +1468,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            Indices of selected survivors in the pool.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cmp</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">comparator</span>
-        <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">cmp</span><span class="o">.</span><span class="n">sort_population</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
+        <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">cmp</span><span class="o">.</span><span class="n">rank_population</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">randomize_ties</span> <span class="ow">or</span> <span class="n">n_survivors</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_idx</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">sorted_idx</span><span class="p">[:</span><span class="n">n_survivors</span><span class="p">]</span>
 

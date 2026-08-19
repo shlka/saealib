@@ -18,6 +18,9 @@
    ~DecompositionComparator.__init__
    ~DecompositionComparator.compare
    ~DecompositionComparator.compare_population
+   ~DecompositionComparator.get_required_attrs
+   ~DecompositionComparator.prepare_population
+   ~DecompositionComparator.rank_population
    ~DecompositionComparator.sort_population
 
 
@@ -35,6 +38,15 @@
 
 
 .. automethod:: saealib.DecompositionComparator.compare_population
+
+
+.. automethod:: saealib.DecompositionComparator.get_required_attrs
+
+
+.. automethod:: saealib.DecompositionComparator.prepare_population
+
+
+.. automethod:: saealib.DecompositionComparator.rank_population
 
 
 .. automethod:: saealib.DecompositionComparator.sort_population

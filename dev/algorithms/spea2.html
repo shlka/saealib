@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SPEA2 (Strength Pareto Evolutionary Algorithm 2) &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 documentation</title>
+    <title>SPEA2 (Strength Pareto Evolutionary Algorithm 2) &#8212; saealib 0.1.0b5.dev84+gec6002047 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=8506a0c3"></script>
+    <script src="../_static/documentation_options.js?v=dc44e4d1"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1031,14 +1031,13 @@ Because this procedure breaks ties between individuals with equal distance using
 <h2>Flowchart<a class="headerlink" href="#flowchart" title="Link to this heading">#</a></h2>
 <pre  class="mermaid">
         flowchart TD
-    INIT[&quot;Initializer&lt;br/&gt;Generate initial population P0&lt;br/&gt;(L1)&quot;] --&gt; GEN
+    INIT[&quot;LHSInitializer&lt;br/&gt;Sample n_init_archive individuals (≈ literature P0) →&lt;br/&gt;rank_population() ranks them&lt;br/&gt;(fitness assignment + environmental selection) →&lt;br/&gt;take top n_init_population as&lt;br/&gt;initial ctx.population (≈ literature P̄1)&lt;br/&gt;(L1, L2, L3)&quot;] --&gt; GEN
     subgraph GEN[&quot;One generation (DirectStrategy.step)&quot;]
         direction TB
-        ASK[&quot;GA.ask()&lt;br/&gt;Binary tournament selection →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate offspring&lt;br/&gt;(L5, L6)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved)&quot;]
-        EVAL --&gt; COMB[&quot;GA.tell()&lt;br/&gt;Combine population and offspring&lt;br/&gt;into a single pool&lt;br/&gt;(L3)&quot;]
-        COMB --&gt; FIT[&quot;SPEA2Comparator._fitness()&lt;br/&gt;spea2_fitness computes&lt;br/&gt;S(i) → R(i) → D(i) → F(i)&lt;br/&gt;(L2)&quot;]
-        FIT --&gt; SORT[&quot;SPEA2Comparator.sort_population()&lt;br/&gt;F(i)&amp;lt;1: spea2_truncation_order&lt;br/&gt;F(i)≥1: ascending F(i)&lt;br/&gt;Infeasible solutions: ascending cv&lt;br/&gt;(L3)&quot;]
-        SORT --&gt; TRUNC[&quot;TruncationSelection&lt;br/&gt;Take top N individuals as Pt+1&quot;]
+        ASK[&quot;GA.ask()&lt;br/&gt;Binary tournament selection →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate&lt;br/&gt;N offspring&lt;br/&gt;(L5, L6)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved;&lt;br/&gt;no independent pseudocode step)&quot;]
+        EVAL --&gt; COMB[&quot;GA.tell()&lt;br/&gt;Combine population (P̄t) and offspring&lt;br/&gt;into a single pool&quot;]
+        COMB --&gt; RANK[&quot;SPEA2Comparator.rank_population()&lt;br/&gt;prepare_population(): S(i)→R(i)→D(i)→F(i)&lt;br/&gt;sort_population(): F(i)&amp;lt;1 spea2_truncation_order,&lt;br/&gt;F(i)≥1 ascending F(i),&lt;br/&gt;infeasible: ascending cv&lt;br/&gt;(L2, L3)&quot;]
+        RANK --&gt; TRUNC[&quot;TruncationSelection&lt;br/&gt;Take top N̄ individuals as P̄t+1&quot;]
     end
     GEN --&gt; TERM{&quot;Termination condition&lt;br/&gt;reached?&quot;}
     TERM -- &quot;Not yet (L4)&quot; --&gt; GEN
@@ -1054,38 +1053,38 @@ Because this procedure breaks ties between individuals with equal distance using
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>Search algorithm</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code> (<code class="docutils literal notranslate"><span class="pre">ask()</span></code> performs crossover and mutation; <code class="docutils literal notranslate"><span class="pre">tell()</span></code> combines the population and offspring into a single pool and performs survivor selection)</p></td>
-<td><p>L1, L6</p></td>
+<tr class="row-even"><td><p>Initialization</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">LHSInitializer</span></code> (samples <code class="docutils literal notranslate"><span class="pre">n_init_archive</span></code> individuals, true-evaluates them, and calls <code class="docutils literal notranslate"><span class="pre">rank_population()</span></code> — folding the paper’s initial fitness assignment and first environmental selection into initialization — then hands the top <code class="docutils literal notranslate"><span class="pre">n_init_population</span></code> to the initial population)</p></td>
+<td><p>L1, L2, L3</p></td>
 </tr>
-<tr class="row-odd"><td><p>Parent selection</p></td>
+<tr class="row-odd"><td><p>Search algorithm</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GA</span></code> (<code class="docutils literal notranslate"><span class="pre">ask()</span></code> performs mating selection and variation; <code class="docutils literal notranslate"><span class="pre">tell()</span></code> combines the population and offspring into a single pool and performs environmental selection)</p></td>
+<td><p>L3, L5, L6</p></td>
+</tr>
+<tr class="row-even"><td><p>Parent selection</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=2)</span></code> (binary tournament; the winner is decided via <code class="docutils literal notranslate"><span class="pre">compare_population</span></code>)</p></td>
 <td><p>L5</p></td>
 </tr>
-<tr class="row-even"><td><p>Crossover</p></td>
+<tr class="row-odd"><td><p>Crossover</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">CrossoverSBX(prob=0.9,</span> <span class="pre">eta=20.0)</span></code></p></td>
 <td><p>L6</p></td>
 </tr>
-<tr class="row-odd"><td><p>Mutation</p></td>
+<tr class="row-even"><td><p>Mutation</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">MutationPolynomial(eta=20.0)</span></code></p></td>
 <td><p>L6</p></td>
 </tr>
-<tr class="row-even"><td><p>Fitness computation</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code> (<code class="docutils literal notranslate"><span class="pre">sort_population</span></code> internally computes <span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>/<span class="math notranslate nohighlight">\(F(i)\)</span> via <code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code>)</p></td>
-<td><p>L2</p></td>
-</tr>
-<tr class="row-odd"><td><p>Environmental selection</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator.sort_population()</span></code> + <code class="docutils literal notranslate"><span class="pre">TruncationSelection()</span></code> (uses <code class="docutils literal notranslate"><span class="pre">spea2_truncation_order</span></code> for the non-dominated <span class="math notranslate nohighlight">\(F(i)&lt;1\)</span> block, ascending <span class="math notranslate nohighlight">\(F(i)\)</span> for the dominated <span class="math notranslate nohighlight">\(F(i)\geq1\)</span> block, and ascending <code class="docutils literal notranslate"><span class="pre">cv</span></code> for infeasible solutions)</p></td>
-<td><p>L3</p></td>
+<tr class="row-odd"><td><p>Fitness computation &amp; environmental selection</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator.rank_population()</span></code> (<code class="docutils literal notranslate"><span class="pre">prepare_population()</span></code> computes <span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>/<span class="math notranslate nohighlight">\(F(i)\)</span> via <code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code> and persists it onto the population; <code class="docutils literal notranslate"><span class="pre">sort_population()</span></code> orders the non-dominated <span class="math notranslate nohighlight">\(F(i)&lt;1\)</span> block via <code class="docutils literal notranslate"><span class="pre">spea2_truncation_order</span></code>, the dominated <span class="math notranslate nohighlight">\(F(i)\geq1\)</span> block by ascending <span class="math notranslate nohighlight">\(F(i)\)</span>, and infeasible solutions by ascending <code class="docutils literal notranslate"><span class="pre">cv</span></code>) + <code class="docutils literal notranslate"><span class="pre">TruncationSelection()</span></code> (takes the top <span class="math notranslate nohighlight">\(\bar N\)</span>)</p></td>
+<td><p>L2, L3</p></td>
 </tr>
 <tr class="row-even"><td><p>Evaluation strategy</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code> (no surrogate involved; every candidate generated by <code class="docutils literal notranslate"><span class="pre">GA.ask()</span></code> is evaluated with the true objective function)</p></td>
-<td><p>L2 (in-generation evaluation)</p></td>
+<td><p>No independent step (occurs after L6, before the next L2)</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">GA</span><span class="p">,</span> <span class="n">SPEA2Comparator</span><span class="p">,</span> <span class="n">Optimizer</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">GA</span><span class="p">,</span> <span class="n">LHSInitializer</span><span class="p">,</span> <span class="n">SPEA2Comparator</span><span class="p">,</span> <span class="n">Optimizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.benchmarks</span><span class="w"> </span><span class="kn">import</span> <span class="n">zdt1</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.crossover</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverSBX</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.operators.mutation</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationPolynomial</span>
@@ -1093,6 +1092,9 @@ Because this procedure breaks ties between individuals with equal distance using
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">DirectStrategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
 
+
+<span class="n">N</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># offspring per generation, and the initial candidate pool size</span>
+<span class="n">N_BAR</span> <span class="o">=</span> <span class="mi">20</span>  <span class="c1"># SPEA2 external archive size</span>
 
 <span class="n">problem</span> <span class="o">=</span> <span class="n">zdt1</span><span class="p">(</span><span class="n">n_var</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="n">problem</span><span class="o">.</span><span class="n">comparator</span> <span class="o">=</span> <span class="n">SPEA2Comparator</span><span class="p">()</span>
@@ -1106,8 +1108,9 @@ Because this procedure breaks ties between individuals with equal distance using
 
 <span class="n">opt</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">set_initializer</span><span class="p">(</span><span class="n">LHSInitializer</span><span class="p">(</span><span class="n">n_init_archive</span><span class="o">=</span><span class="n">N</span><span class="p">,</span> <span class="n">n_init_population</span><span class="o">=</span><span class="n">N_BAR</span><span class="p">))</span>
     <span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">DirectStrategy</span><span class="p">())</span>
+    <span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">DirectStrategy</span><span class="p">(</span><span class="n">n_offspring</span><span class="o">=</span><span class="n">N</span><span class="p">))</span>
     <span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe</span><span class="p">(</span><span class="mi">2000</span><span class="p">)))</span>
 <span class="p">)</span>
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
@@ -1116,17 +1119,29 @@ Because this procedure breaks ties between individuals with equal distance using
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">problem.comparator</span> <span class="pre">=</span> <span class="pre">SPEA2Comparator()</span></code> line cannot be omitted.
 In NSGA-II, <code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code> is the default for <code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>, so the same line could be omitted, but this is not the case for SPEA2.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ctx.pareto_archive</span></code> is saealib’s own cumulative non-dominated archive, tracked across the entire run independently of any specific algorithm; it is not the same state container as SPEA2’s external archive, which corresponds to <code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>.
+Read <code class="docutils literal notranslate"><span class="pre">ctx.population</span></code> directly if the paper’s output <span class="math notranslate nohighlight">\(A\)</span> (the non-dominated solutions in the final external archive <span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span>) is specifically what’s needed.</p>
 </section>
 <section id="differences-from-the-source">
 <h2>Differences from the source<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
-<p>The original SPEA2 specifies population size <span class="math notranslate nohighlight">\(N\)</span> and archive size <span class="math notranslate nohighlight">\(\bar N\)</span> independently, but saealib’s <code class="docutils literal notranslate"><span class="pre">GA.tell()</span></code> combines the population and offspring into one pool, so the same value is used for both.</p>
+<p>With the default <code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code> on an unconstrained problem, saealib reproduces SPEA2’s core selection semantics — the strength/raw-fitness/density fitness assignment and the truncation-based environmental selection — as described in the paper.
+Two aspects of the execution structure differ from the source.</p>
+<p><strong>Initialization</strong>: the paper generates an initial population <span class="math notranslate nohighlight">\(P_0\)</span> (size <span class="math notranslate nohighlight">\(N\)</span>) and starts with an empty archive <span class="math notranslate nohighlight">\(\bar P_0 = \emptyset\)</span>; the first fitness assignment and environmental selection (L2, L3) only happen once the main loop begins at <span class="math notranslate nohighlight">\(t=0\)</span>.
+saealib’s <code class="docutils literal notranslate"><span class="pre">LHSInitializer</span></code> folds this initial fitness assignment and environmental selection into construction itself: it samples <code class="docutils literal notranslate"><span class="pre">n_init_archive</span></code> individuals (playing the role of the paper’s <span class="math notranslate nohighlight">\(P_0\)</span>), true-evaluates them, and calls <code class="docutils literal notranslate"><span class="pre">rank_population()</span></code> to rank them before handing the top <code class="docutils literal notranslate"><span class="pre">n_init_population</span></code> to the initial <code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>.
+The resulting <code class="docutils literal notranslate"><span class="pre">ctx.population</span></code> at <span class="math notranslate nohighlight">\(t=0\)</span> therefore already corresponds to the paper’s post-selection archive <span class="math notranslate nohighlight">\(\bar P_1\)</span>, not to the empty <span class="math notranslate nohighlight">\(\bar P_0\)</span>.</p>
+<p><strong>Constraint handling</strong>: for constrained problems, <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code> additionally applies Deb (2000)’s feasibility-first rule <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id33" title="Kalyanmoy Deb. An efficient constraint handling method for genetic algorithms. Computer Methods in Applied Mechanics and Engineering, 186(2–4):311–338, 2000. doi:10.1016/S0045-7825(99)00389-8.">10</a>]</span> — feasible individuals always outrank infeasible ones, and infeasible individuals are ordered by ascending constraint violation.
+The SPEA2 algorithm as published does not address constraint handling; this is a saealib-side extension.</p>
 </section>
 <section id="parameters-and-variants">
 <h2>Parameters and variants<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
 <section id="complexity">
 <h3>Complexity<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h3>
 <p>Fitness computation (<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>) is <span class="math notranslate nohighlight">\(O(M^2)\)</span> (<span class="math notranslate nohighlight">\(M=N+\bar N\)</span>), or <span class="math notranslate nohighlight">\(O(M^2\log M)\)</span> including the distance sort needed for density estimation.
-The truncation operator is <span class="math notranslate nohighlight">\(O(M^3)\)</span> in the worst case and <span class="math notranslate nohighlight">\(O(M^2\log M)\)</span> on average <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>.</p>
+The truncation operator is <span class="math notranslate nohighlight">\(O(M^3)\)</span> in the worst case and <span class="math notranslate nohighlight">\(O(M^2\log M)\)</span> on average <span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>.</p>
+<p><strong>Sizing <span class="math notranslate nohighlight">\(N\)</span> and <span class="math notranslate nohighlight">\(\bar N\)</span> independently</strong>: <code class="docutils literal notranslate"><span class="pre">ctx.population</span></code> plays the role of SPEA2’s archive <span class="math notranslate nohighlight">\(\bar P\)</span> — <code class="docutils literal notranslate"><span class="pre">GA.tell()</span></code> merges it with the offspring, and <code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code> (using the <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code> configured via <code class="docutils literal notranslate"><span class="pre">problem.comparator</span></code>) performs environmental selection on the result — so <code class="docutils literal notranslate"><span class="pre">LHSInitializer(n_init_population=...)</span></code> sets <span class="math notranslate nohighlight">\(\bar N\)</span>, and <code class="docutils literal notranslate"><span class="pre">DirectStrategy(n_offspring=...)</span></code> sets the number of offspring generated (and true-evaluated) per generation, <span class="math notranslate nohighlight">\(N\)</span>.
+<code class="docutils literal notranslate"><span class="pre">LHSInitializer</span></code>’s other size parameter, <code class="docutils literal notranslate"><span class="pre">n_init_archive</span></code>, sets the number of initially evaluated entries in saealib’s own cumulative <code class="docutils literal notranslate"><span class="pre">Archive</span></code> (<code class="docutils literal notranslate"><span class="pre">ctx.archive</span></code>) — a different, longer-lived container than SPEA2’s external archive, which keeps growing with every subsequent generation’s evaluations.
+At <span class="math notranslate nohighlight">\(t=0\)</span> specifically it also sizes the candidate pool subjected to the first fitness assignment and environmental selection (see <em>Differences from the source</em> above), so a literature-faithful initialization sets <code class="docutils literal notranslate"><span class="pre">n_init_archive=N</span></code>.
+Built-in initializers require <code class="docutils literal notranslate"><span class="pre">n_init_population</span> <span class="pre">&lt;=</span> <span class="pre">n_init_archive</span></code>, so an initial state with <span class="math notranslate nohighlight">\(\bar N &gt; N\)</span> cannot be constructed directly.</p>
 <p><strong>Swapping the dominator (dominance predicate)</strong>: <code class="docutils literal notranslate"><span class="pre">SPEA2Comparator(dominator=...)</span></code> lets you inject a <a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a> other than the default <code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>.
 Since the computation of <span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span> depends on this dominance predicate, swapping it changes SPEA2’s fitness itself.</p>
 </section>
@@ -1142,6 +1157,7 @@ Since the computation of <span class="math notranslate nohighlight">\(S(i)\)</sp
 <li><p><a class="reference internal" href="../concepts/search_algorithms/survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code></p></li>
 <li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: List of strategies including <code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code></p></li>
 <li><p><a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a>: List of dominance predicates that can be swapped in via the <code class="docutils literal notranslate"><span class="pre">dominator</span></code> argument</p></li>
+<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/initialization.html"><span class="std std-doc">Initializer</span></a>: How <code class="docutils literal notranslate"><span class="pre">LHSInitializer</span></code>’s <code class="docutils literal notranslate"><span class="pre">n_init_archive</span></code>/<code class="docutils literal notranslate"><span class="pre">n_init_population</span></code> parameters size the initial archive and population</p></li>
 </ul>
 </section>
 </section>

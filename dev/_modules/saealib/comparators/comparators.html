@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.comparators.comparators &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 documentation</title>
+    <title>saealib.comparators.comparators &#8212; saealib 0.1.0b5.dev84+gec6002047 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=8506a0c3"></script>
+    <script src="../../../_static/documentation_options.js?v=dc44e4d1"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -984,9 +984,11 @@ window.runMermaid = runMermaid;</script>
     <span class="n">spea2_fitness</span><span class="p">,</span>
     <span class="n">spea2_truncation_order</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">PopulationAttribute</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Population</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
 
 
 <div class="viewcode-block" id="Comparator">
@@ -1101,6 +1103,76 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            -1 if a is better than b, 1 if b is better than a, 0 if equal.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Comparator.get_required_attrs">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Comparator.html#saealib.Comparator.get_required_attrs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_required_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PopulationAttribute</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return population attributes this comparator needs to persist.</span>
+
+<span class="sd">        Population-relative ranking state (e.g. SPEA2 fitness) that must</span>
+<span class="sd">        survive across selections belongs here as a named, typed attribute</span>
+<span class="sd">        rather than in the population&#39;s transient cache. Default: no</span>
+<span class="sd">        additional attributes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        problem : Problem</span>
+<span class="sd">            The optimization problem.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list[PopulationAttribute]</span>
+<span class="sd">            Empty by default.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="Comparator.prepare_population">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Comparator.html#saealib.Comparator.prepare_population">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Freshly recompute and materialize population-relative ranking state.</span>
+
+<span class="sd">        Default is a no-op — comparators whose ranking depends only on</span>
+<span class="sd">        per-individual values already stored in ``f``/``cv`` do not need this.</span>
+<span class="sd">        Comparators that declare attributes via :meth:`get_required_attrs`</span>
+<span class="sd">        should override this to recompute and write those attributes for the</span>
+<span class="sd">        given population, unconditionally (not reusing any prior cached value).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        population : Population</span>
+<span class="sd">            The population to prepare ranking state for.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="Comparator.rank_population">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Comparator.html#saealib.Comparator.rank_population">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rank_population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare population-relative ranking state, then sort.</span>
+
+<span class="sd">        Equivalent to calling :meth:`prepare_population` followed by</span>
+<span class="sd">        :meth:`sort_population`. Callers performing environmental selection on</span>
+<span class="sd">        a freshly assembled pool (e.g. survivor selection merging population</span>
+<span class="sd">        and offspring) should call this instead of :meth:`sort_population`</span>
+<span class="sd">        directly, so any population-relative state declared via</span>
+<span class="sd">        :meth:`get_required_attrs` is recomputed for the new set before</span>
+<span class="sd">        ranking.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        population : Population</span>
+<span class="sd">            The population to rank.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Sorted population indices, as returned by</span>
+<span class="sd">            :meth:`sort_population`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prepare_population</span><span class="p">(</span><span class="n">population</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_population</span><span class="p">(</span><span class="n">population</span><span class="p">)</span></div>
 </div>
 
 
@@ -1640,36 +1712,59 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The dominance predicate used by this comparator.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dominator</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_fitness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return the length-N SPEA2 fitness array, computing and caching as needed.</span>
+<div class="viewcode-block" id="SPEA2Comparator.get_required_attrs">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SPEA2Comparator.html#saealib.SPEA2Comparator.get_required_attrs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_required_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PopulationAttribute</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declare persistent SPEA2 fitness storage.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">PopulationAttribute</span><span class="p">(</span><span class="s2">&quot;spea2_fitness&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="p">(),</span> <span class="n">default</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)]</span></div>
 
-<span class="sd">        Infeasible individuals (cv &gt; eps_cv) receive ``+inf`` so they naturally</span>
-<span class="sd">        sort to the end.  Feasible rows with any NaN objective also receive</span>
-<span class="sd">        ``+inf`` so they sort to the end of the feasible block.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cached</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">get_cache</span><span class="p">(</span><span class="s2">&quot;spea2_fitness&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">cached</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_fitness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute SPEA2 fitness for the current population.&quot;&quot;&quot;</span>
         <span class="n">f_arr</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
         <span class="n">cv_arr</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;cv&quot;</span><span class="p">)</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_arr</span><span class="p">)</span>
-
-        <span class="n">fitness_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>  <span class="c1"># infeasible -&gt; +inf (sort last)</span>
+        <span class="n">fitness_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
         <span class="n">feasible</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cv_arr</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps_cv</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">feasible</span><span class="p">):</span>
             <span class="n">f_feasible</span> <span class="o">=</span> <span class="n">spea2_fitness</span><span class="p">(</span>
-                <span class="n">f_arr</span><span class="p">[</span><span class="n">feasible</span><span class="p">],</span>
-                <span class="n">direction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span>
-                <span class="n">dominator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dominator</span><span class="p">,</span>
+                <span class="n">f_arr</span><span class="p">[</span><span class="n">feasible</span><span class="p">],</span> <span class="n">direction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span> <span class="n">dominator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dominator</span>
             <span class="p">)</span>
-            <span class="c1"># Rows with any NaN objective -&gt; +inf so they sort after valid feasibles</span>
             <span class="n">nan_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">f_arr</span><span class="p">[</span><span class="n">feasible</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">f_feasible</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">nan_mask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">f_feasible</span><span class="p">)</span>
             <span class="n">fitness_all</span><span class="p">[</span><span class="n">feasible</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_feasible</span>
+        <span class="k">return</span> <span class="n">fitness_all</span>
 
-        <span class="n">population</span><span class="o">.</span><span class="n">set_cache</span><span class="p">(</span><span class="s2">&quot;spea2_fitness&quot;</span><span class="p">,</span> <span class="n">fitness_all</span><span class="p">)</span>
+<div class="viewcode-block" id="SPEA2Comparator.prepare_population">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.SPEA2Comparator.html#saealib.SPEA2Comparator.prepare_population">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_population</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Recompute and store SPEA2 fitness for the current population.&quot;&quot;&quot;</span>
+        <span class="n">fitness</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_fitness</span><span class="p">(</span><span class="n">population</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;spea2_fitness&quot;</span> <span class="ow">in</span> <span class="n">population</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
+            <span class="n">population</span><span class="o">.</span><span class="n">update_array</span><span class="p">(</span><span class="s2">&quot;spea2_fitness&quot;</span><span class="p">,</span> <span class="n">fitness</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">population</span><span class="o">.</span><span class="n">set_cache</span><span class="p">(</span><span class="s2">&quot;spea2_fitness_fallback&quot;</span><span class="p">,</span> <span class="n">fitness</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_assigned_fitness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return persisted fitness when every active row has a value.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;spea2_fitness&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">population</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;spea2_fitness&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">values</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fitness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return persisted SPEA2 fitness or compute it through the fallback.&quot;&quot;&quot;</span>
+        <span class="n">assigned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assigned_fitness</span><span class="p">(</span><span class="n">population</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">assigned</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">assigned</span>
+        <span class="n">cached</span> <span class="o">=</span> <span class="n">population</span><span class="o">.</span><span class="n">get_cache</span><span class="p">(</span><span class="s2">&quot;spea2_fitness_fallback&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cached</span>
+        <span class="n">fitness_all</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_fitness</span><span class="p">(</span><span class="n">population</span><span class="p">)</span>
+        <span class="n">population</span><span class="o">.</span><span class="n">set_cache</span><span class="p">(</span><span class="s2">&quot;spea2_fitness_fallback&quot;</span><span class="p">,</span> <span class="n">fitness_all</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">fitness_all</span>
 
 <div class="viewcode-block" id="SPEA2Comparator.sort_population">

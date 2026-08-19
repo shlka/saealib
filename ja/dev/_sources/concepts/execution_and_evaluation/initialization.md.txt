@@ -29,15 +29,18 @@ The implementation boundary for `Initializer` is `initialize(provider, problem) 
 
 `GenomeInitializer` registers the Genomes provided by SearchSpace directly in the Archive.
 The other three share the constructor `(n_init_archive, n_init_population, seed=None)` and generate initial points in vector form.
-All four evaluate the initial Archive, sort it with the Comparator, and pass the top candidates to the initial Population.
+All four evaluate the initial Archive, rank it with the Comparator, and pass the top candidates to the initial Population.
 
 ```
 Sample (n_init_archive points)
   -> Evaluate via provider.evaluator.evaluate_batch
   -> add to archive / pareto_archive
-  -> Sort via problem.comparator.sort_population
+  -> Rank via problem.comparator.rank_population
   -> Feed the top n_init_population into population
 ```
+
+Because this ranks a freshly assembled Archive rather than reusing state from a prior selection, it calls `rank_population` rather than `sort_population` directly — see [Comparator](../problem_and_ranking/comparators.md) for the distinction.
+For a Comparator like `SPEA2Comparator`, this is also what first populates its persisted ranking state (`spea2_fitness`) on the initial Population.
 
 The three classes' implementations are nearly identical except for the one line doing the sampling — this is a deliberate choice for simplicity, a design that doesn't over-abstract the shared processing.
 
@@ -46,7 +49,7 @@ The three classes' implementations are nearly identical except for the one line 
 The `Initializer` base provides two helper methods reusable in custom implementations.
 
 **`_create_attrs(problem, provider)`**: Builds the `PopulationAttribute` values for `Population` and `Archive`.
-The legacy vector path uses `x`, `f`, `g`, and `cv`, and adds auxiliary attributes required by the Algorithm.
+The legacy vector path uses `x`, `f`, `g`, `cv`, and `id`, then merges in auxiliary attributes required by both the Algorithm (`Algorithm.get_required_attrs`) and the Comparator (`Comparator.get_required_attrs`) — this is how, for example, `SPEA2Comparator`'s `spea2_fitness` attribute ends up in the schema.
 `GenomeInitializer` manages Genomes in a dedicated column, so its standard attributes do not include `x`.
 
 **`_create_context(problem, archive, pareto_archive, population, rng)`**: Builds the `OptimizationState`.
@@ -90,6 +93,7 @@ Swap the Initializer with `Optimizer.set_initializer(initializer)`.
 - [Population](../observation_and_state/population.md): The `Population`/`Archive`/`ParetoArchive` being constructed
 - [Evaluator](evaluation.md): Used to evaluate the initial samples
 - [CallbackManager](../observation_and_state/callbacks.md): Observing `InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`
+- [Comparator](../problem_and_ranking/comparators.md): `rank_population`, used to rank the initial Archive
 
 ## References
 

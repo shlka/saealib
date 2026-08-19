@@ -18,6 +18,9 @@
    ~NSGA3Comparator.__init__
    ~NSGA3Comparator.compare
    ~NSGA3Comparator.compare_population
+   ~NSGA3Comparator.get_required_attrs
+   ~NSGA3Comparator.prepare_population
+   ~NSGA3Comparator.rank_population
    ~NSGA3Comparator.sort_population
 
 
@@ -35,6 +38,15 @@
 
 
 .. automethod:: saealib.NSGA3Comparator.compare_population
+
+
+.. automethod:: saealib.NSGA3Comparator.get_required_attrs
+
+
+.. automethod:: saealib.NSGA3Comparator.prepare_population
+
+
+.. automethod:: saealib.NSGA3Comparator.rank_population
 
 
 .. automethod:: saealib.NSGA3Comparator.sort_population

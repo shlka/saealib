@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.DecompositionComparator &#8212; saealib 0.1.0b5.dev83+gee2cd7e78 ドキュメント</title>
+    <title>saealib.DecompositionComparator &#8212; saealib 0.1.0b5.dev84+gec6002047 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=1c1c1b6d"></script>
+    <script src="../../_static/documentation_options.js?v=455e5f7f"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -955,7 +955,16 @@ Mechanics and Engineering</em>, 186(2-4), 311-338.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#saealib.DecompositionComparator.compare_population" title="saealib.DecompositionComparator.compare_population"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compare_population</span></code></a></p></td>
 <td><p>Compare two individuals using feasibility rule then aggregate score.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#saealib.DecompositionComparator.sort_population" title="saealib.DecompositionComparator.sort_population"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sort_population</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.DecompositionComparator.get_required_attrs" title="saealib.DecompositionComparator.get_required_attrs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_required_attrs</span></code></a></p></td>
+<td><p>Return population attributes this comparator needs to persist.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.DecompositionComparator.prepare_population" title="saealib.DecompositionComparator.prepare_population"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_population</span></code></a></p></td>
+<td><p>Freshly recompute and materialize population-relative ranking state.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saealib.DecompositionComparator.rank_population" title="saealib.DecompositionComparator.rank_population"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rank_population</span></code></a></p></td>
+<td><p>Prepare population-relative ranking state, then sort.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saealib.DecompositionComparator.sort_population" title="saealib.DecompositionComparator.sort_population"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sort_population</span></code></a></p></td>
 <td><p>Sort by aggregate score; infeasible individuals come last.</p></td>
 </tr>
 </tbody>
@@ -1030,6 +1039,71 @@ if equal (within <code class="docutils literal notranslate"><span class="pre">ep
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="saealib.DecompositionComparator.get_required_attrs">
+<span class="sig-prename descclassname"><span class="pre">DecompositionComparator.</span></span><span class="sig-name descname"><span class="pre">get_required_attrs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.DecompositionComparator.get_required_attrs" title="Link to this definition">#</a></dt>
+<dd><p>Return population attributes this comparator needs to persist.</p>
+<p>Population-relative ranking state (e.g. SPEA2 fitness) that must
+survive across selections belongs here as a named, typed attribute
+rather than in the population's transient cache. Default: no
+additional attributes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>problem</strong> (<a class="reference internal" href="saealib.Problem.html#saealib.Problem" title="saealib.Problem"><em>Problem</em></a>) -- The optimization problem.</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>Empty by default.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="saealib.PopulationAttribute.html#saealib.PopulationAttribute" title="saealib.PopulationAttribute">PopulationAttribute</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.DecompositionComparator.prepare_population">
+<span class="sig-prename descclassname"><span class="pre">DecompositionComparator.</span></span><span class="sig-name descname"><span class="pre">prepare_population</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">population</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.DecompositionComparator.prepare_population" title="Link to this definition">#</a></dt>
+<dd><p>Freshly recompute and materialize population-relative ranking state.</p>
+<p>Default is a no-op — comparators whose ranking depends only on
+per-individual values already stored in <code class="docutils literal notranslate"><span class="pre">f</span></code>/<code class="docutils literal notranslate"><span class="pre">cv</span></code> do not need this.
+Comparators that declare attributes via <a class="reference internal" href="#saealib.DecompositionComparator.get_required_attrs" title="saealib.DecompositionComparator.get_required_attrs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_required_attrs()</span></code></a>
+should override this to recompute and write those attributes for the
+given population, unconditionally (not reusing any prior cached value).</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>population</strong> (<a class="reference internal" href="saealib.Population.html#saealib.Population" title="saealib.Population"><em>Population</em></a>) -- The population to prepare ranking state for.</p>
+</dd>
+<dt class="field-even">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="saealib.DecompositionComparator.rank_population">
+<span class="sig-prename descclassname"><span class="pre">DecompositionComparator.</span></span><span class="sig-name descname"><span class="pre">rank_population</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">population</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.DecompositionComparator.rank_population" title="Link to this definition">#</a></dt>
+<dd><p>Prepare population-relative ranking state, then sort.</p>
+<p>Equivalent to calling <a class="reference internal" href="#saealib.DecompositionComparator.prepare_population" title="saealib.DecompositionComparator.prepare_population"><code class="xref py py-meth docutils literal notranslate"><span class="pre">prepare_population()</span></code></a> followed by
+<a class="reference internal" href="#saealib.DecompositionComparator.sort_population" title="saealib.DecompositionComparator.sort_population"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sort_population()</span></code></a>. Callers performing environmental selection on
+a freshly assembled pool (e.g. survivor selection merging population
+and offspring) should call this instead of <a class="reference internal" href="#saealib.DecompositionComparator.sort_population" title="saealib.DecompositionComparator.sort_population"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sort_population()</span></code></a>
+directly, so any population-relative state declared via
+<a class="reference internal" href="#saealib.DecompositionComparator.get_required_attrs" title="saealib.DecompositionComparator.get_required_attrs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_required_attrs()</span></code></a> is recomputed for the new set before
+ranking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>population</strong> (<a class="reference internal" href="saealib.Population.html#saealib.Population" title="saealib.Population"><em>Population</em></a>) -- The population to rank.</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>Sorted population indices, as returned by
+<a class="reference internal" href="#saealib.DecompositionComparator.sort_population" title="saealib.DecompositionComparator.sort_population"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sort_population()</span></code></a>.</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="saealib.DecompositionComparator.sort_population">
 <span class="sig-prename descclassname"><span class="pre">DecompositionComparator.</span></span><span class="sig-name descname"><span class="pre">sort_population</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">population</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/decomposition.html#DecompositionComparator.sort_population"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.DecompositionComparator.sort_population" title="Link to this definition">#</a></dt>
 <dd><p>Sort by aggregate score; infeasible individuals come last.</p>
@@ -1099,6 +1173,9 @@ if equal (within <code class="docutils literal notranslate"><span class="pre">ep
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.DecompositionComparator.__init__"><code class="docutils literal notranslate"><span class="pre">DecompositionComparator.__init__()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.DecompositionComparator.compare"><code class="docutils literal notranslate"><span class="pre">DecompositionComparator.compare()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.DecompositionComparator.compare_population"><code class="docutils literal notranslate"><span class="pre">DecompositionComparator.compare_population()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.DecompositionComparator.get_required_attrs"><code class="docutils literal notranslate"><span class="pre">DecompositionComparator.get_required_attrs()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.DecompositionComparator.prepare_population"><code class="docutils literal notranslate"><span class="pre">DecompositionComparator.prepare_population()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.DecompositionComparator.rank_population"><code class="docutils literal notranslate"><span class="pre">DecompositionComparator.rank_population()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.DecompositionComparator.sort_population"><code class="docutils literal notranslate"><span class="pre">DecompositionComparator.sort_population()</span></code></a></li>
 </ul>
   </nav></div>

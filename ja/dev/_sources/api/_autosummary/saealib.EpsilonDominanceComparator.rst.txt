@@ -18,6 +18,9 @@
    ~EpsilonDominanceComparator.__init__
    ~EpsilonDominanceComparator.compare
    ~EpsilonDominanceComparator.compare_population
+   ~EpsilonDominanceComparator.get_required_attrs
+   ~EpsilonDominanceComparator.prepare_population
+   ~EpsilonDominanceComparator.rank_population
    ~EpsilonDominanceComparator.sort_population
 
 
@@ -35,6 +38,15 @@
 
 
 .. automethod:: saealib.EpsilonDominanceComparator.compare_population
+
+
+.. automethod:: saealib.EpsilonDominanceComparator.get_required_attrs
+
+
+.. automethod:: saealib.EpsilonDominanceComparator.prepare_population
+
+
+.. automethod:: saealib.EpsilonDominanceComparator.rank_population
 
 
 .. automethod:: saealib.EpsilonDominanceComparator.sort_population
