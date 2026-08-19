@@ -11,7 +11,7 @@ Pass it via `Problem`'s `comparator` argument.
 
 ## Comparator's role
 
-`Comparator` has four methods that are all abstract, including `__init__` itself.
+`Comparator` has four abstract methods, including `__init__` itself.
 
 - **`__init__(weights, eps_cv, eps_obj, direction=None)`**: Holds `weights`/`eps_cv`/`eps_obj`/`direction`
 - **`sort_population(population) -> np.ndarray`**: Returns an index array ordering the entire population from best to worst
@@ -20,6 +20,14 @@ Pass it via `Problem`'s `comparator` argument.
 
 Having `__init__` be an abstract method is different from other components.
 Subclasses implementing a custom `Comparator` must always call `super().__init__(weights, eps_cv, eps_obj, direction=...)`.
+
+It also has three concrete methods with a no-op default, for ranking state that must persist across selections rather than being derived fresh from `f`/`cv` each time:
+
+- **`get_required_attrs(problem) -> list[PopulationAttribute]`**: Declares the `PopulationAttribute`s the comparator needs `Population`/`Archive` to carry. Empty by default
+- **`prepare_population(population) -> None`**: Freshly recomputes and writes those attributes for the given population. No-op by default
+- **`rank_population(population) -> np.ndarray`**: `prepare_population` followed by `sort_population`. Environmental selection on a freshly merged pool should call this instead of `sort_population` directly, so persisted state is recomputed for the new set before ranking
+
+A `Comparator` that ranks purely from per-individual `f`/`cv` (`SingleObjectiveComparator`, `ParetoComparator`, `NSGA2Comparator`, ...) needs none of the three — `rank_population` then behaves identically to `sort_population`. `SPEA2Comparator` is the built-in example that overrides all three.
 
 ## Built-in Comparators
 
@@ -58,6 +66,9 @@ These Comparators can't be used in situations that need a two-point comparison (
 Use `ParetoComparator` instead in such situations.
 `compare_population()` (comparison via population indices) is defined on both classes, so things like tournament selection work as-is.
 
+`SPEA2Comparator` additionally uses the `get_required_attrs`/`prepare_population` pair described above: `get_required_attrs` declares a persistent `spea2_fitness` attribute, and `prepare_population` recomputes $S(i)$/$R(i)$/$D(i)$/$F(i)$ over the population it's given and writes them there.
+Environmental selection (`TruncationSelection` calling `rank_population`) recomputes fitness fresh over the merged population-and-offspring pool; the individuals that survive truncation carry their fitness values with them, so `compare_population()` calls during the next generation's mating selection reuse the persisted values instead of recomputing over a different-sized set.
+
 `HypervolumeComparator`'s HV computation performs O(N) leave-one-out evaluations per front.
 For problems with many objectives, this computational cost grows large.
 
@@ -84,7 +95,7 @@ See that page for details.
 
 ## Implementing a custom Comparator
 
-If you need a custom ranking scheme, subclass `Comparator` and implement all four methods.
+If you need a custom ranking scheme, subclass `Comparator` and implement all four abstract methods.
 `__init__` must always call `super().__init__(weights, eps_cv, eps_obj, direction=...)`.
 
 ```python
@@ -115,6 +126,7 @@ class RandomComparator(Comparator):
 ```
 
 When implementing a metric that depends on the entire population, as `SPEA2Comparator`/`HypervolumeComparator` do, you can use the design pattern of setting the class attribute `is_population_relative = True` and having `compare()` raise a `NotImplementedError` explaining why.
+If that metric also needs to survive being carried into a smaller population — as SPEA2 fitness must survive truncation to remain valid for the next generation's mating selection — override `get_required_attrs` to declare where it's stored and `prepare_population` to recompute it fresh; without that, a later read sees a value computed for a different-sized population.
 
 ## Related components
 
@@ -123,6 +135,7 @@ When implementing a metric that depends on the entire population, as `SPEA2Compa
 - [Decomposition](decomposition.md): The scalarization functions used by `DecompositionComparator`
 - [Problem](problem.md): How to pass the `comparator` argument, and the default-selection rules
 - [ParentSelection](../search_algorithms/parent_selection.md) / [SurvivorSelection](../search_algorithms/survivor_selection.md): Operators that use `Comparator` to select individuals
+- [Population](../observation_and_state/population.md): The `PopulationAttribute` schema that `get_required_attrs` extends
 
 ## References
 

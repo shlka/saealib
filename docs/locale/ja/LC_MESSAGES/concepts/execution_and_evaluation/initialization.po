@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"POT-Creation-Date: 2026-08-19 11:55+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -107,33 +107,44 @@ msgid ""
 "`GenomeInitializer` registers the Genomes provided by SearchSpace "
 "directly in the Archive. The other three share the constructor "
 "`(n_init_archive, n_init_population, seed=None)` and generate initial "
-"points in vector form. All four evaluate the initial Archive, sort it "
+"points in vector form. All four evaluate the initial Archive, rank it "
 "with the Comparator, and pass the top candidates to the initial "
 "Population."
 msgstr ""
-"`GenomeInitializer` は、SearchSpaceが提供するGenomeをそのままArchiveへ登録します。 "
-"他の3つは同じコンストラクタ `(n_init_archive, n_init_population, seed=None)` "
-"を持ち、ベクトル表現の初期点を生成します。 "
-"いずれも初期Archiveを評価し、Comparatorで並べた上位候補を初期Populationへ渡します。"
+"`GenomeInitializer`は、SearchSpaceが提供するGenomeを直接Archiveへ登録します。 "
+"他の3クラスはコンストラクタ`(n_init_archive, n_init_population, "
+"seed=None)`を共有し、ベクトル形式で初期点を生成します。 "
+"4クラスとも、初期Archiveを評価し、Comparatorでランク付けしたうえで、上位の候補を初期Populationへ渡します。"
 
 #: ../../concepts/execution_and_evaluation/initialization.md:42
+msgid ""
+"Because this ranks a freshly assembled Archive rather than reusing state "
+"from a prior selection, it calls `rank_population` rather than "
+"`sort_population` directly — see "
+"[Comparator](../problem_and_ranking/comparators.md) for the distinction. "
+"For a Comparator like `SPEA2Comparator`, this is also what first "
+"populates its persisted ranking state (`spea2_fitness`) on the initial "
+"Population."
+msgstr "これは、前回の選択の状態を再利用するのではなく新しく組み立てたArchiveをランク付けするため、`sort_population`を直接ではなく`rank_population`を呼び出します——両者の違いは[Comparator](../problem_and_ranking/comparators.md)を参照してください。`SPEA2Comparator`のようなComparatorにとっては、これが初期Populationにその永続化されたランキング状態（`spea2_fitness`）を最初に書き込む場所でもあります。"
+
+#: ../../concepts/execution_and_evaluation/initialization.md:45
 msgid ""
 "The three classes' implementations are nearly identical except for the "
 "one line doing the sampling — this is a deliberate choice for simplicity,"
 " a design that doesn't over-abstract the shared processing."
 msgstr "3クラスの実装はサンプリング方法の1行以外ほぼ重複していますが、これは意図的な単純さの選択であり、共通処理を過度に抽象化しない設計になっています。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:44
+#: ../../concepts/execution_and_evaluation/initialization.md:47
 msgid "Base-class helper methods"
 msgstr "基底クラスのヘルパーメソッド"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:46
+#: ../../concepts/execution_and_evaluation/initialization.md:49
 msgid ""
 "The `Initializer` base provides two helper methods reusable in custom "
 "implementations."
 msgstr "`Initializer`基底には、独自実装で再利用できる2つのヘルパーメソッドが用意されています。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:48
+#: ../../concepts/execution_and_evaluation/initialization.md:51
 msgid ""
 "**`_create_attrs(problem, provider)`**: Builds the `PopulationAttribute` "
 "values for `Population` and `Archive`. The legacy vector path uses `x`, "
@@ -146,7 +157,7 @@ msgstr ""
 "を使い、Algorithmが必要とする補助属性を追加します。 `GenomeInitializer` "
 "ではGenomeが専用の列として管理されるため、標準属性に `x` を含めません。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:52
+#: ../../concepts/execution_and_evaluation/initialization.md:55
 msgid ""
 "**`_create_context(problem, archive, pareto_archive, population, rng)`**:"
 " Builds the `OptimizationState`. When the Comparator is an "
@@ -157,11 +168,11 @@ msgstr ""
 "rng)`**：`OptimizationState` を構築します。 Comparatorが `NSGA3Comparator` "
 "で内部乱数生成器をまだ持たない場合は、ここで `rng.spawn(1)[0]` を設定します。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:55
+#: ../../concepts/execution_and_evaluation/initialization.md:58
 msgid "Implementing a custom Initializer"
 msgstr "独自Initializerの実装方法"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:57
+#: ../../concepts/execution_and_evaluation/initialization.md:60
 msgid ""
 "To add custom vector sampling, subclass `Initializer` and implement "
 "`initialize()`. For a new Genome representation, implement an Initializer"
@@ -171,11 +182,11 @@ msgstr ""
 "新しいGenome表現を使う場合は、`Problem.space.sample()` と `Problem.space.validate()` "
 "を使うInitializerを実装します。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:60
+#: ../../concepts/execution_and_evaluation/initialization.md:63
 msgid "Genome-native initialization keeps the following order."
 msgstr "Genome-nativeな初期化では、次の順序を保ちます。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:62
+#: ../../concepts/execution_and_evaluation/initialization.md:65
 msgid ""
 "Create containers with the Algorithm's `population_class`, "
 "`archive_class`, and `create_pareto_archive()`."
@@ -183,11 +194,11 @@ msgstr ""
 "Algorithmの `population_class`、`archive_class`、`create_pareto_archive()` "
 "で入れ物を作る。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:63
+#: ../../concepts/execution_and_evaluation/initialization.md:66
 msgid "Build the `OptimizationState`."
 msgstr "`OptimizationState` を構築する。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:64
+#: ../../concepts/execution_and_evaluation/initialization.md:67
 msgid ""
 "Generate Genomes with `problem.space.sample(n, rng)` and validate them "
 "with `problem.space.validate()`."
@@ -195,29 +206,29 @@ msgstr ""
 "`problem.space.sample(n, rng)` でGenomeを生成し、`problem.space.validate()` "
 "で検証する。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:65
+#: ../../concepts/execution_and_evaluation/initialization.md:68
 msgid "Evaluate them with `provider.evaluator.evaluate_batch(genomes, problem)`."
 msgstr "`provider.evaluator.evaluate_batch(genomes, problem)` で評価する。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:66
+#: ../../concepts/execution_and_evaluation/initialization.md:69
 msgid ""
 "Register candidate IDs, Genomes, and evaluation results in the Archive "
 "and ParetoArchive."
 msgstr "候補ID、Genome、評価結果をArchiveとParetoArchiveへ登録する。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:67
+#: ../../concepts/execution_and_evaluation/initialization.md:70
 msgid ""
 "Update the evaluation count and pass Comparator-sorted candidates to the "
 "Population."
 msgstr "評価回数を更新し、Comparatorで並べた候補をPopulationへ渡す。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:69
+#: ../../concepts/execution_and_evaluation/initialization.md:72
 msgid ""
 "The following skeleton shows the input and output boundary used by a "
 "Genome-native Initializer."
 msgstr "次の骨格は、Genome-nativeなInitializerが使う入力と出力の境界を示しています。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:82
+#: ../../concepts/execution_and_evaluation/initialization.md:85
 msgid ""
 "The start and end of the initial evaluation can be observed through "
 "`CallbackManager`. Because the evaluation Request must preserve candidate"
@@ -227,56 +238,63 @@ msgstr ""
 "初期評価の開始と終了は `CallbackManager` から観測できます。 "
 "評価Requestの候補IDとGenomeを維持する必要があるため、Genomeを `x` 配列へ暗黙に変換して管理しません。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:85
+#: ../../concepts/execution_and_evaluation/initialization.md:88
 msgid "Swap the Initializer with `Optimizer.set_initializer(initializer)`."
 msgstr "`Optimizer.set_initializer(initializer)` でInitializerを差し替えます。"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:87
+#: ../../concepts/execution_and_evaluation/initialization.md:90
 msgid "Related components"
 msgstr "関連コンポーネント"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:89
+#: ../../concepts/execution_and_evaluation/initialization.md:92
 msgid ""
 "[OptimizationState](../observation_and_state/optimization_state.md): The "
 "state object `initialize()` ultimately returns"
 msgstr "[OptimizationState](../observation_and_state/optimization_state.md)：`initialize()`が最終的に返す状態オブジェクト"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:90
+#: ../../concepts/execution_and_evaluation/initialization.md:93
 msgid ""
 "[Population](../observation_and_state/population.md): The "
 "`Population`/`Archive`/`ParetoArchive` being constructed"
 msgstr "[Population](../observation_and_state/population.md)：構築対象の`Population`/`Archive`/`ParetoArchive`"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:91
+#: ../../concepts/execution_and_evaluation/initialization.md:94
 msgid "[Evaluator](evaluation.md): Used to evaluate the initial samples"
 msgstr "[Evaluator](evaluation.md)：初期サンプルの評価に使う"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:92
+#: ../../concepts/execution_and_evaluation/initialization.md:95
 msgid ""
 "[CallbackManager](../observation_and_state/callbacks.md): Observing "
 "`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`"
 msgstr "[CallbackManager](../observation_and_state/callbacks.md)：`InitialEvaluationStartEvent`/`InitialEvaluationEndEvent`の観察"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:94
+#: ../../concepts/execution_and_evaluation/initialization.md:96
+msgid ""
+"[Comparator](../problem_and_ranking/comparators.md): `rank_population`, "
+"used to rank the initial Archive"
+msgstr "[Comparator](../problem_and_ranking/comparators.md)：初期Archiveのランク付けに使う`rank_population`"
+
+#: ../../concepts/execution_and_evaluation/initialization.md:98
 msgid "References"
 msgstr "参照"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:96
+#: ../../concepts/execution_and_evaluation/initialization.md:100
 #, python-brace-format
 msgid "{py:class}`saealib.Initializer`"
 msgstr "{py:class}`saealib.Initializer`"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:97
+#: ../../concepts/execution_and_evaluation/initialization.md:101
 #, python-brace-format
 msgid "{py:class}`saealib.LHSInitializer`"
 msgstr "{py:class}`saealib.LHSInitializer`"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:98
+#: ../../concepts/execution_and_evaluation/initialization.md:102
 #, python-brace-format
 msgid "{py:class}`saealib.RandomInitializer`"
 msgstr "{py:class}`saealib.RandomInitializer`"
 
-#: ../../concepts/execution_and_evaluation/initialization.md:99
+#: ../../concepts/execution_and_evaluation/initialization.md:103
 #, python-brace-format
 msgid "{py:class}`saealib.SobolInitializer`"
 msgstr "{py:class}`saealib.SobolInitializer`"
+

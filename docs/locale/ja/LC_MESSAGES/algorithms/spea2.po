@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-15 11:39+0900\n"
+"POT-Creation-Date: 2026-08-19 11:41+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -169,7 +169,7 @@ msgstr "変異：交配プールに交叉と突然変異を適用して $P_{t+1}
 msgid "Flowchart"
 msgstr "フローチャート"
 
-#: ../../algorithms/spea2.md:67
+#: ../../algorithms/spea2.md:66
 msgid "Configuration in saealib"
 msgstr "saealibでの構成"
 
@@ -235,36 +235,24 @@ msgid "`MutationPolynomial(eta=20.0)`"
 msgstr "`MutationPolynomial(eta=20.0)`"
 
 #: ../../algorithms/spea2.md:51
-msgid "Fitness computation"
-msgstr "適応度計算"
+msgid "Fitness computation & environmental selection"
+msgstr "適応度計算と環境選択"
 
 #: ../../algorithms/spea2.md:51
 msgid ""
-"`SPEA2Comparator` (`sort_population` internally computes "
-"$S(i)$/$R(i)$/$D(i)$/$F(i)$ via `spea2_fitness`)"
-msgstr "`SPEA2Comparator`（`sort_population`内部で`spea2_fitness`が$S(i)$/$R(i)$/$D(i)$/$F(i)$を計算）"
-
-#: ../../algorithms/spea2.md:51
-msgid "L2"
-msgstr "手順 L2"
-
-#: ../../algorithms/spea2.md:51
-msgid "Environmental selection"
-msgstr "環境選択"
-
-#: ../../algorithms/spea2.md:51
-msgid ""
-"`SPEA2Comparator.sort_population()` + `TruncationSelection()` (uses "
-"`spea2_truncation_order` for the non-dominated $F(i)<1$ block, ascending "
-"$F(i)$ for the dominated $F(i)\\geq1$ block, and ascending `cv` for "
-"infeasible solutions)"
+"`SPEA2Comparator.rank_population()` (`prepare_population()` computes "
+"$S(i)$/$R(i)$/$D(i)$/$F(i)$ via `spea2_fitness` and persists it onto the "
+"population; `sort_population()` orders the non-dominated $F(i)<1$ block "
+"via `spea2_truncation_order`, the dominated $F(i)\\geq1$ block by "
+"ascending $F(i)$, and infeasible solutions by ascending `cv`) + "
+"`TruncationSelection()` (takes the top $\\bar N$)"
 msgstr ""
-"`SPEA2Comparator.sort_population()` + "
-"`TruncationSelection()`（$F(i)<1$の非劣解ブロックには`spea2_truncation_order`を適用し、$F(i)\\geq1$の劣解ブロックは$F(i)$昇順、実行不可能解は`cv`昇順とする）"
+"`SPEA2Comparator.rank_population()`（`prepare_population()`が`spea2_fitness`を介して$S(i)$/$R(i)$/$D(i)$/$F(i)$を計算し個体群へ永続化、`sort_population()`が$F(i)<1$の非劣解ブロックを`spea2_truncation_order`で、$F(i)\\geq1$の劣解ブロックを$F(i)$昇順で、実行不可能解を`cv`昇順で並べる）+"
+" `TruncationSelection()`（上位$\\bar N$個体を採用）"
 
 #: ../../algorithms/spea2.md:51
-msgid "L3"
-msgstr "手順 L3"
+msgid "L2, L3"
+msgstr "「L2, L3」"
 
 #: ../../algorithms/spea2.md:51
 msgid "Evaluation strategy"
@@ -280,7 +268,7 @@ msgstr "`DirectStrategy`（サロゲートを介さず、`GA.ask()`が生成し�
 msgid "L2 (in-generation evaluation)"
 msgstr "L2（世代内の評価）"
 
-#: ../../algorithms/spea2.md:109
+#: ../../algorithms/spea2.md:107
 msgid ""
 "The `problem.comparator = SPEA2Comparator()` line cannot be omitted. In "
 "NSGA-II, `NSGA2Comparator` is the default for `n_obj > 1`, so the same "
@@ -289,28 +277,23 @@ msgstr ""
 "`problem.comparator = SPEA2Comparator()`の行は省略できません。 NSGA-"
 "IIでは`NSGA2Comparator`が`n_obj > 1`のときの既定値なので同じ行を省略できましたが、SPEA2ではそうではありません。"
 
-#: ../../algorithms/spea2.md:112
+#: ../../algorithms/spea2.md:110
 msgid "Differences from the source"
 msgstr "文献との差分"
 
-#: ../../algorithms/spea2.md:114
-msgid ""
-"The original SPEA2 specifies population size $N$ and archive size $\\bar "
-"N$ independently, but saealib's `GA.tell()` combines the population and "
-"offspring into one pool, so the same value is used for both."
-msgstr ""
-"SPEA2の原法は個体群サイズ$N$とアーカイブサイズ$\\bar "
-"N$を独立に指定しますが、saealibの`GA.tell()`は個体群と子個体を一つのプールにまとめるため、両者に同じ値を使います。"
+#: ../../algorithms/spea2.md:112
+msgid "No significant differences from the source algorithm."
+msgstr "文献との有意な差分はありません。"
 
-#: ../../algorithms/spea2.md:116
+#: ../../algorithms/spea2.md:114
 msgid "Parameters and variants"
 msgstr "パラメータと変種"
 
-#: ../../algorithms/spea2.md:118
+#: ../../algorithms/spea2.md:116
 msgid "Complexity"
 msgstr "計算量"
 
-#: ../../algorithms/spea2.md:120
+#: ../../algorithms/spea2.md:118
 #, python-brace-format
 msgid ""
 "Fitness computation ($S(i)$/$R(i)$/$D(i)$) is $O(M^2)$ ($M=N+\\bar N$), "
@@ -322,7 +305,26 @@ msgstr ""
 "N$）で、密度推定のための距離ソートを含めると$O(M^2\\log M)$になります。 "
 "打ち切り演算子は最悪$O(M^3)$、平均では$O(M^2\\log M)$です{cite}`zitzler2001spea2`。"
 
-#: ../../algorithms/spea2.md:123
+#: ../../algorithms/spea2.md:121
+msgid ""
+"**Sizing $N$ and $\\bar N$ independently**: `ctx.population` plays the "
+"role of SPEA2's archive $\\bar P$ — `GA.tell()` merges it with the "
+"offspring and `TruncationSelection(SPEA2Comparator)` performs "
+"environmental selection on the result — so "
+"`LHSInitializer(n_init_population=...)` sets $\\bar N$, and "
+"`DirectStrategy(n_offspring=...)` sets the number of offspring generated "
+"(and true-evaluated) per generation, $N$. `LHSInitializer`'s other size "
+"parameter, `n_init_archive`, sizes saealib's own cumulative `Archive` "
+"(`ctx.archive`); it is unrelated to SPEA2's external archive and should "
+"not be confused with $\\bar N$."
+msgstr ""
+"**$N$と$\\bar N$の独立設定**：`ctx.population`はSPEA2のアーカイブ$\\bar "
+"P$の役割を担います——`GA.tell()`がこれを子個体群と統合し、`TruncationSelection(SPEA2Comparator)`がその結果に対して環境選択を行います——そのため`LHSInitializer(n_init_population=...)`が$\\bar"
+" "
+"N$を、`DirectStrategy(n_offspring=...)`が各世代で生成（かつ真の評価が行われる）子個体数$N$を設定します。`LHSInitializer`のもう一方のサイズパラメータ`n_init_archive`は、saealib自身の累積`Archive`（`ctx.archive`）のサイズを指定するものであり、SPEA2の外部アーカイブとは無関係なので、$\\bar"
+" N$と混同しないでください。"
+
+#: ../../algorithms/spea2.md:124
 msgid ""
 "**Swapping the dominator (dominance predicate)**: "
 "`SPEA2Comparator(dominator=...)` lets you inject a "
@@ -331,21 +333,21 @@ msgid ""
 " on this dominance predicate, swapping it changes SPEA2's fitness itself."
 msgstr "**支配述語の差し替え**：`SPEA2Comparator(dominator=...)`では、既定の`ParetoDominator`以外の[Dominator](../concepts/problem_and_ranking/dominance.md)を注入できます。$S(i)$/$R(i)$の計算はこの支配述語に依存するため、差し替えるとSPEA2の適応度自体が変わります。"
 
-#: ../../algorithms/spea2.md:126
+#: ../../algorithms/spea2.md:127
 msgid "Related"
 msgstr "関連"
 
-#: ../../algorithms/spea2.md:128
+#: ../../algorithms/spea2.md:129
 msgid "[References](../references.md): Full bibliographic details for the source"
 msgstr "[文献リファレンス](../references.md)：出典の完全な書誌情報"
 
-#: ../../algorithms/spea2.md:129
+#: ../../algorithms/spea2.md:130
 msgid ""
 "[Comparator](../concepts/problem_and_ranking/comparators.md): Detailed "
 "specification of `SPEA2Comparator`"
 msgstr "[Comparator](../concepts/problem_and_ranking/comparators.md)：`SPEA2Comparator`の詳細仕様"
 
-#: ../../algorithms/spea2.md:130
+#: ../../algorithms/spea2.md:131
 msgid ""
 "[Crossover](../concepts/search_algorithms/crossover.md): List of "
 "crossover operators including `CrossoverSBX`"
@@ -353,7 +355,7 @@ msgstr ""
 "[Crossover](../concepts/search_algorithms/crossover.md): "
 "`CrossoverSBX`を含む交叉演算子の一覧"
 
-#: ../../algorithms/spea2.md:131
+#: ../../algorithms/spea2.md:132
 msgid ""
 "[Mutation](../concepts/search_algorithms/mutation.md): List of mutation "
 "operators including `MutationPolynomial`"
@@ -361,19 +363,19 @@ msgstr ""
 "[Mutation](../concepts/search_algorithms/mutation.md): "
 "`MutationPolynomial`を含む突然変異演算子の一覧"
 
-#: ../../algorithms/spea2.md:132
+#: ../../algorithms/spea2.md:133
 msgid ""
 "[ParentSelection](../concepts/search_algorithms/parent_selection.md): "
 "Detailed usage of `TournamentSelection`"
 msgstr "[ParentSelection](../concepts/search_algorithms/parent_selection.md)：`TournamentSelection`の詳しい使い方"
 
-#: ../../algorithms/spea2.md:133
+#: ../../algorithms/spea2.md:134
 msgid ""
 "[SurvivorSelection](../concepts/search_algorithms/survivor_selection.md):"
 " Detailed usage of `TruncationSelection`"
 msgstr "[SurvivorSelection](../concepts/search_algorithms/survivor_selection.md)：`TruncationSelection`の詳しい使い方"
 
-#: ../../algorithms/spea2.md:134
+#: ../../algorithms/spea2.md:135
 msgid ""
 "[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
 " List of strategies including `DirectStrategy`"
@@ -381,8 +383,53 @@ msgstr ""
 "[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
 " `DirectStrategy`を含む戦略の一覧"
 
-#: ../../algorithms/spea2.md:135
+#: ../../algorithms/spea2.md:136
 msgid ""
 "[Dominator](../concepts/problem_and_ranking/dominance.md): List of "
 "dominance predicates that can be swapped in via the `dominator` argument"
 msgstr "[Dominator](../concepts/problem_and_ranking/dominance.md)：`dominator`引数で差し替えられる支配述語の一覧"
+
+#: ../../algorithms/spea2.md:137
+msgid ""
+"[Initializer](../concepts/execution_and_evaluation/initialization.md): "
+"How `LHSInitializer`'s `n_init_archive`/`n_init_population` parameters "
+"size the initial archive and population"
+msgstr "[Initializer](../concepts/execution_and_evaluation/initialization.md)：`LHSInitializer`の`n_init_archive`/`n_init_population`引数が初期アーカイブと個体群のサイズをどう決めるか"
+
+#~ msgid "Fitness computation"
+#~ msgstr "適応度計算"
+
+#~ msgid ""
+#~ "`SPEA2Comparator` (`sort_population` internally "
+#~ "computes $S(i)$/$R(i)$/$D(i)$/$F(i)$ via "
+#~ "`spea2_fitness`)"
+#~ msgstr "`SPEA2Comparator`（`sort_population`内部で`spea2_fitness`が$S(i)$/$R(i)$/$D(i)$/$F(i)$を計算）"
+
+#~ msgid "L2"
+#~ msgstr "手順 L2"
+
+#~ msgid ""
+#~ "`SPEA2Comparator.sort_population()` + "
+#~ "`TruncationSelection()` (uses `spea2_truncation_order` "
+#~ "for the non-dominated $F(i)<1$ block,"
+#~ " ascending $F(i)$ for the dominated "
+#~ "$F(i)\\geq1$ block, and ascending `cv` "
+#~ "for infeasible solutions)"
+#~ msgstr ""
+#~ "`SPEA2Comparator.sort_population()` + "
+#~ "`TruncationSelection()`（$F(i)<1$の非劣解ブロックには`spea2_truncation_order`を適用し、$F(i)\\geq1$の劣解ブロックは$F(i)$昇順、実行不可能解は`cv`昇順とする）"
+
+#~ msgid "L3"
+#~ msgstr "手順 L3"
+
+#~ msgid ""
+#~ "The original SPEA2 specifies population "
+#~ "size $N$ and archive size $\\bar "
+#~ "N$ independently, but saealib's `GA.tell()`"
+#~ " combines the population and offspring "
+#~ "into one pool, so the same value"
+#~ " is used for both."
+#~ msgstr ""
+#~ "SPEA2の原法は個体群サイズ$N$とアーカイブサイズ$\\bar "
+#~ "N$を独立に指定しますが、saealibの`GA.tell()`は個体群と子個体を一つのプールにまとめるため、両者に同じ値を使います。"
+
