@@ -33,7 +33,7 @@ from saealib.core.state import (
     RUNTIME_GENERATION,
     RUNTIME_RNG,
 )
-from saealib.exceptions import ValidationError
+from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.optimizer import ComponentProvider
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
@@ -90,6 +90,44 @@ def _resolved_dense_view(problem: Problem) -> DenseNumericView | None:
     )
 
 
+def _defaults_equal(a: object, b: object) -> bool:
+    try:
+        return bool(np.array_equal(np.asarray(a), np.asarray(b), equal_nan=True))
+    except TypeError:
+        return a == b
+
+
+def _merge_required_attrs(
+    attrs: list[PopulationAttribute],
+    problem: Problem,
+    provider: ComponentProvider,
+) -> list[PopulationAttribute]:
+    merged = list(attrs)
+    by_name = {attr.name: attr for attr in merged}
+    sources: list[PopulationAttribute] = []
+    if provider.algorithm is not None:
+        sources.extend(provider.algorithm.get_required_attrs(problem))
+    comparator = problem.comparator
+    if comparator is not None:
+        sources.extend(comparator.get_required_attrs(problem))
+    for attr in sources:
+        existing = by_name.get(attr.name)
+        if existing is None:
+            merged.append(attr)
+            by_name[attr.name] = attr
+            continue
+        if (
+            np.dtype(existing.dtype) != np.dtype(attr.dtype)
+            or existing.shape != attr.shape
+            or not _defaults_equal(existing.default, attr.default)
+        ):
+            raise ConfigurationError(
+                f"Conflicting PopulationAttribute definitions for {attr.name!r}: "
+                f"{existing} vs {attr}"
+            )
+    return merged
+
+
 class Initializer(ABC):
     """Abstract base for classes that set up the initial optimization context."""
 
@@ -135,13 +173,7 @@ class Initializer(ABC):
             PopulationAttribute("cv", float, (), default=0.0),
             PopulationAttribute("id", np.int64, (), default=-1),
         ]
-        if provider.algorithm is not None:
-            attrs_required = provider.algorithm.get_required_attrs(problem)
-            ex_names = {attr.name for attr in attrs}
-            for attr in attrs_required:
-                if attr.name not in ex_names:
-                    attrs.append(attr)
-        return attrs
+        return _merge_required_attrs(attrs, problem, provider)
 
     def _create_context(
         self,
@@ -214,11 +246,7 @@ class GenomeInitializer(Initializer):
             PopulationAttribute("cv", float, (), default=0.0),
             PopulationAttribute("id", np.int64, (), default=-1),
         ]
-        if provider.algorithm is not None:
-            required = provider.algorithm.get_required_attrs(problem)
-            names = {attr.name for attr in attrs}
-            attrs.extend(attr for attr in required if attr.name not in names)
-        return attrs
+        return _merge_required_attrs(attrs, problem, provider)
 
     def initialize(
         self, provider: ComponentProvider, problem: Problem
@@ -273,7 +301,7 @@ class GenomeInitializer(Initializer):
         ctx.count_fe(self.n_init_archive)
         provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
 
-        sorted_idx = problem.comparator.sort_population(archive)
+        sorted_idx = problem.comparator.rank_population(archive)
         archive_sorted = archive.extract(sorted_idx)
         archive.clear()
         archive._extend_internal(archive_sorted, preserve_ids=True)
@@ -300,6 +328,10 @@ class LHSInitializer(Initializer):
     def __init__(
         self, n_init_archive: int, n_init_population: int, seed: int | None = None
     ):
+        if n_init_archive < 0 or n_init_population < 0:
+            raise ValueError("initial sizes must be non-negative")
+        if n_init_population > n_init_archive:
+            raise ValueError("n_init_population cannot exceed n_init_archive")
         self.n_init_archive = n_init_archive
         self.n_init_population = n_init_population
         self.seed = seed
@@ -413,7 +445,7 @@ class LHSInitializer(Initializer):
 
         provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
 
-        sorted_idx = problem.comparator.sort_population(archive)
+        sorted_idx = problem.comparator.rank_population(archive)
         archive_sorted = archive.extract(sorted_idx)
         archive.clear()
         archive._extend_internal(archive_sorted, preserve_ids=True)
@@ -442,6 +474,10 @@ class RandomInitializer(Initializer):
     def __init__(
         self, n_init_archive: int, n_init_population: int, seed: int | None = None
     ):
+        if n_init_archive < 0 or n_init_population < 0:
+            raise ValueError("initial sizes must be non-negative")
+        if n_init_population > n_init_archive:
+            raise ValueError("n_init_population cannot exceed n_init_archive")
         self.n_init_archive = n_init_archive
         self.n_init_population = n_init_population
         self.seed = seed
@@ -552,7 +588,7 @@ class RandomInitializer(Initializer):
 
         provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
 
-        sorted_idx = problem.comparator.sort_population(archive)
+        sorted_idx = problem.comparator.rank_population(archive)
         archive_sorted = archive.extract(sorted_idx)
         archive.clear()
         archive._extend_internal(archive_sorted, preserve_ids=True)
@@ -581,6 +617,10 @@ class SobolInitializer(Initializer):
     def __init__(
         self, n_init_archive: int, n_init_population: int, seed: int | None = None
     ):
+        if n_init_archive < 0 or n_init_population < 0:
+            raise ValueError("initial sizes must be non-negative")
+        if n_init_population > n_init_archive:
+            raise ValueError("n_init_population cannot exceed n_init_archive")
         self.n_init_archive = n_init_archive
         self.n_init_population = n_init_population
         self.seed = seed
@@ -694,7 +734,7 @@ class SobolInitializer(Initializer):
 
         provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
 
-        sorted_idx = problem.comparator.sort_population(archive)
+        sorted_idx = problem.comparator.rank_population(archive)
         archive_sorted = archive.extract(sorted_idx)
         archive.clear()
         archive._extend_internal(archive_sorted, preserve_ids=True)
