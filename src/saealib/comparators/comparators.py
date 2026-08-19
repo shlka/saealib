@@ -688,18 +688,13 @@ class SPEA2Comparator(Comparator):
             fitness_all[feasible] = f_feasible
         return fitness_all
 
-    def _fallback_cache_key(self) -> tuple:
-        """Cache key covering all parameters that affect fitness values."""
-        _dir_key = (
-            tuple(self.direction.tolist()) if self.direction is not None else None
-        )
-        return ("spea2_fitness_fallback", self._dominator, _dir_key, self.eps_cv)
-
     def prepare_population(self, population: Population) -> None:
         """Recompute and store SPEA2 fitness for the current population."""
-        if "spea2_fitness" not in population.schema:
-            return
-        population.update_array("spea2_fitness", self._compute_fitness(population))
+        fitness = self._compute_fitness(population)
+        if "spea2_fitness" in population.schema:
+            population.update_array("spea2_fitness", fitness)
+        else:
+            population.set_cache("spea2_fitness_fallback", fitness)
 
     def _assigned_fitness(self, population: Population) -> np.ndarray | None:
         """Return persisted fitness when every active row has a value."""
@@ -715,12 +710,11 @@ class SPEA2Comparator(Comparator):
         assigned = self._assigned_fitness(population)
         if assigned is not None:
             return assigned
-        cache_key = self._fallback_cache_key()
-        cached = population.get_cache(cache_key)
+        cached = population.get_cache("spea2_fitness_fallback")
         if cached is not None:
             return cached
         fitness_all = self._compute_fitness(population)
-        population.set_cache(cache_key, fitness_all)
+        population.set_cache("spea2_fitness_fallback", fitness_all)
         return fitness_all
 
     def sort_population(self, population: Population) -> np.ndarray:

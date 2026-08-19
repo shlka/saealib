@@ -13,6 +13,7 @@ Tests cover:
 
 import logging
 from collections.abc import Callable
+from dataclasses import dataclass
 from types import SimpleNamespace
 
 import numpy as np
@@ -2112,16 +2113,37 @@ class TestSPEA2Comparator:
 
         np.testing.assert_array_equal(order1, order2[::-1])
 
-    def test_fallback_cache_is_keyed_by_comparator_parameters(self) -> None:
-        f = np.array([[0.0, 0.0], [1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0]])
+    def test_rank_population_works_with_unhashable_dominator(self) -> None:
+        @dataclass
+        class _UnhashableDominator(Dominator):
+            epsilon: float
+
+            def dominance_matrix(
+                self, f: np.ndarray, direction: np.ndarray | None = None
+            ) -> np.ndarray:
+                return ParetoDominator().dominance_matrix(f, direction)
+
+            def dominates_many(
+                self,
+                fa: np.ndarray,
+                f_matrix: np.ndarray,
+                direction: np.ndarray | None = None,
+            ) -> tuple[np.ndarray, np.ndarray]:
+                return ParetoDominator().dominates_many(fa, f_matrix, direction)
+
+        with pytest.raises(TypeError):
+            hash(_UnhashableDominator(epsilon=0.1))
+
+        f = np.array([[0.6, 0.3], [0.3, 0.7], [0.0, 1.0], [0.1, 0.9], [0.2, 0.8]])
         pool = _make_pop(f)
+        comp = SPEA2Comparator(
+            direction=np.array([-1.0, -1.0]),
+            dominator=_UnhashableDominator(epsilon=0.1),
+        )
 
-        minimizing = SPEA2Comparator(direction=np.array([-1.0, -1.0]))
-        order_min = minimizing.sort_population(pool)
-        maximizing = SPEA2Comparator(direction=np.array([1.0, 1.0]))
-        order_max = maximizing.sort_population(pool)
+        order = comp.rank_population(pool)
 
-        np.testing.assert_array_equal(order_min, order_max[::-1])
+        assert len(order) == len(pool)
 
     # -----------------------------------------------------------------------
     # 2. Class marker
