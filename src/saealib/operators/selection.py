@@ -382,7 +382,7 @@ class TruncationSelection(SurvivorSelection):
         ``comparator.compare_population``) are shuffled before truncating,
         matching pymoo's ``randomized_argsort`` treatment of the splitting
         front. When False (default), ties keep the order returned by
-        ``comparator.sort_population`` (deterministic).
+        ``comparator.rank_population`` (deterministic).
     """
 
     def __init__(self, randomize_ties: bool = False):
