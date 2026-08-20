@@ -371,11 +371,6 @@ class Optimizer:
                     self
                 ),
                 initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
-                async_max_pending=(
-                    None
-                    if self.async_evaluation_scheduler is None
-                    else self.async_evaluation_scheduler.max_pending
-                ),
             ),
         )
         self._executable_plan = plan

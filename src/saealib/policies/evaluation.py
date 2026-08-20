@@ -52,6 +52,10 @@ class EvaluationPlan:
         requests = tuple(self.requests)
         if not requests:
             raise ValidationError("an evaluation plan must contain a request")
+        if any(len(request.candidate_ids) == 0 for request in requests):
+            raise ValidationError(
+                "an evaluation plan request must contain at least one candidate"
+            )
         request_ids = [int(request.request_id) for request in requests]
         if len(request_ids) != len(set(request_ids)):
             raise ValidationError("an evaluation plan contains duplicate request IDs")

@@ -95,27 +95,48 @@ def _candidate_count(graph: ComponentGraph) -> int | None:
     return None
 
 
-def _selects_multiple(planner: object, candidate_count: int | None) -> bool:
-    """Return whether a known planner can select multiple unique candidates."""
+def _selects_multiple(
+    planner: object, candidate_count: int | None
+) -> Literal["single", "multiple", "unknown"]:
+    """Classify the statically known unique-candidate cardinality."""
     planner_name = type(planner).__name__
     if planner_name == "RepeatedEvaluation":
         # RepeatedEvaluation uses EvaluateAll().plan(), then replicates the
         # complete candidate batch.  Its unique-candidate count is therefore
         # the static candidate count, not the replicate count.
-        return candidate_count is None or candidate_count > 1
+        if candidate_count is None:
+            return "unknown"
+        if candidate_count > 1:
+            return "multiple"
+        if candidate_count == 1:
+            return "single"
+        return "unknown"
     if planner_name == "TopKEvaluation":
         k = getattr(planner, "k", None)
-        return isinstance(k, int) and not isinstance(k, bool) and k > 1
+        if not isinstance(k, int) or isinstance(k, bool):
+            return "unknown"
+        if k > 1:
+            return "multiple"
+        if k == 1:
+            return "single"
+        return "unknown"
     if planner_name == "RatioEvaluation":
         ratio = getattr(planner, "ratio", None)
         if not isinstance(ratio, (int, float)) or isinstance(ratio, bool):
-            return False
+            return "unknown"
         if candidate_count is None:
-            return ratio > 0.0
-        return max(1, int(ratio * candidate_count)) > 1
+            return "unknown"
+        selected_count = max(1, int(ratio * candidate_count))
+        return "multiple" if selected_count > 1 else "single"
     if planner_name == "EvaluateAll":
-        return candidate_count is None or candidate_count > 1
-    return False
+        if candidate_count is None:
+            return "unknown"
+        if candidate_count > 1:
+            return "multiple"
+        if candidate_count == 1:
+            return "single"
+        return "unknown"
+    return "unknown"
 
 
 class CORSNonSequentialEvaluationRule:
@@ -135,7 +156,8 @@ class CORSNonSequentialEvaluationRule:
         planners = _planner_nodes(context.graph)
         candidate_count = _candidate_count(context.graph)
         static_batch = any(
-            _selects_multiple(planner, candidate_count) for _, planner, _ in planners
+            _selects_multiple(planner, candidate_count) == "multiple"
+            for _, planner, _ in planners
         )
         surrogate_generation_nodes = _surrogate_generation_nodes(context.graph)
         surrogate_generation_cors = any(

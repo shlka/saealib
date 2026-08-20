@@ -7,6 +7,7 @@ from itertools import pairwise
 from typing import Any
 
 import numpy as np
+import pytest
 
 from saealib import (
     GA,
@@ -30,6 +31,7 @@ from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.core.compiler.cors_diagnostics import CORS_NONSEQUENTIAL_MESSAGE
 from saealib.core.state import PROPOSALS_CURRENT
+from saealib.exceptions import ValidationError
 from saealib.execution import (
     AsyncEvaluationScheduler,
     EvaluationHandle,
@@ -389,6 +391,16 @@ def test_repeated_evaluation_uses_unique_candidate_ids_for_batch_warning():
 
     assert state.decision_count == 1
     assert events == []
+
+
+def test_zero_candidate_top_k_plan_is_rejected_before_decision_count_advances():
+    state = _make_async_state().replace(scores=np.array([1.0], dtype=np.float64))
+    stage = EvaluationPlanStage(TopKEvaluation(0))
+
+    with pytest.raises(ValidationError, match="candidate"):
+        stage.execute(state)
+
+    assert state.decision_count == 0
 
 
 def test_async_sequential_cors_submission_does_not_warn():

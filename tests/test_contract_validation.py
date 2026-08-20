@@ -262,6 +262,24 @@ def test_cors_compiler_keeps_individual_based_single_candidate_clean() -> None:
     )
 
 
+def test_individual_based_default_ratio_compiler_is_clean() -> None:
+    """An unknown static ask count must not turn the default ratio into a warning."""
+    optimizer = _default_optimizer()
+    optimizer.set_acquisition(CORSDistance(search_pattern=(0.9, 0.0)))
+    # IndividualBasedStrategy supplies its standard RatioEvaluation; no planner
+    # override is used here.  At runtime this configuration evaluates one
+    # candidate, while AskStage intentionally does not expose a static count.
+    optimizer.set_strategy(IndividualBasedStrategy(evaluation_ratio=0.1))
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    assert not any(
+        diagnostic.code == "cors_nonsequential_evaluation"
+        for diagnostic in plan.diagnostics
+    )
+
+
 def test_cors_compiler_warns_for_generation_based_surrogate_cors() -> None:
     optimizer = _default_optimizer()
     optimizer.set_acquisition(CORSDistance(search_pattern=(0.9, 0.0)))

@@ -214,7 +214,7 @@ def _notify_cors_runtime_warning(
         for request in plan.requests
         for candidate_id in request.candidate_ids
     }
-    if overlap or len(candidate_ids) >= 2:
+    if overlap or len(candidate_ids) != 1:
         callback(len(candidate_ids), overlap)
 
 

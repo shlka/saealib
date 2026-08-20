@@ -253,16 +253,26 @@ class CORSDistance(PointwiseAcquisition):
                 "directly with no ctx."
             )
         beta = self.search_pattern[ctx.decision_count % len(self.search_pattern)]
+        reference = self.compute_reference(archive, rng=ctx.rng)
         return _CORSReference(
-            evaluated_x=self.compute_reference(archive, rng=ctx.rng),
+            evaluated_x=reference.evaluated_x,
             beta=beta,
         )
 
     def compute_reference(
         self, archive: Archive, rng: np.random.Generator | None = None
-    ) -> np.ndarray:
-        """Return the archive's evaluated design vectors for the distance constraint."""
-        return archive.x
+    ) -> _CORSReference:
+        """Return a reference usable directly by :meth:`score`.
+
+        ``compute_reference`` has no optimization context from which to resolve
+        the scheduled beta.  Direct callers therefore receive the first search
+        pattern entry; ``prepare`` replaces that beta with the entry selected by
+        ``ctx.decision_count`` while reusing the evaluated design vectors.
+        """
+        return _CORSReference(
+            evaluated_x=archive.x,
+            beta=self.search_pattern[0],
+        )
 
     def score(
         self,
@@ -281,9 +291,8 @@ class CORSDistance(PointwiseAcquisition):
             shape: (n_samples, n_features), aligned row-for-row with
             prediction.value.
         reference : Any
-            The reference must be the ``_CORSReference`` returned by
-            :meth:`prepare`, not the raw array returned by
-            :meth:`compute_reference`.
+            The ``_CORSReference`` returned by :meth:`compute_reference` or
+            :meth:`prepare`.
 
         Returns
         -------

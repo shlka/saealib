@@ -490,7 +490,19 @@ class TestCORSDistance:
         arc = _archive_x([0.0, 5.0, 10.0])
         af = CORSDistance(delta=10.0)
         ref = af.compute_reference(arc)
-        np.testing.assert_array_equal(np.sort(ref.ravel()), [0.0, 5.0, 10.0])
+        np.testing.assert_array_equal(
+            np.sort(ref.evaluated_x.ravel()), [0.0, 5.0, 10.0]
+        )
+
+    def test_compute_reference_can_be_passed_directly_to_score(self) -> None:
+        arc = _archive_x([0.0, 5.0, 10.0])
+        pred = _pred_x(value=[[5.0]], x=[[100.0]])
+        af = CORSDistance(delta=10.0)
+
+        ref = af.compute_reference(arc)
+        scores = af.score(pred, ref)
+
+        assert scores[0] == pytest.approx(5.0)
 
     def test_far_candidate_scores_by_predicted_mean(self) -> None:
         """A candidate far from every evaluated point is unaffected by the constraint."""  # noqa: E501
