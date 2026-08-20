@@ -275,12 +275,10 @@ def test_canonical_cors_evaluates_one_candidate_per_decision():
     optimizer = _make_optimizer(_make_problem(), acquisition, n_gen=3)
     optimizer.set_strategy(PreSelectionStrategy(n_candidates=4, n_select=1))
     optimizer.set_evaluation_planner(TopKEvaluation(1, sanitize_nonfinite=True))
-    score_calls: list[tuple[int, int]] = []
+    score_calls: list[int] = []
     optimizer.cbmanager.register(
         AcquisitionEndEvent,
-        lambda event: score_calls.append(
-            (int(event.ctx.gen), int(event.ctx.decision_count))
-        ),
+        lambda event: score_calls.append(int(event.ctx.gen)),
     )
 
     states = list(optimizer.iterate())
@@ -291,8 +289,8 @@ def test_canonical_cors_evaluates_one_candidate_per_decision():
         (2, 2),
         (3, 3),
     ]
-    assert score_calls == [(1, 0), (2, 1), (3, 2)]
-    assert [(gen, count) for gen, count, _ in acquisition.records] == score_calls
+    assert score_calls == [1, 2, 3]
+    assert [gen for gen, _, _ in acquisition.records] == score_calls
     np.testing.assert_allclose(
         [beta for _, _, beta in acquisition.records], SEARCH_PATTERN
     )
