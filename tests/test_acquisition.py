@@ -539,6 +539,16 @@ class TestCORSDistance:
 
         assert betas == [0.95, 0.25, 0.05, 0.03, 0.0, 0.95, 0.25]
 
+    @pytest.mark.parametrize("archive_size", [23, 25])
+    def test_first_beta_does_not_depend_on_archive_size(
+        self, archive_size: int
+    ) -> None:
+        """A-4 starts at SP1's first beta regardless of initial archive size."""
+        arc = _archive_x(np.arange(archive_size, dtype=float))
+        af = CORSDistance()
+
+        assert af.prepare(arc, _decision_ctx(0)).beta == pytest.approx(0.95)
+
     def test_score_is_read_only_for_prepared_beta(self) -> None:
         """Repeated score() calls do not advance the prepared beta."""
         arc = _archive_x([0.0])
@@ -623,6 +633,98 @@ class TestCORSDistance:
         prepared = af.prepare(arc, _decision_ctx(0))
         scores = af.score(pred, reference=prepared)
         assert scores[0] == pytest.approx(-3.0)
+
+    def test_beta_one_keeps_unique_maximin_candidate_at_boundary(self) -> None:
+        """At beta=1, the unique maximin candidate passes the strict inequality."""
+        arc = _archive_x([0.0, 10.0])
+        pred = _pred_x(value=[[1.0], [2.0], [3.0]], x=[[1.0], [5.0], [20.0]])
+        af = CORSDistance(search_pattern=(1.0,))
+        prepared = af.prepare(arc, _decision_ctx(0))
+
+        scores = af.score(pred, reference=prepared)
+
+        # Candidate distances are [1, 5, 10], so Delta_i=10 and the
+        # beta=1 threshold is 10. Equality is feasible; only the maximin
+        # candidate remains finite.
+        np.testing.assert_array_equal(scores, [-np.inf, -np.inf, 3.0])
+        assert np.count_nonzero(np.isfinite(scores)) == 1
+
+    def test_delta_none_keeps_at_least_one_candidate_feasible_at_beta_095(self) -> None:
+        """The pool-derived maximin scale prevents an impossible beta=.95 constraint."""
+        arc = _archive_x([0.0, 10.0])
+        pred = _pred_x(value=[[1.0], [2.0], [3.0]], x=[[1.0], [5.0], [20.0]])
+        af = CORSDistance(search_pattern=(0.95, 0.0))
+        prepared = af.prepare(arc, _decision_ctx(0))
+
+        scores = af.score(pred, reference=prepared)
+
+        assert np.count_nonzero(np.isfinite(scores)) >= 1
+        assert scores[2] == pytest.approx(3.0)
+
+    def test_delta_none_uses_candidate_pool_maximin_distance(self) -> None:
+        """The threshold uses max_c min_j ||candidate_c - evaluated_j||."""
+        arc = _archive_x([0.0, 10.0])
+        pred = _pred_x(value=[[1.0], [2.0], [3.0]], x=[[1.0], [5.0], [20.0]])
+        af = CORSDistance(search_pattern=(0.5, 0.0))
+        prepared = af.prepare(arc, _decision_ctx(0))
+
+        scores = af.score(pred, reference=prepared)
+
+        # Candidate distances are [1, 5, 10], so Delta_i=10 and the
+        # beta=.5 threshold is 5. Equality is feasible by Eq. (1).
+        np.testing.assert_array_equal(scores, [-np.inf, 2.0, 3.0])
+
+    def test_explicit_delta_preserves_fixed_distance_scale(self) -> None:
+        """An explicit delta keeps the legacy fixed-threshold behavior."""
+        arc = _archive_x([0.0, 10.0])
+        pred = _pred_x(value=[[1.0], [2.0]], x=[[5.0], [20.0]])
+        af = CORSDistance(delta=5.0, search_pattern=(0.95, 0.0))
+        prepared = af.prepare(arc, _decision_ctx(0))
+
+        scores = af.score(pred, reference=prepared)
+
+        # Fixed delta gives threshold=.95*5=4.75; both candidates pass.
+        np.testing.assert_array_equal(scores, [1.0, 2.0])
+
+    def test_delta_none_reflects_pool_bias_in_the_approximation(self) -> None:
+        """A pool concentrated near the archive yields a smaller Delta_i."""
+        arc = _archive_x([0.0, 10.0])
+        pred = _pred_x(
+            value=[[1.0], [2.0], [3.0], [4.0]],
+            x=[[0.1], [0.2], [9.8], [9.9]],
+        )
+        af = CORSDistance(search_pattern=(0.95, 0.0))
+        prepared = af.prepare(arc, _decision_ctx(0))
+
+        scores = af.score(pred, reference=prepared)
+
+        # Pool maximin distance is .2, so beta=.95 permits the two .2-away
+        # points while excluding the two .1-away points.
+        np.testing.assert_array_equal(scores, [-np.inf, 2.0, 3.0, -np.inf])
+
+    @pytest.mark.parametrize("delta", [0.0, -1.0, float("nan"), float("inf")])
+    def test_rejects_non_positive_or_non_finite_delta(self, delta: float) -> None:
+        with pytest.raises(ValidationError, match="delta"):
+            CORSDistance(delta=delta)
+
+    @pytest.mark.parametrize(
+        "search_pattern",
+        [(1.1,), (-0.1,), (float("nan"),), (float("inf"),)],
+    )
+    def test_search_pattern_rejects_nonfinite_or_out_of_range_values(
+        self, search_pattern: tuple[float, ...]
+    ) -> None:
+        with pytest.raises(ValidationError, match="search_pattern"):
+            CORSDistance(search_pattern=search_pattern)
+
+    def test_search_pattern_rejects_empty_tuple(self) -> None:
+        with pytest.raises(ValidationError, match="search_pattern"):
+            CORSDistance(search_pattern=())
+
+    def test_search_pattern_accepts_all_zero_pattern(self) -> None:
+        af = CORSDistance(search_pattern=(0.0,))
+
+        assert af.search_pattern == (0.0,)
 
 
 # ===========================================================================

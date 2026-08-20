@@ -459,9 +459,6 @@ _RECIPES: dict[str, Callable[[], Any]] = {
     "saealib.surrogate.switching.ManagerSwitcher": _recipe_manager_switcher,
     "saealib.surrogate.switching.StrategySwitcher": _recipe_strategy_switcher,
     "saealib.surrogate.torch_surrogate.TorchSurrogate": _recipe_torch_surrogate,
-    _qualified_name(_REGISTRY["CORSDistance"]): lambda: build(
-        {"type": "CORSDistance", "params": {"delta": 10.0}}
-    ),
     _qualified_name(_REGISTRY["CrossoverBLXAlpha"]): lambda: build(
         {
             "type": "CrossoverBLXAlpha",
