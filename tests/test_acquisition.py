@@ -8,7 +8,8 @@ Tests cover:
 - LowerConfidenceBound: negated LCB, kappa parameter, requires uncertainty
 - LowerConfidenceBound beta_schedule: round-index-based kappa, gp_ucb_beta_schedule
 - ProbabilityOfFeasibility: P(g<=0), requires uncertainty
-- CORSDistance: distance-constrained mean prediction, beta_i cycling
+- CORSDistance: distance-constrained mean prediction, decision_count-based beta_i
+  cycling
 - AcquisitionFunction: abstract base class cannot be instantiated
 - direction-aware minimize-space conversion for EI/LCB
 """
@@ -493,51 +494,122 @@ class TestCORSDistance:
 
     def test_far_candidate_scores_by_predicted_mean(self) -> None:
         """A candidate far from every evaluated point is unaffected by the constraint."""  # noqa: E501
-        reference = _archive_x([0.0, 1.0, 2.0]).x
+        arc = _archive_x([0.0, 1.0, 2.0])
         pred = _pred_x(value=[[5.0]], x=[[100.0]])
-        scores = CORSDistance(delta=1.0).score(pred, reference=reference)
+        af = CORSDistance(delta=1.0)
+        prepared = af.prepare(arc, _decision_ctx(0))
+        scores = af.score(pred, reference=prepared)
         assert scores[0] == pytest.approx(5.0)
 
     def test_close_candidate_gets_worst_score(self) -> None:
         """A candidate violating beta_1 * delta gets -inf, never the predicted mean."""
-        reference = _archive_x([0.0, 5.0, 10.0]).x
-        # First score() call uses beta_1 = 0.95 (default SP1); threshold = 9.5.
+        arc = _archive_x([0.0, 5.0, 10.0])
+        # decision_count=0 uses beta_1 = 0.95 (default SP1); threshold = 9.5.
         pred = _pred_x(value=[[5.0]], x=[[0.05]])
-        scores = CORSDistance(delta=10.0).score(pred, reference=reference)
+        af = CORSDistance(delta=10.0)
+        prepared = af.prepare(arc, _decision_ctx(0))
+        scores = af.score(pred, reference=prepared)
         assert scores[0] == -np.inf
 
     def test_beta_cycles_across_calls(self) -> None:
-        """beta_i cycles through search_pattern, advancing once per score() call."""
-        reference = _archive_x([0.0]).x
+        """beta_i cycles through search_pattern, advancing once per prepare() call."""
+        arc = _archive_x([0.0])
         pred = _pred_x(value=[[5.0]], x=[[0.05]])
         af = CORSDistance(delta=10.0, search_pattern=(1.0, 0.0))
 
-        # Call 1: beta_1 = 1.0 -> threshold = 10.0 -> dist 0.05 violates.
-        assert af.score(pred, reference=reference)[0] == -np.inf
-        # Call 2: beta_2 = 0.0 -> threshold = 0.0 -> Eq. (1) trivially satisfied.
-        assert af.score(pred, reference=reference)[0] == pytest.approx(5.0)
-        # Call 3: wraps back to beta_1 = 1.0 -> violates again.
-        assert af.score(pred, reference=reference)[0] == -np.inf
+        # decision_count=0: beta_1 = 1.0 -> threshold = 10.0 -> violates.
+        prepared = af.prepare(arc, _decision_ctx(0))
+        assert af.score(pred, reference=prepared)[0] == -np.inf
+        # decision_count=1: beta_2 = 0.0 -> Eq. (1) is trivially satisfied.
+        prepared = af.prepare(arc, _decision_ctx(1))
+        assert af.score(pred, reference=prepared)[0] == pytest.approx(5.0)
+        # decision_count=2: wraps back to beta_1 = 1.0 -> violates again.
+        prepared = af.prepare(arc, _decision_ctx(2))
+        assert af.score(pred, reference=prepared)[0] == -np.inf
+
+    def test_prepare_cycles_beta_from_decision_count(self) -> None:
+        """prepare() derives the SP1 beta from a zero-based decision_count."""
+        arc = _archive_x([0.0])
+        af = CORSDistance(delta=10.0)
+
+        betas = [
+            af.prepare(arc, _decision_ctx(decision_count)).beta
+            for decision_count in range(7)
+        ]
+
+        assert betas == [0.95, 0.25, 0.05, 0.03, 0.0, 0.95, 0.25]
+
+    def test_score_is_read_only_for_prepared_beta(self) -> None:
+        """Repeated score() calls do not advance the prepared beta."""
+        arc = _archive_x([0.0])
+        pred = _pred_x(value=[[5.0]], x=[[0.05]])
+        af = CORSDistance(delta=10.0, search_pattern=(1.0, 0.0))
+        prepared = af.prepare(arc, _decision_ctx(0))
+
+        first = af.score(pred, reference=prepared)
+        second = af.score(pred, reference=prepared)
+
+        assert first[0] == -np.inf
+        np.testing.assert_array_equal(second, first)
+        assert prepared.beta == 1.0
+
+    def test_evaluate_without_ctx_raises_validation_error(self) -> None:
+        """A beta decision cannot be made when evaluate() has no context."""
+        arc = _archive_x([0.0])
+        pred = _pred_x(value=[[5.0]], x=[[0.05]])
+        af = CORSDistance(delta=10.0)
+
+        with pytest.raises(ValidationError, match="decision_count"):
+            af.evaluate(np.array([[0.05]]), pred, arc)
+
+    def test_decision_count_is_a_numeric_noop_for_legacy_cycle_index(self) -> None:
+        """A-4 matches the old beta index ``_cycle - 1`` for each decision."""
+        arc = _archive_x([0.0])
+        pattern = (0.95, 0.25, 0.05, 0.03, 0.0)
+        af = CORSDistance(delta=10.0, search_pattern=pattern)
+
+        # The measured max_fe=40/evaluation_ratio=0.2 run has decision_count
+        # values 0..3 for its four acquisition decisions.
+        for decision_count in range(4):
+            prepared = af.prepare(arc, _decision_ctx(decision_count))
+            legacy_cycle = decision_count + 1
+            legacy_beta = pattern[(legacy_cycle - 1) % len(pattern)]
+            assert prepared.beta == legacy_beta
+
+    def test_default_search_pattern_is_cors_sp1(self) -> None:
+        """The default search pattern remains Regis & Shoemaker's SP1."""
+        assert CORSDistance(delta=1.0).search_pattern == (
+            0.95,
+            0.25,
+            0.05,
+            0.03,
+            0.0,
+        )
 
     def test_beta_zero_never_excludes(self) -> None:
         """A search_pattern of all zeros never enforces the distance constraint."""
-        reference = _archive_x([0.0]).x
+        arc = _archive_x([0.0])
         pred = _pred_x(value=[[5.0]], x=[[0.0]])
         af = CORSDistance(delta=10.0, search_pattern=(0.0,))
+        prepared = af.prepare(arc, _decision_ctx(0))
         for _ in range(3):
-            assert af.score(pred, reference=reference)[0] == pytest.approx(5.0)
+            assert af.score(pred, reference=prepared)[0] == pytest.approx(5.0)
 
     def test_empty_archive_no_constraint(self) -> None:
-        reference = _archive_x([]).x
+        arc = _archive_x([])
         pred = _pred_x(value=[[5.0]], x=[[0.0]])
-        scores = CORSDistance(delta=10.0).score(pred, reference=reference)
+        af = CORSDistance(delta=10.0)
+        prepared = af.prepare(arc, _decision_ctx(0))
+        scores = af.score(pred, reference=prepared)
         assert scores[0] == pytest.approx(5.0)
 
     def test_missing_x_raises(self) -> None:
-        reference = _archive_x([0.0]).x
+        arc = _archive_x([0.0])
         pred = _pred(value=[[5.0]])
+        af = CORSDistance(delta=10.0)
+        prepared = af.prepare(arc, _decision_ctx(0))
         with pytest.raises(ValueError, match="requires prediction"):
-            CORSDistance(delta=10.0).score(pred, reference=reference)
+            af.score(pred, reference=prepared)
 
     def test_x_row_mismatch_raises(self) -> None:
         with pytest.raises(ValidationError, match="shape"):
@@ -545,11 +617,11 @@ class TestCORSDistance:
 
     def test_direction_scalarizes_base_score(self) -> None:
         """The unconstrained base score respects direction, like MeanPrediction."""
-        reference = _archive_x([0.0, 1.0]).x
+        arc = _archive_x([0.0, 1.0])
         pred = _pred_x(value=[[3.0]], x=[[100.0]])
-        scores = CORSDistance(delta=1.0, direction=np.array([-1.0])).score(
-            pred, reference=reference
-        )
+        af = CORSDistance(delta=1.0, direction=np.array([-1.0]))
+        prepared = af.prepare(arc, _decision_ctx(0))
+        scores = af.score(pred, reference=prepared)
         assert scores[0] == pytest.approx(-3.0)
 
 

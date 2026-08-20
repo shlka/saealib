@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from scipy.spatial import distance
 
 from saealib.acquisition.base import PointwiseAcquisition
+from saealib.exceptions import ValidationError
 from saealib.registry import register
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
+    from saealib.context import OptimizationState
     from saealib.population import Archive
 
 
@@ -88,6 +91,14 @@ class MeanPrediction(PointwiseAcquisition):
         return m[:, 0]  # single-objective default
 
 
+@dataclass(frozen=True)
+class _CORSReference:
+    """Prepared archive reference and beta for one CORS decision."""
+
+    evaluated_x: np.ndarray
+    beta: float
+
+
 @register()
 class CORSDistance(PointwiseAcquisition):
     """
@@ -106,8 +117,13 @@ class CORSDistance(PointwiseAcquisition):
     cycles through ``search_pattern``: the parameters are set by performing
     cycles of ``N + 1`` iterations, with ``beta_i = beta_{i + N + 1}`` for
     all ``i >= 1`` and ``1 >= beta_1 >= ... >= beta_{N+1} = 0`` in the cited work.
-    One entry of ``search_pattern`` is consumed each time :meth:`score` is
-    called, so the first call uses ``search_pattern[0]``.
+    ``prepare()`` resolves one entry of ``search_pattern`` for each decision
+    from ``ctx.decision_count`` using a zero-based index, so decision zero
+    uses ``search_pattern[0]``. This differs from
+    :class:`~saealib.acquisition.lcb.LowerConfidenceBound`, whose scheduled
+    parameter uses the same field as ``t = ctx.decision_count + 1`` (one-based).
+    A real context is therefore required when ``evaluate()`` prepares a CORS
+    reference; direct ``score()`` calls must provide that prepared reference.
 
     Regis & Shoemaker (2005) define ``Delta_i``  as the maximin
     distance of any point in the feasible domain D from the previously
@@ -168,7 +184,42 @@ class CORSDistance(PointwiseAcquisition):
         self.search_pattern = tuple(search_pattern)
         self.weights = weights
         self.direction = direction
-        self._cycle = 0
+
+    def prepare(self, archive: Archive, ctx: OptimizationState | None = None) -> Any:
+        """
+        Prepare the evaluated points and beta for one decision.
+
+        CORS uses ``ctx.decision_count`` directly as a zero-based index into
+        ``search_pattern``. In contrast, the scheduled parameter in
+        :class:`~saealib.acquisition.lcb.LowerConfidenceBound` uses
+        ``ctx.decision_count + 1`` as its one-based round index. Keeping the
+        offset distinction here makes the CORS phase start at SP1's first
+        entry when ``decision_count == 0``.
+
+        Returns
+        -------
+        _CORSReference
+            The archive's evaluated design vectors together with the beta
+            selected for this decision.
+
+        Raises
+        ------
+        ValidationError
+            If ``ctx`` is ``None``. A decision count is required to resolve
+            the beta; call ``evaluate()`` with a real context rather than
+            calling ``score()`` directly without a prepared reference.
+        """
+        if ctx is None:
+            raise ValidationError(
+                "CORSDistance.search_pattern requires ctx.decision_count; "
+                "call evaluate() with a real OptimizationState, not score() "
+                "directly with no ctx."
+            )
+        beta = self.search_pattern[ctx.decision_count % len(self.search_pattern)]
+        return _CORSReference(
+            evaluated_x=self.compute_reference(archive, rng=ctx.rng),
+            beta=beta,
+        )
 
     def compute_reference(
         self, archive: Archive, rng: np.random.Generator | None = None
@@ -195,6 +246,9 @@ class CORSDistance(PointwiseAcquisition):
         reference : Any
             Evaluated design vectors returned by ``compute_reference``.
             shape: (n_evaluated, n_features).
+            The reference must be the ``_CORSReference`` returned by
+            :meth:`prepare`, not the raw array returned by
+            :meth:`compute_reference`.
 
         Returns
         -------
@@ -208,7 +262,14 @@ class CORSDistance(PointwiseAcquisition):
         ValueError
             If ``prediction.x`` is missing or its row count does not
             match ``prediction.value``.
+        ValidationError
+            If ``reference`` was not prepared with :meth:`prepare`.
         """
+        if not isinstance(reference, _CORSReference):
+            raise ValidationError(
+                "CORSDistance.score() requires a prepare()-resolved reference; "
+                "call evaluate() with a real ctx, not score() directly."
+            )
         m = prediction.value  # (n_samples, n_obj)
         if self.direction is not None:
             base = m @ np.asarray(self.direction)  # (n_samples,)
@@ -218,13 +279,11 @@ class CORSDistance(PointwiseAcquisition):
             base = m[:, 0]  # single-objective default
         scores = np.array(base, dtype=float, copy=True)  # never mutate prediction.value
 
-        beta = self.search_pattern[self._cycle % len(self.search_pattern)]
-        self._cycle += 1
-        threshold = beta * self.delta
+        threshold = reference.beta * self.delta
 
         evaluated_x = (
-            np.asarray(reference, dtype=float)
-            if reference is not None
+            np.asarray(reference.evaluated_x, dtype=float)
+            if reference.evaluated_x is not None
             else np.empty((0, 0))
         )
         if threshold <= 0 or evaluated_x.shape[0] == 0:
