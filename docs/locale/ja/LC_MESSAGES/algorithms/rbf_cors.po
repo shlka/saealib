@@ -382,10 +382,9 @@ msgid ""
 "its thin-plate-spline-plus-linear-polynomial RBF configuration.  "
 "`delta=None` is explicit to show the paper-inspired candidate-pool "
 "approximation; it is also the `CORSDistance` default.  The 40-FE budget "
-"keeps a documentation example quick (the final batch can make the "
-"observed `fe` slightly larger than the limit); use a larger budget for an"
-" experiment rather than treating this as a benchmark."
-msgstr "次は実行可能なスモーク例です。原論文のSP1と、薄板スプラインおよび線形多項式を組み合わせたRBF構成を使います。`delta=None`を明示して、論文に基づく候補プール近似を示します。これは`CORSDistance`の既定値でもあります。40回のFE予算によりドキュメント例の実行時間を短くしています（最後のバッチにより観測される`fe`が上限をわずかに超える場合があります）。ベンチマークとして扱うのではなく、実験にはより大きな予算を使ってください。"
+"keeps a documentation example quick; use a larger budget for an experiment"
+" rather than treating this as a benchmark."
+msgstr "次は実行可能なスモーク例です。原論文のSP1と、薄板スプラインおよび線形多項式を組み合わせたRBF構成を使います。`delta=None`を明示して、論文に基づく候補プール近似を示します。これは`CORSDistance`の既定値でもあります。40回のFE予算によりドキュメント例の実行時間を短くしています。ベンチマークとして扱うのではなく、実験にはより大きな予算を使ってください。"
 
 #: ../../algorithms/rbf_cors.md:239
 msgid ""

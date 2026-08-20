@@ -13,9 +13,9 @@ from saealib.core.compiler.diagnostics import (
 from saealib.core.compiler.graph import ComponentGraph
 
 CORS_NONSEQUENTIAL_MESSAGE = (
-    "CORSDistance is used with an evaluation configuration that may select "
-    "multiple candidates per decision. This configuration is supported, but "
-    "uses one beta value for the whole decision and does not reproduce the "
+    "CORSDistance is used with non-sequential evaluation semantics: multiple "
+    "candidates may be evaluated in one decision, or multiple decisions may "
+    "overlap. This configuration is supported, but does not reproduce the "
     "sequential CORS procedure."
 )
 

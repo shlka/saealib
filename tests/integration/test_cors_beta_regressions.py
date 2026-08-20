@@ -476,7 +476,8 @@ def test_optimizer_emits_one_runtime_warning_for_a_true_evaluation_batch():
     cors_warnings = [
         item
         for item in caught
-        if "CORSDistance is used with an evaluation configuration" in str(item.message)
+        if "CORSDistance is used with non-sequential evaluation semantics"
+        in str(item.message)
     ]
     assert len(cors_warnings) == 1
     assert evaluated_batch_sizes == [2, 2]
@@ -506,6 +507,7 @@ def test_nested_composite_cors_warns_for_opaque_runtime_batch():
     cors_warnings = [
         item
         for item in caught
-        if "CORSDistance is used with an evaluation configuration" in str(item.message)
+        if "CORSDistance is used with non-sequential evaluation semantics"
+        in str(item.message)
     ]
     assert len(cors_warnings) == 1

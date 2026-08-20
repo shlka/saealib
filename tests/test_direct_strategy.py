@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import Any, cast
 
 import numpy as np
@@ -17,6 +18,7 @@ from saealib import (
     TruncationSelection,
     max_gen,
 )
+from saealib.acquisition.mean import CORSDistance
 from saealib.callback import CallbackManager
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
@@ -183,6 +185,29 @@ def test_minimize_without_surrogate_manager():
     assert ctx is not None
     assert ctx.gen == 5
     assert ctx.fe > 0
+
+
+def test_direct_strategy_does_not_warn_for_unused_cors_acquisition():
+    optimizer = (
+        Optimizer(_make_problem())
+        .set_initializer(LHSInitializer(n_init_archive=4, n_init_population=4, seed=0))
+        .set_algorithm(_make_ga())
+        .set_acquisition(CORSDistance())
+        .set_strategy(DirectStrategy(n_offspring=4))
+        .set_termination(Termination(max_gen(1)))
+    )
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        optimizer.run()
+
+    cors_warnings = [
+        item
+        for item in caught
+        if "CORSDistance is used with non-sequential evaluation semantics"
+        in str(item.message)
+    ]
+    assert cors_warnings == []
 
 
 def test_importable_from_top_level():

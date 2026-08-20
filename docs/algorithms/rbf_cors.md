@@ -172,8 +172,7 @@ The following is a runnable smoke example.  It uses the paper's SP1 and its
 thin-plate-spline-plus-linear-polynomial RBF configuration.  `delta=None` is
 explicit to show the paper-inspired candidate-pool approximation; it is also
 the `CORSDistance` default.  The 40-FE budget keeps a documentation example
-quick (the final batch can make the observed `fe` slightly larger than the
-limit); use a larger budget for an experiment rather than treating this as a
+quick; use a larger budget for an experiment rather than treating this as a
 benchmark.
 
 ```python

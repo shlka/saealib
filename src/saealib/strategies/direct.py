@@ -65,10 +65,7 @@ class DirectStrategy(OptimizationStrategy):
         if feedback_builder is None:
             feedback_builder = self.feedback_builder
         evaluation_tail = [
-            EvaluationPlanStage(
-                evaluation_planner,
-                cors_runtime_warning=getattr(provider, "_cors_runtime_warning", None),
-            ),
+            EvaluationPlanStage(evaluation_planner),
             EvaluationSubmitStage(provider.evaluator),
             EvaluationCollectStage(provider.evaluator),
             EvaluationApplyStage(),
