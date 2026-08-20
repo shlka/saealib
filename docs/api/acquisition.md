@@ -111,13 +111,15 @@ source's sequential CORS procedure.
 
 `CORSDistance.requires_sequential_decisions` is compiler metadata for this
 semantic distinction.  The compiler emits the `cors_nonsequential_evaluation`
-warning when a batch or overlapping asynchronous configuration is statically
-visible.  A custom planner is checked at runtime by unique candidate ID, and a
-runtime warning is emitted once per optimizer runtime when it selects multiple
-distinct candidates or when distinct asynchronous decisions actually overlap.
-Repeated evaluations of one candidate do not trigger the batch warning.
-Configuring an asynchronous scheduler alone does not trigger a warning;
-`max_pending=1` is the source-faithful boundary.
+warning in either of two statically detectable cases: a planner statically
+selects multiple distinct candidates for one decision, or `CORSDistance` is in a
+`GenerationBasedStrategy` surrogate-only region.  A custom planner is checked
+at runtime by unique candidate ID, and a runtime warning is emitted once per
+optimizer execution when it selects multiple distinct candidates or when distinct
+asynchronous decisions actually overlap.  Repeated evaluations of one candidate
+do not trigger the batch warning.  Scheduler capacity alone does not produce a
+compiler warning, because most strategies do not refill while an earlier
+decision is pending.  `max_pending=1` is the source-faithful boundary.
 
 The beta phase starts at `search_pattern[0]` when `ctx.decision_count == 0` and
 `CORSDistance` has been used continuously from the beginning of the run.  If a

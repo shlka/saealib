@@ -13,8 +13,9 @@ from saealib.core.compiler.diagnostics import (
 from saealib.core.compiler.graph import ComponentGraph
 
 CORS_NONSEQUENTIAL_MESSAGE = (
-    "CORSDistance is used with non-sequential evaluation semantics: multiple "
-    "candidates may be evaluated in one decision, or multiple decisions may "
+    "CORSDistance is used outside the source-faithful sequential one-candidate "
+    "evaluation path. The CORS score may not directly determine the true-evaluated "
+    "point, multiple candidates may share one decision, or distinct decisions may "
     "overlap. This configuration is supported, but does not reproduce the "
     "sequential CORS procedure."
 )
@@ -156,8 +157,9 @@ class CORSNonSequentialEvaluationRule:
                     path=ContractPath(components=(acquisition_id,)),
                     related=related,
                     resolutions=(
-                        "Use sequential, one-candidate decisions, or accept the "
-                        "supported non-sequential extension.",
+                        "Use a configuration where CORSDistance directly selects one "
+                        "true-evaluated candidate per sequential decision, or accept "
+                        "the supported extension.",
                     ),
                 ),
             )

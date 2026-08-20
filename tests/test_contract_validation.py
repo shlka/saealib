@@ -222,14 +222,16 @@ def test_cors_compiler_warns_for_static_multi_candidate_top_k() -> None:
     assert diagnostics[0].severity is Severity.WARNING
     assert (
         diagnostics[0].message
-        == "CORSDistance is used with non-sequential evaluation semantics: multiple "
-        "candidates may be evaluated in one decision, or multiple decisions may "
+        == "CORSDistance is used outside the source-faithful sequential one-candidate "
+        "evaluation path. The CORS score may not directly determine the true-evaluated "
+        "point, multiple candidates may share one decision, or distinct decisions may "
         "overlap. This configuration is supported, but does not reproduce the "
         "sequential CORS procedure."
     )
     assert diagnostics[0].resolutions == (
-        "Use sequential, one-candidate decisions, or accept the supported "
-        "non-sequential extension.",
+        "Use a configuration where CORSDistance directly selects one "
+        "true-evaluated candidate per sequential decision, or accept the "
+        "supported extension.",
     )
 
 

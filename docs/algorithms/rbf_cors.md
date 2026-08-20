@@ -101,18 +101,19 @@ true evaluation for each decision.
 true objective in one `EvaluationPlan`.  `CORSDistance` prepares one beta for
 that decision, and the runtime applies the same beta to every candidate in the
 plan.  This is a supported batch extension, not the source's sequential CORS
-procedure.  The compiler emits a `cors_nonsequential_evaluation` warning when
-this configuration is statically visible; a custom planner is checked at
-runtime by counting distinct candidate IDs, and the warning is emitted once per
-optimizer runtime.
+procedure.  The compiler emits a `cors_nonsequential_evaluation` warning in
+either of two statically detectable cases: a planner statically selects multiple
+distinct candidates for one decision, or `CORSDistance` is in a
+`GenerationBasedStrategy` surrogate-only region.  A custom planner is checked
+at runtime by counting distinct candidate IDs, and the warning is emitted once
+per optimizer execution.
 
 Repeated evaluations of one candidate do not count as a multi-candidate batch,
-because the runtime compares unique candidate IDs.  The runtime does not warn
-merely because an asynchronous scheduler is configured.  `max_pending=1`
-keeps the source-faithful sequential boundary.  A larger capacity receives a
-compiler warning when statically configured, while a runtime warning for
-asynchronous non-sequential behavior requires actual overlap between distinct
-decisions.
+because the runtime compares unique candidate IDs.  Scheduler capacity alone
+does not produce a compiler warning, because most strategies do not refill while
+an earlier decision is pending.  Runtime diagnostics are emitted when distinct
+decisions actually overlap.  `max_pending=1` keeps the source-faithful
+sequential boundary.
 
 The beta index is `ctx.decision_count % len(search_pattern)`.  A
 `decision_count` that starts at zero and remains paired with `CORSDistance`
@@ -255,6 +256,10 @@ matches the source's sequential decision structure.  `PreSelectionStrategy`
 with `n_select=1` and `TopKEvaluation(1)` express that configuration while
 leaving candidate generation batched.
 
+`GenerationBasedStrategy` is non-canonical when `CORSDistance` is in its
+surrogate-only region, because the CORS score does not directly determine the
+true-evaluated point.
+
 `saealib` also permits multiple distinct candidates per decision.  Every
 candidate in that `EvaluationPlan` receives the one beta prepared for the
 plan.  The compiler or runtime warning identifies this supported extension,
@@ -280,10 +285,10 @@ after a component replacement starts from the current decision count, so the
 runtime does not infer the earlier phase.
 
 Asynchronous scheduling follows the same boundary.  `max_pending=1` waits for
-the current decision before preparing the next one.  A scheduler by itself
-produces no warning.  A capacity greater than one is statically diagnosed when
-it can allow overlapping decisions, and the runtime diagnoses only an overlap
-that actually occurs.
+the current decision before preparing the next one.  Scheduler capacity alone
+does not produce a compiler warning, because most strategies do not refill while
+an earlier decision is pending.  Runtime diagnostics are emitted when distinct
+decisions actually overlap.
 
 ### $\Delta_i$: paper definition versus `delta`
 

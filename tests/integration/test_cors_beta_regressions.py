@@ -28,6 +28,7 @@ from saealib.acquisition.mean import CORSDistance
 from saealib.callback import AcquisitionEndEvent, PostEvaluationEvent
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
+from saealib.core.compiler.cors_diagnostics import CORS_NONSEQUENTIAL_MESSAGE
 from saealib.core.state import PROPOSALS_CURRENT
 from saealib.execution import (
     AsyncEvaluationScheduler,
@@ -137,6 +138,13 @@ class _OpaqueBatchPlanner(EvaluationPlanner):
                 ),
             )
         )
+
+
+class _OpaqueEvaluateAllPlanner(EvaluationPlanner):
+    """Planner whose multi-candidate behavior is only observable at runtime."""
+
+    def plan(self, candidates, acquisition, ctx):
+        return EvaluateAll().plan(candidates, acquisition, ctx)
 
 
 _ASYNC_ATTRS = [
@@ -476,11 +484,41 @@ def test_optimizer_emits_one_runtime_warning_for_a_true_evaluation_batch():
     cors_warnings = [
         item
         for item in caught
-        if "CORSDistance is used with non-sequential evaluation semantics"
+        if "CORSDistance is used outside the source-faithful sequential one-candidate "
         in str(item.message)
     ]
     assert len(cors_warnings) == 1
     assert evaluated_batch_sizes == [2, 2]
+
+
+def test_cors_runtime_warning_is_once_per_run():
+    optimizer = (
+        Optimizer(_make_problem(), seed=7)
+        .set_initializer(LHSInitializer(6, 4))
+        .set_algorithm(
+            GA(
+                crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.5),
+                mutation=MutationUniform(prob_var=0.1),
+                parent_selection=SequentialSelection(),
+                survivor_selection=TruncationSelection(),
+            )
+        )
+        .set_surrogate(RBFSurrogate(GaussianKernel()), n_neighbors=5)
+        .set_acquisition(CORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN))
+        .set_strategy(PreSelectionStrategy(n_candidates=4, n_select=2))
+        .set_evaluation_planner(_OpaqueEvaluateAllPlanner())
+        .set_termination(Termination(max_gen(1)))
+    )
+
+    for _ in range(2):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            optimizer.run()
+
+        cors_warnings = [
+            item for item in caught if str(item.message) == CORS_NONSEQUENTIAL_MESSAGE
+        ]
+        assert len(cors_warnings) == 1
 
 
 def test_nested_composite_cors_warns_for_opaque_runtime_batch():
@@ -507,7 +545,7 @@ def test_nested_composite_cors_warns_for_opaque_runtime_batch():
     cors_warnings = [
         item
         for item in caught
-        if "CORSDistance is used with non-sequential evaluation semantics"
+        if "CORSDistance is used outside the source-faithful sequential one-candidate "
         in str(item.message)
     ]
     assert len(cors_warnings) == 1

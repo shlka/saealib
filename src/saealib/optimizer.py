@@ -974,6 +974,7 @@ class Optimizer:
         Generator[OptimizationState]
             Generator of OptimizationState.
         """
+        self._cors_runtime_warning_emitted = False
         self.resolve_defaults()
         self._compile_plan()
         issues = self.validate()
@@ -1018,6 +1019,7 @@ class Optimizer:
         OptimizationState
             The optimization context.
         """
+        self._cors_runtime_warning_emitted = False
         self.resolve_defaults()
         self._compile_plan()
         issues = self.validate()
@@ -1052,6 +1054,7 @@ class Optimizer:
         -------
         Generator[OptimizationState, None, None]
         """
+        self._cors_runtime_warning_emitted = False
         self._compile_plan()
         issues = self.validate(require_initializer=False)
         if issues:
@@ -1075,6 +1078,7 @@ class Optimizer:
         OptimizationState
             The final optimization context.
         """
+        self._cors_runtime_warning_emitted = False
         self._compile_plan()
         issues = self.validate(require_initializer=False)
         if issues:

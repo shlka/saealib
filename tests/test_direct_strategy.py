@@ -204,7 +204,7 @@ def test_direct_strategy_does_not_warn_for_unused_cors_acquisition():
     cors_warnings = [
         item
         for item in caught
-        if "CORSDistance is used with non-sequential evaluation semantics"
+        if "CORSDistance is used outside the source-faithful sequential one-candidate "
         in str(item.message)
     ]
     assert cors_warnings == []
