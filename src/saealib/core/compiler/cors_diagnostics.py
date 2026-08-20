@@ -55,6 +55,32 @@ def _planner_nodes(graph: ComponentGraph) -> tuple[tuple[str, object, object], .
     return tuple(result)
 
 
+def _surrogate_generation_nodes(graph: ComponentGraph) -> frozenset[str]:
+    """Return nodes in a GenerationBasedStrategy surrogate-only region.
+
+    The generation-based pipeline names the branch that feeds
+    ``TellStage(channel=SURROGATE)`` ``surrogate_generations``.  Its acquisition
+    score therefore does not feed the true-evaluation planner, even when that
+    planner selects only one candidate.
+    """
+    result: set[str] = set()
+
+    def visit(current: ComponentGraph) -> None:
+        for region_node in getattr(current, "region_nodes", ()):
+            region = getattr(region_node, "region", None)
+            body = getattr(region, "body", None)
+            if getattr(region, "region_id", None) == "surrogate_generations":
+                result.update(node.component_id for node in getattr(body, "nodes", ()))
+            if isinstance(body, ComponentGraph):
+                visit(body)
+            otherwise = getattr(region, "otherwise", None)
+            if isinstance(otherwise, ComponentGraph):
+                visit(otherwise)
+
+    visit(graph)
+    return frozenset(result)
+
+
 def _candidate_count(graph: ComponentGraph) -> int | None:
     """Return an explicit ask count when the graph exposes one."""
     counts: list[int] = []
@@ -92,14 +118,14 @@ def _selects_multiple(planner: object, candidate_count: int | None) -> bool:
 
 
 class CORSNonSequentialEvaluationRule:
-    """Warn when a CORS graph is statically non-sequential."""
+    """Warn when a CORS graph is non-canonical or statically non-sequential."""
 
     namespace = "core"
     name = "cors_nonsequential_evaluation"
     phase: Literal["verification"] = "verification"
 
     def apply(self, context) -> object:
-        """Return one advisory diagnostic for a supported batch extension."""
+        """Return one advisory diagnostic for a supported semantic extension."""
         from saealib.core.compiler.compiler import VerificationResult
 
         cors_nodes = _cors_nodes(context.graph)
@@ -110,19 +136,17 @@ class CORSNonSequentialEvaluationRule:
         static_batch = any(
             _selects_multiple(planner, candidate_count) for _, planner, _ in planners
         )
-        async_overlap = (
-            context.compile_context.async_max_pending is not None
-            and context.compile_context.async_max_pending > 1
+        surrogate_generation_nodes = _surrogate_generation_nodes(context.graph)
+        surrogate_generation_cors = any(
+            component_id in surrogate_generation_nodes for component_id, _ in cors_nodes
         )
-        if not static_batch and not async_overlap:
+        if not static_batch and not surrogate_generation_cors:
             return VerificationResult()
         acquisition_id = cors_nodes[0][0]
         related = tuple(
             ContractPath(components=(component_id,))
             for component_id, _, _ in planners[:1]
         )
-        if async_overlap:
-            related += (ContractPath(components=("async_evaluation_scheduler",)),)
         return VerificationResult(
             diagnostics=(
                 Diagnostic(
@@ -132,8 +156,8 @@ class CORSNonSequentialEvaluationRule:
                     path=ContractPath(components=(acquisition_id,)),
                     related=related,
                     resolutions=(
-                        "Use one true-evaluated candidate per decision, or accept "
-                        "the supported batch extension.",
+                        "Use sequential, one-candidate decisions, or accept the "
+                        "supported non-sequential extension.",
                     ),
                 ),
             )

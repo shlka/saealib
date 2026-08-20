@@ -27,6 +27,8 @@ from saealib.policies.evaluation import (
 )
 from saealib.problem import Problem
 from saealib.strategies.direct import DirectStrategy
+from saealib.strategies.gb import GenerationBasedStrategy
+from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.rbf import RBFSurrogate
 from saealib.surrogate.rbf_kernels import GaussianKernel
@@ -225,6 +227,10 @@ def test_cors_compiler_warns_for_static_multi_candidate_top_k() -> None:
         "overlap. This configuration is supported, but does not reproduce the "
         "sequential CORS procedure."
     )
+    assert diagnostics[0].resolutions == (
+        "Use sequential, one-candidate decisions, or accept the supported "
+        "non-sequential extension.",
+    )
 
 
 def test_cors_compiler_keeps_single_candidate_configuration_clean() -> None:
@@ -234,6 +240,36 @@ def test_cors_compiler_keeps_single_candidate_configuration_clean() -> None:
 
     assert plan is not None
     assert not any(
+        diagnostic.code == "cors_nonsequential_evaluation"
+        for diagnostic in plan.diagnostics
+    )
+
+
+def test_cors_compiler_keeps_individual_based_single_candidate_clean() -> None:
+    optimizer = _default_optimizer()
+    optimizer.set_acquisition(CORSDistance(search_pattern=(0.9, 0.0)))
+    optimizer.set_strategy(IndividualBasedStrategy(evaluation_ratio=0.25))
+    optimizer.set_evaluation_planner(TopKEvaluation(1))
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    assert not any(
+        diagnostic.code == "cors_nonsequential_evaluation"
+        for diagnostic in plan.diagnostics
+    )
+
+
+def test_cors_compiler_warns_for_generation_based_surrogate_cors() -> None:
+    optimizer = _default_optimizer()
+    optimizer.set_acquisition(CORSDistance(search_pattern=(0.9, 0.0)))
+    optimizer.set_strategy(GenerationBasedStrategy(gen_ctrl=1))
+    optimizer.set_evaluation_planner(TopKEvaluation(1))
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    assert any(
         diagnostic.code == "cors_nonsequential_evaluation"
         for diagnostic in plan.diagnostics
     )
@@ -279,7 +315,7 @@ def test_cors_compiler_keeps_repeated_single_candidate_clean() -> None:
     )
 
 
-def test_cors_compiler_warns_for_async_overlap_capacity() -> None:
+def test_cors_compiler_keeps_async_overlap_capacity_clean() -> None:
     optimizer = _cors_optimizer(n_select=1, planner=TopKEvaluation(1))
     optimizer.set_async_evaluation_scheduler(
         AsyncEvaluationScheduler(SerialEvaluator(), max_pending=2)
@@ -288,7 +324,7 @@ def test_cors_compiler_warns_for_async_overlap_capacity() -> None:
     plan = optimizer._compile_plan()
 
     assert plan is not None
-    assert any(
+    assert not any(
         diagnostic.code == "cors_nonsequential_evaluation"
         for diagnostic in plan.diagnostics
     )
