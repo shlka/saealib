@@ -7,7 +7,7 @@ import dataclasses
 import importlib.util
 import pickle
 import warnings
-from collections.abc import Callable, Generator, Mapping
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, cast
 
@@ -36,7 +36,10 @@ from saealib.core.compiler import (
 from saealib.core.compiler.contract_diagnostics import (
     check_pymoo_feedback_compatibility,
 )
-from saealib.core.compiler.cors_diagnostics import CORS_NONSEQUENTIAL_MESSAGE
+from saealib.core.compiler.cors_diagnostics import (
+    CORS_NONSEQUENTIAL_MESSAGE,
+    _requires_sequential_decisions,
+)
 from saealib.core.compiler.graph import ComponentGraph
 from saealib.core.contracts import ComponentContract
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
@@ -559,14 +562,7 @@ class Optimizer:
     def _cors_runtime_warning(self, candidate_count: int, overlap: bool) -> None:
         """Emit the CORS batch or overlap warning once per optimizer runtime."""
         del candidate_count, overlap
-        acquisition = self.acquisition
-        acquisitions = getattr(acquisition, "acquisitions", None)
-        is_cors = bool(getattr(acquisition, "requires_sequential_decisions", False))
-        if isinstance(acquisitions, Mapping):
-            is_cors = is_cors or any(
-                getattr(item, "requires_sequential_decisions", False)
-                for item in acquisitions.values()
-            )
+        is_cors = _requires_sequential_decisions(self.acquisition)
         if not is_cors or self._cors_runtime_warning_emitted:
             return
         warnings.warn(CORS_NONSEQUENTIAL_MESSAGE, UserWarning, stacklevel=3)

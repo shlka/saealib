@@ -3,12 +3,11 @@
 # This file is distributed under the same license as the saealib package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 22:38+0900\n"
+"POT-Creation-Date: 2026-08-20 20:50+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -39,15 +38,15 @@ msgstr "獲得関数（補充基準）の抽象基底クラスです。"
 msgid "Implementations"
 msgstr "実装"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid ":py:obj:`saealib.ExpectedImprovement <saealib.ExpectedImprovement>`"
 msgstr "{py:obj}`saealib.ExpectedImprovement <saealib.ExpectedImprovement>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "Expected Improvement (EI) acquisition function."
 msgstr "期待改善量（EI）の獲得関数です。"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid ""
 ":py:obj:`saealib.BatchExpectedImprovement "
 "<saealib.BatchExpectedImprovement>`"
@@ -55,94 +54,83 @@ msgstr ""
 "{py:obj}`saealib.BatchExpectedImprovement "
 "<saealib.BatchExpectedImprovement>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "Monte Carlo qEI with candidate-joint covariance and greedy set utility."
 msgstr "候補間の共分散と貪欲な集合効用を用いるモンテカルロqEIです。"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid ":py:obj:`saealib.LowerConfidenceBound <saealib.LowerConfidenceBound>`"
 msgstr "{py:obj}`saealib.LowerConfidenceBound <saealib.LowerConfidenceBound>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "Lower Confidence Bound (LCB) acquisition function."
 msgstr "下側信頼限界（LCB）の獲得関数です。"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid ":py:obj:`saealib.MaxUncertainty <saealib.MaxUncertainty>`"
 msgstr "{py:obj}`saealib.MaxUncertainty <saealib.MaxUncertainty>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "Acquisition function that maximizes predictive uncertainty (exploration)."
 msgstr "予測の不確実性（探索）を最大化する獲得関数です。"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid ":py:obj:`saealib.MeanPrediction <saealib.MeanPrediction>`"
 msgstr "{py:obj}`saealib.MeanPrediction <saealib.MeanPrediction>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "Acquisition function based on predicted mean value (exploitation)."
 msgstr "予測平均値（活用）に基づく獲得関数です。"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid ":py:obj:`saealib.CORSDistance <saealib.CORSDistance>`"
 msgstr "{py:obj}`saealib.CORSDistance <saealib.CORSDistance>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "CORS distance-constrained predicted-mean acquisition function."
 msgstr "CORSの距離制約付き予測平均獲得関数です。"
 
-#: ../../api/acquisition.md:42
-msgid "CORSDistance"
-msgstr "CORSDistance"
-
-#: ../../api/acquisition.md:63
-msgid "Constructor arguments"
-msgstr "コンストラクタ引数"
-
-#: ../../api/acquisition.md:85
-msgid "Prepared reference and return value"
-msgstr "準備済み参照と戻り値"
-
-#: ../../api/acquisition.md:34:<autosummary>:1
-msgid ":py:obj:`saealib.ProbabilityOfFeasibility "
+#: ../../api/acquisition.md:35:<autosummary>:1
+msgid ""
+":py:obj:`saealib.ProbabilityOfFeasibility "
 "<saealib.ProbabilityOfFeasibility>`"
 msgstr ""
 "{py:obj}`saealib.ProbabilityOfFeasibility "
 "<saealib.ProbabilityOfFeasibility>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "Probability of Feasibility (PoF) acquisition function."
 msgstr "実行可能性確率（PoF）の獲得関数です。"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid ":py:obj:`saealib.ProductOfFeasibility <saealib.ProductOfFeasibility>`"
 msgstr "{py:obj}`saealib.ProductOfFeasibility <saealib.ProductOfFeasibility>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "Joint probability of feasibility across all constraint columns."
 msgstr "すべての制約列にわたる実行可能性の同時確率です。"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid ":py:obj:`saealib.EHVIAcquisition <saealib.EHVIAcquisition>`"
 msgstr "{py:obj}`saealib.EHVIAcquisition <saealib.EHVIAcquisition>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "Expected Hypervolume Improvement (EHVI) acquisition function."
 msgstr "期待超体積改善量（EHVI）の獲得関数です。"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid ":py:obj:`saealib.ParEGOAcquisition <saealib.ParEGOAcquisition>`"
 msgstr "{py:obj}`saealib.ParEGOAcquisition <saealib.ParEGOAcquisition>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "ParEGO acquisition function for multi-objective Bayesian optimisation."
 msgstr "多目的ベイズ最適化用のParEGO獲得関数です。"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid ":py:obj:`saealib.SMSEGOAcquisition <saealib.SMSEGOAcquisition>`"
 msgstr "{py:obj}`saealib.SMSEGOAcquisition <saealib.SMSEGOAcquisition>`・獲得関数"
 
-#: ../../api/acquisition.md:34:<autosummary>:1
+#: ../../api/acquisition.md:35:<autosummary>:1
 msgid "SMS-EGO acquisition function for multi-objective Bayesian optimisation."
 msgstr "多目的ベイズ最適化用のSMS-EGO獲得関数です。"
 
@@ -164,13 +152,10 @@ msgid ""
 "regret guarantee -- see the \"GP-UCB\" algorithm page in the docs for the"
 " additional conditions that requires."
 msgstr ""
-"有限の意思決定集合向けのスケジュール``beta_t = 2 log(domain_size * t^2 "
-"* pi^2 / (6 * delta))``を実装します :cite:`srinivas2012gpucb`。ここで "
-"``domain_size``は有限の意思決定集合の要素数``|D|``です。このヘルパーは、"
-"引用文献にある連続領域向けの別のスケジュール（コンパクト領域を対象とする異なる式）を実装しません。"
-"連続探索空間に``domain_size``を渡しても、この有限領域向けの式に数値を代入するだけであり、"
-"それだけで有限領域定理の後悔保証が得られるわけではありません。その保証に必要な追加条件については、"
-"ドキュメントの「GP-UCB」アルゴリズムページを参照してください。"
+"有限の意思決定集合向けのスケジュール``beta_t = 2 log(domain_size * t^2 * pi^2 / (6 * "
+"delta))``を実装します :cite:`srinivas2012gpucb`。ここで "
+"``domain_size``は有限の意思決定集合の要素数``|D|``です。このヘルパーは、引用文献にある連続領域向けの別のスケジュール（コンパクト領域を対象とする異なる式）を実装しません。連続探索空間に``domain_size``を渡しても、この有限領域向けの式に数値を代入するだけであり、それだけで有限領域定理の後悔保証が得られるわけではありません。その保証に必要な追加条件については、ドキュメントの"
+"「GP-UCB」アルゴリズムページを参照してください。"
 
 #: ../../api/acquisition.md
 msgid "Parameters"
@@ -196,7 +181,9 @@ msgid ""
 " (``t`` must be an int starting at 1; raises "
 ":class:`~saealib.exceptions.ValidationError` for a non-integer ``t`` or "
 "``t < 1``)."
-msgstr "pickle可能な``schedule(t) -> float``。反復回数``t``（int型、1始まり）に対して増加します。``t``が整数でない場合、または``t < 1``の場合は "
+msgstr ""
+"pickle可能な``schedule(t) -> "
+"float``。反復回数``t``（int型、1始まり）に対して増加します。``t``が整数でない場合、または``t < 1``の場合は "
 ":class:`~saealib.exceptions.ValidationError` を送出します。"
 
 #: ../../api/acquisition.md
@@ -213,25 +200,157 @@ msgid ""
 "``(0, 1)``."
 msgstr "``domain_size``がint型でない場合、または正でない場合、あるいは``delta``が``(0, 1)``の範囲外の場合。"
 
-#~ msgid ""
-#~ "``beta_t = 2 log(domain_size * t^2 "
-#~ "* pi^2 / (6 * delta))``, the "
-#~ "schedule the cited regret bound uses "
-#~ "for a finite search domain of size"
-#~ " ``domain_size`` :cite:`srinivas2012gpucb`. For a"
-#~ " continuous domain, ``domain_size`` is a"
-#~ " discretization-count proxy supplied by "
-#~ "the caller; this function does not "
-#~ "derive one."
-#~ msgstr ""
-#~ "``beta_t = 2 log(domain_size * t^2 "
-#~ "* pi^2 / (6 * delta))``は、引用文献 "
-#~ ":cite:`srinivas2012gpucb` "
-#~ "の後悔上界がサイズ``domain_size``の有限探索領域に対して用いるスケジュールです。連続領域の場合、``domain_size``は呼び出し側が与える離散化点数の代理値であり、この関数自体はその値を導出しません。"
+#: ../../api/acquisition.md:42
+msgid "CORSDistance"
+msgstr "CORSDistance"
 
-#~ msgid ""
-#~ "Size of the (possibly discretized) "
-#~ "search domain (``|D|`` in the cited "
-#~ "bound). Must be positive."
-#~ msgstr "（離散化されている場合を含む）探索領域のサイズ（引用文献の``|D|``）。正の値でなければなりません。"
+#: ../../api/acquisition.md:44
+#, python-brace-format
+msgid ""
+"`CORSDistance` is the CORS distance-constrained predicted-mean "
+"acquisition function {cite}`regis2005cors`.  It gives each candidate a "
+"scalar predicted-mean score and replaces the score with `-np.inf` when "
+"the candidate is too close to an already evaluated design vector.  As "
+"with every `saealib` acquisition, higher scores are preferred."
+msgstr "`CORSDistance`は、CORSの距離制約付き予測平均獲得関数です。各候補にスカラーの予測平均スコアを与え、既評価の設計ベクトルに近すぎる候補のスコアを`-np.inf`に置き換えます。`saealib`のすべての獲得関数と同様に、スコアが高い候補を優先します。"
 
+#: ../../api/acquisition.md:50
+msgid "The public constructor is:"
+msgstr "公開コンストラクタは次のとおりです。"
+
+#: ../../api/acquisition.md:63
+msgid "Constructor arguments"
+msgstr "コンストラクタ引数"
+
+#: ../../api/acquisition.md:65
+msgid ""
+"**`delta`** (`float | None`, default `None`): the distance scale in the "
+"threshold `beta * delta`.  With `None`, `CORSDistance` computes the "
+"paper's iteration-specific $\\Delta_i$ approximately from the current "
+"candidate pool on every score call: `max_candidate min_evaluated "
+"distance`.  A numeric value must be finite and greater than zero and "
+"preserves the legacy fixed-scale behavior.  A design space's diagonal "
+"length is not the paper's Eq. (2) $\\Delta_i$ and may make a high-beta "
+"batch infeasible; use `None` unless a fixed scale is intentional."
+msgstr ""
+"**`delta`**（`float | None`、既定値`None`）：しきい値`beta * "
+"delta`に使う距離尺度です。`None`では、`CORSDistance`が各スコア計算で現在の候補プールから論文の反復ごとの$\\Delta_i$を近似します。近似は`max_candidate"
+" min_evaluated "
+"distance`で表します。数値を渡す場合は有限かつ0より大きい値にし、従来の固定尺度モードを使います。設計空間の対角線長は論文の式（2）の$\\Delta_i$ではなく、高いbetaのバッチを実行不能にする場合があります。固定尺度にする理由がなければ`None`を使います。"
+
+#: ../../api/acquisition.md:73
+msgid ""
+"**`search_pattern`** (`Sequence[float]`): the periodic beta sequence.  "
+"The default is the paper's SP1, `(0.95, 0.25, 0.05, 0.03, 0.0)`.  The "
+"implementation accepts any non-empty sequence whose values are finite and"
+" in `[0, 1]`.  It does not require the paper's trailing zero or non-"
+"increasing order, so `(1.0,)` is valid pure exploration."
+msgstr ""
+"**`search_pattern`**（`Sequence[float]`）：周期的なbeta列です。既定値は論文のSP1である`(0.95, "
+"0.25, 0.05, 0.03, 0.0)`です。実装は、値が有限で`[0, "
+"1]`に含まれる空でない列を受け付けます。論文の末尾の0や非増加順序は要求しないため、`(1.0,)`は純粋な探索を表す有効な値です。"
+
+#: ../../api/acquisition.md:78
+msgid ""
+"**`weights`** (`np.ndarray | None`): optional magnitude-aware weights for"
+" scalarizing multi-objective predicted means.  The shape is `(n_obj,)`."
+msgstr ""
+"**`weights`**（`np.ndarray | "
+"None`）：多目的予測平均をスカラー化する、値の大きさを考慮した重みです。形状は`(n_obj,)`です。"
+
+#: ../../api/acquisition.md:80
+msgid ""
+"**`direction`** (`np.ndarray | None`): optional per-objective signs (`+1`"
+" for maximization and `-1` for minimization).  Direction-only "
+"scalarization takes precedence over `weights`; when unset, "
+"`problem.direction` is normally injected at run start."
+msgstr ""
+"**`direction`**（`np.ndarray | "
+"None`）：目的ごとの符号（最大化は`+1`、最小化は`-1`）です。directionだけによるスカラー化は`weights`より優先されます。未設定の場合は、通常、実行開始時に`problem.direction`を注入します。"
+
+#: ../../api/acquisition.md:85
+msgid "Prepared reference and return value"
+msgstr "準備済み参照と戻り値"
+
+#: ../../api/acquisition.md:87
+#, python-format
+msgid ""
+"`CORSDistance` resolves the beta entry using `ctx.decision_count % "
+"len(search_pattern)` (zero-based) in `prepare(archive, ctx)`.  The normal"
+" call is through `AcquisitionFunction.evaluate(..., ctx=...)`; calling "
+"`score()` directly requires the prepared reference returned by "
+"`prepare()`, and `prediction.x` must contain the candidate design vectors"
+" aligned row-for-row with `prediction.value`."
+msgstr ""
+"`CORSDistance`は`prepare(archive, ctx)`で、`ctx.decision_count % "
+"len(search_pattern)`（0始まり）を使ってbetaの要素を解決します。通常は`AcquisitionFunction.evaluate(...,"
+" "
+"ctx=...)`から呼び出します。`score()`を直接呼ぶ場合は`prepare()`が返す準備済み参照が必要であり、`prediction.x`には`prediction.value`と行単位で対応する候補設計ベクトルが必要です。"
+
+#: ../../api/acquisition.md:95
+msgid ""
+"`score(prediction, reference) -> np.ndarray` returns one `float` score "
+"per candidate, with shape `(n_samples,)`.  Candidates violating"
+msgstr ""
+"`score(prediction, reference) -> "
+"np.ndarray`は、候補ごとに1つの`float`スコアを返します。形状は`(n_samples,)`です。次の制約に違反する候補は"
+
+#: ../../api/acquisition.md:98
+msgid ""
+"\n"
+"\\min_j\\lVert x-x_j\\rVert \\geq \\beta_i\\Delta_i\n"
+msgstr ""
+"\n"
+"\\min_j\\lVert x-x_j\\rVert \\geq \\beta_i\\Delta_i\n"
+
+#: ../../api/acquisition.md:102
+msgid ""
+"receive `-np.inf`; feasible candidates retain their scalarized predicted-"
+"mean score.  With the default `delta=None`, $\\Delta_i$ is the candidate-"
+"pool maximin distance approximation.  All candidates evaluated in one "
+"prepared batch share the same beta.  The source-faithful configuration "
+"uses one true-evaluated candidate per decision, for example "
+"`PreSelectionStrategy(..., n_select=1)` or `TopKEvaluation(1)`. "
+"`CORSDistance` also supports multiple distinct candidates per "
+"`EvaluationPlan`. That extension applies the one beta to the whole plan "
+"and does not reproduce the source's sequential CORS procedure."
+msgstr ""
+"`-np.inf`を受け取り、実行可能な候補はスカラー化した予測平均スコアを保持します。既定の`delta=None`では、$\\Delta_i$は候補プールのmaximin距離近似です。1つの準備済みバッチで評価する全候補は同じbetaを共有します。原法に対応する構成では、例えば`PreSelectionStrategy(...,"
+" "
+"n_select=1)`または`TopKEvaluation(1)`を使い、決定ごとに真評価する候補を1つにします。`CORSDistance`は1つの`EvaluationPlan`で複数の異なる候補を扱うこともできます。この拡張ではプラン全体に1つのbetaを適用するため、原法の逐次CORS手順は再現しません。"
+
+#: ../../api/acquisition.md:112
+msgid ""
+"`CORSDistance.requires_sequential_decisions` is compiler metadata for "
+"this semantic distinction.  The compiler emits the "
+"`cors_nonsequential_evaluation` warning when a batch or overlapping "
+"asynchronous configuration is statically visible.  A custom planner is "
+"checked at runtime by unique candidate ID, and a runtime warning is "
+"emitted once per optimizer runtime when it selects multiple distinct "
+"candidates or when distinct asynchronous decisions actually overlap. "
+"Repeated evaluations of one candidate do not trigger the batch warning. "
+"Configuring an asynchronous scheduler alone does not trigger a warning; "
+"`max_pending=1` is the source-faithful boundary."
+msgstr "`CORSDistance.requires_sequential_decisions`は、この意味上の区別を表すコンパイラメタデータです。コンパイラは、バッチまたは重複する非同期構成を静的に確認できる場合に`cors_nonsequential_evaluation`警告を出します。カスタムプランナーは異なる候補IDでランタイムに確認し、異なる候補を選んだ場合、または異なる非同期決定が実際に重なった場合に、オプティマイザーの実行ごとに1回ランタイム警告を出します。同じ候補の反復評価ではバッチ警告は出ません。非同期スケジューラーを設定しただけでは警告は出ず、`max_pending=1`が原法に対応する境界です。"
+
+#: ../../api/acquisition.md:122
+msgid ""
+"The beta phase starts at `search_pattern[0]` when `ctx.decision_count == "
+"0` and `CORSDistance` has been used continuously from the beginning of "
+"the run.  If a component is replaced during a run and `CORSDistance` is "
+"introduced later, the phase starts at the current `decision_count`."
+msgstr ""
+"`ctx.decision_count == "
+"0`で、実行開始から`CORSDistance`を継続して使っている場合、betaの位相は`search_pattern[0]`から始まります。実行中にコンポーネントを差し替えて後から`CORSDistance`を導入した場合、位相は現在の`decision_count`から始まります。"
+
+#: ../../api/acquisition.md:128
+msgid ""
+"The paper advances beta after each single costly evaluation.  The runtime"
+" advances `decision_count` once per confirmed `EvaluationPlan`.  A batch "
+"plan therefore shares one beta, while a one-candidate plan corresponds to"
+" one source iteration.  See [CORS-RBF](../algorithms/rbf_cors.md) for the"
+" full paper-to-runtime comparison, including the candidate-pool "
+"approximation of $\\Delta_i$."
+msgstr ""
+"論文は各1回の高コスト評価の後にbetaを進めます。ランタイムは確認済みの`EvaluationPlan`ごとに`decision_count`を1増やします。そのため、バッチプランは1つのbetaを共有し、1候補プランは原法の1反復に対応します。候補プール近似の$\\Delta_i$を含む論文とランタイムの比較全体は"
+"[CORS-RBF](../algorithms/rbf_cors.md)を参照してください。"

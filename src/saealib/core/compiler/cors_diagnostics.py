@@ -72,9 +72,10 @@ def _selects_multiple(planner: object, candidate_count: int | None) -> bool:
     """Return whether a known planner can select multiple unique candidates."""
     planner_name = type(planner).__name__
     if planner_name == "RepeatedEvaluation":
-        # Repeated requests intentionally describe one candidate observed more
-        # than once, not a multi-candidate decision.
-        return False
+        # RepeatedEvaluation uses EvaluateAll().plan(), then replicates the
+        # complete candidate batch.  Its unique-candidate count is therefore
+        # the static candidate count, not the replicate count.
+        return candidate_count is None or candidate_count > 1
     if planner_name == "TopKEvaluation":
         k = getattr(planner, "k", None)
         return isinstance(k, int) and not isinstance(k, bool) and k > 1

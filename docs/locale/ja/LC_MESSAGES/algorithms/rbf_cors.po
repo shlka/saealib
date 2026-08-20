@@ -3,12 +3,11 @@
 # This file is distributed under the same license as the saealib package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: saealib \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 15:26+0900\n"
+"POT-Creation-Date: 2026-08-20 20:50+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -24,311 +23,152 @@ msgid "CORS-RBF (Constrained Optimization using Response Surfaces)"
 msgstr "CORS-RBF（Constrained Optimization using Response Surfaces）"
 
 #: ../../algorithms/rbf_cors.md:9
+#, python-brace-format
 msgid ""
-"CORS-RBF is the radial-basis-function (RBF) implementation of **Constrained "
-"Optimization using Response Surfaces (CORS)** proposed by Regis and Shoemaker "
-"(2005) {cite}`regis2005cors`. CORS is intended for expensive black-box "
-"objectives: it fits a response surface to the evaluations already paid for and "
-"uses a distance constraint to keep the next evaluation away from those points. "
-"The distance requirement cycles between global exploration and local "
-"surrogate-based search."
+"CORS-RBF is the radial-basis-function (RBF) implementation of "
+"**Constrained Optimization using Response Surfaces (CORS)** proposed by "
+"Regis and Shoemaker (2005) {cite}`regis2005cors`.  CORS is intended for "
+"expensive black-box objectives: it fits a response surface to the "
+"evaluations already paid for and uses a distance constraint to keep the "
+"next evaluation away from those points. The distance requirement cycles "
+"between global exploration and local surrogate-based search."
 msgstr ""
-"CORS-RBFは、RegisとShoemakerが提案した**応答曲面を用いた制約付き最適化（CORS）**のRBF実装です。"
-"CORSは評価コストの高いブラックボックス目的関数を対象とし、支払い済みの評価から応答曲面を構成します。"
-"距離制約によって、次の評価点を既評価点から離します。"
-"距離制約は、大域探索とサロゲートによる局所探索の間で切り替わります。"
-
-#: ../../algorithms/rbf_cors.md:12
-msgid "Overview"
-msgstr "概要"
-
-#: ../../algorithms/rbf_cors.md:14
-msgid ""
-"RBF interpolation only reconstructs a smooth surface passing through the "
-"training points, and unlike GP regression, it has no predictive variance."
-" Because of this, the naive approach of simply minimizing the surrogate "
-"model's prediction to choose the next evaluation point ends up repeatedly"
-" searching only around points where good values have already been "
-"observed, and can converge to a point that isn't even a local minimum of "
-"the true function."
-msgstr ""
-"RBF補間は、学習点を通る滑らかな曲面を再構成するだけで、GP回帰のような予測分散を持ちません。 "
-"そのため、サロゲートモデルの予測値をそのまま最小化して次の評価点を選ぶ素朴な方法は、既に良い値が観測された点の周辺だけを繰り返し探索してしまい、真の関数の局所最小値ですらない点に収束しかねません。"
+"CORS-"
+"RBFは、RegisとShoemakerが提案した**応答曲面を用いた制約付き最適化（CORS）**のRBF実装です。CORSは評価コストの高いブラックボックス目的関数を対象とし、支払い済みの評価から応答曲面を構成します。距離制約により、次の評価を既評価点から離れた位置で行います。距離条件は、大域探索とサロゲートによる局所探索を切り替えます。"
 
 #: ../../algorithms/rbf_cors.md:17
 msgid ""
-"CORS avoids this problem by building a **distance constraint** directly "
-"into the candidate-point selection itself. The auxiliary problem solved "
-"at each iteration is a constrained optimization that, in addition to "
-"minimizing the surrogate model $\\hat f_i(x)$, requires the next "
-"candidate point to be at least $\\beta_i \\Delta_i$ away from every "
-"existing evaluated point ($\\Delta_i$ being the maximum of the minimum "
-"distances from the existing point set). $\\beta_i$ is given, iteration by"
-" iteration, as a sequence (the **search pattern**) that cycles from "
-"values near 1 (favoring global search) down to 0 (favoring local search, "
-"i.e. simply minimizing the surrogate model); this distance constraint "
-"takes over the role of exploration that a GP's predictive variance would "
-"otherwise play."
-msgstr ""
-"CORSは、候補点の選択そのものに**距離制約**を組み込むことでこの問題を回避します。各反復で解く補助問題は制約付き最適化であり、サロゲートモデル$\\hat"
-" f_i(x)$を最小化するだけでなく、次の候補点が既存の評価済み点すべてから少なくとも$\\beta_i "
-"\\Delta_i$離れていることを要求します（$\\Delta_i$は既存点集合からの最小距離の最大値です）。$\\beta_i$は反復ごとに数列（**探索パターン**）として与えられ、1に近い値（大域探索寄り）から0（局所探索寄り、つまりサロゲートモデルの単純な最小化）まで循環します。この距離制約が、GPの予測分散が担うはずの探索の役割を引き受けます。"
-
-#: ../../algorithms/rbf_cors.md:21
-msgid ""
-"This distance constraint is not a side effect — it is the core of CORS. "
-"It has been proven that, as long as the search pattern contains at least "
-"one nonzero value, convergence to the global minimum of any continuous "
-"function is guaranteed, regardless of the type of surrogate model or how "
-"the initial evaluation points are chosen."
-msgstr ""
-"この距離制約は副産物ではなく、CORSの核心です。 search "
-"patternに0でない値が1つでも含まれていれば、サロゲートモデルの種類や初期評価点の選び方によらず、任意の連続関数の大域最小値に収束することが証明されています。"
+"`saealib` implements the distance-constrained criterion as "
+"`CORSDistance`.  The library's evolutionary algorithm supplies a finite "
+"candidate pool, so `CORSDistance` ranks that pool rather than solving the"
+" continuous CORS auxiliary problem directly.  The highest-scoring "
+"candidates are then sent to the true objective according to the "
+"configured evaluation strategy."
+msgstr "`saealib`は距離制約付き基準を`CORSDistance`として実装します。ライブラリの進化アルゴリズムは有限個の候補プールを生成するため、`CORSDistance`は連続なCORS補助問題を直接解かず、そのプールを順位付けします。設定した評価戦略に従い、スコアの高い候補を真の目的関数へ送ります。"
 
 #: ../../algorithms/rbf_cors.md:24
-#, python-brace-format
-msgid ""
-"The source is {cite}`regis2005cors`. The concrete procedure is shown in "
-"the pseudocode below."
-msgstr "出典は{cite}`regis2005cors`。具体的な手順は次の擬似コードに示します。"
+msgid "Overview"
+msgstr "概要"
 
 #: ../../algorithms/rbf_cors.md:26
-msgid "Pseudocode"
-msgstr "擬似コード"
-
-#: ../../algorithms/rbf_cors.md:28
-msgid "(CORS-RBF)"
-msgstr "式: (CORS-RBF)"
-
-#: ../../algorithms/rbf_cors.md:31
-#, python-brace-format
 msgid ""
-"**Inputs** objective function $f$, search domain $\\mathcal{D}$, initial "
-"evaluated point set $S_1 = \\{x_1, \\ldots, x_k\\}$, periodic distance-"
-"parameter sequence (search pattern) $\\langle \\beta_1, \\ldots, "
-"\\beta_{N+1}=0 \\rangle$ **Output** best solution $x^*$"
+"Let $S_i$ be the set of points evaluated by the true objective before "
+"CORS step $i$, and let $\\hat f_i$ be the response surface fitted to "
+"those points. The CORS auxiliary problem (CORS-AP) is"
 msgstr ""
-"**Inputs** 目的関数 $f$、探索領域 $\\mathcal{D}$、初期評価点集合 $S_1 = \\{x_1, \\ldots, "
-"x_k\\}$、距離パラメータの周期列(search pattern) $\\langle \\beta_1, \\ldots, "
-"\\beta_{N+1}=0 \\rangle$ **Output** 最良解 $x^*$"
+"真の目的関数でCORSのステップ$i$より前に評価した点の集合を$S_i$とし、それらの点に適合した応答曲面を$\\hat "
+"f_i$とします。CORSの補助問題（CORS-AP）は次のとおりです。"
 
-#: ../../algorithms/rbf_cors.md:34
-msgid "Evaluate $S_1$ with the true function $f$ and set $i := 1$"
-msgstr "$S_1$ を真の関数 $f$ で評価し、$i := 1$ とする"
-
-#: ../../algorithms/rbf_cors.md:35
-#, python-brace-format
+#: ../../algorithms/rbf_cors.md:30
 msgid ""
-"Fit an RBF surrogate model $\\hat f_i$ to the evaluated data so far, $D_i"
-" = \\{(x, f(x)) \\mid x \\in S_i\\}$"
+"\n"
+"\\begin{aligned}\n"
+"\\operatorname{minimize}_{x \\in \\mathcal{D}}\\quad & \\hat f_i(x) \\\\\n"
+"\\text{subject to}\\quad & \\lVert x-x_j\\rVert \\geq \\beta_i\\Delta_i,\n"
+"\\quad x_j \\in S_i.\n"
+"\\end{aligned}\n"
 msgstr ""
-"これまでの評価済みデータ $D_i = \\{(x, f(x)) \\mid x \\in S_i\\}$ にRBFサロゲートモデル $\\hat"
-" f_i$ をフィットする"
-
-#: ../../algorithms/rbf_cors.md:36
-msgid ""
-"Solve the constrained minimization problem $\\min_{x \\in \\mathcal{D}} "
-"\\hat f_i(x) \\ \\mathrm{s.t.} \\ \\|x - x_j\\| \\geqslant \\beta_i "
-"\\Delta_i \\ (j=1,\\ldots,|S_i|)$ to find the candidate point $x_{k+i}$ "
-"($\\Delta_i$ being the maximum of the minimum distances from the existing"
-" evaluated point set)"
-msgstr ""
-"制約付き最小化問題 $\\min_{x \\in \\mathcal{D}} \\hat f_i(x) \\ \\mathrm{s.t.} \\ "
-"\\|x - x_j\\| \\geqslant \\beta_i \\Delta_i \\ (j=1,\\ldots,|S_i|)$ "
-"を解いて候補点 $x_{k+i}$ を求める（$\\Delta_i$は既存評価点集合からの最大最小距離）"
-
-#: ../../algorithms/rbf_cors.md:37
-msgid ""
-"Evaluate $x_{k+i}$ with the true function and add it to $S_{i+1} := S_i "
-"\\cup \\{x_{k+i}\\}$"
-msgstr "$x_{k+i}$ を真の関数で評価し、$S_{i+1} := S_i \\cup \\{x_{k+i}\\}$ に追加する"
+"\n"
+"\\begin{aligned}\n"
+"\\operatorname{minimize}_{x \\in \\mathcal{D}}\\quad & \\hat f_i(x) \\\\\n"
+"\\text{subject to}\\quad & \\lVert x-x_j\\rVert \\geq \\beta_i\\Delta_i,\n"
+"\\quad x_j \\in S_i.\n"
+"\\end{aligned}\n"
 
 #: ../../algorithms/rbf_cors.md:38
 msgid ""
-"Update $\\beta_i$ according to the periodic sequence, set $i := i+1$, and"
-" return to step 2 until the termination condition is reached"
-msgstr "終了条件に達するまで、周期列に従い $\\beta_i$ を更新して $i := i+1$ とし2へ戻る"
-
-#: ../../algorithms/rbf_cors.md:41
-msgid "Flowchart"
-msgstr "フローチャート"
-
-#: ../../algorithms/rbf_cors.md:58
-msgid "Configuration in saealib"
-msgstr "saealibでの構成"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "Role"
-msgstr "役割"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "saealib implementation"
-msgstr "saealibでの実装"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "Corresponding step"
-msgstr "対応ステップ"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "Search algorithm"
-msgstr "探索アルゴリズム本体"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid ""
-"`GA` (the specific combination of crossover, mutation, and selection is "
-"not part of CORS's definition)"
-msgstr "`GA`（交叉、突然変異、選択の組み合わせ自体はCORSの定義に含まれない）"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "L3"
-msgstr "手順 L3"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "Surrogate model"
-msgstr "サロゲートモデル"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid ""
-"`RBFSurrogate` (RBF interpolation; this example uses `GaussianKernel()` "
-"with no polynomial term, but `kernel` is a required argument and any "
-"`RBFKernel`/`polynomial_degree` can be injected — see Differences from "
-"the source)"
-msgstr "`RBFSurrogate`（RBF補間。この例では多項式項なしの`GaussianKernel()`を使いますが、`kernel`は必須引数であり、任意の`RBFKernel`と`polynomial_degree`を注入できます。詳しくは「原法との差分」を参照してください）"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "L2"
-msgstr "手順 L2"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "Acquisition function"
-msgstr "獲得関数"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid ""
-"`CORSDistance` (applies a $\\beta_i\\Delta_i$ distance constraint to the "
-"predictive mean)"
-msgstr "`CORSDistance`（予測平均に$\\beta_i\\Delta_i$の距離制約を適用）"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "Surrogate management"
-msgstr "サロゲート管理"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "`GlobalSurrogateManager` (fits the RBF over the entire archive)"
-msgstr "`GlobalSurrogateManager`（アーカイブ全体でRBFをフィットする）"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "L2-3"
-msgstr "「L2-3」"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid "Evaluation strategy"
-msgstr "評価戦略"
-
-#: ../../algorithms/rbf_cors.md:43
-msgid ""
-"`PreSelectionStrategy(n_candidates=20, n_select=1)` (ranks the candidate "
-"pool and evaluates one candidate)"
+"Here, $\\beta_i \\in [0,1]$ controls the exploration--exploitation trade-"
+"off. A value near one favors points far from the evaluated set; zero "
+"removes the additional distance constraint and leaves ordinary surrogate-"
+"mean search. The source paper defines the scale as the distance of a "
+"domain-wide maximin point from its closest evaluated point:"
 msgstr ""
-"`PreSelectionStrategy(n_candidates=20, n_select=1)`（候補プールを順位付けし、1点を真に評価する）"
+"ここで、$\\beta_i \\in "
+"[0,1]$は探索と活用の均衡を制御します。1に近い値は評価済み集合から遠い点を優先し、0は追加の距離制約をなくして通常のサロゲート平均探索にします。原論文は、尺度を領域全体のmaximin点から最も近い評価点までの距離として定義します。"
 
-#: ../../algorithms/rbf_cors.md:43
-msgid "L3-4"
-msgstr "「L3-4」"
-
-#: ../../algorithms/rbf_cors.md:116
-msgid "Differences from the source"
-msgstr "原法との差分"
-
-#: ../../algorithms/rbf_cors.md:118
+#: ../../algorithms/rbf_cors.md:44
 msgid ""
-"The paper solves CORS-AP over the whole feasible domain and selects one point "
-"that minimizes the response surface under the distance constraint. `saealib` "
-"uses the candidate pool generated by `GA` and selects the highest-scoring "
-"feasible rows. The canonical configuration evaluates one true candidate per "
-"decision, so it matches the source's sequential decision structure. "
-"`PreSelectionStrategy` with `n_select=1` and `TopKEvaluation(1)` express that "
-"configuration while leaving candidate generation batched. `saealib` also "
-"permits multiple distinct candidates per decision. Every candidate in that "
-"`EvaluationPlan` receives the one beta prepared for the plan. The compiler or "
-"runtime warning identifies this supported extension, but the configuration does "
-"not reproduce the source's sequential procedure. The source paper's sequential "
-"convergence discussion must not be transferred to that extension without an "
-"additional argument. The GA operators and the choice of "
-"`GlobalSurrogateManager` are also `saealib` configuration choices. They should "
-"not be read as part of the CORS definition."
+"\n"
+"\\Delta_i = \\max_{\\tilde{x} \\in \\mathcal{D}}\n"
+"           \\min_{x_j \\in S_i}\\lVert \\tilde{x}-x_j\\rVert.\n"
+"\\tag{2}\n"
 msgstr ""
-"論文は実行可能領域全体でCORS-APを解き、距離制約の下で応答曲面を最小化する1点を選びます。"
-"saealibは`GA`が生成した候補プールから、スコアが高く距離制約を満たす行を選びます。"
-"標準構成は1決定につき1点を真に評価するため、原法の逐次的な決定構造に対応します。"
-"`PreSelectionStrategy`の`n_select=1`と`TopKEvaluation(1)`でこの構成を指定できます。"
-"候補生成自体はバッチのままにできます。"
-"saealibは1決定で複数の異なる候補を許容します。"
-"その`EvaluationPlan`の全候補には、プランに対して準備した1つのβを適用します。"
-"コンパイラまたはランタイムの警告は、この拡張構成を示します。"
-"ただし、この構成は原法の逐次手順を再現しません。"
-"原論文の逐次手順を前提とする収束議論を、この拡張構成へ追加の議論なしに適用するわけにはいきません。"
-"GAの演算子と`GlobalSurrogateManager`の選択もsaealibの構成上の選択です。"
-"これらをCORSの定義の一部として扱うわけにはいきません。"
+"\n"
+"\\Delta_i = \\max_{\\tilde{x} \\in \\mathcal{D}}\n"
+"           \\min_{x_j \\in S_i}\\lVert \\tilde{x}-x_j\\rVert.\n"
+"\\tag{2}\n"
 
-#: ../../algorithms/rbf_cors.md:125
-msgid "Parameters and variants"
-msgstr "パラメータと変種"
-
-#: ../../algorithms/rbf_cors.md:127
-msgid ""
-"**kernel (choice of RBF kernel)**: `RBFSurrogate(kernel=...)` requires an"
-" `RBFKernel` instance; there is no default. The example above passes "
-"`GaussianKernel()`."
-msgstr "**kernel（RBFカーネルの選択）**：`RBFSurrogate(kernel=...)`は`RBFKernel`インスタンスを要求する必須引数であり、既定値はありません。上記の例では`GaussianKernel()`を渡しています。"
-
-#: ../../algorithms/rbf_cors.md:130
+#: ../../algorithms/rbf_cors.md:50
 #, python-brace-format
 msgid ""
-"**delta**: The fixed distance scale used in the threshold `beta * delta`. "
-"Leave it as `None` (the default) to compute the candidate-pool maximin "
-"approximation of $\\Delta_i$ on each score call. A numeric value must be finite "
-"and greater than zero and opts into the legacy fixed-scale behavior."
+"The constraint is the central part of CORS, not an optional post-"
+"processing step.  Regis and Shoemaker prove a global-convergence result "
+"when the search pattern contains a positive value infinitely often; the "
+"result is independent of the response-surface model and of the initial "
+"evaluated points {cite}`regis2005cors`."
+msgstr "距離制約は任意の後処理ではなく、CORSの中心部分です。RegisとShoemakerは、探索パターンに正の値が無限回現れる場合に大域収束結果を示しています。この結果は応答曲面モデルと初期評価点に依存しません。{cite}`regis2005cors`"
+
+#: ../../algorithms/rbf_cors.md:56
+msgid ""
+"`saealib` follows its general acquisition convention that a **higher "
+"score is better**.  `CORSDistance` first scalarizes the predicted mean "
+"(using `direction`, `weights`, or the first objective), then assigns "
+"`-np.inf` to candidates that violate the current distance constraint."
+msgstr "`saealib`は「スコアが高いほど良い」という一般的な獲得関数の規約に従います。`CORSDistance`は予測平均を（`direction`、`weights`、または第1目的で）まずスカラー化し、現在の距離制約に違反する候補へ`-np.inf`を割り当てます。"
+
+#: ../../algorithms/rbf_cors.md:61
+msgid "Search patterns and $\\beta$"
+msgstr "探索パターンと$\\beta$"
+
+#: ../../algorithms/rbf_cors.md:63
+#, python-brace-format
+msgid ""
+"The paper uses a periodic sequence "
+"$\\langle\\beta_1,\\ldots,\\beta_{N+1}\\rangle$ and repeats it after each"
+" cycle. Its general description uses a non-increasing sequence ending in "
+"zero, with large values for global search and values close to zero for "
+"local search.  In the Dixon--Szego benchmark experiments it reports:"
 msgstr ""
-"**delta**：しきい値`beta * delta`に使う固定距離尺度です。"
-"既定値の`None`では、各スコア計算で候補プールから$\\Delta_i$のmaximin近似を計算します。"
-"数値を渡す場合は有限かつ0より大きい値にし、従来の固定尺度モードを明示します。"
+"原論文は周期列$\\langle\\beta_1,\\ldots,\\beta_{N+1}\\rangle$を使い、各サイクルの後に繰り返します。一般的な説明では、0で終わる非増加列を使い、大きな値を大域探索に、0に近い値を局所探索に割り当てます。Dixon"
+"--Szegoベンチマーク実験では、次の列を報告しています。"
 
-#: ../../algorithms/rbf_cors.md:133
-msgid "Related"
-msgstr "関連"
+#: ../../algorithms/rbf_cors.md:69
+msgid "**SP1**: $\\langle 0.95,\\ 0.25,\\ 0.05,\\ 0.03,\\ 0\\rangle$;"
+msgstr "**SP1**：$\\langle 0.95,\\ 0.25,\\ 0.05,\\ 0.03,\\ 0\\rangle$。"
 
-#: ../../algorithms/rbf_cors.md:135
-msgid "[References](../references.md): Full bibliographic details for the source"
-msgstr "[文献リファレンス](../references.md)：出典の完全な書誌情報"
+#: ../../algorithms/rbf_cors.md:70
+msgid "**SP2**: $\\langle 0.9,\\ 0.75,\\ 0.25,\\ 0.05,\\ 0.03\\rangle$."
+msgstr "**SP2**：$\\langle 0.9,\\ 0.75,\\ 0.25,\\ 0.05,\\ 0.03\\rangle$。"
 
-#: ../../algorithms/rbf_cors.md:136
+#: ../../algorithms/rbf_cors.md:72
+#, python-brace-format
 msgid ""
-"[Surrogate](../concepts/surrogate_modeling/surrogate.md): List of "
-"surrogate models including `RBFSurrogate`/`GaussianKernel`"
-msgstr "[Surrogate](../concepts/surrogate_modeling/surrogate.md)：`RBFSurrogate`/`GaussianKernel`を含むサロゲートモデル一覧"
+"These are experimental choices, not separate acquisition classes.  SP1 is"
+" `CORSDistance`'s default and has length $L=5$.  The source also observes"
+" that the ordering and terminal-zero conditions are heuristics: having at"
+" least one non-zero entry is the condition used by its convergence "
+"corollary {cite}`regis2005cors`."
+msgstr "これらは実験上の選択であり、別々の獲得関数クラスではありません。SP1は`CORSDistance`の既定値で、長さは$L=5$です。原論文は順序と末尾の0をヒューリスティックとし、収束に関する系では少なくとも1つの非ゼロ値があることを条件にしています。{cite}`regis2005cors`"
 
-#: ../../algorithms/rbf_cors.md:137
-msgid ""
-"[AcquisitionFunction](../concepts/surrogate_modeling/acquisition_functions.md):"
-" List of acquisition functions including distance-constrained "
-"`CORSDistance` for CORS"
-msgstr "[AcquisitionFunction](../concepts/surrogate_modeling/acquisition_functions.md)：CORSの距離制約付き`CORSDistance`を含む獲得関数一覧"
+#: ../../algorithms/rbf_cors.md:78
+msgid "For `CORSDistance`, the beta index is explicitly"
+msgstr "`CORSDistance`のbetaの添字は次の式で定まります。"
 
-#: ../../algorithms/rbf_cors.md:138
+#: ../../algorithms/rbf_cors.md:84
 msgid ""
-"[SurrogateManager](../concepts/surrogate_modeling/surrogate_manager.md): "
-"Detailed usage of `GlobalSurrogateManager`"
-msgstr "[SurrogateManager](../concepts/surrogate_modeling/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方"
-
-#: ../../algorithms/rbf_cors.md:139
-msgid ""
-"[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
-" `PreSelectionStrategy` for one-candidate decisions and `IndividualBasedStrategy` "
-"for ratio-based extensions"
+"The index is zero-based, so `decision_count == 0` selects "
+"`search_pattern[0]`.  This is deliberately different from the scheduled "
+"parameter in `LowerConfidenceBound`, which uses `ctx.decision_count + 1` "
+"as a one-based round number.  `prepare(archive, ctx)` packages the "
+"evaluated design vectors and the selected beta into the read-only "
+"reference consumed by `score()`; scoring does not mutate a private cycle "
+"counter."
 msgstr ""
-"[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md)："
-"1決定1点の評価には`PreSelectionStrategy`を使い、割合による拡張には`IndividualBasedStrategy`を使います。"
+"添字は0始まりです。そのため、`decision_count == "
+"0`では`search_pattern[0]`を選びます。これは、`ctx.decision_count + "
+"1`を1始まりのラウンド番号として使う`LowerConfidenceBound`のスケジュール済みパラメータとは意図的に異なります。`prepare(archive,"
+" "
+"ctx)`は評価済み設計ベクトルと選択したbetaを、`score()`が受け取る読み取り専用の参照へまとめます。スコア計算は非公開のサイクルカウンターを変更しません。"
 
 #: ../../algorithms/rbf_cors.md:92
 msgid "Source-faithful decisions and batch extensions"
@@ -336,47 +176,469 @@ msgstr "原法に対応する決定とバッチ拡張"
 
 #: ../../algorithms/rbf_cors.md:94
 msgid ""
-"The source advances one CORS step for **one true evaluation point**. The "
-"source-faithful `saealib` configuration therefore uses a candidate pool with "
-"`PreSelectionStrategy(..., n_select=1)` or an explicit `TopKEvaluation(1)`. "
-"Candidate generation may still produce a batch; only one candidate proceeds to "
-"true evaluation for each decision."
+"The source advances one CORS step for **one true evaluation point**.  The"
+" source-faithful `saealib` configuration therefore uses a candidate pool "
+"with `PreSelectionStrategy(..., n_select=1)` or an explicit "
+"`TopKEvaluation(1)`. Candidate generation may still produce a batch; only"
+" one candidate proceeds to true evaluation for each decision."
 msgstr ""
-"原法は**1点の真評価**ごとにCORSの手順を1回進めます。"
-"そのため、原法に対応する`saealib`構成では、候補プールに対して`PreSelectionStrategy(..., n_select=1)`または明示的な`TopKEvaluation(1)`を使います。"
-"候補生成はバッチで実行できますが、各決定で真に評価する候補は1点です。"
+"原論文は**1点の真評価**ごとにCORSのステップを1回進めます。そのため、原法に対応する`saealib`構成では、候補プールに対して`PreSelectionStrategy(...,"
+" "
+"n_select=1)`または明示的な`TopKEvaluation(1)`を使います。候補生成はバッチでも実行できますが、各決定で真に評価する候補は1点です。"
 
-#: ../../algorithms/rbf_cors.md:101
+#: ../../algorithms/rbf_cors.md:100
 msgid ""
-"`saealib` also supports planners that send multiple distinct candidates to the "
-"true objective in one `EvaluationPlan`. `CORSDistance` prepares one beta for "
-"that decision, and the runtime applies the same beta to every candidate in the "
-"plan. This is a supported batch extension, not the source's sequential CORS "
-"procedure."
-msgstr ""
-"saealibは、1つの`EvaluationPlan`で複数の異なる候補を目的関数へ送るプランナーもサポートします。"
-"`CORSDistance`はその決定に対して1つのβを準備し、ランタイムはプラン内の全候補へ同じβを適用します。"
-"これはサポート対象のバッチ拡張であり、原法の逐次CORS手順ではありません。"
+"`saealib` also supports planners that send multiple distinct candidates "
+"to the true objective in one `EvaluationPlan`.  `CORSDistance` prepares "
+"one beta for that decision, and the runtime applies the same beta to "
+"every candidate in the plan.  This is a supported batch extension, not "
+"the source's sequential CORS procedure.  The compiler emits a "
+"`cors_nonsequential_evaluation` warning when this configuration is "
+"statically visible; a custom planner is checked at runtime by counting "
+"distinct candidate IDs, and the warning is emitted once per optimizer "
+"runtime."
+msgstr "`saealib`は、1つの`EvaluationPlan`で複数の異なる候補を真の目的関数へ送るプランナーもサポートします。`CORSDistance`はその決定に対して1つのbetaを準備し、ランタイムはプラン内の各候補へ同じbetaを適用します。これはサポート対象のバッチ拡張であり、原法の逐次CORS手順ではありません。コンパイラは、この構成を静的に確認できる場合に`cors_nonsequential_evaluation`警告を出します。カスタムプランナーは、異なる候補IDを数えてランタイムで確認し、警告はオプティマイザーの実行ごとに1回出ます。"
 
 #: ../../algorithms/rbf_cors.md:109
 msgid ""
-"Repeated evaluations of one candidate do not count as a multi-candidate batch, "
-"because the runtime compares unique candidate IDs. The runtime does not warn "
-"merely because an asynchronous scheduler is configured. `max_pending=1` keeps "
-"the source-faithful sequential boundary."
-msgstr ""
-"同じ候補の反復評価は、ランタイムが候補IDの重複を除いて数えるため、複数候補のバッチには数えません。"
-"非同期スケジューラーを設定しただけでは、ランタイム警告は出ません。"
-"`max_pending=1`は原法に対応する逐次境界を保ちます。"
+"Repeated evaluations of one candidate do not count as a multi-candidate "
+"batch, because the runtime compares unique candidate IDs.  The runtime "
+"does not warn merely because an asynchronous scheduler is configured.  "
+"`max_pending=1` keeps the source-faithful sequential boundary.  A larger "
+"capacity receives a compiler warning when statically configured, while a "
+"runtime warning for asynchronous non-sequential behavior requires actual "
+"overlap between distinct decisions."
+msgstr "同じ候補の反復評価は、ランタイムが候補IDの重複を除いて数えるため、複数候補のバッチには数えません。非同期スケジューラーを設定しただけでは、ランタイム警告は出ません。`max_pending=1`は原法に対応する逐次境界を保ちます。容量が1より大きく、静的に設定されている場合はコンパイラが警告します。非同期の非逐次動作についてランタイムが警告するのは、異なる決定が実際に重なる場合です。"
 
-#: ../../algorithms/rbf_cors.md:116
+#: ../../algorithms/rbf_cors.md:117
+#, python-format
 msgid ""
-"The beta index is `ctx.decision_count % len(search_pattern)`. A "
-"`decision_count` that starts at zero and remains paired with `CORSDistance` "
-"from the beginning of a run matches the source iteration index. Replacing a "
-"component with `CORSDistance` during a run starts its phase at the current "
-"`decision_count`."
+"The beta index is `ctx.decision_count % len(search_pattern)`.  A "
+"`decision_count` that starts at zero and remains paired with "
+"`CORSDistance` from the beginning of a run matches the source iteration "
+"index.  Replacing a component with `CORSDistance` during a run starts its"
+" phase at the current `decision_count`; it does not reconstruct the "
+"earlier source iterations."
 msgstr ""
-"βの添字は`ctx.decision_count % len(search_pattern)`です。"
-"実行開始時の`decision_count`が0で、最初から`CORSDistance`を継続して使う場合は、原法の反復番号と位相が一致します。"
-"実行途中でコンポーネントを`CORSDistance`へ差し替えた場合は、その時点の`decision_count`から位相を開始します。"
+"ベータの添字は`ctx.decision_count % "
+"len(search_pattern)`です。実行開始時の`decision_count`が0で、最初から`CORSDistance`を継続して使う場合は、原法の反復番号と位相が一致します。実行途中でコンポーネントを`CORSDistance`へ差し替えた場合は、その時点の`decision_count`から位相を開始します。過去の原法の反復を再構成することはありません。"
+
+#: ../../algorithms/rbf_cors.md:123
+msgid "CORS-RBF procedure"
+msgstr "CORS-RBFの手順"
+
+#: ../../algorithms/rbf_cors.md:125
+msgid ""
+"The following pseudocode separates the paper's one-point procedure from "
+"the candidate-pool approximation used by `saealib`."
+msgstr "次の擬似コードは、原論文の1点手順と`saealib`の候補プール近似を分けて示します。"
+
+#: ../../algorithms/rbf_cors.md:128
+msgid "(CORS-RBF with a candidate pool)"
+msgstr "候補プールを用いるCORS-RBF"
+
+#: ../../algorithms/rbf_cors.md:131
+#, python-brace-format
+msgid ""
+"**Inputs** objective function $f$, search domain $\\mathcal{D}$, initial "
+"evaluated set $S_1$, RBF surrogate, search pattern, and evaluation budget"
+" **Output** best solution found in the true-evaluation archive"
+msgstr ""
+"**Inputs** 目的関数$f$、探索領域$\\mathcal{D}$、初期評価集合$S_1$、RBFサロゲート、探索パターン、評価予算 "
+"**Output** 真評価アーカイブで見つかった最良解"
+
+#: ../../algorithms/rbf_cors.md:134
+msgid "Evaluate the initial set $S_1$ with $f$."
+msgstr "初期集合$S_1$を$f$で評価します。"
+
+#: ../../algorithms/rbf_cors.md:135
+msgid "Fit the RBF surrogate $\\hat f_i$ to the evaluated archive."
+msgstr "評価済みアーカイブへRBFサロゲート$\\hat f_i$を適合させます。"
+
+#: ../../algorithms/rbf_cors.md:136
+msgid ""
+"Generate a candidate pool $C_i$ with the configured evolutionary "
+"algorithm."
+msgstr "設定した進化アルゴリズムで候補プール$C_i$を生成します。"
+
+#: ../../algorithms/rbf_cors.md:137
+msgid ""
+"Prepare $\\beta_i$ from the current decision count and compute the "
+"distance of each candidate in $C_i$ to the evaluated archive."
+msgstr "現在の決定回数から$\\beta_i$を準備し、候補プール$C_i$の各候補と評価済みアーカイブとの距離を計算します。"
+
+#: ../../algorithms/rbf_cors.md:138
+#, python-brace-format
+msgid ""
+"Compute the candidate-pool approximation $\\widehat{\\Delta}_i = \\max_{x"
+" \\in C_i} \\min_{x_j \\in S_i} \\lVert x-x_j\\rVert$ unless a fixed "
+"`delta` was supplied."
+msgstr ""
+"固定`delta`を指定していない場合は、候補プール近似$\\widehat{\\Delta}_i = \\max_{x \\in C_i} "
+"\\min_{x_j \\in S_i} \\lVert x-x_j\\rVert$を計算します。"
+
+#: ../../algorithms/rbf_cors.md:139
+#, python-brace-format
+msgid ""
+"Score the predicted mean. Set the score to $-\\infty$ for each candidate "
+"with minimum distance below $\\beta_i\\widehat{\\Delta}_i$ (or below "
+"$\\beta_i\\,\\texttt{delta}$ for the fixed-scale mode)."
+msgstr "予測平均をスコア化します。最小距離が$\\beta_i\\widehat{\\Delta}_i$未満の各候補には$-\\infty$を設定します（固定尺度モードでは$\\beta_i\\,\\texttt{delta}$未満）。"
+
+#: ../../algorithms/rbf_cors.md:140
+msgid ""
+"Send the highest-scoring candidate or batch of candidates to the true "
+"objective, add the observations to the archive, and repeat from step 2 "
+"until termination."
+msgstr "スコアが最も高い候補または候補バッチを真の目的関数へ送り、観測値をアーカイブへ追加し、終了するまでステップ2から繰り返します。"
+
+#: ../../algorithms/rbf_cors.md:143
+msgid "Flowchart"
+msgstr "フローチャート"
+
+#: ../../algorithms/rbf_cors.md:161
+msgid "Configuration in `saealib`"
+msgstr "`saealib`での構成"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "Role"
+msgstr "役割"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "`saealib` implementation"
+msgstr "`saealib`での実装"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "Corresponding CORS step"
+msgstr "対応するCORSのステップ"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "Search algorithm"
+msgstr "探索アルゴリズム"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid ""
+"`GA` (the crossover, mutation, parent-selection, and survivor-selection "
+"choices are library configuration, not part of CORS)"
+msgstr "`GA`（交叉、突然変異、親選択、世代交代選択はライブラリの構成であり、CORSの一部ではありません）"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "3"
+msgstr "3"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "Surrogate model"
+msgstr "サロゲートモデル"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid ""
+"`RBFSurrogate` (the paper's experiment uses a thin-plate-spline kernel "
+"with a linear polynomial term)"
+msgstr "`RBFSurrogate`（論文の実験では線形多項式項を持つ薄板スプラインカーネルを使います）"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "2"
+msgstr "2"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "Acquisition function"
+msgstr "獲得関数"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid ""
+"`CORSDistance` (predicted-mean score plus the $\\beta_i\\Delta_i$ "
+"distance constraint)"
+msgstr "`CORSDistance`（予測平均スコアと$\\beta_i\\Delta_i$の距離制約）"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "4--6"
+msgstr "4--6"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "Surrogate management"
+msgstr "サロゲート管理"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "`GlobalSurrogateManager` (fits the RBF on the complete evaluated archive)"
+msgstr "`GlobalSurrogateManager`（評価済みアーカイブ全体でRBFを適合させます）"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "Evaluation strategy"
+msgstr "評価戦略"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid ""
+"`PreSelectionStrategy(n_candidates=20, n_select=1)` (ranks the candidate "
+"pool and evaluates one candidate)"
+msgstr "`PreSelectionStrategy(n_candidates=20, n_select=1)`（候補プールを順位付けし、1点を真に評価する）"
+
+#: ../../algorithms/rbf_cors.md:145
+msgid "6--7"
+msgstr "6--7"
+
+#: ../../algorithms/rbf_cors.md:171
+msgid ""
+"The following is a runnable smoke example.  It uses the paper's SP1 and "
+"its thin-plate-spline-plus-linear-polynomial RBF configuration.  "
+"`delta=None` is explicit to show the paper-inspired candidate-pool "
+"approximation; it is also the `CORSDistance` default.  The 40-FE budget "
+"keeps a documentation example quick (the final batch can make the "
+"observed `fe` slightly larger than the limit); use a larger budget for an"
+" experiment rather than treating this as a benchmark."
+msgstr "次は実行可能なスモーク例です。原論文のSP1と、薄板スプラインおよび線形多項式を組み合わせたRBF構成を使います。`delta=None`を明示して、論文に基づく候補プール近似を示します。これは`CORSDistance`の既定値でもあります。40回のFE予算によりドキュメント例の実行時間を短くしています（最後のバッチにより観測される`fe`が上限をわずかに超える場合があります）。ベンチマークとして扱うのではなく、実験にはより大きな予算を使ってください。"
+
+#: ../../algorithms/rbf_cors.md:239
+msgid ""
+"The example is intentionally explicit about `direction`: with "
+"`direction=[-1]`, a lower objective value produces a higher acquisition "
+"score. If a Gaussian RBF is preferred, use "
+"`RBFSurrogate(kernel=GaussianKernel())` and omit `polynomial_degree`; a "
+"Gaussian kernel does not require a polynomial term."
+msgstr "この例では`direction`を明示しています。`direction=[-1]`では、目的値が小さいほど獲得スコアが高くなります。ガウスRBFを使う場合は`RBFSurrogate(kernel=GaussianKernel())`を指定し、`polynomial_degree`を省略します。ガウスカーネルには多項式項が不要です。"
+
+#: ../../algorithms/rbf_cors.md:245
+msgid "Differences from the source"
+msgstr "原法との差分"
+
+#: ../../algorithms/rbf_cors.md:247
+msgid "Candidate-pool approximation of CORS-AP"
+msgstr "CORS-APの候補プール近似"
+
+#: ../../algorithms/rbf_cors.md:249
+msgid ""
+"The paper solves CORS-AP over the whole feasible domain and selects one "
+"point that minimizes the response surface under the distance constraint."
+"  `saealib` uses the candidate pool generated by `GA` and selects the "
+"highest-scoring feasible rows."
+msgstr ""
+"原論文は実行可能領域全体でCORS-"
+"APを解き、距離制約の下で応答曲面を最小化する1点を選びます。`saealib`は`GA`が生成した候補プールから、スコアが最も高い実行可能な行を選びます。"
+
+#: ../../algorithms/rbf_cors.md:254
+msgid ""
+"The canonical configuration evaluates one true candidate per decision, so"
+" it matches the source's sequential decision structure.  "
+"`PreSelectionStrategy` with `n_select=1` and `TopKEvaluation(1)` express "
+"that configuration while leaving candidate generation batched."
+msgstr "標準構成は1決定につき1点を真に評価するため、原法の逐次的な決定構造に対応します。`PreSelectionStrategy`の`n_select=1`と`TopKEvaluation(1)`でこの構成を指定できます。候補生成自体はバッチのままにできます。"
+
+#: ../../algorithms/rbf_cors.md:259
+msgid ""
+"`saealib` also permits multiple distinct candidates per decision.  Every "
+"candidate in that `EvaluationPlan` receives the one beta prepared for the"
+" plan.  The compiler or runtime warning identifies this supported "
+"extension, but the configuration does not reproduce the source's "
+"sequential procedure. The source paper's sequential convergence "
+"discussion must not be transferred to that extension without an "
+"additional argument."
+msgstr "`saealib`は1決定で複数の異なる候補も許容します。その`EvaluationPlan`の全候補には、プランに対して準備した1つのbetaを適用します。コンパイラまたはランタイムの警告は、このサポート対象の拡張を示します。ただし、この構成は原法の逐次手順を再現しません。原論文の逐次手順を前提とする収束議論を、この拡張構成へ追加の議論なしに適用するわけにはいきません。"
+
+#: ../../algorithms/rbf_cors.md:266
+msgid ""
+"The GA operators and the choice of `GlobalSurrogateManager` are also "
+"`saealib` configuration choices.  They should not be read as part of the "
+"CORS definition."
+msgstr "GAの演算子と`GlobalSurrogateManager`の選択も`saealib`の構成上の選択です。これらをCORSの定義の一部として扱うわけにはいきません。"
+
+#: ../../algorithms/rbf_cors.md:270
+msgid "Beta progression and asynchronous boundaries"
+msgstr "ベータの進行と非同期境界"
+
+#: ../../algorithms/rbf_cors.md:272
+msgid ""
+"The source's $i$ advances after each true evaluation point.  `saealib`'s "
+"`CORSDistance` reads the runtime's `ctx.decision_count` and selects one "
+"zero-based pattern entry per prepared decision.  All candidates in one "
+"plan share that entry because `prepare()` runs once for the plan and "
+"`score()` is read-only."
+msgstr "原法の$i$は各真評価点の後に進みます。`saealib`の`CORSDistance`は実行時の`ctx.decision_count`を読み取り、準備した決定ごとに0始まりのパターン要素を1つ選びます。`prepare()`はプランごとに1回実行され、`score()`は読み取り専用であるため、1つのプラン内の全候補が同じ要素を共有します。"
+
+#: ../../algorithms/rbf_cors.md:278
+msgid ""
+"A run that starts with `decision_count == 0` and continues to use "
+"`CORSDistance` keeps the source iteration phase.  Introducing the "
+"acquisition after a component replacement starts from the current "
+"decision count, so the runtime does not infer the earlier phase."
+msgstr ""
+"`decision_count == "
+"0`で開始し、実行開始から`CORSDistance`を使い続ける実行では、原法の反復位相が保たれます。コンポーネント差し替え後に獲得関数を導入した場合は、現在の決定回数から開始するため、ランタイムは過去の位相を推定しません。"
+
+#: ../../algorithms/rbf_cors.md:283
+msgid ""
+"Asynchronous scheduling follows the same boundary.  `max_pending=1` waits"
+" for the current decision before preparing the next one.  A scheduler by "
+"itself produces no warning.  A capacity greater than one is statically "
+"diagnosed when it can allow overlapping decisions, and the runtime "
+"diagnoses only an overlap that actually occurs."
+msgstr "非同期スケジューリングも同じ境界に従います。`max_pending=1`では、現在の決定が完了してから次の決定を準備します。スケジューラーを設定しただけでは警告は出ません。1より大きい容量で決定の重複が起こり得る場合は静的に診断し、ランタイムでは実際に起きた重複だけを診断します。"
+
+#: ../../algorithms/rbf_cors.md:289
+msgid "$\\Delta_i$: paper definition versus `delta`"
+msgstr "$\\Delta_i$：論文の定義と`delta`の違い"
+
+#: ../../algorithms/rbf_cors.md:291
+msgid ""
+"Equation (2) in the paper is a domain-wide maximin distance.  An "
+"acquisition function does not receive the full feasible domain, so "
+"`CORSDistance(delta=None)` computes the following approximation from the "
+"current candidate pool `prediction.x` on every score call:"
+msgstr "論文の式（2）は領域全体のmaximin距離です。獲得関数は実行可能領域全体を受け取らないため、`CORSDistance(delta=None)`は各スコア計算で現在の候補プール`prediction.x`から次の近似を計算します。"
+
+#: ../../algorithms/rbf_cors.md:296
+#, python-brace-format
+msgid ""
+"\n"
+"\\widehat{\\Delta}_i = \\max_{x \\in C_i}\\min_{x_j \\in S_i}\n"
+"                         \\lVert x-x_j\\rVert.\n"
+msgstr ""
+"\n"
+"\\widehat{\\Delta}_i = \\max_{x \\in C_i}\\min_{x_j \\in S_i}\n"
+"                         \\lVert x-x_j\\rVert.\n"
+
+#: ../../algorithms/rbf_cors.md:301
+msgid ""
+"This is the same cover-point idea described by the paper's implementation"
+" section, with the generated candidate pool serving as the cover set.  It"
+" can underestimate the domain-wide value if the pool covers only a "
+"promising subregion, but it has an important feasibility property: for a "
+"non-empty pool and $\\beta_i\\leq 1$, a maximin candidate satisfies the "
+"threshold (equality is allowed), so at least one candidate remains "
+"executable."
+msgstr ""
+"これは論文の実装節で説明される被覆点の考え方と同じであり、生成した候補プールを被覆集合として使います。候補プールが有望な部分領域だけを覆う場合は、領域全体の値を過小評価する可能性があります。しかし、空でない候補プールと$\\beta_i\\leq"
+" 1$に対して、maximin候補はしきい値を満たします（等号を許します）。そのため、少なくとも1候補が実行可能なまま残ります。"
+
+#: ../../algorithms/rbf_cors.md:308
+#, python-brace-format
+msgid ""
+"Earlier documentation examples used the design-box diagonal as a fixed "
+"`delta`.  That is a distance scale, not the iteration-specific "
+"$\\Delta_i$ in Eq. (2).  With a diagonal-length `delta`, a high value "
+"such as $\\beta_i=0.95$ can put every candidate in the current pool below"
+" the threshold (the impossible region discussed in the paper), leaving no"
+" executable row. The default `delta=None` path fixes that failure mode by"
+" deriving $\\widehat{\\Delta}_i$ from the candidates each time.  Passing "
+"a finite positive numeric `delta` remains supported for legacy fixed-"
+"scale experiments, but the caller is responsible for choosing a scale "
+"that leaves feasible candidates."
+msgstr "以前のドキュメント例では、設計空間の対角線長を固定`delta`として使っていました。これは距離尺度であり、式（2）の反復ごとの$\\Delta_i$ではありません。対角線長の`delta`では、$\\beta_i=0.95$のような高い値により、現在の候補プールの全候補がしきい値を下回り（論文で議論される実行不能領域）、実行可能な行がなくなる場合があります。既定の`delta=None`経路では、候補から毎回$\\widehat{\\Delta}_i$を導出してこの失敗を防ぎます。有限で正の数値`delta`を渡す従来の固定尺度実験もサポートしますが、実行可能な候補が残る尺度を選ぶ責任は呼び出し側にあります。"
+
+#: ../../algorithms/rbf_cors.md:318
+msgid "Search-pattern validation"
+msgstr "探索パターンの検証"
+
+#: ../../algorithms/rbf_cors.md:320
+msgid ""
+"The paper's non-increasing order and terminal zero are useful heuristics,"
+" not requirements of the convergence argument.  The implementation "
+"therefore accepts exactly the following input contract:"
+msgstr "論文の非増加順序と末尾の0は有用なヒューリスティックですが、収束議論の要件ではありません。そのため、実装が受け付ける入力契約を次のように定めます。"
+
+#: ../../algorithms/rbf_cors.md:324
+msgid "`search_pattern` is non-empty;"
+msgstr "`search_pattern`は空でない。"
+
+#: ../../algorithms/rbf_cors.md:325
+msgid "every value is finite; and"
+msgstr "すべての値が有限である。"
+
+#: ../../algorithms/rbf_cors.md:326
+msgid "every value satisfies $0\\leq\\beta\\leq1$."
+msgstr "すべての値が$0\\leq\\beta\\leq1$を満たす。"
+
+#: ../../algorithms/rbf_cors.md:328
+msgid ""
+"It does **not** require a trailing zero or a non-increasing sequence.  "
+"For example, `(1.0,)` is valid and expresses pure exploration, and an "
+"all-zero pattern is also accepted (although it gives up the paper's "
+"exploration property).  The constructor normalizes the values to a tuple "
+"of floats."
+msgstr "末尾の0や非増加順序は**要求しません**。例えば、`(1.0,)`は純粋な探索を表す有効な値であり、全要素が0のパターンも受け付けます（ただし、論文の探索特性は失われます）。コンストラクタは値をfloatのタプルへ正規化します。"
+
+#: ../../algorithms/rbf_cors.md:333
+msgid "Parameters and variants"
+msgstr "パラメータと変種"
+
+#: ../../algorithms/rbf_cors.md:335
+msgid ""
+"**`delta`**: The fixed distance scale used in the threshold `beta * "
+"delta`.  Leave it as `None` (the default) to compute the candidate-pool "
+"maximin approximation of $\\Delta_i$ on each score call.  A numeric value"
+" must be finite and greater than zero and opts into the legacy fixed-"
+"scale behavior."
+msgstr ""
+"**`delta`**：しきい値`beta * "
+"delta`に使う固定距離尺度です。既定値の`None`では、各スコア計算で候補プールから$\\Delta_i$のmaximin近似を計算します。数値を渡す場合は有限かつ0より大きい値にし、従来の固定尺度モードを明示します。"
+
+#: ../../algorithms/rbf_cors.md:340
+msgid ""
+"**`search_pattern`**: The periodic beta sequence.  The default is SP1, "
+"`(0.95, 0.25, 0.05, 0.03, 0.0)`.  SP2 from the paper can be supplied as "
+"`(0.9, 0.75, 0.25, 0.05, 0.03)`."
+msgstr ""
+"**`search_pattern`**：周期的なbeta列です。既定値はSP1の`(0.95, 0.25, 0.05, 0.03, "
+"0.0)`です。論文のSP2は`(0.9, 0.75, 0.25, 0.05, 0.03)`として指定できます。"
+
+#: ../../algorithms/rbf_cors.md:344
+msgid ""
+"**`weights` and `direction`**: Multi-objective scalarization options "
+"inherited from `MeanPrediction`.  `direction` uses per-objective signs "
+"(`+1` for maximization and `-1` for minimization) and takes precedence "
+"over `weights`. If neither is supplied, the first objective is used; an "
+"unset direction is normally injected from `problem.direction` at run "
+"start."
+msgstr "**`weights`と`direction`**：`MeanPrediction`から継承する多目的予測平均のスカラー化オプションです。`direction`は目的ごとの符号（最大化は`+1`、最小化は`-1`）を使い、`weights`より優先されます。どちらも指定しない場合は第1目的を使います。directionが未設定の場合は、通常、実行開始時に`problem.direction`を注入します。"
+
+#: ../../algorithms/rbf_cors.md:350
+msgid ""
+"**RBF kernel**: `RBFSurrogate(kernel=...)` requires an explicit "
+"`RBFKernel`. Use `ThinPlateSplineKernel()` with `polynomial_degree=1` to "
+"match the paper's RBF experiment, or use a strictly positive-definite "
+"kernel such as `GaussianKernel()` without a polynomial term."
+msgstr "**RBFカーネル**：`RBFSurrogate(kernel=...)`には明示的な`RBFKernel`が必要です。論文のRBF実験に合わせる場合は`polynomial_degree=1`を指定した`ThinPlateSplineKernel()`を使います。多項式項を付けない場合は、`GaussianKernel()`のような正定値カーネルを使えます。"
+
+#: ../../algorithms/rbf_cors.md:355
+msgid ""
+"**Candidate coordinates**: `CORSDistance` needs `prediction.x`, the "
+"candidate design vectors aligned with `prediction.value`.  The "
+"surrogate's `predict()` must populate this field.  Call the normal "
+"`evaluate(..., ctx=...)` path (or call `prepare()` with a real context) "
+"so the beta for the current decision is resolved before `score()` runs."
+msgstr ""
+"**候補座標**：`CORSDistance`には、`prediction.value`と行単位で対応する候補設計ベクトル`prediction.x`が必要です。サロゲートの`predict()`がこのフィールドを設定します。通常の`evaluate(...,"
+" ctx=...)`経路を使うか、実際のコンテキストで`prepare()`を呼び、`score()`の前に現在の決定のbetaを解決します。"
+
+#: ../../algorithms/rbf_cors.md:361
+msgid "Related"
+msgstr "関連"
+
+#: ../../algorithms/rbf_cors.md:363
+msgid ""
+"[References](../references.md): Full bibliographic details for Regis & "
+"Shoemaker (2005)"
+msgstr "[文献](../references.md)：RegisとShoemaker（2005）の完全な書誌情報"
+
+#: ../../algorithms/rbf_cors.md:364
+msgid ""
+"[Surrogate](../concepts/surrogate_modeling/surrogate.md): RBF surrogates "
+"and kernels"
+msgstr "[サロゲート](../concepts/surrogate_modeling/surrogate.md)：RBFサロゲートとカーネル"
+
+#: ../../algorithms/rbf_cors.md:365
+msgid ""
+"[AcquisitionFunction](../concepts/surrogate_modeling/acquisition_functions.md):"
+" Acquisition lifecycle and score convention"
+msgstr "[獲得関数](../concepts/surrogate_modeling/acquisition_functions.md)：獲得関数のライフサイクルとスコア規約"
+
+#: ../../algorithms/rbf_cors.md:366
+msgid ""
+"[SurrogateManager](../concepts/surrogate_modeling/surrogate_manager.md): "
+"`GlobalSurrogateManager`"
+msgstr "[サロゲート管理](../concepts/surrogate_modeling/surrogate_manager.md)：`GlobalSurrogateManager`"
+
+#: ../../algorithms/rbf_cors.md:367
+msgid ""
+"[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
+" `PreSelectionStrategy` for one-candidate decisions and "
+"`IndividualBasedStrategy` for ratio-based extensions"
+msgstr "[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md)：1決定1点の評価には`PreSelectionStrategy`を使い、割合による拡張には`IndividualBasedStrategy`を使います。"

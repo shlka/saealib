@@ -23,6 +23,7 @@ from saealib import (
     TruncationSelection,
     max_gen,
 )
+from saealib.acquisition import CompositeAcquisition
 from saealib.acquisition.mean import CORSDistance
 from saealib.callback import AcquisitionEndEvent, PostEvaluationEvent
 from saealib.comparators import SingleObjectiveComparator
@@ -31,12 +32,18 @@ from saealib.core.state import PROPOSALS_CURRENT
 from saealib.execution import (
     AsyncEvaluationScheduler,
     EvaluationHandle,
+    EvaluationRequest,
     EvaluationStatus,
     EvaluationUpdate,
     Evaluator,
     SerialEvaluator,
 )
-from saealib.policies.evaluation import EvaluateAll, TopKEvaluation
+from saealib.policies.evaluation import (
+    EvaluateAll,
+    EvaluationPlan,
+    EvaluationPlanner,
+    TopKEvaluation,
+)
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
 from saealib.stages import (
@@ -108,6 +115,27 @@ class _ImmediateEvaluator(Evaluator):
             pending.request.request_id,
             EvaluationStatus.PENDING,
             backend_token=(pending.request, problem),
+        )
+
+
+class _OpaqueBatchPlanner(EvaluationPlanner):
+    """Planner whose batch behavior is only observable at runtime."""
+
+    def plan(self, candidates, acquisition, ctx):
+        del candidates, acquisition, ctx
+        return EvaluationPlan(
+            (
+                EvaluationRequest(
+                    np.int64(100),
+                    np.array([10], dtype=np.int64),
+                    np.array([[0.2]], dtype=np.float64),
+                ),
+                EvaluationRequest(
+                    np.int64(101),
+                    np.array([11], dtype=np.int64),
+                    np.array([[0.3]], dtype=np.float64),
+                ),
+            )
         )
 
 
@@ -452,3 +480,32 @@ def test_optimizer_emits_one_runtime_warning_for_a_true_evaluation_batch():
     ]
     assert len(cors_warnings) == 1
     assert evaluated_batch_sizes == [2, 2]
+
+
+def test_nested_composite_cors_warns_for_opaque_runtime_batch():
+    inner = CompositeAcquisition(
+        {
+            "cors": CORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN),
+        },
+        combine_fn=lambda scores: scores[0],
+    )
+    acquisition = CompositeAcquisition(
+        {"inner": inner},
+        combine_fn=lambda scores: scores[0],
+    )
+    optimizer = Optimizer(_make_problem(), seed=7).set_acquisition(acquisition)
+    stage = EvaluationPlanStage(
+        planner=_OpaqueBatchPlanner(),
+        cors_runtime_warning=optimizer._cors_runtime_warning,
+    )
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        stage.execute(_make_async_state())
+
+    cors_warnings = [
+        item
+        for item in caught
+        if "CORSDistance is used with an evaluation configuration" in str(item.message)
+    ]
+    assert len(cors_warnings) == 1

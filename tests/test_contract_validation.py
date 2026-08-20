@@ -20,7 +20,11 @@ from saealib.execution.evaluator import SerialEvaluator
 from saealib.execution.scheduler import AsyncEvaluationScheduler
 from saealib.islands import IslandModel
 from saealib.optimizer import Optimizer
-from saealib.policies.evaluation import RatioEvaluation, TopKEvaluation
+from saealib.policies.evaluation import (
+    RatioEvaluation,
+    RepeatedEvaluation,
+    TopKEvaluation,
+)
 from saealib.problem import Problem
 from saealib.strategies.direct import DirectStrategy
 from saealib.strategies.ps import PreSelectionStrategy
@@ -190,10 +194,12 @@ def test_optimizer_compiles_once_per_run_and_retains_plan(monkeypatch) -> None:
     assert optimizer.describe() == optimizer.executable_plan.describe()
 
 
-def _cors_optimizer(*, n_select: int, planner=None) -> Optimizer:
+def _cors_optimizer(*, n_select: int, planner=None, n_candidates: int = 4) -> Optimizer:
     optimizer = _default_optimizer()
     optimizer.set_acquisition(CORSDistance(search_pattern=(0.9, 0.0)))
-    optimizer.set_strategy(PreSelectionStrategy(n_candidates=4, n_select=n_select))
+    optimizer.set_strategy(
+        PreSelectionStrategy(n_candidates=n_candidates, n_select=n_select)
+    )
     if planner is not None:
         optimizer.set_evaluation_planner(planner)
     return optimizer
@@ -240,6 +246,34 @@ def test_cors_compiler_warns_for_known_ratio_batch() -> None:
 
     assert plan is not None
     assert any(
+        diagnostic.code == "cors_nonsequential_evaluation"
+        for diagnostic in plan.diagnostics
+    )
+
+
+def test_cors_compiler_warns_for_repeated_full_candidate_batch() -> None:
+    optimizer = _cors_optimizer(n_select=1, planner=RepeatedEvaluation(2))
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    assert any(
+        diagnostic.code == "cors_nonsequential_evaluation"
+        for diagnostic in plan.diagnostics
+    )
+
+
+def test_cors_compiler_keeps_repeated_single_candidate_clean() -> None:
+    optimizer = _cors_optimizer(
+        n_select=1,
+        n_candidates=1,
+        planner=RepeatedEvaluation(2),
+    )
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    assert not any(
         diagnostic.code == "cors_nonsequential_evaluation"
         for diagnostic in plan.diagnostics
     )
