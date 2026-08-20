@@ -84,8 +84,27 @@ msgid "Acquisition function based on predicted mean value (exploitation)."
 msgstr "予測平均値（活用）に基づく獲得関数です。"
 
 #: ../../api/acquisition.md:34:<autosummary>:1
-msgid ""
-":py:obj:`saealib.ProbabilityOfFeasibility "
+msgid ":py:obj:`saealib.CORSDistance <saealib.CORSDistance>`"
+msgstr "{py:obj}`saealib.CORSDistance <saealib.CORSDistance>`・獲得関数"
+
+#: ../../api/acquisition.md:34:<autosummary>:1
+msgid "CORS distance-constrained predicted-mean acquisition function."
+msgstr "CORSの距離制約付き予測平均獲得関数です。"
+
+#: ../../api/acquisition.md:42
+msgid "CORSDistance"
+msgstr "CORSDistance"
+
+#: ../../api/acquisition.md:63
+msgid "Constructor arguments"
+msgstr "コンストラクタ引数"
+
+#: ../../api/acquisition.md:85
+msgid "Prepared reference and return value"
+msgstr "準備済み参照と戻り値"
+
+#: ../../api/acquisition.md:34:<autosummary>:1
+msgid ":py:obj:`saealib.ProbabilityOfFeasibility "
 "<saealib.ProbabilityOfFeasibility>`"
 msgstr ""
 "{py:obj}`saealib.ProbabilityOfFeasibility "

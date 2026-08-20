@@ -60,6 +60,7 @@ class CompileContext:
     portability_required: bool = False
     adapter_registry: object | None = None
     initial_state_keys: frozenset[StateKey[object]] = frozenset()
+    async_max_pending: int | None = None
 
     def __post_init__(self) -> None:
         namespaces = frozenset(self.enabled_rule_namespaces)
@@ -71,6 +72,14 @@ class CompileContext:
             validate_name(value)
         if not isinstance(self.portability_required, bool):
             raise ValidationError("portability_required must be a boolean")
+        if self.async_max_pending is not None and (
+            isinstance(self.async_max_pending, bool)
+            or not isinstance(self.async_max_pending, int)
+            or self.async_max_pending < 1
+        ):
+            raise ValidationError(
+                "async_max_pending must be a positive integer or None"
+            )
         if self.adapter_registry is not None and not callable(
             getattr(self.adapter_registry, "candidates", None)
         ):
@@ -1168,6 +1177,9 @@ DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, PortCompatibilityRule()))
 from saealib.core.compiler.adapters import (  # noqa: E402  # registration boundary
     LosslessAdapterRule,
 )
+from saealib.core.compiler.cors_diagnostics import (  # noqa: E402
+    CORSNonSequentialEvaluationRule,
+)
 from saealib.core.compiler.dataflow_rules import (  # noqa: E402
     StructuredDataflowRule,
 )
@@ -1190,6 +1202,7 @@ DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, PersistenceRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, RuntimeCompatibilityRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, LifecycleCompatibilityRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, StateEffectRule()))
+DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, CORSNonSequentialEvaluationRule()))
 
 __all__ = [
     "CompilationRule",

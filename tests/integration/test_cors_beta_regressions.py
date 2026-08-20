@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import warnings
+from itertools import pairwise
 from typing import Any
 
 import numpy as np
@@ -22,7 +24,7 @@ from saealib import (
     max_gen,
 )
 from saealib.acquisition.mean import CORSDistance
-from saealib.callback import AcquisitionEndEvent
+from saealib.callback import AcquisitionEndEvent, PostEvaluationEvent
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.core.state import PROPOSALS_CURRENT
@@ -34,10 +36,15 @@ from saealib.execution import (
     Evaluator,
     SerialEvaluator,
 )
-from saealib.policies.evaluation import EvaluateAll
+from saealib.policies.evaluation import EvaluateAll, TopKEvaluation
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
-from saealib.stages import AcquisitionStage, AsyncEvaluationSubmitStage
+from saealib.stages import (
+    AcquisitionStage,
+    AsyncEvaluationSubmitStage,
+    EvaluationPlanStage,
+)
+from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.prediction import SurrogatePrediction
 
 SEARCH_PATTERN = (0.9, 0.4, 0.0)
@@ -227,6 +234,39 @@ def test_repeated_plan_keeps_one_cors_decision_per_generation():
     assert states[-1].decision_count == 3
 
 
+def test_canonical_cors_evaluates_one_candidate_per_decision():
+    acquisition = _RecordingCORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN)
+    optimizer = _make_optimizer(_make_problem(), acquisition, n_gen=3)
+    optimizer.set_strategy(PreSelectionStrategy(n_candidates=4, n_select=1))
+    optimizer.set_evaluation_planner(TopKEvaluation(1, sanitize_nonfinite=True))
+    score_calls: list[tuple[int, int]] = []
+    optimizer.cbmanager.register(
+        AcquisitionEndEvent,
+        lambda event: score_calls.append(
+            (int(event.ctx.gen), int(event.ctx.decision_count))
+        ),
+    )
+
+    states = list(optimizer.iterate())
+
+    assert [(state.gen, state.decision_count) for state in states] == [
+        (0, 0),
+        (1, 1),
+        (2, 2),
+        (3, 3),
+    ]
+    assert score_calls == [(1, 0), (2, 1), (3, 2)]
+    assert [(gen, count) for gen, count, _ in acquisition.records] == score_calls
+    np.testing.assert_allclose(
+        [beta for _, _, beta in acquisition.records], SEARCH_PATTERN
+    )
+    assert [current.fe - previous.fe for previous, current in pairwise(states)] == [
+        1,
+        1,
+        1,
+    ]
+
+
 def test_async_refill_reads_advanced_decision_count_within_generation():
     """Async scheduler refill follows CORS phase without generation changes.
 
@@ -299,3 +339,116 @@ def test_npz_resume_preserves_cors_search_phase(tmp_path):
         == SEARCH_PATTERN[saved_decision_count % len(SEARCH_PATTERN)]
     )
     assert resumed.decision_count == 4
+
+
+def test_repeated_evaluation_uses_unique_candidate_ids_for_batch_warning():
+    events: list[tuple[int, bool]] = []
+    state = _make_async_state()
+    stage = EvaluationPlanStage(
+        RepeatedEvaluation(2),
+        cors_runtime_warning=lambda candidate_count, overlap: events.append(
+            (candidate_count, overlap)
+        ),
+    )
+
+    state = stage.execute(state)
+
+    assert state.decision_count == 1
+    assert events == []
+
+
+def test_async_sequential_cors_submission_does_not_warn():
+    state = _make_async_state()
+    acquisition = _RecordingCORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN)
+    acquisition_stage = AcquisitionStage(acquisition)
+    evaluator = _ImmediateEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=1)
+    events: list[tuple[int, bool]] = []
+    submit_stage = AsyncEvaluationSubmitStage(
+        scheduler,
+        EvaluateAll(),
+        cors_runtime_warning=lambda candidate_count, overlap: events.append(
+            (candidate_count, overlap)
+        ),
+    )
+
+    for index in range(3):
+        population = _make_candidate(10 + index, 0.2 + 0.1 * index)
+        state = state.replace(
+            offspring=population,
+            predictions=SurrogatePrediction.objective(
+                value=np.array([[1.0]], dtype=np.float64), x=population.x
+            ),
+        )
+        state = acquisition_stage.execute(state)
+        state = submit_stage.execute(state)
+        state = scheduler.poll(state, wait=True)
+
+    assert events == []
+
+
+def test_async_overlapping_cors_decisions_warn_at_runtime():
+    state = _make_async_state()
+    evaluator = _ImmediateEvaluator()
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=2)
+    events: list[tuple[int, bool]] = []
+    submit_stage = AsyncEvaluationSubmitStage(
+        scheduler,
+        EvaluateAll(),
+        cors_runtime_warning=lambda candidate_count, overlap: events.append(
+            (candidate_count, overlap)
+        ),
+    )
+
+    state = submit_stage.execute(state)
+    state = state.replace(
+        offspring=_make_candidate(11, 0.3),
+        evaluation_plan=None,
+        evaluation_plan_state=None,
+        evaluation_plan_updates={},
+        evaluation_request=None,
+    )
+    state = submit_stage.execute(state)
+
+    assert events == [(1, True)]
+    assert len(state.pending_evaluations) == 2
+
+
+def test_optimizer_emits_one_runtime_warning_for_a_true_evaluation_batch():
+    problem = _make_problem()
+    optimizer = (
+        Optimizer(problem, seed=7)
+        .set_initializer(LHSInitializer(6, 4))
+        .set_algorithm(
+            GA(
+                crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.5),
+                mutation=MutationUniform(prob_var=0.1),
+                parent_selection=SequentialSelection(),
+                survivor_selection=TruncationSelection(),
+            )
+        )
+        .set_surrogate(RBFSurrogate(GaussianKernel()), n_neighbors=5)
+        .set_acquisition(CORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN))
+        .set_strategy(PreSelectionStrategy(n_candidates=4, n_select=2))
+        .set_termination(Termination(max_gen(2)))
+    )
+
+    evaluated_batch_sizes: list[int] = []
+    optimizer.cbmanager.register(
+        PostEvaluationEvent,
+        lambda event: evaluated_batch_sizes.append(
+            0 if event.candidate_ids is None else len(event.candidate_ids)
+        ),
+    )
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        list(optimizer.iterate())
+
+    cors_warnings = [
+        item
+        for item in caught
+        if "CORSDistance is used with an evaluation configuration" in str(item.message)
+    ]
+    assert len(cors_warnings) == 1
+    assert evaluated_batch_sizes == [2, 2]

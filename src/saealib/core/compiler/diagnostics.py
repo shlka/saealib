@@ -271,3 +271,13 @@ DIAGNOSTIC_CODES.register(
         ),
     ),
 )
+DIAGNOSTIC_CODES.register(
+    "cors_nonsequential_evaluation",
+    VocabularyDescriptor(
+        name="cors_nonsequential_evaluation",
+        description=(
+            "CORSDistance is configured with a batch or overlapping decision "
+            "semantics rather than source-faithful sequential decisions."
+        ),
+    ),
+)

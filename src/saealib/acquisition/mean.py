@@ -104,6 +104,15 @@ class CORSDistance(PointwiseAcquisition):
     """
     CORS distance-constrained predicted-mean acquisition function.
 
+    ``requires_sequential_decisions`` is lightweight metadata for compiler and
+    runtime diagnostics: one true-evaluated candidate per decision is the
+    source-faithful configuration, while multi-candidate plans remain
+    supported as an explicit batch extension. ``decision_count == 0`` matches
+    the first CORS iteration when this acquisition is used continuously from
+    the beginning of a run. If a component is replaced and ``CORSDistance`` is
+    introduced later, its CORS phase starts at the current ``decision_count``
+    rather than at zero.
+
     Implements the auxiliary problem (CORS-AP) of the Constrained
     Optimization using Response Surfaces (CORS) method: the predicted-mean
     score used to rank candidates for the next costly evaluation is
@@ -176,6 +185,8 @@ class CORSDistance(PointwiseAcquisition):
     radial basis functions. *Journal of Global Optimization*, 31(1),
     153-171.
     """
+
+    requires_sequential_decisions: bool = True
 
     def __init__(
         self,

@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA  # noqa: N811
 
+from saealib.acquisition.mean import CORSDistance
 from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
 from saealib.core.compiler import (
     Compiler,
@@ -19,8 +20,10 @@ from saealib.execution.evaluator import SerialEvaluator
 from saealib.execution.scheduler import AsyncEvaluationScheduler
 from saealib.islands import IslandModel
 from saealib.optimizer import Optimizer
+from saealib.policies.evaluation import RatioEvaluation, TopKEvaluation
 from saealib.problem import Problem
 from saealib.strategies.direct import DirectStrategy
+from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.rbf import RBFSurrogate
 from saealib.surrogate.rbf_kernels import GaussianKernel
 from saealib.termination import Termination, max_fe
@@ -185,3 +188,73 @@ def test_optimizer_compiles_once_per_run_and_retains_plan(monkeypatch) -> None:
     assert calls == 1
     assert optimizer.executable_plan is not None
     assert optimizer.describe() == optimizer.executable_plan.describe()
+
+
+def _cors_optimizer(*, n_select: int, planner=None) -> Optimizer:
+    optimizer = _default_optimizer()
+    optimizer.set_acquisition(CORSDistance(search_pattern=(0.9, 0.0)))
+    optimizer.set_strategy(PreSelectionStrategy(n_candidates=4, n_select=n_select))
+    if planner is not None:
+        optimizer.set_evaluation_planner(planner)
+    return optimizer
+
+
+def test_cors_compiler_warns_for_static_multi_candidate_top_k() -> None:
+    optimizer = _cors_optimizer(n_select=2, planner=TopKEvaluation(2))
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    diagnostics = [
+        diagnostic
+        for diagnostic in plan.diagnostics
+        if diagnostic.code == "cors_nonsequential_evaluation"
+    ]
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity is Severity.WARNING
+    assert (
+        diagnostics[0].message
+        == "CORSDistance is used with an evaluation configuration that may select "
+        "multiple candidates per decision. This configuration is supported, but "
+        "uses one beta value for the whole decision and does not reproduce the "
+        "sequential CORS procedure."
+    )
+
+
+def test_cors_compiler_keeps_single_candidate_configuration_clean() -> None:
+    optimizer = _cors_optimizer(n_select=1, planner=TopKEvaluation(1))
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    assert not any(
+        diagnostic.code == "cors_nonsequential_evaluation"
+        for diagnostic in plan.diagnostics
+    )
+
+
+def test_cors_compiler_warns_for_known_ratio_batch() -> None:
+    optimizer = _cors_optimizer(n_select=1, planner=RatioEvaluation(0.75))
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    assert any(
+        diagnostic.code == "cors_nonsequential_evaluation"
+        for diagnostic in plan.diagnostics
+    )
+
+
+def test_cors_compiler_warns_for_async_overlap_capacity() -> None:
+    optimizer = _cors_optimizer(n_select=1, planner=TopKEvaluation(1))
+    optimizer.set_async_evaluation_scheduler(
+        AsyncEvaluationScheduler(SerialEvaluator(), max_pending=2)
+    )
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    assert any(
+        diagnostic.code == "cors_nonsequential_evaluation"
+        for diagnostic in plan.diagnostics
+    )

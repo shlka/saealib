@@ -200,6 +200,24 @@ def _plan_incomplete(state: OptimizationState) -> bool:
     return state.evaluation_plan is not None and not _plan_complete(state)
 
 
+def _notify_cors_runtime_warning(
+    callback: Callable[[int, bool], None] | None,
+    plan: EvaluationPlan,
+    *,
+    overlap: bool,
+) -> None:
+    """Report unique candidates in one plan to the optimizer warning gate."""
+    if callback is None:
+        return
+    candidate_ids = {
+        int(candidate_id)
+        for request in plan.requests
+        for candidate_id in request.candidate_ids
+    }
+    if overlap or len(candidate_ids) >= 2:
+        callback(len(candidate_ids), overlap)
+
+
 def _apply_component_patch(state: OptimizationState, patch: StatePatch) -> None:
     if not isinstance(patch, StatePatch):
         raise ValidationError("feedback consumer must return a StatePatch")
@@ -1051,12 +1069,14 @@ class EvaluationPlanStage(Stage):
         self,
         planner: EvaluationPlanner | None = None,
         n_eval=None,
+        cors_runtime_warning: Callable[[int, bool], None] | None = None,
     ) -> None:
         super().__init__()
         if planner is not None and n_eval is not None:
             raise ValidationError("provide planner or n_eval")
         self._planner = planner or EvaluateAll()
         self._n_eval = n_eval
+        self._cors_runtime_warning = cors_runtime_warning
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         if _plan_incomplete(state):
@@ -1098,6 +1118,11 @@ class EvaluationPlanStage(Stage):
             raise EvaluationProtocolError(
                 "evaluation planner must return EvaluationPlan"
             )
+        _notify_cors_runtime_warning(
+            self._cors_runtime_warning,
+            plan,
+            overlap=False,
+        )
         plan_ids = {int(item.request_id) for item in plan.requests}
         occupied_ids = (
             set(map(int, state.pending_evaluations))
@@ -1188,6 +1213,7 @@ class EvaluationPlanStage(Stage):
             feedback_builder,
             algorithm,
             callback_manager,
+            self._cors_runtime_warning,
         ).execute(current)
 
     def has_async_work(self, state: OptimizationState) -> bool:
@@ -1241,6 +1267,7 @@ class AsyncEvaluationSubmitStage(Stage):
         feedback_builder: FeedbackBuilder | None = None,
         algorithm: Any = None,
         callback_manager: Any = None,
+        cors_runtime_warning: Callable[[int, bool], None] | None = None,
     ) -> None:
         super().__init__()
         self._scheduler = scheduler
@@ -1248,6 +1275,7 @@ class AsyncEvaluationSubmitStage(Stage):
         self._feedback_builder = feedback_builder
         self._algorithm = algorithm
         self._callback_manager = callback_manager
+        self._cors_runtime_warning = cors_runtime_warning
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         candidates = state.offspring
@@ -1270,13 +1298,20 @@ class AsyncEvaluationSubmitStage(Stage):
                     evaluation_plan_updates={},
                 )
                 plan = None
+        overlap = False
         if plan is None:
+            overlap = bool(state.pending_evaluations)
             plan = self._planner.plan(candidates, acquisition, state)
             state = state.replace(decision_count=state.decision_count + 1)
         if not isinstance(plan, EvaluationPlan):
             raise EvaluationProtocolError(
                 "evaluation planner must return EvaluationPlan"
             )
+        _notify_cors_runtime_warning(
+            self._cors_runtime_warning,
+            plan,
+            overlap=overlap,
+        )
         plan_state = state.evaluation_plan_state
         submitted_ids = set(plan_state.submitted if plan_state else ())
         completed_ids = set(plan_state.completed if plan_state else ())

@@ -7,7 +7,7 @@ import dataclasses
 import importlib.util
 import pickle
 import warnings
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, cast
 
@@ -36,6 +36,7 @@ from saealib.core.compiler import (
 from saealib.core.compiler.contract_diagnostics import (
     check_pymoo_feedback_compatibility,
 )
+from saealib.core.compiler.cors_diagnostics import CORS_NONSEQUENTIAL_MESSAGE
 from saealib.core.compiler.graph import ComponentGraph
 from saealib.core.contracts import ComponentContract
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
@@ -201,6 +202,7 @@ class Optimizer:
         self._preset: dict | None = None
         self._last_contract_diagnostics: tuple[Diagnostic, ...] = ()
         self._executable_plan: ExecutablePlan | None = None
+        self._cors_runtime_warning_emitted = False
 
     # --- setters (all return self for chaining) ---
 
@@ -366,6 +368,11 @@ class Optimizer:
                     self
                 ),
                 initial_state_keys=OPTIMIZATION_STATE_INITIAL_KEYS,
+                async_max_pending=(
+                    None
+                    if self.async_evaluation_scheduler is None
+                    else self.async_evaluation_scheduler.max_pending
+                ),
             ),
         )
         self._executable_plan = plan
@@ -546,8 +553,24 @@ class Optimizer:
     # --- callbacks ---
 
     def dispatch(self, event: Event) -> None:
-        """Dispatch an event to the callback manager."""
+        """Dispatch a callback event to the callback manager."""
         self.cbmanager.dispatch(event)
+
+    def _cors_runtime_warning(self, candidate_count: int, overlap: bool) -> None:
+        """Emit the CORS batch or overlap warning once per optimizer runtime."""
+        del candidate_count, overlap
+        acquisition = self.acquisition
+        acquisitions = getattr(acquisition, "acquisitions", None)
+        is_cors = bool(getattr(acquisition, "requires_sequential_decisions", False))
+        if isinstance(acquisitions, Mapping):
+            is_cors = is_cors or any(
+                getattr(item, "requires_sequential_decisions", False)
+                for item in acquisitions.values()
+            )
+        if not is_cors or self._cors_runtime_warning_emitted:
+            return
+        warnings.warn(CORS_NONSEQUENTIAL_MESSAGE, UserWarning, stacklevel=3)
+        self._cors_runtime_warning_emitted = True
 
     # --- run ---
 
@@ -1085,6 +1108,7 @@ class Optimizer:
         """Restore an optimizer without a stale compiled execution plan."""
         self.__dict__.update(state)
         self.__dict__.setdefault("_executable_plan", None)
+        self.__dict__.setdefault("_cors_runtime_warning_emitted", False)
 
     def save_pickle(self, ctx: OptimizationState, path: str | Path) -> None:
         """
