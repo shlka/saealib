@@ -104,14 +104,7 @@ class GenerationBasedStrategy(OptimizationStrategy):
             steps=[
                 stage_component(CountGenerationStage()),
                 stage_component(AskStage(provider.algorithm, cbmanager=cbmanager)),
-                stage_component(
-                    EvaluationPlanStage(
-                        evaluation_planner,
-                        cors_runtime_warning=getattr(
-                            provider, "_cors_runtime_warning", None
-                        ),
-                    )
-                ),
+                stage_component(EvaluationPlanStage(evaluation_planner)),
                 stage_component(EvaluationSubmitStage(provider.evaluator)),
                 stage_component(EvaluationCollectStage(provider.evaluator)),
                 stage_component(EvaluationApplyStage()),

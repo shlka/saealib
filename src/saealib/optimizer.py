@@ -59,6 +59,17 @@ from saealib.surrogate.rbf_kernels import GaussianKernel
 from saealib.termination import Termination
 from saealib.termination import max_fe as max_fe_cond
 
+
+def _graph_requires_sequential_decisions(graph: ComponentGraph) -> bool:
+    """Read semantic acquisition requirements from a strategy graph."""
+    for node in graph.nodes:
+        stage = getattr(node.component, "stage", node.component)
+        acquisition = getattr(stage, "_acquisition", None)
+        if acquisition is not None and _requires_sequential_decisions(acquisition):
+            return True
+    return False
+
+
 if TYPE_CHECKING:
     from saealib.algorithms.base import Algorithm
     from saealib.execution.initializer import Initializer
@@ -205,6 +216,7 @@ class Optimizer:
         self._preset: dict | None = None
         self._last_contract_diagnostics: tuple[Diagnostic, ...] = ()
         self._executable_plan: ExecutablePlan | None = None
+        self._requires_sequential_decisions_in_plan = False
         self._cors_runtime_warning_emitted = False
 
     # --- setters (all return self for chaining) ---
@@ -361,7 +373,9 @@ class Optimizer:
         graph = build_graph(self)
         if not isinstance(graph, ComponentGraph):
             self._executable_plan = None
+            self._requires_sequential_decisions_in_plan = False
             return None
+        self._configure_runtime_diagnostics(graph)
         plan = Compiler().compile(
             graph,
             CompileContext(
@@ -554,11 +568,24 @@ class Optimizer:
         """Dispatch a callback event to the callback manager."""
         self.cbmanager.dispatch(event)
 
-    def _cors_runtime_warning(self, candidate_count: int, overlap: bool) -> None:
-        """Emit the CORS batch or overlap warning once per optimizer runtime."""
-        del candidate_count, overlap
-        is_cors = _requires_sequential_decisions(self.acquisition)
-        if not is_cors or self._cors_runtime_warning_emitted:
+    def _configure_runtime_diagnostics(self, graph: ComponentGraph) -> None:
+        """Attach the generic runtime semantic hook to compiled plan stages."""
+        self._requires_sequential_decisions_in_plan = (
+            _graph_requires_sequential_decisions(graph)
+        )
+        for node in graph.nodes:
+            stage = getattr(node.component, "stage", node.component)
+            setter = getattr(stage, "set_semantic_warning", None)
+            if callable(setter):
+                setter(self._semantic_runtime_warning)
+
+    def _semantic_runtime_warning(self, candidate_count: int, overlap: bool) -> None:
+        """Emit a runtime warning when a required sequential plan is non-sequential."""
+        if (
+            not self._requires_sequential_decisions_in_plan
+            or (candidate_count == 1 and not overlap)
+            or self._cors_runtime_warning_emitted
+        ):
             return
         warnings.warn(CORS_NONSEQUENTIAL_MESSAGE, UserWarning, stacklevel=3)
         self._cors_runtime_warning_emitted = True
@@ -1103,6 +1130,7 @@ class Optimizer:
         """Restore an optimizer without a stale compiled execution plan."""
         self.__dict__.update(state)
         self.__dict__.setdefault("_executable_plan", None)
+        self.__dict__.setdefault("_requires_sequential_decisions_in_plan", False)
         self.__dict__.setdefault("_cors_runtime_warning_emitted", False)
 
     def save_pickle(self, ctx: OptimizationState, path: str | Path) -> None:

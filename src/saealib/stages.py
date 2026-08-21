@@ -202,13 +202,13 @@ def _plan_incomplete(state: OptimizationState) -> bool:
     return state.evaluation_plan is not None and not _plan_complete(state)
 
 
-def _notify_cors_runtime_warning(
+def _notify_semantic_runtime_warning(
     callback: Callable[[int, bool], None] | None,
     plan: EvaluationPlan,
     *,
     overlap: bool,
 ) -> None:
-    """Report unique candidates in one plan to the optimizer warning gate."""
+    """Report non-sequential plan shape to the generic runtime diagnostic hook."""
     if callback is None:
         return
     candidate_ids = {
@@ -1119,14 +1119,20 @@ class EvaluationPlanStage(Stage):
         self,
         planner: EvaluationPlanner | None = None,
         n_eval=None,
-        cors_runtime_warning: Callable[[int, bool], None] | None = None,
+        semantic_warning: Callable[[int, bool], None] | None = None,
     ) -> None:
         super().__init__()
         if planner is not None and n_eval is not None:
             raise ValidationError("provide planner or n_eval")
         self._planner = planner or EvaluateAll()
         self._n_eval = n_eval
-        self._cors_runtime_warning = cors_runtime_warning
+        self._semantic_warning = semantic_warning
+
+    def set_semantic_warning(
+        self, callback: Callable[[int, bool], None] | None
+    ) -> None:
+        """Install the generic runtime semantic diagnostic hook."""
+        self._semantic_warning = callback
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         if _plan_incomplete(state):
@@ -1168,8 +1174,8 @@ class EvaluationPlanStage(Stage):
             raise EvaluationProtocolError(
                 "evaluation planner must return EvaluationPlan"
             )
-        _notify_cors_runtime_warning(
-            self._cors_runtime_warning,
+        _notify_semantic_runtime_warning(
+            self._semantic_warning,
             plan,
             overlap=False,
         )
@@ -1263,7 +1269,7 @@ class EvaluationPlanStage(Stage):
             feedback_builder,
             algorithm,
             callback_manager,
-            self._cors_runtime_warning,
+            self._semantic_warning,
         ).execute(current)
 
     def has_async_work(self, state: OptimizationState) -> bool:
@@ -1317,7 +1323,7 @@ class AsyncEvaluationSubmitStage(Stage):
         feedback_builder: FeedbackBuilder | None = None,
         algorithm: Any = None,
         callback_manager: Any = None,
-        cors_runtime_warning: Callable[[int, bool], None] | None = None,
+        semantic_warning: Callable[[int, bool], None] | None = None,
     ) -> None:
         super().__init__()
         self._scheduler = scheduler
@@ -1325,7 +1331,13 @@ class AsyncEvaluationSubmitStage(Stage):
         self._feedback_builder = feedback_builder
         self._algorithm = algorithm
         self._callback_manager = callback_manager
-        self._cors_runtime_warning = cors_runtime_warning
+        self._semantic_warning = semantic_warning
+
+    def set_semantic_warning(
+        self, callback: Callable[[int, bool], None] | None
+    ) -> None:
+        """Install the generic runtime semantic diagnostic hook."""
+        self._semantic_warning = callback
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         candidates = state.offspring
@@ -1357,8 +1369,8 @@ class AsyncEvaluationSubmitStage(Stage):
             raise EvaluationProtocolError(
                 "evaluation planner must return EvaluationPlan"
             )
-        _notify_cors_runtime_warning(
-            self._cors_runtime_warning,
+        _notify_semantic_runtime_warning(
+            self._semantic_warning,
             plan,
             overlap=overlap,
         )

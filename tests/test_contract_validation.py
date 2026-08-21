@@ -8,7 +8,8 @@ import numpy as np
 import pytest
 from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA  # noqa: N811
 
-from saealib.acquisition.mean import CORSDistance
+from saealib.acquisition.base import CompositeAcquisition
+from saealib.acquisition.mean import CORSDistance, MeanPrediction
 from saealib.algorithms.pymoo_algorithm import PymooAlgorithm
 from saealib.core.compiler import (
     Compiler,
@@ -168,6 +169,10 @@ def test_pymoo_diagnostic_code_is_persistently_registered() -> None:
     assert DIAGNOSTIC_CODES.get("pymoo_partial_feedback_unsupported") is not None
 
 
+def test_cors_composite_diagnostic_code_is_persistently_registered() -> None:
+    assert DIAGNOSTIC_CODES.get("cors_composite_usage") is not None
+
+
 def test_contract_diagnostics_are_not_called_per_generation(monkeypatch) -> None:
     optimizer = _default_optimizer()
     optimizer.set_termination(Termination(max_fe(1)))
@@ -233,10 +238,9 @@ def test_cors_compiler_warns_for_static_multi_candidate_top_k() -> None:
     assert (
         diagnostics[0].message
         == "CORSDistance is used outside the source-faithful sequential one-candidate "
-        "evaluation path. The CORS score may not directly determine the true-evaluated "
-        "point, multiple candidates may share one decision, or distinct decisions may "
-        "overlap. This configuration is supported, but does not reproduce the "
-        "sequential CORS procedure."
+        "evaluation cadence. Multiple candidates may share one decision, or distinct "
+        "decisions may overlap. This configuration is supported, but does not "
+        "reproduce the sequential CORS procedure."
     )
     assert diagnostics[0].resolutions == (
         "Use a configuration where CORSDistance directly selects one "
@@ -254,6 +258,44 @@ def test_cors_compiler_keeps_single_candidate_configuration_clean() -> None:
     assert not any(
         diagnostic.code == "cors_nonsequential_evaluation"
         for diagnostic in plan.diagnostics
+    )
+
+
+def test_cors_composite_usage_warns_for_single_candidate_top_k() -> None:
+    optimizer = _cors_optimizer(n_select=1, planner=TopKEvaluation(1))
+    optimizer.set_acquisition(
+        CompositeAcquisition(
+            {
+                "cors": CORSDistance(search_pattern=(0.9, 0.0)),
+                "mean": MeanPrediction(),
+            },
+            combine_fn=lambda scores: scores[0] + scores[1],
+        )
+    )
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    diagnostics = [
+        diagnostic
+        for diagnostic in plan.diagnostics
+        if diagnostic.code == "cors_composite_usage"
+    ]
+    assert len(diagnostics) == 1
+    assert diagnostics[0].severity is Severity.WARNING
+    assert "combine_fn" in diagnostics[0].message
+    assert "-inf" in diagnostics[0].message
+    assert "CORSDistance alone" in diagnostics[0].message
+
+
+def test_cors_composite_usage_is_clean_for_standalone_cors() -> None:
+    optimizer = _cors_optimizer(n_select=1, planner=TopKEvaluation(1))
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    assert not any(
+        diagnostic.code == "cors_composite_usage" for diagnostic in plan.diagnostics
     )
 
 

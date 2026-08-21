@@ -14,10 +14,16 @@ from saealib.core.compiler.graph import ComponentGraph
 
 CORS_NONSEQUENTIAL_MESSAGE = (
     "CORSDistance is used outside the source-faithful sequential one-candidate "
-    "evaluation path. The CORS score may not directly determine the true-evaluated "
-    "point, multiple candidates may share one decision, or distinct decisions may "
-    "overlap. This configuration is supported, but does not reproduce the "
-    "sequential CORS procedure."
+    "evaluation cadence. Multiple candidates may share one decision, or distinct "
+    "decisions may overlap. This configuration is supported, but does not "
+    "reproduce the sequential CORS procedure."
+)
+
+CORS_COMPOSITE_USAGE_MESSAGE = (
+    "CORSDistance is combined with another acquisition inside CompositeAcquisition; "
+    "the combine_fn is not guaranteed to preserve CORS's -inf distance constraint. "
+    "Use CORSDistance alone to reproduce the source-faithful sequential "
+    "one-candidate selection."
 )
 
 
@@ -36,12 +42,33 @@ def _requires_sequential_decisions(acquisition: object) -> bool:
     return False
 
 
+def _composite_contains_sequential_acquisition(acquisition: object) -> bool:
+    """Return whether a composite acquisition contains a CORS-like child."""
+    children = getattr(acquisition, "acquisitions", None)
+    if not isinstance(children, Mapping):
+        return False
+    return any(_requires_sequential_decisions(child) for child in children.values())
+
+
 def _cors_nodes(graph: ComponentGraph) -> tuple[tuple[str, object], ...]:
     result: list[tuple[str, object]] = []
     for node in graph.nodes:
         stage = _stage(node.component)
         acquisition = getattr(stage, "_acquisition", None)
         if acquisition is not None and _requires_sequential_decisions(acquisition):
+            result.append((node.component_id, acquisition))
+    return tuple(result)
+
+
+def _composite_cors_nodes(graph: ComponentGraph) -> tuple[tuple[str, object], ...]:
+    """Return acquisition nodes whose composite children include CORS metadata."""
+    result: list[tuple[str, object]] = []
+    for node in graph.nodes:
+        stage = _stage(node.component)
+        acquisition = getattr(stage, "_acquisition", None)
+        if acquisition is not None and _composite_contains_sequential_acquisition(
+            acquisition
+        ):
             result.append((node.component_id, acquisition))
     return tuple(result)
 
@@ -203,6 +230,38 @@ def _selects_multiple(
     return "unknown"
 
 
+class CORSCompositeUsageRule:
+    """Warn when a CORS-like acquisition is hidden inside a composite."""
+
+    namespace = "core"
+    name = "cors_composite_usage"
+    phase: Literal["verification"] = "verification"
+
+    def apply(self, context) -> object:
+        """Return a source-faithfulness warning for composite CORS usage."""
+        from saealib.core.compiler.compiler import VerificationResult
+
+        composite_nodes = _composite_cors_nodes(context.graph)
+        if not composite_nodes:
+            return VerificationResult()
+        return VerificationResult(
+            diagnostics=tuple(
+                Diagnostic(
+                    severity=Severity.WARNING,
+                    code="cors_composite_usage",
+                    message=CORS_COMPOSITE_USAGE_MESSAGE,
+                    path=ContractPath(components=(component_id,)),
+                    resolutions=(
+                        "Use CORSDistance as the sole acquisition when the "
+                        "source-faithful sequential one-candidate selection is "
+                        "required.",
+                    ),
+                )
+                for component_id, _ in composite_nodes
+            )
+        )
+
+
 class CORSNonSequentialEvaluationRule:
     """Warn when a CORS graph is non-canonical or statically non-sequential."""
 
@@ -265,4 +324,9 @@ class CORSNonSequentialEvaluationRule:
         )
 
 
-__all__ = ["CORS_NONSEQUENTIAL_MESSAGE", "CORSNonSequentialEvaluationRule"]
+__all__ = [
+    "CORS_COMPOSITE_USAGE_MESSAGE",
+    "CORS_NONSEQUENTIAL_MESSAGE",
+    "CORSCompositeUsageRule",
+    "CORSNonSequentialEvaluationRule",
+]

@@ -281,3 +281,13 @@ DIAGNOSTIC_CODES.register(
         ),
     ),
 )
+DIAGNOSTIC_CODES.register(
+    "cors_composite_usage",
+    VocabularyDescriptor(
+        name="cors_composite_usage",
+        description=(
+            "CORSDistance is combined with another acquisition and the "
+            "combine_fn may not preserve its distance constraint."
+        ),
+    ),
+)

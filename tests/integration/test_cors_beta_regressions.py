@@ -60,6 +60,7 @@ from saealib.stages import (
     EvaluationPlanStage,
     EvaluationSubmitStage,
 )
+from saealib.strategies.base import OptimizationStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.prediction import SurrogatePrediction
 
@@ -176,6 +177,15 @@ class _OpaqueEvaluateAllPlanner(EvaluationPlanner):
 
     def plan(self, candidates, acquisition, ctx):
         return EvaluateAll().plan(candidates, acquisition, ctx)
+
+
+class _CustomPreSelectionStrategy(OptimizationStrategy):
+    """Custom graph strategy that does not know about CORS diagnostics."""
+
+    requires_surrogate = True
+
+    def build_graph(self, provider):
+        return PreSelectionStrategy(n_candidates=4, n_select=1).build_graph(provider)
 
 
 _ASYNC_ATTRS = [
@@ -414,7 +424,7 @@ def test_repeated_evaluation_uses_unique_candidate_ids_for_batch_warning():
     state = _make_async_state()
     stage = EvaluationPlanStage(
         RepeatedEvaluation(2),
-        cors_runtime_warning=lambda candidate_count, overlap: events.append(
+        semantic_warning=lambda candidate_count, overlap: events.append(
             (candidate_count, overlap)
         ),
     )
@@ -531,7 +541,7 @@ def test_async_sequential_cors_submission_does_not_warn():
     submit_stage = AsyncEvaluationSubmitStage(
         scheduler,
         EvaluateAll(),
-        cors_runtime_warning=lambda candidate_count, overlap: events.append(
+        semantic_warning=lambda candidate_count, overlap: events.append(
             (candidate_count, overlap)
         ),
     )
@@ -559,7 +569,7 @@ def test_async_overlapping_cors_decisions_warn_at_runtime():
     submit_stage = AsyncEvaluationSubmitStage(
         scheduler,
         EvaluateAll(),
-        cors_runtime_warning=lambda candidate_count, overlap: events.append(
+        semantic_warning=lambda candidate_count, overlap: events.append(
             (candidate_count, overlap)
         ),
     )
@@ -619,6 +629,30 @@ def test_optimizer_emits_one_runtime_warning_for_a_true_evaluation_batch():
     assert evaluated_batch_sizes == [2, 2]
 
 
+def test_custom_strategy_and_opaque_planner_warn_at_runtime_without_cors_wiring():
+    optimizer = _make_optimizer(_make_problem(), CORSDistance(delta=1.0), n_gen=1)
+    optimizer.set_strategy(_CustomPreSelectionStrategy())
+    optimizer.set_evaluation_planner(_OpaqueEvaluateAllPlanner())
+
+    plan = optimizer._compile_plan()
+
+    assert plan is not None
+    assert not any(
+        diagnostic.code == "cors_nonsequential_evaluation"
+        for diagnostic in plan.diagnostics
+    )
+    assert not hasattr(optimizer, "_cors_runtime_warning")
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        optimizer.run()
+
+    cors_warnings = [
+        item for item in caught if str(item.message) == CORS_NONSEQUENTIAL_MESSAGE
+    ]
+    assert len(cors_warnings) == 1
+
+
 def test_cors_runtime_warning_is_once_per_run():
     optimizer = (
         Optimizer(_make_problem(), seed=7)
@@ -661,9 +695,12 @@ def test_nested_composite_cors_warns_for_opaque_runtime_batch():
         combine_fn=lambda scores: scores[0],
     )
     optimizer = Optimizer(_make_problem(), seed=7).set_acquisition(acquisition)
+    # This direct stage test bypasses graph compilation; model the compiled
+    # graph's semantic requirement explicitly before invoking the generic hook.
+    optimizer._requires_sequential_decisions_in_plan = True
     stage = EvaluationPlanStage(
         planner=_OpaqueBatchPlanner(),
-        cors_runtime_warning=optimizer._cors_runtime_warning,
+        semantic_warning=optimizer._semantic_runtime_warning,
     )
 
     with warnings.catch_warnings(record=True) as caught:
