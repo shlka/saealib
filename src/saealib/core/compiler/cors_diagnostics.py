@@ -15,6 +15,7 @@ from saealib.core.compiler.semantic_utils import (
     data_reachable_consumers,
     owner_id,
     owner_node_ids,
+    requires_sequential_decisions,
 )
 
 CORS_NONSEQUENTIAL_MESSAGE = (
@@ -37,22 +38,12 @@ def _stage(component: object) -> object:
     return getattr(component, "stage", component)
 
 
-def _requires_sequential_decisions(acquisition: object) -> bool:
-    """Check CORS metadata without importing concrete acquisition classes."""
-    if getattr(acquisition, "requires_sequential_decisions", False):
-        return True
-    children = getattr(acquisition, "acquisitions", None)
-    if isinstance(children, Mapping):
-        return any(_requires_sequential_decisions(child) for child in children.values())
-    return False
-
-
 def _composite_contains_sequential_acquisition(acquisition: object) -> bool:
     """Return whether a composite acquisition contains a CORS-like child."""
     children = getattr(acquisition, "acquisitions", None)
     if not isinstance(children, Mapping):
         return False
-    return any(_requires_sequential_decisions(child) for child in children.values())
+    return any(requires_sequential_decisions(child) for child in children.values())
 
 
 def _cors_nodes(graph: ComponentGraph) -> tuple[tuple[str, object], ...]:
@@ -60,7 +51,7 @@ def _cors_nodes(graph: ComponentGraph) -> tuple[tuple[str, object], ...]:
     for node in graph.nodes:
         stage = _stage(node.component)
         acquisition = getattr(stage, "_acquisition", None)
-        if acquisition is not None and _requires_sequential_decisions(acquisition):
+        if acquisition is not None and requires_sequential_decisions(acquisition):
             result.append((node.component_id, acquisition))
     return tuple(result)
 

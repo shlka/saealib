@@ -36,12 +36,12 @@ from saealib.core.compiler import (
 from saealib.core.compiler.contract_diagnostics import (
     check_pymoo_feedback_compatibility,
 )
-from saealib.core.compiler.cors_diagnostics import (
-    CORS_NONSEQUENTIAL_MESSAGE,
-    _requires_sequential_decisions,
-)
+from saealib.core.compiler.cors_diagnostics import CORS_NONSEQUENTIAL_MESSAGE
 from saealib.core.compiler.graph import ComponentGraph
-from saealib.core.compiler.semantic_utils import data_reachable_consumers
+from saealib.core.compiler.semantic_utils import (
+    data_reachable_consumers,
+    requires_sequential_decisions,
+)
 from saealib.core.contracts import ComponentContract
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.exceptions import ConfigurationError, ValidationError
@@ -66,7 +66,7 @@ def _graph_requires_sequential_decisions(graph: ComponentGraph) -> bool:
     for node in graph.nodes:
         stage = getattr(node.component, "stage", node.component)
         acquisition = getattr(stage, "_acquisition", None)
-        if acquisition is not None and _requires_sequential_decisions(acquisition):
+        if acquisition is not None and requires_sequential_decisions(acquisition):
             return True
     return False
 
@@ -576,22 +576,22 @@ class Optimizer:
         )
         sequential_planner_ids: set[str] = set()
         if self._requires_sequential_decisions_in_plan:
-            cors_ids: set[str] = set()
+            sequential_acquisition_ids: set[str] = set()
             planner_ids: set[str] = set()
             for node in graph.nodes:
                 stage = getattr(node.component, "stage", node.component)
                 acquisition = getattr(stage, "_acquisition", None)
-                if acquisition is not None and _requires_sequential_decisions(
+                if acquisition is not None and requires_sequential_decisions(
                     acquisition
                 ):
-                    cors_ids.add(node.component_id)
+                    sequential_acquisition_ids.add(node.component_id)
                 if getattr(stage, "_planner", None) is not None:
                     planner_ids.add(node.component_id)
-            for cors_id in cors_ids:
+            for acquisition_id in sequential_acquisition_ids:
                 sequential_planner_ids.update(
                     data_reachable_consumers(
                         graph,
-                        starts={cors_id},
+                        starts={acquisition_id},
                         consumers=planner_ids,
                     )
                 )

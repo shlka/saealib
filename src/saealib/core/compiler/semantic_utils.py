@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 
 from saealib.core.compiler.graph import ComponentGraph
 
@@ -11,6 +11,7 @@ __all__ = [
     "data_reachable_consumers",
     "owner_id",
     "owner_node_ids",
+    "requires_sequential_decisions",
 ]
 
 
@@ -33,6 +34,16 @@ def owner_id(graph: ComponentGraph, component_id: str) -> str:
         or component_id.startswith(f"{node.component_id}__")
     ]
     return min(matches, key=len) if matches else component_id
+
+
+def requires_sequential_decisions(acquisition: object) -> bool:
+    """Return whether an acquisition tree requires sequential decisions."""
+    if getattr(acquisition, "requires_sequential_decisions", False):
+        return True
+    children = getattr(acquisition, "acquisitions", None)
+    if isinstance(children, Mapping):
+        return any(requires_sequential_decisions(child) for child in children.values())
+    return False
 
 
 def data_reachable(graph: ComponentGraph, starts: Collection[str]) -> frozenset[str]:
