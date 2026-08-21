@@ -20,6 +20,10 @@ from saealib.core.compiler.compiler import (
     VerificationRule,
 )
 from saealib.core.compiler.contract_diagnostics import check_component_contract
+from saealib.core.compiler.cors_diagnostics import (
+    CORSCompositeUsageRule,
+    CORSNonSequentialEvaluationRule,
+)
 from saealib.core.compiler.diagnostics import (
     DIAGNOSTIC_CODES,
     ContractPath,
@@ -58,6 +62,8 @@ from saealib.core.compiler.structured import StructuredGraph
 __all__ = [
     "DIAGNOSTIC_CODES",
     "BranchRegion",
+    "CORSCompositeUsageRule",
+    "CORSNonSequentialEvaluationRule",
     "CompilationRule",
     "CompileContext",
     "ComponentBindings",

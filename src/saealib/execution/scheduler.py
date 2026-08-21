@@ -38,6 +38,7 @@ from saealib.core.state import (
     POPULATIONS_MAIN,
     PROPOSALS_CURRENT,
     RUNTIME_ASYNC_FATAL,
+    RUNTIME_COMPLETED_DECISION_COUNT,
     RUNTIME_RNG,
 )
 from saealib.exceptions import (
@@ -65,7 +66,11 @@ from saealib.policies.feedback import (
     FeedbackResult,
     _feedback_batch_from_result,
 )
-from saealib.stages import deliver_feedback
+from saealib.stages import (
+    _plan_completed_successfully,
+    _plan_has_evaluation_rows,
+    deliver_feedback,
+)
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -83,6 +88,7 @@ class AsyncEvaluationScheduler:
             EVALUATIONS_PLAN_STATE,
             EVALUATIONS_PLAN_UPDATES,
             EVALUATIONS_COUNT,
+            RUNTIME_COMPLETED_DECISION_COUNT,
             ARCHIVES_MAIN,
             ARCHIVES_PARETO,
             PROPOSALS_CURRENT,
@@ -94,6 +100,7 @@ class AsyncEvaluationScheduler:
             EVALUATIONS_PLAN_STATE,
             EVALUATIONS_PLAN_UPDATES,
             EVALUATIONS_COUNT,
+            RUNTIME_COMPLETED_DECISION_COUNT,
             ARCHIVES_MAIN,
             ARCHIVES_PARETO,
             RUNTIME_ASYNC_FATAL,
@@ -1342,6 +1349,12 @@ class AsyncEvaluationScheduler:
         except Exception:
             self._restore_archive_snapshots(snapshots)
             raise
+        if _plan_completed_successfully(state) and _plan_has_evaluation_rows(
+            state, update
+        ):
+            return state.replace(
+                completed_decision_count=state.completed_decision_count + 1
+            )
         return state
 
     def _restore_archive_snapshots(self, snapshots: list[tuple[Any, ...]]) -> None:

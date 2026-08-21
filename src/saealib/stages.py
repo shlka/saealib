@@ -75,6 +75,7 @@ from saealib.core.state import (
     PROPOSALS_OFFSPRING,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_COMPLETED_DECISION_COUNT,
     RUNTIME_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
@@ -92,6 +93,7 @@ from saealib.execution.evaluator import (
     EvaluationRequest,
     EvaluationResult,
     EvaluationStatus,
+    EvaluationUpdate,
     Evaluator,
     PendingEvaluation,
 )
@@ -198,6 +200,70 @@ def _plan_complete(state: OptimizationState) -> bool:
 
 def _plan_incomplete(state: OptimizationState) -> bool:
     return state.evaluation_plan is not None and not _plan_complete(state)
+
+
+def _notify_semantic_runtime_warning(
+    callback: Callable[[int, bool], None] | None,
+    plan: EvaluationPlan,
+    *,
+    overlap: bool,
+) -> None:
+    """Report non-sequential plan shape to the generic runtime diagnostic hook."""
+    if callback is None:
+        return
+    candidate_ids = {
+        int(candidate_id)
+        for request in plan.requests
+        for candidate_id in request.candidate_ids
+    }
+    if overlap or len(candidate_ids) != 1:
+        callback(len(candidate_ids), overlap)
+
+
+def _plan_completed_successfully(state: OptimizationState) -> bool:
+    """Return whether every request in the active plan completed successfully."""
+    plan = state.evaluation_plan
+    if plan is None:
+        return False
+    terminal = {
+        EvaluationStatus.COMPLETED,
+        EvaluationStatus.FAILED,
+        EvaluationStatus.CANCELLED,
+    }
+    for request in plan.requests:
+        request_id = int(request.request_id)
+        pending = state.pending_evaluations.get(request_id)
+        if pending is not None and pending.status in terminal:
+            status = pending.status
+        else:
+            updates = state.evaluation_plan_updates.get(request_id, ())
+            if updates:
+                status = updates[-1].status
+            elif len(plan.requests) == 1 and state.evaluation_updates:
+                status = state.evaluation_updates[-1].status
+            else:
+                return False
+        if status is not EvaluationStatus.COMPLETED:
+            return False
+    return True
+
+
+def _plan_has_evaluation_rows(
+    state: OptimizationState, update: EvaluationUpdate | None = None
+) -> bool:
+    """Return whether this plan has produced rows that can reach the archive."""
+    if update is not None and update.result is not None and len(update.candidate_ids):
+        return True
+    if state.evaluation_updates and any(
+        item.result is not None and len(item.candidate_ids)
+        for item in state.evaluation_updates
+    ):
+        return True
+    return any(
+        item.result is not None and len(item.candidate_ids)
+        for updates in state.evaluation_plan_updates.values()
+        for item in updates
+    )
 
 
 def _apply_component_patch(state: OptimizationState, patch: StatePatch) -> None:
@@ -318,6 +384,7 @@ _STATE_FIELD_KEYS: dict[str, Any] = {
     "fe": EVALUATIONS_COUNT,
     "gen": RUNTIME_GENERATION,
     "decision_count": RUNTIME_DECISION_COUNT,
+    "completed_decision_count": RUNTIME_COMPLETED_DECISION_COUNT,
     "async_fatal": RUNTIME_ASYNC_FATAL,
     "data": USER_DATA,
     "proposal_id": PROPOSALS_CURRENT,
@@ -800,6 +867,7 @@ class AcquisitionStage(Stage):
                 ARCHIVES_MAIN,
                 RUNTIME_GENERATION,
                 RUNTIME_DECISION_COUNT,
+                RUNTIME_COMPLETED_DECISION_COUNT,
                 RUNTIME_RNG,
             ),
             writes=(SCORES, ACQUISITION_RESULT),
@@ -1051,12 +1119,20 @@ class EvaluationPlanStage(Stage):
         self,
         planner: EvaluationPlanner | None = None,
         n_eval=None,
+        semantic_warning: Callable[[int, bool], None] | None = None,
     ) -> None:
         super().__init__()
         if planner is not None and n_eval is not None:
             raise ValidationError("provide planner or n_eval")
         self._planner = planner or EvaluateAll()
         self._n_eval = n_eval
+        self._semantic_warning = semantic_warning
+
+    def set_semantic_warning(
+        self, callback: Callable[[int, bool], None] | None
+    ) -> None:
+        """Install the generic runtime semantic diagnostic hook."""
+        self._semantic_warning = callback
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         if _plan_incomplete(state):
@@ -1098,6 +1174,11 @@ class EvaluationPlanStage(Stage):
             raise EvaluationProtocolError(
                 "evaluation planner must return EvaluationPlan"
             )
+        _notify_semantic_runtime_warning(
+            self._semantic_warning,
+            plan,
+            overlap=False,
+        )
         plan_ids = {int(item.request_id) for item in plan.requests}
         occupied_ids = (
             set(map(int, state.pending_evaluations))
@@ -1188,6 +1269,7 @@ class EvaluationPlanStage(Stage):
             feedback_builder,
             algorithm,
             callback_manager,
+            self._semantic_warning,
         ).execute(current)
 
     def has_async_work(self, state: OptimizationState) -> bool:
@@ -1241,6 +1323,7 @@ class AsyncEvaluationSubmitStage(Stage):
         feedback_builder: FeedbackBuilder | None = None,
         algorithm: Any = None,
         callback_manager: Any = None,
+        semantic_warning: Callable[[int, bool], None] | None = None,
     ) -> None:
         super().__init__()
         self._scheduler = scheduler
@@ -1248,6 +1331,13 @@ class AsyncEvaluationSubmitStage(Stage):
         self._feedback_builder = feedback_builder
         self._algorithm = algorithm
         self._callback_manager = callback_manager
+        self._semantic_warning = semantic_warning
+
+    def set_semantic_warning(
+        self, callback: Callable[[int, bool], None] | None
+    ) -> None:
+        """Install the generic runtime semantic diagnostic hook."""
+        self._semantic_warning = callback
 
     def execute(self, state: OptimizationState) -> OptimizationState:
         candidates = state.offspring
@@ -1270,13 +1360,20 @@ class AsyncEvaluationSubmitStage(Stage):
                     evaluation_plan_updates={},
                 )
                 plan = None
+        overlap = False
         if plan is None:
+            overlap = bool(state.pending_evaluations)
             plan = self._planner.plan(candidates, acquisition, state)
             state = state.replace(decision_count=state.decision_count + 1)
         if not isinstance(plan, EvaluationPlan):
             raise EvaluationProtocolError(
                 "evaluation planner must return EvaluationPlan"
             )
+        _notify_semantic_runtime_warning(
+            self._semantic_warning,
+            plan,
+            overlap=overlap,
+        )
         plan_state = state.evaluation_plan_state
         submitted_ids = set(plan_state.submitted if plan_state else ())
         completed_ids = set(plan_state.completed if plan_state else ())
@@ -1952,6 +2049,7 @@ class EvaluationAcknowledgeStage(Stage):
                 EVALUATIONS_PENDING,
                 EVALUATION_HANDLES,
                 EVALUATIONS_COUNT,
+                RUNTIME_COMPLETED_DECISION_COUNT,
             ),
             components=(("_evaluator", self._evaluator),),
         )
@@ -2072,6 +2170,10 @@ class EvaluationAcknowledgeStage(Stage):
             current = current.replace(
                 pending_evaluations=pending_map.copy(),
                 evaluation_handles=handles.copy(),
+            )
+        if _plan_completed_successfully(current) and _plan_has_evaluation_rows(current):
+            current = current.replace(
+                completed_decision_count=current.completed_decision_count + 1
             )
         return current.replace(
             evaluation_plan=None,

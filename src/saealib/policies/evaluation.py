@@ -52,6 +52,10 @@ class EvaluationPlan:
         requests = tuple(self.requests)
         if not requests:
             raise ValidationError("an evaluation plan must contain a request")
+        if any(len(request.candidate_ids) == 0 for request in requests):
+            raise ValidationError(
+                "an evaluation plan request must contain at least one candidate"
+            )
         request_ids = [int(request.request_id) for request in requests]
         if len(request_ids) != len(set(request_ids)):
             raise ValidationError("an evaluation plan contains duplicate request IDs")
@@ -202,7 +206,9 @@ class TopKEvaluation(_RequestPlanner):
     """Evaluate the stable top-k acquisition scores."""
 
     def __init__(self, k: int, sanitize_nonfinite: bool = False) -> None:
-        self.k = k
+        if not isinstance(k, (int, np.integer)) or isinstance(k, bool) or k <= 0:
+            raise ValidationError("k must be a positive integer")
+        self.k = int(k)
         self.sanitize_nonfinite = sanitize_nonfinite
 
     def plan(self, candidates, acquisition, ctx):
