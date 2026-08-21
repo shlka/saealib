@@ -38,6 +38,9 @@ from saealib.core.compiler.contract_diagnostics import (
 )
 from saealib.core.compiler.cors_diagnostics import (
     CORS_NONSEQUENTIAL_MESSAGE,
+    _cors_nodes,
+    _planner_nodes,
+    _planner_reachable,
     _requires_sequential_decisions,
 )
 from saealib.core.compiler.graph import ComponentGraph
@@ -573,10 +576,18 @@ class Optimizer:
         self._requires_sequential_decisions_in_plan = (
             _graph_requires_sequential_decisions(graph)
         )
+        sequential_planner_ids: set[str] = set()
+        if self._requires_sequential_decisions_in_plan:
+            sequential_planner_ids = {
+                planner_node_id
+                for cors_id, _ in _cors_nodes(graph)
+                for planner_node_id, _, _ in _planner_nodes(graph)
+                if _planner_reachable(graph, cors_id, planner_node_id)
+            }
         for node in graph.nodes:
             stage = getattr(node.component, "stage", node.component)
             setter = getattr(stage, "set_semantic_warning", None)
-            if callable(setter):
+            if callable(setter) and node.component_id in sequential_planner_ids:
                 setter(self._semantic_runtime_warning)
 
     def _semantic_runtime_warning(self, candidate_count: int, overlap: bool) -> None:

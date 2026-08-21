@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+from dataclasses import replace
 from itertools import pairwise
 from typing import Any
 
@@ -25,11 +26,17 @@ from saealib import (
     max_gen,
 )
 from saealib.acquisition import CompositeAcquisition
-from saealib.acquisition.mean import CORSDistance
+from saealib.acquisition.mean import CORSDistance, MeanPrediction
 from saealib.callback import AcquisitionEndEvent, PostEvaluationEvent
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.core.compiler.cors_diagnostics import CORS_NONSEQUENTIAL_MESSAGE
+from saealib.core.compiler.graph import DataEdge, NodeRef
+from saealib.core.graph_builder import (
+    NodeAdapterSpec,
+    StageContractNodeAdapter,
+    build_decomposed_component_graph_from_specs,
+)
 from saealib.core.state import PROPOSALS_CURRENT
 from saealib.exceptions import ValidationError
 from saealib.execution import (
@@ -42,6 +49,7 @@ from saealib.execution import (
     Evaluator,
     SerialEvaluator,
 )
+from saealib.pipeline import Stage
 from saealib.policies.evaluation import (
     EvaluateAll,
     EvaluationPlan,
@@ -54,6 +62,7 @@ from saealib.stages import (
     AcquisitionStage,
     ArchiveUpdateStage,
     AsyncEvaluationSubmitStage,
+    CountGenerationStage,
     EvaluationAcknowledgeStage,
     EvaluationApplyStage,
     EvaluationCollectStage,
@@ -186,6 +195,127 @@ class _CustomPreSelectionStrategy(OptimizationStrategy):
 
     def build_graph(self, provider):
         return PreSelectionStrategy(n_candidates=4, n_select=1).build_graph(provider)
+
+
+class _PrepareOffspringStage(Stage):
+    """Provide a deterministic candidate batch to the branch planner stages."""
+
+    name = "prepare_offspring"
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        assert state.population is not None
+        return state.replace(
+            offspring=state.population,
+            scores=np.zeros(len(state.population), dtype=np.float64),
+        )
+
+
+class _NoopAcquisitionStage(AcquisitionStage):
+    """Expose an acquisition branch without needing surrogate predictions."""
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        return state
+
+
+class _ClearingEvaluationPlanStage(EvaluationPlanStage):
+    """Run one real planner call, then close its request for the next branch."""
+
+    def __init__(self, planner, candidate_counts: list[int]) -> None:
+        super().__init__(planner)
+        self.candidate_counts = candidate_counts
+
+    def execute(self, state: OptimizationState) -> OptimizationState:
+        result = super().execute(state)
+        plan = result.evaluation_plan
+        assert plan is not None
+        self.candidate_counts.append(
+            sum(len(request.candidate_ids) for request in plan.requests)
+        )
+        return result.replace(
+            evaluation_request=None,
+            evaluation_plan=None,
+            evaluation_plan_state=None,
+            pending_evaluations={},
+            evaluation_updates=[],
+            evaluation_update_new_ids=[],
+            evaluation_plan_updates={},
+            evaluation_new_ids=np.empty(0, dtype=np.int64),
+        )
+
+
+class _IndependentRuntimeBranchesStrategy(OptimizationStrategy):
+    """Sequentially execute two data-flow-independent acquisition branches."""
+
+    requires_surrogate = False
+
+    def __init__(self) -> None:
+        self._graph = None
+        self.cors_candidate_counts: list[int] = []
+        self.batch_candidate_counts: list[int] = []
+
+    def build_graph(self, provider):
+        del provider
+        if self._graph is not None:
+            return self._graph
+
+        cors_acquisition = _NoopAcquisitionStage(
+            CORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN)
+        )
+        cors_acquisition.name = "cors_acquisition"
+        cors_planner = _ClearingEvaluationPlanStage(
+            TopKEvaluation(1), candidate_counts=self.cors_candidate_counts
+        )
+        cors_planner.name = "cors_planner"
+
+        other_acquisition = _NoopAcquisitionStage(
+            MeanPrediction(direction=np.array([-1.0]))
+        )
+        other_acquisition.name = "other_acquisition"
+        other_planner = _ClearingEvaluationPlanStage(
+            EvaluateAll(), candidate_counts=self.batch_candidate_counts
+        )
+        other_planner.name = "other_planner"
+
+        stages = (
+            CountGenerationStage(),
+            _PrepareOffspringStage(),
+            cors_acquisition,
+            cors_planner,
+            other_acquisition,
+            other_planner,
+        )
+        specs = tuple(
+            NodeAdapterSpec(
+                component_id=stage.name,
+                adapter=StageContractNodeAdapter(stage, node_path=stage.name),
+            )
+            for stage in stages
+        )
+        graph = build_decomposed_component_graph_from_specs(specs)
+        branch_edges = (
+            DataEdge(
+                source=NodeRef(
+                    component_id="cors_acquisition___acquisition", role="acquisition"
+                ),
+                target=NodeRef(
+                    component_id="cors_planner___planner", role="evaluation_planner"
+                ),
+                source_port="scores",
+                target_port="acquisition",
+            ),
+            DataEdge(
+                source=NodeRef(
+                    component_id="other_acquisition___acquisition", role="acquisition"
+                ),
+                target=NodeRef(
+                    component_id="other_planner___planner", role="evaluation_planner"
+                ),
+                source_port="scores",
+                target_port="acquisition",
+            ),
+        )
+        self._graph = replace(graph, data_edges=(*graph.data_edges, *branch_edges))
+        return self._graph
 
 
 _ASYNC_ATTRS = [
@@ -651,6 +781,26 @@ def test_custom_strategy_and_opaque_planner_warn_at_runtime_without_cors_wiring(
         item for item in caught if str(item.message) == CORS_NONSEQUENTIAL_MESSAGE
     ]
     assert len(cors_warnings) == 1
+
+
+def test_cors_runtime_ignores_batch_planner_on_an_independent_branch():
+    strategy = _IndependentRuntimeBranchesStrategy()
+    optimizer = (
+        _make_optimizer(_make_problem(), CORSDistance(delta=1.0), n_gen=1)
+        .set_initializer(LHSInitializer(10, 10))
+        .set_strategy(strategy)
+    )
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        optimizer.run()
+
+    assert strategy.cors_candidate_counts == [1]
+    assert strategy.batch_candidate_counts == [10]
+    cors_warnings = [
+        item for item in caught if str(item.message) == CORS_NONSEQUENTIAL_MESSAGE
+    ]
+    assert cors_warnings == []
 
 
 def test_cors_runtime_warning_is_once_per_run():
