@@ -56,6 +56,51 @@ def _planner_nodes(graph: ComponentGraph) -> tuple[tuple[str, object, object], .
     return tuple(result)
 
 
+def _owner_node_ids(graph: ComponentGraph, owner_id: str) -> frozenset[str]:
+    """Return a stage node and its decomposed part nodes."""
+    prefix = f"{owner_id}__"
+    return frozenset(
+        node.component_id
+        for node in graph.nodes
+        if node.component_id == owner_id or node.component_id.startswith(prefix)
+    )
+
+
+def _owner_id(graph: ComponentGraph, component_id: str) -> str:
+    """Map a decomposed part node back to its owning stage node."""
+    matches = [
+        node.component_id
+        for node in graph.nodes
+        if component_id == node.component_id
+        or component_id.startswith(f"{node.component_id}__")
+    ]
+    return min(matches, key=len) if matches else component_id
+
+
+def _data_reachable(graph: ComponentGraph, starts: frozenset[str]) -> frozenset[str]:
+    """Follow data edges from the supplied graph nodes."""
+    reachable = set(starts)
+    changed = True
+    while changed:
+        changed = False
+        for edge in graph.data_edges:
+            source = edge.source.component_id
+            target = edge.target.component_id
+            if source in reachable and target not in reachable:
+                reachable.add(target)
+                changed = True
+    return frozenset(reachable)
+
+
+def _planner_reachable(
+    graph: ComponentGraph, acquisition_id: str, planner_id: str
+) -> bool:
+    """Return whether a CORS score data-flows to one planner."""
+    starts = _owner_node_ids(graph, acquisition_id)
+    targets = _owner_node_ids(graph, planner_id)
+    return bool(starts and targets and _data_reachable(graph, starts) & targets)
+
+
 def _surrogate_generation_nodes(graph: ComponentGraph) -> frozenset[str]:
     """Return nodes in a GenerationBasedStrategy surrogate-only region.
 
@@ -82,10 +127,29 @@ def _surrogate_generation_nodes(graph: ComponentGraph) -> frozenset[str]:
     return frozenset(result)
 
 
-def _candidate_count(graph: ComponentGraph) -> int | None:
-    """Return an explicit ask count when the graph exposes one."""
+def _candidate_count(
+    graph: ComponentGraph, planner_node_ids: frozenset[str] | None = None
+) -> int | None:
+    """Return an ask count for one planner's upstream data-flow branch."""
+    if planner_node_ids is None:
+        candidate_nodes = frozenset(node.component_id for node in graph.nodes)
+    else:
+        reverse_reachable = set(planner_node_ids)
+        changed = True
+        while changed:
+            changed = False
+            for edge in graph.data_edges:
+                if edge.target.component_id in reverse_reachable and (
+                    edge.source.component_id not in reverse_reachable
+                ):
+                    reverse_reachable.add(edge.source.component_id)
+                    changed = True
+        candidate_nodes = frozenset(reverse_reachable)
+    owner_ids = {_owner_id(graph, component_id) for component_id in candidate_nodes}
     counts: list[int] = []
     for node in graph.nodes:
+        if node.component_id not in owner_ids:
+            continue
         stage = _stage(node.component)
         count = getattr(stage, "_n_offspring", None)
         if isinstance(count, int) and not isinstance(count, bool) and count >= 0:
@@ -154,10 +218,23 @@ class CORSNonSequentialEvaluationRule:
         if not cors_nodes:
             return VerificationResult()
         planners = _planner_nodes(context.graph)
-        candidate_count = _candidate_count(context.graph)
+        reachable_planners = tuple(
+            (component_id, planner, stage)
+            for component_id, planner, stage in planners
+            if any(
+                _planner_reachable(context.graph, cors_id, component_id)
+                for cors_id, _ in cors_nodes
+            )
+        )
         static_batch = any(
-            _selects_multiple(planner, candidate_count) == "multiple"
-            for _, planner, _ in planners
+            _selects_multiple(
+                planner,
+                _candidate_count(
+                    context.graph, _owner_node_ids(context.graph, component_id)
+                ),
+            )
+            == "multiple"
+            for component_id, planner, _ in reachable_planners
         )
         surrogate_generation_nodes = _surrogate_generation_nodes(context.graph)
         surrogate_generation_cors = any(
@@ -168,7 +245,7 @@ class CORSNonSequentialEvaluationRule:
         acquisition_id = cors_nodes[0][0]
         related = tuple(
             ContractPath(components=(component_id,))
-            for component_id, _, _ in planners[:1]
+            for component_id, _, _ in reachable_planners
         )
         return VerificationResult(
             diagnostics=(

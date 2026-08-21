@@ -4,15 +4,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from saealib.core.state import StateKey
+from saealib.core.state import RUNTIME_COMPLETED_DECISION_COUNT, StateKey
 from saealib.stages import _builtin_stage_instances_for_contracts
 
 BEGIN_MARKER = "<!-- BEGIN GENERATED STAGE CONTRACTS: do not edit -->"
 END_MARKER = "<!-- END GENERATED STAGE CONTRACTS -->"
+_NON_DOCUMENTED_RUNTIME_KEYS = frozenset({RUNTIME_COMPLETED_DECISION_COUNT})
 
 
 def _keys(keys: tuple[StateKey[object], ...]) -> str:
-    return ", ".join(f"`{key.namespace}.{key.name}`" for key in keys) or "—"
+    return (
+        ", ".join(
+            f"`{key.namespace}.{key.name}`"
+            for key in keys
+            if key not in _NON_DOCUMENTED_RUNTIME_KEYS
+        )
+        or "—"
+    )
 
 
 def render_stage_contracts() -> str:

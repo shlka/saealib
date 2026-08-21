@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pytest
 from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA  # noqa: N811
@@ -15,7 +17,15 @@ from saealib.core.compiler import (
     DiagnosticBag,
     Severity,
 )
+from saealib.core.compiler.compiler import (
+    CompileContext,
+    RuleContext,
+    VerificationResult,
+)
+from saealib.core.compiler.cors_diagnostics import CORSNonSequentialEvaluationRule
 from saealib.core.compiler.diagnostics import DIAGNOSTIC_CODES
+from saealib.core.compiler.graph import ComponentGraph, ComponentNode, DataEdge, NodeRef
+from saealib.core.contracts import ComponentContract
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.execution.scheduler import AsyncEvaluationScheduler
 from saealib.islands import IslandModel
@@ -244,6 +254,78 @@ def test_cors_compiler_keeps_single_candidate_configuration_clean() -> None:
     assert not any(
         diagnostic.code == "cors_nonsequential_evaluation"
         for diagnostic in plan.diagnostics
+    )
+
+
+class _DiagnosticGraphComponent:
+    def __init__(self, *, acquisition=None, planner=None, n_offspring=None):
+        self._acquisition = acquisition
+        self._planner = planner
+        self._n_offspring = n_offspring
+
+    def contract(self):
+        return ComponentContract()
+
+
+def test_cors_compiler_ignores_batch_planner_on_an_independent_branch() -> None:
+    """Only planners reached by the CORS score can make it non-sequential."""
+    graph = ComponentGraph(
+        nodes=(
+            ComponentNode(
+                component_id="cors",
+                component=_DiagnosticGraphComponent(
+                    acquisition=CORSDistance(search_pattern=(0.9, 0.0))
+                ),
+            ),
+            ComponentNode(
+                component_id="cors_ask",
+                component=_DiagnosticGraphComponent(n_offspring=1),
+            ),
+            ComponentNode(
+                component_id="cors_planner",
+                component=_DiagnosticGraphComponent(planner=TopKEvaluation(1)),
+            ),
+            ComponentNode(
+                component_id="other_ask",
+                component=_DiagnosticGraphComponent(n_offspring=10),
+            ),
+            ComponentNode(
+                component_id="other_planner",
+                component=_DiagnosticGraphComponent(planner=RatioEvaluation(1.0)),
+            ),
+        ),
+        data_edges=(
+            DataEdge(
+                source=NodeRef(component_id="cors"),
+                target=NodeRef(component_id="cors_planner"),
+                source_port="scores",
+                target_port="acquisition",
+            ),
+            DataEdge(
+                source=NodeRef(component_id="cors_ask"),
+                target=NodeRef(component_id="cors_planner"),
+                source_port="candidates",
+                target_port="candidates",
+            ),
+            DataEdge(
+                source=NodeRef(component_id="other_ask"),
+                target=NodeRef(component_id="other_planner"),
+                source_port="candidates",
+                target_port="candidates",
+            ),
+        ),
+        entry_points=(NodeRef(component_id="cors"),),
+    )
+    result = cast(
+        VerificationResult,
+        CORSNonSequentialEvaluationRule().apply(
+            RuleContext(graph, CompileContext(), DiagnosticBag())
+        ),
+    )
+
+    assert not any(
+        diagnostic.code == "cors_nonsequential_evaluation"
+        for diagnostic in result.diagnostics
     )
 
 

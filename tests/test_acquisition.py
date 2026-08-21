@@ -79,9 +79,19 @@ def _archive_x(xs):
     return arc
 
 
-def _decision_ctx(decision_count: int) -> Any:
-    """Minimal duck-typed OptimizationState stand-in exposing ctx.decision_count/rng."""
-    return SimpleNamespace(decision_count=decision_count, rng=np.random.default_rng(0))
+def _decision_ctx(
+    decision_count: int, completed_decision_count: int | None = None
+) -> Any:
+    """Minimal decision context exposing both runtime counters and the RNG."""
+    return SimpleNamespace(
+        decision_count=decision_count,
+        completed_decision_count=(
+            decision_count
+            if completed_decision_count is None
+            else completed_decision_count
+        ),
+        rng=np.random.default_rng(0),
+    )
 
 
 # ===========================================================================
@@ -486,23 +496,21 @@ class TestGpUcbBetaSchedule:
 class TestCORSDistance:
     """Tests for the CORS distance-constrained acquisition function."""
 
-    def test_compute_reference_returns_archive_x(self) -> None:
+    def test_compute_reference_requires_decision_context(self) -> None:
         arc = _archive_x([0.0, 5.0, 10.0])
         af = CORSDistance(delta=10.0)
-        ref = af.compute_reference(arc)
-        np.testing.assert_array_equal(
-            np.sort(ref.evaluated_x.ravel()), [0.0, 5.0, 10.0]
+        with pytest.raises(ValidationError, match="decision context"):
+            af.compute_reference(arc)
+
+    def test_prepare_resolves_beta_from_completed_decision_count(self) -> None:
+        arc = _archive_x([0.0, 5.0, 10.0])
+        af = CORSDistance(delta=10.0, search_pattern=(0.9, 0.4, 0.0))
+        prepared = af.prepare(
+            arc,
+            _decision_ctx(decision_count=99, completed_decision_count=1),
         )
 
-    def test_compute_reference_can_be_passed_directly_to_score(self) -> None:
-        arc = _archive_x([0.0, 5.0, 10.0])
-        pred = _pred_x(value=[[5.0]], x=[[100.0]])
-        af = CORSDistance(delta=10.0)
-
-        ref = af.compute_reference(arc)
-        scores = af.score(pred, ref)
-
-        assert scores[0] == pytest.approx(5.0)
+        assert prepared.beta == pytest.approx(0.4)
 
     def test_far_candidate_scores_by_predicted_mean(self) -> None:
         """A candidate far from every evaluated point is unaffected by the constraint."""  # noqa: E501

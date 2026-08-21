@@ -34,6 +34,7 @@ from saealib.core.state import PROPOSALS_CURRENT
 from saealib.exceptions import ValidationError
 from saealib.execution import (
     AsyncEvaluationScheduler,
+    EvaluationErrorInfo,
     EvaluationHandle,
     EvaluationRequest,
     EvaluationStatus,
@@ -51,8 +52,13 @@ from saealib.population import Archive, ParetoArchive, Population, PopulationAtt
 from saealib.problem import Problem
 from saealib.stages import (
     AcquisitionStage,
+    ArchiveUpdateStage,
     AsyncEvaluationSubmitStage,
+    EvaluationAcknowledgeStage,
+    EvaluationApplyStage,
+    EvaluationCollectStage,
     EvaluationPlanStage,
+    EvaluationSubmitStage,
 )
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -119,6 +125,29 @@ class _ImmediateEvaluator(Evaluator):
             EvaluationStatus.PENDING,
             backend_token=(pending.request, problem),
         )
+
+
+class _StatusEvaluator(_ImmediateEvaluator):
+    """Return scripted terminal statuses through both evaluator seams."""
+
+    def __init__(self, statuses: list[EvaluationStatus]) -> None:
+        self._statuses = list(statuses)
+
+    def collect(self, handle, *, wait=True):
+        status = self._statuses.pop(0)
+        if status is EvaluationStatus.COMPLETED:
+            return super().collect(handle, wait=wait)
+        request, _ = handle.backend_token
+        handle._delivered_sequence = 0
+        return [
+            EvaluationUpdate(
+                request.request_id,
+                status,
+                np.empty(0, dtype=np.int64),
+                error=EvaluationErrorInfo("scripted", status.value),
+                sequence=0,
+            )
+        ]
 
 
 class _OpaqueBatchPlanner(EvaluationPlanner):
@@ -269,7 +298,7 @@ def test_repeated_plan_keeps_one_cors_decision_per_generation():
     np.testing.assert_allclose(
         [beta for _, _, beta in acquisition.records], SEARCH_PATTERN
     )
-    assert states[-1].decision_count == 3
+    assert states[-1].completed_decision_count == states[-1].decision_count == 3
 
 
 def test_canonical_cors_evaluates_one_candidate_per_decision():
@@ -301,6 +330,7 @@ def test_canonical_cors_evaluates_one_candidate_per_decision():
         1,
         1,
     ]
+    assert states[-1].completed_decision_count == states[-1].decision_count == 3
 
 
 def test_async_refill_reads_advanced_decision_count_within_generation():
@@ -335,6 +365,7 @@ def test_async_refill_reads_advanced_decision_count_within_generation():
         assert state.pending_evaluations == {}
 
     assert completed == [(1, 1, 1), (1, 2, 2), (1, 3, 3)]
+    assert state.completed_decision_count == state.decision_count == 3
     assert [(gen, count) for gen, count, _ in acquisition.records] == [
         (1, 0),
         (1, 1),
@@ -375,6 +406,7 @@ def test_npz_resume_preserves_cors_search_phase(tmp_path):
         == SEARCH_PATTERN[saved_decision_count % len(SEARCH_PATTERN)]
     )
     assert resumed.decision_count == 4
+    assert resumed.completed_decision_count == 4
 
 
 def test_repeated_evaluation_uses_unique_candidate_ids_for_batch_warning():
@@ -394,13 +426,97 @@ def test_repeated_evaluation_uses_unique_candidate_ids_for_batch_warning():
 
 
 def test_zero_candidate_top_k_plan_is_rejected_before_decision_count_advances():
+    with pytest.raises(ValidationError, match="positive"):
+        TopKEvaluation(0)
+    with pytest.raises(ValidationError, match="n_select"):
+        PreSelectionStrategy(n_candidates=1, n_select=0)
+
     state = _make_async_state().replace(scores=np.array([1.0], dtype=np.float64))
-    stage = EvaluationPlanStage(TopKEvaluation(0))
+    stage = EvaluationPlanStage(TopKEvaluation(1))
+    planned = stage.execute(state)
 
-    with pytest.raises(ValidationError, match="candidate"):
-        stage.execute(state)
+    assert planned.decision_count == 1
 
-    assert state.decision_count == 0
+
+def _run_sync_status_plan(state, evaluator):
+    for stage in (
+        EvaluationPlanStage(EvaluateAll()),
+        EvaluationSubmitStage(evaluator),
+        EvaluationCollectStage(evaluator),
+        EvaluationApplyStage(),
+        ArchiveUpdateStage(),
+        EvaluationAcknowledgeStage(evaluator),
+    ):
+        state = stage.execute(state)
+    return state
+
+
+@pytest.mark.parametrize(
+    "terminal_status",
+    (EvaluationStatus.FAILED, EvaluationStatus.CANCELLED),
+)
+def test_sync_failed_or_cancelled_plan_does_not_advance_cors_beta(terminal_status):
+    acquisition = _RecordingCORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN)
+    acquisition_stage = AcquisitionStage(acquisition)
+    evaluator = _StatusEvaluator([terminal_status, EvaluationStatus.COMPLETED])
+    state = _make_async_state()
+    assert state.offspring is not None
+    prediction = SurrogatePrediction.objective(
+        value=np.array([[1.0]], dtype=np.float64), x=state.offspring.x
+    )
+
+    state = state.replace(predictions=prediction)
+    state = acquisition_stage.execute(state)
+    state = _run_sync_status_plan(state, evaluator)
+    assert state.decision_count == 1
+    assert state.completed_decision_count == 0
+
+    state = state.replace(predictions=prediction)
+    state = acquisition_stage.execute(state)
+    state = _run_sync_status_plan(state, evaluator)
+    assert state.decision_count == 2
+    assert state.completed_decision_count == 1
+
+    state = state.replace(predictions=prediction)
+    acquisition_stage.execute(state)
+    assert [beta for _, _, beta in acquisition.records] == [0.9, 0.9, 0.4]
+
+
+@pytest.mark.parametrize(
+    "terminal_status",
+    (EvaluationStatus.FAILED, EvaluationStatus.CANCELLED),
+)
+def test_async_failed_or_cancelled_plan_does_not_advance_cors_beta(terminal_status):
+    acquisition = _RecordingCORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN)
+    acquisition_stage = AcquisitionStage(acquisition)
+    evaluator = _StatusEvaluator([terminal_status, EvaluationStatus.COMPLETED])
+    scheduler = AsyncEvaluationScheduler(evaluator, max_pending=1)
+    submit_stage = AsyncEvaluationSubmitStage(scheduler, EvaluateAll())
+    state = _make_async_state()
+
+    for index in range(2):
+        population = _make_candidate(10 + index, 0.2 + 0.1 * index)
+        state = state.replace(
+            offspring=population,
+            predictions=SurrogatePrediction.objective(
+                value=np.array([[1.0]], dtype=np.float64), x=population.x
+            ),
+        )
+        state = acquisition_stage.execute(state)
+        state = submit_stage.execute(state)
+        state = scheduler.poll(state, wait=True)
+
+    assert state.decision_count == 2
+    assert state.completed_decision_count == 1
+    population = _make_candidate(12, 0.4)
+    state = state.replace(
+        offspring=population,
+        predictions=SurrogatePrediction.objective(
+            value=np.array([[1.0]], dtype=np.float64), x=population.x
+        ),
+    )
+    acquisition_stage.execute(state)
+    assert [beta for _, _, beta in acquisition.records] == [0.9, 0.9, 0.4]
 
 
 def test_async_sequential_cors_submission_does_not_warn():

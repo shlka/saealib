@@ -206,7 +206,9 @@ class TopKEvaluation(_RequestPlanner):
     """Evaluate the stable top-k acquisition scores."""
 
     def __init__(self, k: int, sanitize_nonfinite: bool = False) -> None:
-        self.k = k
+        if not isinstance(k, (int, np.integer)) or isinstance(k, bool) or k <= 0:
+            raise ValidationError("k must be a positive integer")
+        self.k = int(k)
         self.sanitize_nonfinite = sanitize_nonfinite
 
     def plan(self, candidates, acquisition, ctx):

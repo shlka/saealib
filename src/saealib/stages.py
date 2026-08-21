@@ -75,6 +75,7 @@ from saealib.core.state import (
     PROPOSALS_OFFSPRING,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_COMPLETED_DECISION_COUNT,
     RUNTIME_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
@@ -92,6 +93,7 @@ from saealib.execution.evaluator import (
     EvaluationRequest,
     EvaluationResult,
     EvaluationStatus,
+    EvaluationUpdate,
     Evaluator,
     PendingEvaluation,
 )
@@ -218,6 +220,52 @@ def _notify_cors_runtime_warning(
         callback(len(candidate_ids), overlap)
 
 
+def _plan_completed_successfully(state: OptimizationState) -> bool:
+    """Return whether every request in the active plan completed successfully."""
+    plan = state.evaluation_plan
+    if plan is None:
+        return False
+    terminal = {
+        EvaluationStatus.COMPLETED,
+        EvaluationStatus.FAILED,
+        EvaluationStatus.CANCELLED,
+    }
+    for request in plan.requests:
+        request_id = int(request.request_id)
+        pending = state.pending_evaluations.get(request_id)
+        if pending is not None and pending.status in terminal:
+            status = pending.status
+        else:
+            updates = state.evaluation_plan_updates.get(request_id, ())
+            if updates:
+                status = updates[-1].status
+            elif len(plan.requests) == 1 and state.evaluation_updates:
+                status = state.evaluation_updates[-1].status
+            else:
+                return False
+        if status is not EvaluationStatus.COMPLETED:
+            return False
+    return True
+
+
+def _plan_has_evaluation_rows(
+    state: OptimizationState, update: EvaluationUpdate | None = None
+) -> bool:
+    """Return whether this plan has produced rows that can reach the archive."""
+    if update is not None and update.result is not None and len(update.candidate_ids):
+        return True
+    if state.evaluation_updates and any(
+        item.result is not None and len(item.candidate_ids)
+        for item in state.evaluation_updates
+    ):
+        return True
+    return any(
+        item.result is not None and len(item.candidate_ids)
+        for updates in state.evaluation_plan_updates.values()
+        for item in updates
+    )
+
+
 def _apply_component_patch(state: OptimizationState, patch: StatePatch) -> None:
     if not isinstance(patch, StatePatch):
         raise ValidationError("feedback consumer must return a StatePatch")
@@ -336,6 +384,7 @@ _STATE_FIELD_KEYS: dict[str, Any] = {
     "fe": EVALUATIONS_COUNT,
     "gen": RUNTIME_GENERATION,
     "decision_count": RUNTIME_DECISION_COUNT,
+    "completed_decision_count": RUNTIME_COMPLETED_DECISION_COUNT,
     "async_fatal": RUNTIME_ASYNC_FATAL,
     "data": USER_DATA,
     "proposal_id": PROPOSALS_CURRENT,
@@ -818,6 +867,7 @@ class AcquisitionStage(Stage):
                 ARCHIVES_MAIN,
                 RUNTIME_GENERATION,
                 RUNTIME_DECISION_COUNT,
+                RUNTIME_COMPLETED_DECISION_COUNT,
                 RUNTIME_RNG,
             ),
             writes=(SCORES, ACQUISITION_RESULT),
@@ -1987,6 +2037,7 @@ class EvaluationAcknowledgeStage(Stage):
                 EVALUATIONS_PENDING,
                 EVALUATION_HANDLES,
                 EVALUATIONS_COUNT,
+                RUNTIME_COMPLETED_DECISION_COUNT,
             ),
             components=(("_evaluator", self._evaluator),),
         )
@@ -2107,6 +2158,10 @@ class EvaluationAcknowledgeStage(Stage):
             current = current.replace(
                 pending_evaluations=pending_map.copy(),
                 evaluation_handles=handles.copy(),
+            )
+        if _plan_completed_successfully(current) and _plan_has_evaluation_rows(current):
+            current = current.replace(
+                completed_decision_count=current.completed_decision_count + 1
             )
         return current.replace(
             evaluation_plan=None,

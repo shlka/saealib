@@ -28,6 +28,7 @@ from saealib.core.state import (
     PROPOSALS_OFFSPRING,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_COMPLETED_DECISION_COUNT,
     RUNTIME_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
@@ -77,6 +78,7 @@ _STORE_FIELDS = {
     "fe": EVALUATIONS_COUNT,
     "gen": RUNTIME_GENERATION,
     "decision_count": RUNTIME_DECISION_COUNT,
+    "completed_decision_count": RUNTIME_COMPLETED_DECISION_COUNT,
     "evaluation_plan": EVALUATIONS_PLAN,
     "evaluation_plan_state": EVALUATIONS_PLAN_STATE,
     "evaluation_plan_updates": EVALUATIONS_PLAN_UPDATES,
@@ -400,6 +402,10 @@ class OptimizationState:
         execution, :class:`~saealib.stages.AsyncEvaluationSubmitStage` for
         async/steady-state execution -- never on a plan continuation.
         Independent of ``gen``/``fe``.
+    completed_decision_count : int
+        Number of confirmed evaluation plans whose true-evaluation results
+        were successfully applied to the archive. Failed or cancelled plans
+        do not advance this CORS-specific counter.
     offspring : Population or None
         Candidate population produced by the current generation's ask step.
         Set by :class:`~saealib.stages.AskStage`; consumed and updated by
@@ -442,6 +448,7 @@ class OptimizationState:
     fe: int = 0
     gen: int = 0
     decision_count: int = 0
+    completed_decision_count: int = 0
 
     # Pipeline stage data (typed)
     offspring: Population | None = None
@@ -658,6 +665,7 @@ class OptimizationState:
         fe: int = 0,
         gen: int = 0,
         decision_count: int = 0,
+        completed_decision_count: int = 0,
         offspring: Population | None = None,
         evaluated_offspring: Population | None = None,
         scores: np.ndarray | None = None,
@@ -725,6 +733,7 @@ class OptimizationState:
         self.fe = fe
         self.gen = gen
         self.decision_count = decision_count
+        self.completed_decision_count = completed_decision_count
         self.offspring = offspring
         self.evaluated_offspring = evaluated_offspring
         self.scores = scores
