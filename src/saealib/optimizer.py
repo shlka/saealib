@@ -38,12 +38,10 @@ from saealib.core.compiler.contract_diagnostics import (
 )
 from saealib.core.compiler.cors_diagnostics import (
     CORS_NONSEQUENTIAL_MESSAGE,
-    _cors_nodes,
-    _planner_nodes,
-    _planner_reachable,
     _requires_sequential_decisions,
 )
 from saealib.core.compiler.graph import ComponentGraph
+from saealib.core.compiler.semantic_utils import data_reachable_consumers
 from saealib.core.contracts import ComponentContract
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.exceptions import ConfigurationError, ValidationError
@@ -578,17 +576,34 @@ class Optimizer:
         )
         sequential_planner_ids: set[str] = set()
         if self._requires_sequential_decisions_in_plan:
-            sequential_planner_ids = {
-                planner_node_id
-                for cors_id, _ in _cors_nodes(graph)
-                for planner_node_id, _, _ in _planner_nodes(graph)
-                if _planner_reachable(graph, cors_id, planner_node_id)
-            }
+            cors_ids: set[str] = set()
+            planner_ids: set[str] = set()
+            for node in graph.nodes:
+                stage = getattr(node.component, "stage", node.component)
+                acquisition = getattr(stage, "_acquisition", None)
+                if acquisition is not None and _requires_sequential_decisions(
+                    acquisition
+                ):
+                    cors_ids.add(node.component_id)
+                if getattr(stage, "_planner", None) is not None:
+                    planner_ids.add(node.component_id)
+            for cors_id in cors_ids:
+                sequential_planner_ids.update(
+                    data_reachable_consumers(
+                        graph,
+                        starts={cors_id},
+                        consumers=planner_ids,
+                    )
+                )
         for node in graph.nodes:
             stage = getattr(node.component, "stage", node.component)
             setter = getattr(stage, "set_semantic_warning", None)
-            if callable(setter) and node.component_id in sequential_planner_ids:
-                setter(self._semantic_runtime_warning)
+            if callable(setter):
+                setter(
+                    self._semantic_runtime_warning
+                    if node.component_id in sequential_planner_ids
+                    else None
+                )
 
     def _semantic_runtime_warning(self, candidate_count: int, overlap: bool) -> None:
         """Emit a runtime warning when a required sequential plan is non-sequential."""

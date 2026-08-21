@@ -318,6 +318,57 @@ class _IndependentRuntimeBranchesStrategy(OptimizationStrategy):
         return self._graph
 
 
+class _ReconfigurableRuntimeBranchesStrategy(OptimizationStrategy):
+    """Reuse one planner while changing which acquisition branch feeds it."""
+
+    requires_surrogate = False
+
+    def __init__(self) -> None:
+        self.use_independent_branch = False
+        self.cors_acquisition = _NoopAcquisitionStage(
+            CORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN)
+        )
+        self.cors_acquisition.name = "cors_acquisition"
+        self.other_acquisition = _NoopAcquisitionStage(
+            MeanPrediction(direction=np.array([-1.0]))
+        )
+        self.other_acquisition.name = "other_acquisition"
+        self.planner = _ClearingEvaluationPlanStage(
+            _OpaqueBatchPlanner(), candidate_counts=[]
+        )
+        self.planner.name = "shared_planner"
+
+    def build_graph(self, provider):
+        del provider
+        source = (
+            self.other_acquisition
+            if self.use_independent_branch
+            else self.cors_acquisition
+        )
+        stages = (self.cors_acquisition, self.planner)
+        if self.use_independent_branch:
+            stages = (self.cors_acquisition, self.other_acquisition, self.planner)
+        specs = tuple(
+            NodeAdapterSpec(
+                component_id=stage.name,
+                adapter=StageContractNodeAdapter(stage, node_path=stage.name),
+            )
+            for stage in stages
+        )
+        graph = build_decomposed_component_graph_from_specs(specs)
+        edge = DataEdge(
+            source=NodeRef(
+                component_id=f"{source.name}___acquisition", role="acquisition"
+            ),
+            target=NodeRef(
+                component_id="shared_planner___planner", role="evaluation_planner"
+            ),
+            source_port="scores",
+            target_port="acquisition",
+        )
+        return replace(graph, data_edges=(*graph.data_edges, edge))
+
+
 _ASYNC_ATTRS = [
     PopulationAttribute("id", np.int64, (), -1),
     PopulationAttribute("x", np.float64, (1,)),
@@ -864,3 +915,34 @@ def test_nested_composite_cors_warns_for_opaque_runtime_batch():
         in str(item.message)
     ]
     assert len(cors_warnings) == 1
+
+
+def test_runtime_semantic_hook_is_cleared_on_graph_reconfiguration():
+    strategy = _ReconfigurableRuntimeBranchesStrategy()
+    optimizer = _make_optimizer(_make_problem(), CORSDistance(delta=1.0), n_gen=1)
+
+    optimizer.set_strategy(strategy)
+    first_plan = optimizer._compile_plan()
+    assert first_plan is not None
+    assert callable(strategy.planner._semantic_warning)
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        strategy.planner.execute(_make_async_state())
+
+    assert [item for item in caught if str(item.message) == CORS_NONSEQUENTIAL_MESSAGE]
+
+    strategy.use_independent_branch = True
+    second_plan = optimizer._compile_plan()
+    assert second_plan is not None
+    assert strategy.planner._semantic_warning is None
+
+    optimizer._cors_runtime_warning_emitted = False
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        strategy.planner.execute(_make_async_state())
+
+    cors_warnings = [
+        item for item in caught if str(item.message) == CORS_NONSEQUENTIAL_MESSAGE
+    ]
+    assert cors_warnings == []

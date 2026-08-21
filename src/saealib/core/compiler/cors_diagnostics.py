@@ -11,6 +11,11 @@ from saealib.core.compiler.diagnostics import (
     Severity,
 )
 from saealib.core.compiler.graph import ComponentGraph
+from saealib.core.compiler.semantic_utils import (
+    data_reachable_consumers,
+    owner_id,
+    owner_node_ids,
+)
 
 CORS_NONSEQUENTIAL_MESSAGE = (
     "CORSDistance is used outside the source-faithful sequential one-candidate "
@@ -83,49 +88,17 @@ def _planner_nodes(graph: ComponentGraph) -> tuple[tuple[str, object, object], .
     return tuple(result)
 
 
-def _owner_node_ids(graph: ComponentGraph, owner_id: str) -> frozenset[str]:
-    """Return a stage node and its decomposed part nodes."""
-    prefix = f"{owner_id}__"
-    return frozenset(
-        node.component_id
-        for node in graph.nodes
-        if node.component_id == owner_id or node.component_id.startswith(prefix)
-    )
-
-
-def _owner_id(graph: ComponentGraph, component_id: str) -> str:
-    """Map a decomposed part node back to its owning stage node."""
-    matches = [
-        node.component_id
-        for node in graph.nodes
-        if component_id == node.component_id
-        or component_id.startswith(f"{node.component_id}__")
-    ]
-    return min(matches, key=len) if matches else component_id
-
-
-def _data_reachable(graph: ComponentGraph, starts: frozenset[str]) -> frozenset[str]:
-    """Follow data edges from the supplied graph nodes."""
-    reachable = set(starts)
-    changed = True
-    while changed:
-        changed = False
-        for edge in graph.data_edges:
-            source = edge.source.component_id
-            target = edge.target.component_id
-            if source in reachable and target not in reachable:
-                reachable.add(target)
-                changed = True
-    return frozenset(reachable)
-
-
 def _planner_reachable(
     graph: ComponentGraph, acquisition_id: str, planner_id: str
 ) -> bool:
     """Return whether a CORS score data-flows to one planner."""
-    starts = _owner_node_ids(graph, acquisition_id)
-    targets = _owner_node_ids(graph, planner_id)
-    return bool(starts and targets and _data_reachable(graph, starts) & targets)
+    return bool(
+        data_reachable_consumers(
+            graph,
+            starts={acquisition_id},
+            consumers={planner_id},
+        )
+    )
 
 
 def _surrogate_generation_nodes(graph: ComponentGraph) -> frozenset[str]:
@@ -172,7 +145,7 @@ def _candidate_count(
                     reverse_reachable.add(edge.source.component_id)
                     changed = True
         candidate_nodes = frozenset(reverse_reachable)
-    owner_ids = {_owner_id(graph, component_id) for component_id in candidate_nodes}
+    owner_ids = {owner_id(graph, component_id) for component_id in candidate_nodes}
     counts: list[int] = []
     for node in graph.nodes:
         if node.component_id not in owner_ids:
@@ -289,7 +262,7 @@ class CORSNonSequentialEvaluationRule:
             _selects_multiple(
                 planner,
                 _candidate_count(
-                    context.graph, _owner_node_ids(context.graph, component_id)
+                    context.graph, owner_node_ids(context.graph, component_id)
                 ),
             )
             == "multiple"
