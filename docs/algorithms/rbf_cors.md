@@ -78,16 +78,19 @@ non-zero entry is the condition used by its convergence corollary
 For `CORSDistance`, the beta index is explicitly
 
 ```text
-ctx.decision_count % len(search_pattern)
+ctx.completed_decision_count % len(search_pattern)
 ```
 
-The index is zero-based, so `decision_count == 0` selects
+The index is zero-based, so `completed_decision_count == 0` selects
 `search_pattern[0]`.  This is deliberately different from the scheduled
 parameter in `LowerConfidenceBound`, which uses
 `ctx.decision_count + 1` as a one-based round number.  `prepare(archive, ctx)`
-packages the evaluated design vectors and the selected beta into the
-read-only reference consumed by `score()`; scoring does not mutate a private
-cycle counter.
+packages the evaluated design vectors and the selected beta into the read-only
+reference consumed by `score()`; scoring does not mutate a private cycle
+counter.  The runtime counts confirmed evaluation plans in `decision_count`,
+while `completed_decision_count` counts decisions whose true-evaluation results
+were successfully applied.  `CORSDistance` uses `completed_decision_count`, so
+a `FAILED` or `CANCELLED` plan does not advance the CORS phase.
 
 ### Source-faithful decisions and batch extensions
 
@@ -115,11 +118,12 @@ an earlier decision is pending.  Runtime diagnostics are emitted when distinct
 decisions actually overlap.  `max_pending=1` keeps the source-faithful
 sequential boundary.
 
-The beta index is `ctx.decision_count % len(search_pattern)`.  A
-`decision_count` that starts at zero and remains paired with `CORSDistance`
-from the beginning of a run matches the source iteration index.  Replacing a
-component with `CORSDistance` during a run starts its phase at the current
-`decision_count`; it does not reconstruct the earlier source iterations.
+The beta index is `ctx.completed_decision_count % len(search_pattern)`.  A
+`completed_decision_count` that starts at zero and remains paired with
+`CORSDistance` from the beginning of a run matches the source iteration index.
+Replacing a component with `CORSDistance` during a run starts its phase at the
+current `completed_decision_count`; it does not reconstruct the earlier source
+iterations.  A `FAILED` or `CANCELLED` plan leaves this phase unchanged.
 
 ## CORS-RBF procedure
 
@@ -135,7 +139,7 @@ candidate-pool approximation used by `saealib`.
 1. Evaluate the initial set $S_1$ with $f$.
 2. Fit the RBF surrogate $\hat f_i$ to the evaluated archive.
 3. Generate a candidate pool $C_i$ with the configured evolutionary algorithm.
-4. Prepare $\beta_i$ from the current decision count and compute the distance of each candidate in $C_i$ to the evaluated archive.
+4. Prepare $\beta_i$ from the current completed decision count and compute the distance of each candidate in $C_i$ to the evaluated archive.
 5. Compute the candidate-pool approximation $\widehat{\Delta}_i = \max_{x \in C_i} \min_{x_j \in S_i} \lVert x-x_j\rVert$ unless a fixed `delta` was supplied.
 6. Score the predicted mean. Set the score to $-\infty$ for each candidate with minimum distance below $\beta_i\widehat{\Delta}_i$ (or below $\beta_i\,\texttt{delta}$ for the fixed-scale mode).
 7. Send the highest-scoring candidate or batch of candidates to the true objective, add the observations to the archive, and repeat from step 2 until termination.
@@ -274,15 +278,15 @@ definition.
 ### Beta progression and asynchronous boundaries
 
 The source's $i$ advances after each true evaluation point.  `saealib`'s
-`CORSDistance` reads the runtime's `ctx.decision_count` and selects one
-zero-based pattern entry per prepared decision.  All candidates in one plan
+`CORSDistance` reads the runtime's `ctx.completed_decision_count` and selects
+one zero-based pattern entry per prepared decision.  All candidates in one plan
 share that entry because `prepare()` runs once for the plan and `score()` is
-read-only.
+read-only.  A `FAILED` or `CANCELLED` plan does not advance this phase.
 
-A run that starts with `decision_count == 0` and continues to use
+A run that starts with `completed_decision_count == 0` and continues to use
 `CORSDistance` keeps the source iteration phase.  Introducing the acquisition
-after a component replacement starts from the current decision count, so the
-runtime does not infer the earlier phase.
+after a component replacement starts from the current completed decision count,
+so the runtime does not infer the earlier phase.
 
 Asynchronous scheduling follows the same boundary.  `max_pending=1` waits for
 the current decision before preparing the next one.  Scheduler capacity alone

@@ -133,7 +133,8 @@ class CORSDistance(PointwiseAcquisition):
     from ``ctx.completed_decision_count`` using a zero-based index, so decision zero
     uses ``search_pattern[0]``. This differs from
     :class:`~saealib.acquisition.lcb.LowerConfidenceBound`, whose scheduled
-    parameter uses the same field as ``t = ctx.decision_count + 1`` (one-based).
+    parameter uses ``ctx.decision_count + 1`` as a one-based round number.
+    CORS and LCB therefore use different runtime counters.
     A real context is therefore required when ``evaluate()`` prepares a CORS
     reference; direct ``score()`` calls must provide that prepared reference.
 

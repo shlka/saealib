@@ -8,8 +8,8 @@ Tests cover:
 - LowerConfidenceBound: negated LCB, kappa parameter, requires uncertainty
 - LowerConfidenceBound beta_schedule: round-index-based kappa, gp_ucb_beta_schedule
 - ProbabilityOfFeasibility: P(g<=0), requires uncertainty
-- CORSDistance: distance-constrained mean prediction, decision_count-based beta_i
-  cycling
+- CORSDistance: distance-constrained mean prediction, completed_decision_count-based
+  beta_i cycling
 - AcquisitionFunction: abstract base class cannot be instantiated
 - direction-aware minimize-space conversion for EI/LCB
 """

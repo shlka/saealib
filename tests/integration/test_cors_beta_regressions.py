@@ -428,6 +428,8 @@ def test_repeated_evaluation_uses_unique_candidate_ids_for_batch_warning():
 def test_zero_candidate_top_k_plan_is_rejected_before_decision_count_advances():
     with pytest.raises(ValidationError, match="positive"):
         TopKEvaluation(0)
+    with pytest.raises(ValidationError, match="n_candidates"):
+        PreSelectionStrategy(n_candidates=0, n_select=1)
     with pytest.raises(ValidationError, match="n_select"):
         PreSelectionStrategy(n_candidates=1, n_select=0)
 

@@ -2645,7 +2645,7 @@ def _load_v2(
 def _load_v3(
     cls: type[OptimizationState], data: Any, problem: Problem
 ) -> OptimizationState:
-    """Load a schema-v3 or schema-v4 checkpoint (v4 only adds decision_count)."""
+    """Load a schema-v3 or schema-v4 checkpoint with optional decision counters."""
     genome_codec = problem.space.services.get("GenomeCodec")
     dense_numeric_view = problem.space.services.get("DenseNumericView")
     entries = _read_json(data, "_state_entries")
@@ -2769,6 +2769,9 @@ def _load_v3(
     kwargs["fe"] = int(kwargs.get("fe", 0))
     kwargs["gen"] = int(kwargs.get("gen", 0))
     kwargs["decision_count"] = int(kwargs.get("decision_count", 0))
+    kwargs["completed_decision_count"] = int(
+        kwargs.get("completed_decision_count", kwargs.get("decision_count", 0))
+    )
     state = cls(**kwargs)
     state.data = {**state.data, "resumed": True}
     return state

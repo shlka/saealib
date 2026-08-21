@@ -85,7 +85,7 @@ acquisition = CORSDistance(
 ### Prepared reference and return value
 
 `CORSDistance` resolves the beta entry using
-`ctx.decision_count % len(search_pattern)` (zero-based) in
+`ctx.completed_decision_count % len(search_pattern)` (zero-based) in
 `prepare(archive, ctx)`.  The normal call is through
 `AcquisitionFunction.evaluate(..., ctx=...)`; calling `score()` directly
 requires the prepared reference returned by `prepare()`, and `prediction.x`
@@ -119,18 +119,24 @@ optimizer execution when it selects multiple distinct candidates or when distinc
 asynchronous decisions actually overlap.  Repeated evaluations of one candidate
 do not trigger the batch warning.  Scheduler capacity alone does not produce a
 compiler warning, because most strategies do not refill while an earlier
-decision is pending.  `max_pending=1` is the source-faithful boundary.
+decision is pending.  These diagnostics describe candidate selection and
+decision overlap, not successful true evaluation, and they do not advance the
+CORS phase.  `max_pending=1` is the source-faithful boundary.
 
-The beta phase starts at `search_pattern[0]` when `ctx.decision_count == 0` and
-`CORSDistance` has been used continuously from the beginning of the run.  If a
-component is replaced during a run and `CORSDistance` is introduced later, the
-phase starts at the current `decision_count`.
+The beta phase starts at `search_pattern[0]` when
+`ctx.completed_decision_count == 0` and `CORSDistance` has been used
+continuously from the beginning of the run.  If a component is replaced during
+a run and `CORSDistance` is introduced later, the phase starts at the current
+`completed_decision_count`.
 
 ```{note}
 The paper advances beta after each single costly evaluation.  The runtime
-advances `decision_count` once per confirmed `EvaluationPlan`.  A batch plan
-therefore shares one beta, while a one-candidate plan corresponds to one source
-iteration.  See [CORS-RBF](../algorithms/rbf_cors.md) for the full
-paper-to-runtime comparison, including the candidate-pool approximation of
-$\Delta_i$.
+counts confirmed evaluation plans in `decision_count`, while
+`completed_decision_count` counts decisions whose true-evaluation results were
+successfully applied.  `CORSDistance` uses `completed_decision_count`, so a
+`FAILED` or `CANCELLED` plan does not advance its CORS phase.  A batch plan
+therefore shares one beta, while a successfully completed one-candidate plan
+corresponds to one source iteration.  See [CORS-RBF](../algorithms/rbf_cors.md)
+for the full paper-to-runtime comparison, including the candidate-pool
+approximation of $\Delta_i$.
 ```

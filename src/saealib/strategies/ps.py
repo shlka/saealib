@@ -74,6 +74,12 @@ class PreSelectionStrategy(OptimizationStrategy):
             Number of top-scoring candidates to evaluate with the true
             objective function.
         """
+        if (
+            not isinstance(n_candidates, int)
+            or isinstance(n_candidates, bool)
+            or n_candidates < 1
+        ):
+            raise ValidationError("n_candidates must be a positive integer")
         if not isinstance(n_select, int) or isinstance(n_select, bool) or n_select < 1:
             raise ValidationError("n_select must be a positive integer")
         self.n_candidates = n_candidates
