@@ -98,8 +98,8 @@ algorithm = GA(
     TruncationSelection(),
 )
 surrogate_manager = GlobalSurrogateManager(RBFSurrogate(kernel=GaussianKernel()))
-# delta=None approximates Δ_i from the candidate pool (paper-faithful)
-acquisition = CORSDistance(direction=problem.direction)
+# delta=None uses the candidate-pool maximin approximation
+acquisition = CORSDistance(delta=None, direction=problem.direction)
 # n_select=1: source-faithful one-candidate-per-decision cadence
 strategy = PreSelectionStrategy(n_candidates=10, n_select=1)
 
@@ -136,11 +136,10 @@ selects a fixed distance scale instead.
 ## Beta cadence
 
 `CORSDistance.prepare(archive, ctx)` selects
-`search_pattern[ctx.decision_count % len(search_pattern)]`, using a zero-based
-index. Therefore the first decision uses `search_pattern[0]`, and the pattern
-repeats cyclically. The evaluation planner confirms one `decision_count` per
-new evaluation plan; with the canonical one-candidate configuration, this is
-one beta step per true evaluation. Repeated `score()` calls use the prepared
+`search_pattern[_cycle % len(search_pattern)]` and advances the acquisition's
+component-local `_cycle` counter. Therefore the first preparation uses
+`search_pattern[0]`, and the pattern repeats cyclically. The runtime context
+does not determine the CORS phase. Repeated `score()` calls use the prepared
 beta and do not advance the pattern.
 
 ## Related

@@ -2,7 +2,7 @@
 
 These tests verify the source-faithful CORS configuration:
 - 1 decision = 1 true evaluation
-- beta advances per decision via ctx.decision_count
+- beta advances per prepare() call via the acquisition's local cycle
 - search pattern cycles correctly
 - delta=None approximation works
 """
@@ -43,12 +43,12 @@ class _RecordingCORSDistance(CORSDistance):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.records: list[tuple[int, int, float]] = []
+        self.records: list[tuple[int, float]] = []
 
     def prepare(self, archive, ctx=None):
         reference = super().prepare(archive, ctx)
         assert ctx is not None
-        self.records.append((ctx.gen, ctx.decision_count, reference.beta))
+        self.records.append((ctx.gen, reference.beta))
         return reference
 
 
@@ -106,9 +106,9 @@ def test_canonical_cors_evaluates_one_candidate_per_decision():
         (3, 3),
     ]
     assert score_calls == [1, 2, 3]
-    assert [gen for gen, _, _ in acquisition.records] == score_calls
+    assert [gen for gen, _ in acquisition.records] == score_calls
     np.testing.assert_allclose(
-        [beta for _, _, beta in acquisition.records], SEARCH_PATTERN
+        [beta for _, beta in acquisition.records], SEARCH_PATTERN
     )
     assert [current.fe - previous.fe for previous, current in pairwise(states)] == [
         1,
@@ -131,7 +131,7 @@ def test_canonical_cors_with_delta_none():
         (3, 3),
     ]
     np.testing.assert_allclose(
-        [beta for _, _, beta in acquisition.records], SEARCH_PATTERN
+        [beta for _, beta in acquisition.records], SEARCH_PATTERN
     )
     assert [current.fe - previous.fe for previous, current in pairwise(states)] == [
         1,
@@ -150,6 +150,6 @@ def test_cors_search_pattern_cycles():
 
     expected_betas = [0.8, 0.0, 0.8, 0.0, 0.8]
     np.testing.assert_allclose(
-        [beta for _, _, beta in acquisition.records], expected_betas
+        [beta for _, beta in acquisition.records], expected_betas
     )
     assert states[-1].decision_count == 5

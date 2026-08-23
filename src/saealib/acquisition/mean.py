@@ -119,13 +119,12 @@ class CORSDistance(PointwiseAcquisition):
     all ``i >= 1`` and ``1 >= beta_1 >= ... >= beta_{N+1} = 0`` in the cited work.
     saealib accepts any non-empty finite sequence of beta values in ``[0, 1]``;
     the paper's ordering and terminal-zero conditions are not required.
-    ``prepare()`` resolves one entry of ``search_pattern`` for each decision
-    from ``ctx.decision_count`` using a zero-based index, so decision zero
-    uses ``search_pattern[0]``. This differs from
-    :class:`~saealib.acquisition.lcb.LowerConfidenceBound`, whose scheduled
-    parameter uses the same field as ``t = ctx.decision_count + 1`` (one-based).
-    A real context is therefore required when ``evaluate()`` prepares a CORS
-    reference; direct ``score()`` calls must provide that prepared reference.
+    ``prepare()`` resolves one entry of ``search_pattern`` for each call using
+    a component-local cycle counter, so the first call uses
+    ``search_pattern[0]``. The runtime context is accepted for the shared
+    acquisition interface but does not determine the CORS phase. Direct
+    ``score()`` calls can use either the prepared reference or the raw archive
+    reference returned by ``compute_reference()``.
 
     Regis & Shoemaker (2005) define ``Delta_i`` as the maximin distance
     over the feasible domain D from the previously evaluated points::
@@ -194,6 +193,7 @@ class CORSDistance(PointwiseAcquisition):
                     "CORSDistance.delta must be finite and greater than 0"
                 )
         self.delta = delta
+        self._cycle = 0
         try:
             pattern = tuple(float(beta) for beta in search_pattern)
         except (TypeError, ValueError) as exc:
@@ -215,12 +215,9 @@ class CORSDistance(PointwiseAcquisition):
         """
         Prepare the evaluated points and beta for one decision.
 
-        CORS uses ``ctx.decision_count`` directly as a zero-based index into
-        ``search_pattern``. In contrast, the scheduled parameter in
-        :class:`~saealib.acquisition.lcb.LowerConfidenceBound` uses
-        ``ctx.decision_count + 1`` as its one-based round index. Keeping the
-        offset distinction here makes the CORS phase start at SP1's first
-        entry when ``decision_count == 0``.
+        Each call advances the component-local CORS cycle by one. ``ctx`` is
+        intentionally not used to resolve the beta; it is accepted only
+        because the acquisition interface passes it to ``prepare()``.
 
         Returns
         -------
@@ -228,32 +225,16 @@ class CORSDistance(PointwiseAcquisition):
             The archive's evaluated design vectors together with the beta
             selected for this decision.
 
-        Raises
-        ------
-        ValidationError
-            If ``ctx`` is ``None``. A decision count is required to resolve
-            the beta; call ``evaluate()`` with a real context rather than
-            calling ``score()`` directly without a prepared reference.
         """
-        if ctx is None:
-            raise ValidationError(
-                "CORSDistance.search_pattern requires ctx.decision_count; "
-                "call evaluate() with a real OptimizationState, not score() "
-                "directly with no ctx."
-            )
-        beta = self.search_pattern[ctx.decision_count % len(self.search_pattern)]
+        beta = self.search_pattern[self._cycle % len(self.search_pattern)]
+        self._cycle += 1
         return _CORSReference(evaluated_x=archive.x, beta=beta)
 
     def compute_reference(
         self, archive: Archive, rng: np.random.Generator | None = None
-    ) -> _CORSReference:
-        """Return archive reference with beta=0 (no distance constraint).
-
-        This satisfies the ``PointwiseAcquisition`` contract where
-        ``score()`` receives the result of ``compute_reference()``.
-        For the source-faithful beta schedule, use ``prepare()`` instead.
-        """
-        return _CORSReference(evaluated_x=archive.x, beta=0.0)
+    ) -> np.ndarray:
+        """Return the archive's evaluated design vectors."""
+        return archive.x
 
     def score(
         self,
@@ -272,9 +253,10 @@ class CORSDistance(PointwiseAcquisition):
             shape: (n_samples, n_features), aligned row-for-row with
             prediction.value.
         reference : Any
-            The ``_CORSReference`` returned by :meth:`prepare` (with
-            source-faithful beta) or :meth:`compute_reference` (with
-            beta=0, no distance constraint).
+            The ``_CORSReference`` returned by :meth:`prepare` applies the
+            current beta constraint. The ndarray returned by
+            :meth:`compute_reference` is also accepted as an unconstrained
+            reference.
 
         Returns
         -------
@@ -291,12 +273,19 @@ class CORSDistance(PointwiseAcquisition):
             If ``prediction.x`` is missing or its row count does not
             match ``prediction.value``.
         ValidationError
-            If ``reference`` was not prepared with :meth:`prepare`.
+            If ``reference`` is neither a prepared CORS reference nor an
+            ndarray returned by :meth:`compute_reference`.
         """
-        if not isinstance(reference, _CORSReference):
+        if isinstance(reference, _CORSReference):
+            evaluated_x = reference.evaluated_x
+            beta = reference.beta
+        elif isinstance(reference, np.ndarray):
+            evaluated_x = reference
+            beta = 0.0
+        else:
             raise ValidationError(
-                "CORSDistance.score() requires a prepare()-resolved reference; "
-                "call evaluate() with a real ctx, not score() directly."
+                "CORSDistance.score() requires an _CORSReference from "
+                "prepare() or an ndarray from compute_reference()."
             )
         m = prediction.value  # (n_samples, n_obj)
         if self.direction is not None:
@@ -308,11 +297,11 @@ class CORSDistance(PointwiseAcquisition):
         scores = np.array(base, dtype=float, copy=True)  # never mutate prediction.value
 
         evaluated_x = (
-            np.asarray(reference.evaluated_x, dtype=float)
-            if reference.evaluated_x is not None
+            np.asarray(evaluated_x, dtype=float)
+            if evaluated_x is not None
             else np.empty((0, 0))
         )
-        if reference.beta <= 0 or evaluated_x.shape[0] == 0:
+        if beta <= 0 or evaluated_x.shape[0] == 0:
             # beta_i == 0 makes the distance constraint trivially satisfied by
             # every point; an empty archive likewise leaves no constraint to check.
             return scores
@@ -323,7 +312,7 @@ class CORSDistance(PointwiseAcquisition):
 
         min_dist = distance.cdist(candidate_x, evaluated_x).min(axis=1)
         delta_i = min_dist.max() if self.delta is None else self.delta
-        threshold = reference.beta * delta_i
+        threshold = beta * delta_i
         if threshold <= 0:
             return scores
         scores[min_dist < threshold] = -np.inf

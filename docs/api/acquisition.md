@@ -43,9 +43,9 @@ related_layers: [layer3]
 
 `CORSDistance` applies the CORS distance constraint to predicted-mean scores.
 It selects the beta value with
-`ctx.decision_count % len(search_pattern)` in `prepare(archive, ctx)`, so the
-first decision uses the first search-pattern entry and later decisions repeat
-the pattern cyclically. The canonical source-faithful configuration sends one
+an internal cycle counter in `prepare(archive, ctx)`, so the first decision
+uses the first search-pattern entry and later decisions repeat the pattern
+cyclically. The canonical source-faithful configuration sends one
 candidate to true evaluation per decision, for example with
 `PreSelectionStrategy(..., n_select=1)` or `TopKEvaluation(1)`.
 
