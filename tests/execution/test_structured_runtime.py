@@ -461,7 +461,7 @@ def test_async_structured_requires_a_driver_without_sync_fallback() -> None:
 
 def test_async_protocol_completion_resumes_after_protocol_end() -> None:
     request = EvaluationRequest(
-        np.int64(1), np.array([0], dtype=np.int64), np.zeros((1, 1), dtype=np.float64)
+        np.int64(1), np.empty(0, dtype=np.int64), np.empty((0, 1))
     )
     state = _state().replace(
         evaluation_plan=EvaluationPlan((request,)),

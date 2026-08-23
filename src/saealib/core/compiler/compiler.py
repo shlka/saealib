@@ -1168,10 +1168,6 @@ DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, PortCompatibilityRule()))
 from saealib.core.compiler.adapters import (  # noqa: E402  # registration boundary
     LosslessAdapterRule,
 )
-from saealib.core.compiler.cors_diagnostics import (  # noqa: E402
-    CORSCompositeUsageRule,
-    CORSNonSequentialEvaluationRule,
-)
 from saealib.core.compiler.dataflow_rules import (  # noqa: E402
     StructuredDataflowRule,
 )
@@ -1194,8 +1190,6 @@ DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, PersistenceRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, RuntimeCompatibilityRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, LifecycleCompatibilityRule()))
 DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, StateEffectRule()))
-DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, CORSCompositeUsageRule()))
-DEFAULT_RULE_REGISTRY.register(cast(CompilationRule, CORSNonSequentialEvaluationRule()))
 
 __all__ = [
     "CompilationRule",

@@ -104,16 +104,6 @@ class CORSDistance(PointwiseAcquisition):
     """
     CORS distance-constrained predicted-mean acquisition function.
 
-    ``requires_sequential_decisions`` is lightweight metadata for compiler and
-    runtime diagnostics: one true-evaluated candidate per decision is the
-    source-faithful configuration, while multi-candidate plans remain
-    supported as an explicit batch extension. ``completed_decision_count == 0`` matches
-    the first CORS iteration when this acquisition is used continuously from
-    the beginning of a run. If a component is replaced and ``CORSDistance`` is
-    introduced later, its CORS phase starts at the current
-    ``completed_decision_count``
-    rather than at zero.
-
     Implements the auxiliary problem (CORS-AP) of the Constrained
     Optimization using Response Surfaces (CORS) method: the predicted-mean
     score used to rank candidates for the next costly evaluation is
@@ -130,11 +120,10 @@ class CORSDistance(PointwiseAcquisition):
     saealib accepts any non-empty finite sequence of beta values in ``[0, 1]``;
     the paper's ordering and terminal-zero conditions are not required.
     ``prepare()`` resolves one entry of ``search_pattern`` for each decision
-    from ``ctx.completed_decision_count`` using a zero-based index, so decision zero
+    from ``ctx.decision_count`` using a zero-based index, so decision zero
     uses ``search_pattern[0]``. This differs from
     :class:`~saealib.acquisition.lcb.LowerConfidenceBound`, whose scheduled
-    parameter uses ``ctx.decision_count + 1`` as a one-based round number.
-    CORS and LCB therefore use different runtime counters.
+    parameter uses the same field as ``t = ctx.decision_count + 1`` (one-based).
     A real context is therefore required when ``evaluate()`` prepares a CORS
     reference; direct ``score()`` calls must provide that prepared reference.
 
@@ -188,8 +177,6 @@ class CORSDistance(PointwiseAcquisition):
     153-171.
     """
 
-    requires_sequential_decisions: bool = True
-
     def __init__(
         self,
         delta: float | None = None,
@@ -228,12 +215,12 @@ class CORSDistance(PointwiseAcquisition):
         """
         Prepare the evaluated points and beta for one decision.
 
-        CORS uses ``ctx.completed_decision_count`` directly as a zero-based index into
+        CORS uses ``ctx.decision_count`` directly as a zero-based index into
         ``search_pattern``. In contrast, the scheduled parameter in
         :class:`~saealib.acquisition.lcb.LowerConfidenceBound` uses
         ``ctx.decision_count + 1`` as its one-based round index. Keeping the
         offset distinction here makes the CORS phase start at SP1's first
-        entry when ``completed_decision_count == 0``.
+        entry when ``decision_count == 0``.
 
         Returns
         -------
@@ -244,37 +231,27 @@ class CORSDistance(PointwiseAcquisition):
         Raises
         ------
         ValidationError
-            If ``ctx`` is ``None`` or does not expose the completed decision
-            counter. A completed decision count is required to resolve the
-            beta; call ``prepare(archive, ctx)`` with a real context.
+            If ``ctx`` is ``None``. A decision count is required to resolve
+            the beta; call ``evaluate()`` with a real context rather than
+            calling ``score()`` directly without a prepared reference.
         """
-        if ctx is None or not hasattr(ctx, "completed_decision_count"):
+        if ctx is None:
             raise ValidationError(
-                "CORSDistance requires a decision context with "
-                "completed_decision_count; call prepare(archive, ctx) with a "
-                "real OptimizationState."
+                "CORSDistance.search_pattern requires ctx.decision_count; "
+                "call evaluate() with a real OptimizationState, not score() "
+                "directly with no ctx."
             )
-        beta = self.search_pattern[
-            ctx.completed_decision_count % len(self.search_pattern)
-        ]
+        beta = self.search_pattern[ctx.decision_count % len(self.search_pattern)]
         return _CORSReference(
-            evaluated_x=archive.x,
+            evaluated_x=self.compute_reference(archive, rng=ctx.rng),
             beta=beta,
         )
 
     def compute_reference(
         self, archive: Archive, rng: np.random.Generator | None = None
-    ) -> _CORSReference:
-        """Reject context-free reference construction.
-
-        CORS beta is a decision-scoped schedule, so a reference constructed
-        without an :class:`~saealib.context.OptimizationState` could silently
-        use the wrong phase. Call :meth:`prepare` instead.
-        """
-        raise ValidationError(
-            "CORS requires a decision context; call prepare(archive, ctx) with "
-            "a real OptimizationState."
-        )
+    ) -> np.ndarray:
+        """Return the archive's evaluated design vectors for the distance constraint."""
+        return archive.x
 
     def score(
         self,
@@ -293,7 +270,9 @@ class CORSDistance(PointwiseAcquisition):
             shape: (n_samples, n_features), aligned row-for-row with
             prediction.value.
         reference : Any
-            The ``_CORSReference`` returned by :meth:`prepare`.
+            The reference must be the ``_CORSReference`` returned by
+            :meth:`prepare`, not the raw array returned by
+            :meth:`compute_reference`.
 
         Returns
         -------

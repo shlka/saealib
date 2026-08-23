@@ -26,7 +26,6 @@ from saealib.core.state import (
     PROPOSALS_CURRENT,
     PROPOSALS_OFFSPRING,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
-    RUNTIME_COMPLETED_DECISION_COUNT,
     RUNTIME_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
@@ -161,7 +160,6 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 ARCHIVES_MAIN,
                 RUNTIME_GENERATION,
                 RUNTIME_DECISION_COUNT,
-                RUNTIME_COMPLETED_DECISION_COUNT,
                 RUNTIME_RNG,
             },
             {SCORES, ACQUISITION_RESULT},
@@ -297,7 +295,6 @@ def test_all_operational_stages_have_exact_direct_state_contracts() -> None:
                 EVALUATIONS_PENDING,
                 EVALUATION_HANDLES,
                 EVALUATIONS_COUNT,
-                RUNTIME_COMPLETED_DECISION_COUNT,
             },
         ),
         TrueEvaluationStage: (

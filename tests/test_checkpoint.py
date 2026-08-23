@@ -24,7 +24,6 @@ from saealib import (
     TruncationSelection,
     max_gen,
 )
-from saealib.acquisition.mean import CORSDistance
 from saealib.comparators import SingleObjectiveComparator
 from saealib.context import OptimizationState
 from saealib.exceptions import ValidationError
@@ -148,15 +147,13 @@ def test_npz_roundtrip(tmp_path):
     assert loaded.gen == ctx.gen
     assert ctx.decision_count > 0
     assert loaded.decision_count == ctx.decision_count
-    assert loaded.completed_decision_count == ctx.completed_decision_count
 
 
-def test_npz_load_defaults_decision_counters_when_absent(tmp_path):
-    """A pre-counter checkpoint resumes both counters with their defaults."""
+def test_npz_load_defaults_decision_count_when_absent(tmp_path):
+    """A pre-decision_count (v3) checkpoint resumes with decision_count == 0."""
     problem = _make_problem()
     ctx = _make_optimizer(problem, seed=0, n_gen=2).run()
     assert ctx.decision_count > 0
-    assert ctx.completed_decision_count == ctx.decision_count
 
     p = tmp_path / "ckpt.npz"
     ctx.save(p)
@@ -173,58 +170,13 @@ def test_npz_load_defaults_decision_counters_when_absent(tmp_path):
             break
     else:
         raise AssertionError("runtime/decision_count entry was not found")
-    for item in entries:
-        if (
-            item["key"]["namespace"] == "runtime"
-            and item["key"]["name"] == "completed_decision_count"
-        ):
-            item["key"]["name"] = "completed_decision_count_absent_in_v4"
-            break
-    else:
-        raise AssertionError("runtime/completed_decision_count entry was not found")
     raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
     raw["_checkpoint_schema_version"] = np.array(3, dtype=np.int64)
     np.savez(p, **raw)
 
     loaded = OptimizationState.load(p, problem)
     assert loaded.decision_count == 0
-    assert loaded.completed_decision_count == 0
     assert loaded.gen == ctx.gen
-
-
-def test_npz_load_v4_falls_back_to_decision_count_for_cors_phase(tmp_path):
-    """A pre-CORS-counter v4 checkpoint preserves the legacy CORS phase."""
-    problem = _make_problem()
-    ctx = _make_optimizer(problem, seed=0, n_gen=2).run()
-    assert ctx.decision_count == 2
-    assert ctx.completed_decision_count == 2
-
-    p = tmp_path / "ckpt.npz"
-    ctx.save(p)
-    raw = dict(np.load(p, allow_pickle=False).items())
-    entries = json.loads(bytes(raw["_state_entries"]).decode())
-    for item in entries:
-        if (
-            item["key"]["namespace"] == "runtime"
-            and item["key"]["name"] == "completed_decision_count"
-        ):
-            item["key"]["name"] = "completed_decision_count_absent_in_v4"
-            break
-    else:
-        raise AssertionError("runtime/completed_decision_count entry was not found")
-    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
-    raw["_checkpoint_schema_version"] = np.array(4, dtype=np.int64)
-    np.savez(p, **raw)
-
-    loaded = OptimizationState.load(p, problem)
-    assert loaded.decision_count == 2
-    assert loaded.completed_decision_count == 2
-
-    search_pattern = (0.9, 0.4, 0.0)
-    reference = CORSDistance(search_pattern=search_pattern).prepare(
-        loaded.archive, loaded
-    )
-    assert reference.beta == search_pattern[2]
 
 
 def test_npz_extension_added(tmp_path):

@@ -32,7 +32,6 @@ from saealib.core.state.keys import (
     PROPOSALS_OFFSPRING,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
-    RUNTIME_COMPLETED_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
     RUNTIME_RNG,
@@ -61,7 +60,6 @@ _CONTEXT_STATE_KEYS: dict[str, StateKey[object] | tuple[StateKey[object], ...]] 
     "request_id_allocator": RUNTIME_REQUEST_ID_ALLOCATOR,
     "fe": EVALUATIONS_COUNT,
     "gen": RUNTIME_GENERATION,
-    "completed_decision_count": RUNTIME_COMPLETED_DECISION_COUNT,
     "offspring": PROPOSALS_OFFSPRING,
     "evaluated_offspring": EVALUATED_OFFSPRING,
     "scores": SCORES,
@@ -124,9 +122,6 @@ class ExecutionContext(Protocol):
 
     @property
     def gen(self) -> int: ...
-
-    @property
-    def completed_decision_count(self) -> int: ...
 
     @property
     def dim(self) -> int: ...
@@ -350,10 +345,6 @@ class RuntimeContext:
     @property
     def gen(self) -> int:
         return self._state.gen
-
-    @property
-    def completed_decision_count(self) -> int:
-        return self._state.completed_decision_count
 
     @property
     def dim(self) -> int:

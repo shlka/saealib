@@ -28,7 +28,6 @@ from saealib.core.state import (
     PROPOSALS_OFFSPRING,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
-    RUNTIME_COMPLETED_DECISION_COUNT,
     RUNTIME_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
@@ -78,7 +77,6 @@ _STORE_FIELDS = {
     "fe": EVALUATIONS_COUNT,
     "gen": RUNTIME_GENERATION,
     "decision_count": RUNTIME_DECISION_COUNT,
-    "completed_decision_count": RUNTIME_COMPLETED_DECISION_COUNT,
     "evaluation_plan": EVALUATIONS_PLAN,
     "evaluation_plan_state": EVALUATIONS_PLAN_STATE,
     "evaluation_plan_updates": EVALUATIONS_PLAN_UPDATES,
@@ -402,10 +400,6 @@ class OptimizationState:
         execution, :class:`~saealib.stages.AsyncEvaluationSubmitStage` for
         async/steady-state execution -- never on a plan continuation.
         Independent of ``gen``/``fe``.
-    completed_decision_count : int
-        Number of confirmed evaluation plans whose true-evaluation results
-        were successfully applied to the archive. Failed or cancelled plans
-        do not advance this CORS-specific counter.
     offspring : Population or None
         Candidate population produced by the current generation's ask step.
         Set by :class:`~saealib.stages.AskStage`; consumed and updated by
@@ -448,7 +442,6 @@ class OptimizationState:
     fe: int = 0
     gen: int = 0
     decision_count: int = 0
-    completed_decision_count: int = 0
 
     # Pipeline stage data (typed)
     offspring: Population | None = None
@@ -665,7 +658,6 @@ class OptimizationState:
         fe: int = 0,
         gen: int = 0,
         decision_count: int = 0,
-        completed_decision_count: int = 0,
         offspring: Population | None = None,
         evaluated_offspring: Population | None = None,
         scores: np.ndarray | None = None,
@@ -733,7 +725,6 @@ class OptimizationState:
         self.fe = fe
         self.gen = gen
         self.decision_count = decision_count
-        self.completed_decision_count = completed_decision_count
         self.offspring = offspring
         self.evaluated_offspring = evaluated_offspring
         self.scores = scores
@@ -2645,7 +2636,7 @@ def _load_v2(
 def _load_v3(
     cls: type[OptimizationState], data: Any, problem: Problem
 ) -> OptimizationState:
-    """Load a schema-v3 or schema-v4 checkpoint with optional decision counters."""
+    """Load a schema-v3 or schema-v4 checkpoint (v4 only adds decision_count)."""
     genome_codec = problem.space.services.get("GenomeCodec")
     dense_numeric_view = problem.space.services.get("DenseNumericView")
     entries = _read_json(data, "_state_entries")
@@ -2769,9 +2760,6 @@ def _load_v3(
     kwargs["fe"] = int(kwargs.get("fe", 0))
     kwargs["gen"] = int(kwargs.get("gen", 0))
     kwargs["decision_count"] = int(kwargs.get("decision_count", 0))
-    kwargs["completed_decision_count"] = int(
-        kwargs.get("completed_decision_count", kwargs.get("decision_count", 0))
-    )
     state = cls(**kwargs)
     state.data = {**state.data, "resumed": True}
     return state

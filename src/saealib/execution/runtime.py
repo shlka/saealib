@@ -1011,9 +1011,6 @@ class _OptimizerEnvironment:
                 "runtime plan refresh requires strategy.build_graph and problem"
             )
         graph = build_graph(self.optimizer)
-        configure = getattr(self.optimizer, "_configure_runtime_diagnostics", None)
-        if callable(configure):
-            configure(graph)
         executable = Compiler().compile(
             graph,
             CompileContext(
@@ -1176,9 +1173,6 @@ def execute_strategy_step(
     if not callable(build_graph):
         raise ValidationError("strategy requires a callable build_graph")
     graph = build_graph(provider)
-    configure = getattr(provider, "_configure_runtime_diagnostics", None)
-    if callable(configure):
-        configure(graph)
     plan = Compiler().compile(
         graph,
         CompileContext(
@@ -2201,9 +2195,6 @@ def resolve_plan(optimizer: object) -> ExecutablePlan:
     if not callable(build_graph):
         raise ValidationError("default runtime requires an executable plan")
     graph = build_graph(optimizer)
-    configure = getattr(optimizer, "_configure_runtime_diagnostics", None)
-    if callable(configure):
-        configure(graph)
     problem = getattr(optimizer, "problem", None)
     context = None
     if problem is not None:

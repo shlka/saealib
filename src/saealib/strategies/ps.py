@@ -14,7 +14,6 @@ from saealib.core.graph_builder import (
     StageContractNodeAdapter,
     build_decomposed_component_graph_from_specs,
 )
-from saealib.exceptions import ValidationError
 from saealib.pipeline import Pipeline
 from saealib.policies.evaluation import TopKEvaluation
 from saealib.policies.feedback import FeedbackBuilder, TrueOnlyFeedback
@@ -74,14 +73,6 @@ class PreSelectionStrategy(OptimizationStrategy):
             Number of top-scoring candidates to evaluate with the true
             objective function.
         """
-        if (
-            not isinstance(n_candidates, int)
-            or isinstance(n_candidates, bool)
-            or n_candidates < 1
-        ):
-            raise ValidationError("n_candidates must be a positive integer")
-        if not isinstance(n_select, int) or isinstance(n_select, bool) or n_select < 1:
-            raise ValidationError("n_select must be a positive integer")
         self.n_candidates = n_candidates
         self.n_select = n_select
         self.pipeline: Pipeline | None = None

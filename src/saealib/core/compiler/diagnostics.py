@@ -271,23 +271,3 @@ DIAGNOSTIC_CODES.register(
         ),
     ),
 )
-DIAGNOSTIC_CODES.register(
-    "cors_nonsequential_evaluation",
-    VocabularyDescriptor(
-        name="cors_nonsequential_evaluation",
-        description=(
-            "CORSDistance is configured with a batch or overlapping decision "
-            "semantics rather than source-faithful sequential decisions."
-        ),
-    ),
-)
-DIAGNOSTIC_CODES.register(
-    "cors_composite_usage",
-    VocabularyDescriptor(
-        name="cors_composite_usage",
-        description=(
-            "CORSDistance is combined with another acquisition and the "
-            "combine_fn may not preserve its distance constraint."
-        ),
-    ),
-)
