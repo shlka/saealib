@@ -33,7 +33,7 @@ from saealib.acquisition import (
     ProductOfFeasibility,
     gp_ucb_beta_schedule,
 )
-from saealib.acquisition.mean import CORSDistance
+from saealib.acquisition.mean import CORSDistance, _CORSReference
 from saealib.exceptions import ValidationError
 from saealib.population import Archive, PopulationAttribute
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -486,11 +486,15 @@ class TestGpUcbBetaSchedule:
 class TestCORSDistance:
     """Tests for the CORS distance-constrained acquisition function."""
 
-    def test_compute_reference_returns_archive_x(self) -> None:
+    def test_compute_reference_returns_cors_reference(self) -> None:
         arc = _archive_x([0.0, 5.0, 10.0])
         af = CORSDistance(delta=10.0)
         ref = af.compute_reference(arc)
-        np.testing.assert_array_equal(np.sort(ref.ravel()), [0.0, 5.0, 10.0])
+        assert isinstance(ref, _CORSReference)
+        assert ref.beta == 0.0
+        np.testing.assert_array_equal(
+            np.sort(ref.evaluated_x.ravel()), [0.0, 5.0, 10.0]
+        )
 
     def test_far_candidate_scores_by_predicted_mean(self) -> None:
         """A candidate far from every evaluated point is unaffected by the constraint."""  # noqa: E501
