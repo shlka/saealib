@@ -33,7 +33,7 @@ from saealib.acquisition import (
     ProductOfFeasibility,
     gp_ucb_beta_schedule,
 )
-from saealib.acquisition.mean import CORSDistance
+from saealib.acquisition.mean import CORSDistance, _CORSReference
 from saealib.exceptions import ValidationError
 from saealib.population import Archive, PopulationAttribute
 from saealib.surrogate.prediction import SurrogatePrediction
@@ -486,23 +486,27 @@ class TestGpUcbBetaSchedule:
 class TestCORSDistance:
     """Tests for the CORS distance-constrained acquisition function."""
 
-    def test_compute_reference_returns_archive_x(self) -> None:
+    def test_compute_reference_returns_cors_reference_and_advances_beta(self) -> None:
         arc = _archive_x([0.0, 5.0, 10.0])
         af = CORSDistance(delta=10.0)
-        ref = af.compute_reference(arc)
-        assert isinstance(ref, np.ndarray)
-        np.testing.assert_array_equal(np.sort(ref.ravel()), [0.0, 5.0, 10.0])
+        first = af.compute_reference(arc)
+        second = af.compute_reference(arc)
 
-    def test_score_accepts_compute_reference_array(self) -> None:
+        assert isinstance(first, _CORSReference)
+        assert isinstance(second, _CORSReference)
+        np.testing.assert_array_equal(
+            np.sort(first.evaluated_x.ravel()), [0.0, 5.0, 10.0]
+        )
+        assert first.beta == pytest.approx(0.95)
+        assert second.beta == pytest.approx(0.25)
+
+    def test_score_rejects_raw_compute_reference_array(self) -> None:
         arc = _archive_x([0.0])
         pred = _pred_x(value=[[5.0]], x=[[0.05]])
         af = CORSDistance(delta=10.0, search_pattern=(1.0,))
 
-        scores = af.score(pred, reference=af.compute_reference(arc))
-
-        # A raw compute_reference() result has no prepared beta and therefore
-        # follows the ordinary unconstrained PointwiseAcquisition path.
-        assert scores[0] == pytest.approx(5.0)
+        with pytest.raises(ValidationError, match="_CORSReference"):
+            af.score(pred, reference=arc.x)
 
     def test_far_candidate_scores_by_predicted_mean(self) -> None:
         """A candidate far from every evaluated point is unaffected by the constraint."""  # noqa: E501
@@ -539,12 +543,12 @@ class TestCORSDistance:
         prepared = af.prepare(arc)
         assert af.score(pred, reference=prepared)[0] == -np.inf
 
-    def test_prepare_cycles_beta_from_internal_counter(self) -> None:
-        """prepare() advances the SP1 beta using its local counter."""
+    def test_compute_reference_cycles_beta_from_internal_counter(self) -> None:
+        """compute_reference() advances the SP1 beta using its local counter."""
         arc = _archive_x([0.0])
         af = CORSDistance(delta=10.0)
 
-        betas = [af.prepare(arc).beta for _ in range(7)]
+        betas = [af.compute_reference(arc).beta for _ in range(7)]
 
         assert betas == [0.95, 0.25, 0.05, 0.03, 0.0, 0.95, 0.25]
 

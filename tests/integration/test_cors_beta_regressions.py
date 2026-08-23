@@ -2,7 +2,7 @@
 
 These tests verify the source-faithful CORS configuration:
 - 1 decision = 1 true evaluation
-- beta advances per prepare() call via the acquisition's local cycle
+- beta advances per compute_reference() call via the acquisition's local cycle
 - search pattern cycles correctly
 - delta=None approximation works
 """
@@ -43,12 +43,11 @@ class _RecordingCORSDistance(CORSDistance):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.records: list[tuple[int, float]] = []
+        self.records: list[float] = []
 
-    def prepare(self, archive, ctx=None):
-        reference = super().prepare(archive, ctx)
-        assert ctx is not None
-        self.records.append((ctx.gen, reference.beta))
+    def compute_reference(self, archive, rng=None):
+        reference = super().compute_reference(archive, rng)
+        self.records.append(reference.beta)
         return reference
 
 
@@ -106,10 +105,8 @@ def test_canonical_cors_evaluates_one_candidate_per_decision():
         (3, 3),
     ]
     assert score_calls == [1, 2, 3]
-    assert [gen for gen, _ in acquisition.records] == score_calls
-    np.testing.assert_allclose(
-        [beta for _, beta in acquisition.records], SEARCH_PATTERN
-    )
+    assert len(acquisition.records) == len(score_calls)
+    np.testing.assert_allclose(acquisition.records, SEARCH_PATTERN)
     assert [current.fe - previous.fe for previous, current in pairwise(states)] == [
         1,
         1,
@@ -130,9 +127,7 @@ def test_canonical_cors_with_delta_none():
         (2, 2),
         (3, 3),
     ]
-    np.testing.assert_allclose(
-        [beta for _, beta in acquisition.records], SEARCH_PATTERN
-    )
+    np.testing.assert_allclose(acquisition.records, SEARCH_PATTERN)
     assert [current.fe - previous.fe for previous, current in pairwise(states)] == [
         1,
         1,
@@ -149,7 +144,5 @@ def test_cors_search_pattern_cycles():
     states = list(optimizer.iterate())
 
     expected_betas = [0.8, 0.0, 0.8, 0.0, 0.8]
-    np.testing.assert_allclose(
-        [beta for _, beta in acquisition.records], expected_betas
-    )
+    np.testing.assert_allclose(acquisition.records, expected_betas)
     assert states[-1].decision_count == 5

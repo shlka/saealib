@@ -15,7 +15,6 @@ from saealib.registry import register
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
-    from saealib.context import OptimizationState
     from saealib.population import Archive
 
 
@@ -119,12 +118,11 @@ class CORSDistance(PointwiseAcquisition):
     all ``i >= 1`` and ``1 >= beta_1 >= ... >= beta_{N+1} = 0`` in the cited work.
     saealib accepts any non-empty finite sequence of beta values in ``[0, 1]``;
     the paper's ordering and terminal-zero conditions are not required.
-    ``prepare()`` resolves one entry of ``search_pattern`` for each call using
-    a component-local cycle counter, so the first call uses
-    ``search_pattern[0]``. The runtime context is accepted for the shared
-    acquisition interface but does not determine the CORS phase. Direct
-    ``score()`` calls can use either the prepared reference or the raw archive
-    reference returned by ``compute_reference()``.
+    ``compute_reference()`` resolves one entry of ``search_pattern`` for each
+    call using a component-local cycle counter, so the first call uses
+    ``search_pattern[0]``. The runtime context is accepted by the shared
+    acquisition interface but does not determine the CORS phase. The base
+    ``prepare()`` implementation delegates to ``compute_reference()``.
 
     Regis & Shoemaker (2005) define ``Delta_i`` as the maximin distance
     over the feasible domain D from the previously evaluated points::
@@ -211,30 +209,13 @@ class CORSDistance(PointwiseAcquisition):
         self.weights = weights
         self.direction = direction
 
-    def prepare(self, archive: Archive, ctx: OptimizationState | None = None) -> Any:
-        """
-        Prepare the evaluated points and beta for one decision.
-
-        Each call advances the component-local CORS cycle by one. ``ctx`` is
-        intentionally not used to resolve the beta; it is accepted only
-        because the acquisition interface passes it to ``prepare()``.
-
-        Returns
-        -------
-        _CORSReference
-            The archive's evaluated design vectors together with the beta
-            selected for this decision.
-
-        """
+    def compute_reference(
+        self, archive: Archive, rng: np.random.Generator | None = None
+    ) -> _CORSReference:
+        """Return the archive reference and advance the local beta cycle."""
         beta = self.search_pattern[self._cycle % len(self.search_pattern)]
         self._cycle += 1
         return _CORSReference(evaluated_x=archive.x, beta=beta)
-
-    def compute_reference(
-        self, archive: Archive, rng: np.random.Generator | None = None
-    ) -> np.ndarray:
-        """Return the archive's evaluated design vectors."""
-        return archive.x
 
     def score(
         self,
@@ -252,11 +233,9 @@ class CORSDistance(PointwiseAcquisition):
             prediction.x must hold the candidate design vectors,
             shape: (n_samples, n_features), aligned row-for-row with
             prediction.value.
-        reference : Any
-            The ``_CORSReference`` returned by :meth:`prepare` applies the
-            current beta constraint. The ndarray returned by
-            :meth:`compute_reference` is also accepted as an unconstrained
-            reference.
+        reference : _CORSReference
+            The reference returned by :meth:`prepare` or
+            :meth:`compute_reference`, including the current beta constraint.
 
         Returns
         -------
@@ -273,20 +252,15 @@ class CORSDistance(PointwiseAcquisition):
             If ``prediction.x`` is missing or its row count does not
             match ``prediction.value``.
         ValidationError
-            If ``reference`` is neither a prepared CORS reference nor an
-            ndarray returned by :meth:`compute_reference`.
+            If ``reference`` is not an ``_CORSReference``.
         """
-        if isinstance(reference, _CORSReference):
-            evaluated_x = reference.evaluated_x
-            beta = reference.beta
-        elif isinstance(reference, np.ndarray):
-            evaluated_x = reference
-            beta = 0.0
-        else:
+        if not isinstance(reference, _CORSReference):
             raise ValidationError(
                 "CORSDistance.score() requires an _CORSReference from "
-                "prepare() or an ndarray from compute_reference()."
+                "prepare() or compute_reference()."
             )
+        evaluated_x = reference.evaluated_x
+        beta = reference.beta
         m = prediction.value  # (n_samples, n_obj)
         if self.direction is not None:
             base = m @ np.asarray(self.direction)  # (n_samples,)
