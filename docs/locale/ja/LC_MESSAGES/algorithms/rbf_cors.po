@@ -320,4 +320,3 @@ msgid ""
 msgstr ""
 "[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md):"
 " `IndividualBasedStrategy`の`evaluation_ratio`を含む戦略の一覧"
-

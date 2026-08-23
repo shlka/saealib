@@ -215,4 +215,3 @@ msgstr "``domain_size``がint型でない場合、または正でない場合、
 #~ "search domain (``|D|`` in the cited "
 #~ "bound). Must be positive."
 #~ msgstr "（離散化されている場合を含む）探索領域のサイズ（引用文献の``|D|``）。正の値でなければなりません。"
-
