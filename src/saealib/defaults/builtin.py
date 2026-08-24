@@ -44,5 +44,4 @@ class BuiltinDefaultProvider:
         )
 
 
-# Global builtin provider instance
 BUILTIN_DEFAULT_PROVIDER = BuiltinDefaultProvider()

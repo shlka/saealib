@@ -72,7 +72,6 @@ class DefaultResolver:
         all_hints: dict[DefaultKey, list[DefaultHint]] = {}
         diagnostics: list[str] = []
 
-        # Collect hints from all providers
         for provider in providers:
             try:
                 hints = tuple(provider.default_hints(ctx))
@@ -93,7 +92,6 @@ class DefaultResolver:
                     )
                 all_hints.setdefault(hint.key, []).append(hint)
 
-        # Resolve each key
         values: dict[DefaultKey, Any] = {}
         resolved: dict[DefaultKey, ResolvedDefault] = {}
 
@@ -101,7 +99,6 @@ class DefaultResolver:
             if not hints:
                 continue
 
-            # Check for explicit override
             if key in explicit:
                 selected = self._explicit_hint(key, explicit[key])
                 values[key] = selected.value
@@ -113,7 +110,6 @@ class DefaultResolver:
                 )
                 continue
 
-            # Sort by strength (highest first), then by order of appearance
             sorted_hints = sorted(hints, key=lambda h: h.strength, reverse=True)
 
             # Every precedence level is required to be internally consistent.
@@ -194,5 +190,4 @@ def _values_equal(left: Any, right: Any) -> bool:
         return False
 
 
-# Global resolver instance
 DEFAULT_RESOLVER = DefaultResolver()

@@ -1514,7 +1514,6 @@ class NSGA3Comparator(ParetoComparator):
         from saealib.defaults.model import DefaultHint, DefaultStrength
 
         n_ref = len(self._reference_points)
-        # Canonical NSGA-III population size: multiple of 4, at least n_ref
         n_population = 4 * math.ceil(n_ref / 4)
 
         return (

@@ -16,9 +16,6 @@ class DefaultKey:
         return f"DefaultKey({self.name!r})"
 
 
-# Population size keys
 POPULATION_SIZE = DefaultKey("population.size", int)
 INITIAL_ARCHIVE_SIZE = DefaultKey("archive.initial_size", int)
-
-# Termination keys
 MAX_EVALUATIONS = DefaultKey("termination.max_evaluations", int)
