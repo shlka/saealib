@@ -7,6 +7,7 @@ for ranking and comparing solutions in single- and multi-objective optimization.
 
 from __future__ import annotations
 
+import math
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
@@ -1488,6 +1489,45 @@ class NSGA3Comparator(ParetoComparator):
     @rng.setter
     def rng(self, value: np.random.Generator) -> None:
         self._rng = value
+
+    def default_hints(self, ctx: object) -> tuple:
+        """Provide default hints based on reference points.
+
+        Calculates canonical population size from reference points:
+        ``n_population = 4 * ceil(n_ref / 4)``
+
+        This provides the canonical population size for NSGA-III's reference
+        point layout: a multiple of 4 and at least as large as the number of
+        reference points.
+
+        Parameters
+        ----------
+        ctx : DefaultContext
+            The default resolution context (unused, but required by protocol).
+
+        Returns
+        -------
+        tuple[DefaultHint, ...]
+            Hints for population size based on reference points.
+        """
+        from saealib.defaults.keys import POPULATION_SIZE
+        from saealib.defaults.model import DefaultHint, DefaultStrength
+
+        n_ref = len(self._reference_points)
+        n_population = 4 * math.ceil(n_ref / 4)
+
+        return (
+            DefaultHint(
+                key=POPULATION_SIZE,
+                value=n_population,
+                strength=DefaultStrength.RECOMMENDED,
+                source="NSGA3Comparator",
+                reason=(
+                    f"NSGA-III recommended population size aligned with "
+                    f"reference points: 4 * ceil({n_ref} / 4) = {n_population}"
+                ),
+            ),
+        )
 
     def sort_population(self, population: Population) -> np.ndarray:
         """Sort by Pareto front rank then NSGA-III niche preservation."""

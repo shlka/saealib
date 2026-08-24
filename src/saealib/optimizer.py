@@ -9,7 +9,7 @@ import pickle
 import warnings
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from typing_extensions import Self
 
@@ -57,6 +57,7 @@ from saealib.termination import max_fe as max_fe_cond
 
 if TYPE_CHECKING:
     from saealib.algorithms.base import Algorithm
+    from saealib.defaults import DefaultResolution
     from saealib.execution.initializer import Initializer
     from saealib.problem import Problem
     from saealib.strategies.base import OptimizationStrategy
@@ -199,6 +200,7 @@ class Optimizer:
         self.async_evaluation_scheduler: AsyncEvaluationScheduler | None = None
         self.instance_name: str = ""
         self._preset: dict | None = None
+        self._default_resolution: DefaultResolution | None = None
         self._last_contract_diagnostics: tuple[Diagnostic, ...] = ()
         self._executable_plan: ExecutablePlan | None = None
 
@@ -338,6 +340,11 @@ class Optimizer:
     def executable_plan(self) -> ExecutablePlan | None:
         """Return the plan produced by the most recent execution preparation."""
         return self._executable_plan
+
+    @property
+    def default_resolution(self) -> DefaultResolution | None:
+        """Return the semantic defaults resolved for the current configuration."""
+        return self._default_resolution
 
     def describe(self) -> str:
         """Describe the most recently compiled plan, if one exists."""
@@ -697,6 +704,116 @@ class Optimizer:
                     f"not match problem.n_obj ({self.problem.n_obj})"
                 )
 
+    def _discover_default_hint_providers(self) -> tuple[list[Any], dict[str, object]]:
+        """Discover default providers from the configured component graph.
+
+        The component contracts describe constructor-held parts, so following
+        ``ComponentContract.parts`` keeps discovery independent of concrete
+        component classes and supports arbitrarily nested custom components.
+        """
+        from saealib.defaults import BUILTIN_DEFAULT_PROVIDER
+
+        roots = (
+            ("initializer", getattr(self, "initializer", None)),
+            ("algorithm", getattr(self, "algorithm", None)),
+            ("strategy", getattr(self, "strategy", None)),
+            ("surrogate_manager", getattr(self, "surrogate_manager", None)),
+            ("acquisition", getattr(self, "acquisition", None)),
+            ("comparator", self.problem.comparator),
+            ("termination", getattr(self, "termination", None)),
+            ("evaluator", getattr(self, "evaluator", None)),
+            ("evaluation_planner", getattr(self, "evaluation_planner", None)),
+            ("feedback_builder", getattr(self, "feedback_builder", None)),
+            (
+                "async_evaluation_scheduler",
+                getattr(self, "async_evaluation_scheduler", None),
+            ),
+        )
+        providers: list[Any] = [BUILTIN_DEFAULT_PROVIDER]
+        components: dict[str, object] = {}
+        visited: set[int] = set()
+        provider_ids = {id(BUILTIN_DEFAULT_PROVIDER)}
+
+        def visit(
+            component: object,
+            path: str,
+            declared_contract: ComponentContract | None = None,
+        ) -> None:
+            if component is None:
+                return
+            # Keep every reachable path in the context even when a component
+            # instance is shared by multiple roots or parts.  Providers and
+            # child contracts are still visited only once per instance.
+            components[path] = component
+            if id(component) in visited:
+                return
+            visited.add(id(component))
+
+            try:
+                default_hints = getattr(component, "default_hints", None)
+            except Exception as error:
+                raise ConfigurationError(
+                    f"Cannot inspect {path}.default_hints: "
+                    f"{type(error).__name__}: {error}"
+                ) from error
+            if callable(default_hints) and id(component) not in provider_ids:
+                providers.append(component)
+                provider_ids.add(id(component))
+
+            contract = declared_contract
+            if contract is None:
+                try:
+                    contract_method = getattr(component, "contract", None)
+                except Exception as error:
+                    raise ConfigurationError(
+                        f"Cannot inspect {path}.contract: "
+                        f"{type(error).__name__}: {error}"
+                    ) from error
+                if not callable(contract_method):
+                    return
+                try:
+                    contract = cast(ComponentContract, contract_method())
+                except Exception as error:
+                    raise ConfigurationError(
+                        f"Cannot inspect {path}.contract(): "
+                        f"{type(error).__name__}: {error}"
+                    ) from error
+                if not isinstance(contract, ComponentContract):
+                    raise ConfigurationError(
+                        f"{path}.contract() returned "
+                        f"{type(contract).__name__}, expected ComponentContract"
+                    )
+
+            for part in contract.parts:
+                part_path = f"{path}.{part.name}"
+                try:
+                    child = getattr(component, part.name)
+                except AttributeError as error:
+                    if part.optional:
+                        continue
+                    raise ConfigurationError(
+                        f"Cannot discover component part {part_path!r}: "
+                        f"attribute is missing"
+                    ) from error
+                except Exception as error:
+                    raise ConfigurationError(
+                        f"Cannot inspect component part {part_path!r}: "
+                        f"{type(error).__name__}: {error}"
+                    ) from error
+                if child is None:
+                    if part.optional:
+                        continue
+                    raise ConfigurationError(
+                        f"Cannot discover component part {part_path!r}: "
+                        "required part is None"
+                    )
+                visit(child, part_path, part.contract)
+
+        for name, component in roots:
+            if component is not None:
+                visit(component, name)
+        return providers, components
+
     def resolve_defaults(self) -> None:
         """Fill unset components with library defaults (Registry + presets file).
 
@@ -705,9 +822,10 @@ class Optimizer:
         from a bundled preset selected by (1) the algorithm's registered
         name if ``algorithm`` is set, else (2) a Problem-shape rule, else
         (3) the universal fallback preset. ``initializer`` is computed
-        directly from ``problem.dim`` and is not part of any preset;
-        ``termination`` falls back to ``200 * problem.dim`` function
-        evaluations only if neither ``set_*()`` nor a preset supplies one.
+        from semantic defaults and is not part of any preset;
+        ``termination`` falls back to the resolved maximum-evaluations default
+        (``200 * problem.dim`` unless a provider recommends another value)
+        only if neither ``set_*()`` nor a preset supplies one.
         """
         from saealib.defaults import load_defaults
         from saealib.registry import _inject_params, build
@@ -792,16 +910,97 @@ class Optimizer:
             ):
                 self.feedback_builder = build(preset["feedback_builder"])
 
-        if self.initializer is None:
-            from saealib.execution.initializer import LHSInitializer
+        from saealib.defaults import (
+            DEFAULT_RESOLVER,
+            INITIAL_ARCHIVE_SIZE,
+            MAX_EVALUATIONS,
+            POPULATION_SIZE,
+            DefaultContext,
+        )
+        from saealib.defaults.model import (
+            DefaultHint,
+            DefaultResolution,
+            DefaultStrength,
+            ResolvedDefault,
+        )
+        from saealib.execution.initializer import LHSInitializer
 
-            dim = self.problem.dim
+        # Resolve semantic defaults for the complete configured composition,
+        # even when materialization of one of the defaults is unnecessary
+        # because the user supplied that component explicitly.
+        providers, components = self._discover_default_hint_providers()
+        ctx = DefaultContext(
+            problem=self.problem,
+            seed=self.seed,
+            components=components,
+        )
+        resolution = DEFAULT_RESOLVER.resolve(ctx, providers)
+
+        dim = self.problem.dim
+        n_population = resolution.get(POPULATION_SIZE, 4 * dim)
+        n_archive = resolution.get(INITIAL_ARCHIVE_SIZE, 5 * dim)
+
+        # Ensure archive is at least as large as population, and retain that
+        # invariant in the provenance trace as well.  This semantic step must
+        # run even when the initializer was supplied explicitly: otherwise a
+        # second resolve_defaults() call would replace the normalized trace
+        # with the raw resolver result.
+        if n_archive < n_population:
+            archive_resolution = resolution.resolved.get(INITIAL_ARCHIVE_SIZE)
+            if (
+                archive_resolution is not None
+                and archive_resolution.selected_hint.strength
+                == DefaultStrength.REQUIRED
+            ):
+                selected = archive_resolution.selected_hint
+                raise ConfigurationError(
+                    "REQUIRED default for "
+                    f"{INITIAL_ARCHIVE_SIZE.name!r} ({n_archive}) from "
+                    f"{selected.source!r} is smaller than the resolved "
+                    f"population size ({n_population})"
+                )
+
+            adjusted_hint = DefaultHint(
+                key=INITIAL_ARCHIVE_SIZE,
+                value=n_population,
+                strength=DefaultStrength.REQUIRED,
+                source="optimizer",
+                reason=(
+                    f"Raised to match the resolved population size: {n_population}"
+                ),
+            )
+            resolution = DefaultResolution(
+                values={
+                    **resolution.values,
+                    INITIAL_ARCHIVE_SIZE: n_population,
+                },
+                resolved={
+                    **resolution.resolved,
+                    INITIAL_ARCHIVE_SIZE: ResolvedDefault(
+                        key=INITIAL_ARCHIVE_SIZE,
+                        value=n_population,
+                        selected_hint=adjusted_hint,
+                        alternatives=(
+                            archive_resolution.alternatives
+                            if archive_resolution is not None
+                            else ()
+                        ),
+                    ),
+                },
+                diagnostics=resolution.diagnostics,
+            )
+            n_archive = n_population
+
+        if self.initializer is None:
             self.initializer = LHSInitializer(
-                n_init_archive=5 * dim, n_init_population=4 * dim, seed=self.seed
+                n_init_archive=n_archive, n_init_population=n_population, seed=self.seed
             )
 
+        self._default_resolution = resolution
+
         if getattr(self, "termination", None) is None:
-            self.termination = Termination(max_fe_cond(200 * self.problem.dim))
+            max_evaluations = resolution.get(MAX_EVALUATIONS, 200 * dim)
+            self.termination = Termination(max_fe_cond(max_evaluations))
         if self.async_evaluation_scheduler is not None:
             self.async_evaluation_scheduler.algorithm = self.algorithm
 
@@ -1085,6 +1284,7 @@ class Optimizer:
         """Restore an optimizer without a stale compiled execution plan."""
         self.__dict__.update(state)
         self.__dict__.setdefault("_executable_plan", None)
+        self.__dict__.setdefault("_default_resolution", None)
 
     def save_pickle(self, ctx: OptimizationState, path: str | Path) -> None:
         """
