@@ -173,6 +173,36 @@ class _NestedRoot(OptimizationStrategy):
         )
 
 
+class _RequiredArchiveRoot(_NestedRoot):
+    def default_hints(self, ctx: DefaultContext) -> tuple[DefaultHint, ...]:
+        return (
+            DefaultHint(
+                key=POPULATION_SIZE,
+                value=92,
+                strength=DefaultStrength.RECOMMENDED,
+                source="required-archive-root",
+            ),
+            DefaultHint(
+                key=INITIAL_ARCHIVE_SIZE,
+                value=80,
+                strength=DefaultStrength.REQUIRED,
+                source="required-archive-root",
+            ),
+        )
+
+
+class _InitializerHintProvider(LHSInitializer):
+    def default_hints(self, ctx: DefaultContext) -> tuple[DefaultHint, ...]:
+        return (
+            DefaultHint(
+                key=MAX_EVALUATIONS,
+                value=41,
+                strength=DefaultStrength.RECOMMENDED,
+                source="initializer-root",
+            ),
+        )
+
+
 def test_optimizer_discovers_custom_nested_providers_and_uses_all_keys() -> None:
     root = _NestedRoot()
     optimizer = Optimizer(_problem(dim=25)).set_strategy(root)
@@ -210,6 +240,46 @@ def test_optimizer_discovers_custom_nested_providers_and_uses_all_keys() -> None
     assert root.context.components["strategy.nested.leaf"] is root.nested.leaf
 
 
+def test_resolution_normalization_is_idempotent_and_matches_initializer() -> None:
+    optimizer = Optimizer(_problem(dim=25)).set_strategy(_NestedRoot())
+
+    optimizer.resolve_defaults()
+    first = optimizer.default_resolution
+    assert first is not None
+    initializer = cast(LHSInitializer, optimizer.initializer)
+    assert first.get(POPULATION_SIZE) == initializer.n_init_population
+    assert first.get(INITIAL_ARCHIVE_SIZE) == initializer.n_init_archive
+
+    optimizer.resolve_defaults()
+    second = optimizer.default_resolution
+    assert second is not None
+    assert second == first
+    assert second.get(INITIAL_ARCHIVE_SIZE) == 92
+
+
+def test_required_archive_smaller_than_population_is_an_error() -> None:
+    optimizer = Optimizer(_problem(dim=25)).set_strategy(_RequiredArchiveRoot())
+
+    with pytest.raises(ConfigurationError, match=r"REQUIRED.*archive\.initial_size"):
+        optimizer.resolve_defaults()
+
+
+def test_added_root_component_provider_is_discovered() -> None:
+    initializer = _InitializerHintProvider(n_init_archive=10, n_init_population=10)
+    optimizer = Optimizer(_problem()).set_initializer(initializer)
+
+    optimizer.resolve_defaults()
+
+    resolution = optimizer.default_resolution
+    assert resolution is not None
+    assert resolution.get(MAX_EVALUATIONS) == 41
+    assert resolution.resolved[MAX_EVALUATIONS].selected_hint.source == (
+        "initializer-root"
+    )
+    termination = cast(Termination, optimizer.termination)
+    assert termination.is_terminated(cast(OptimizationState, SimpleNamespace(fe=41)))
+
+
 def test_semantic_resolution_runs_with_explicit_initializer() -> None:
     root = _NestedRoot()
     explicit = LHSInitializer(n_init_archive=100, n_init_population=80)
@@ -220,6 +290,7 @@ def test_semantic_resolution_runs_with_explicit_initializer() -> None:
     assert optimizer.initializer is explicit
     assert optimizer.default_resolution is not None
     assert optimizer.default_resolution.get(POPULATION_SIZE) == 92
+    assert optimizer.default_resolution.get(INITIAL_ARCHIVE_SIZE) == 92
 
 
 def test_default_resolution_uses_default_key_mapping() -> None:

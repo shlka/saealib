@@ -714,11 +714,20 @@ class Optimizer:
         from saealib.defaults import BUILTIN_DEFAULT_PROVIDER
 
         roots = (
+            ("initializer", getattr(self, "initializer", None)),
             ("algorithm", getattr(self, "algorithm", None)),
             ("strategy", getattr(self, "strategy", None)),
             ("surrogate_manager", getattr(self, "surrogate_manager", None)),
             ("acquisition", getattr(self, "acquisition", None)),
             ("comparator", self.problem.comparator),
+            ("termination", getattr(self, "termination", None)),
+            ("evaluator", getattr(self, "evaluator", None)),
+            ("evaluation_planner", getattr(self, "evaluation_planner", None)),
+            ("feedback_builder", getattr(self, "feedback_builder", None)),
+            (
+                "async_evaluation_scheduler",
+                getattr(self, "async_evaluation_scheduler", None),
+            ),
         )
         providers: list[Any] = [BUILTIN_DEFAULT_PROVIDER]
         components: dict[str, object] = {}
@@ -730,19 +739,36 @@ class Optimizer:
             path: str,
             declared_contract: ComponentContract | None = None,
         ) -> None:
-            if component is None or id(component) in visited:
+            if component is None:
+                return
+            # Keep every reachable path in the context even when a component
+            # instance is shared by multiple roots or parts.  Providers and
+            # child contracts are still visited only once per instance.
+            components[path] = component
+            if id(component) in visited:
                 return
             visited.add(id(component))
-            components[path] = component
 
-            default_hints = getattr(component, "default_hints", None)
+            try:
+                default_hints = getattr(component, "default_hints", None)
+            except Exception as error:
+                raise ConfigurationError(
+                    f"Cannot inspect {path}.default_hints: "
+                    f"{type(error).__name__}: {error}"
+                ) from error
             if callable(default_hints) and id(component) not in provider_ids:
                 providers.append(component)
                 provider_ids.add(id(component))
 
             contract = declared_contract
             if contract is None:
-                contract_method = getattr(component, "contract", None)
+                try:
+                    contract_method = getattr(component, "contract", None)
+                except Exception as error:
+                    raise ConfigurationError(
+                        f"Cannot inspect {path}.contract: "
+                        f"{type(error).__name__}: {error}"
+                    ) from error
                 if not callable(contract_method):
                     return
                 try:
@@ -774,6 +800,13 @@ class Optimizer:
                         f"Cannot inspect component part {part_path!r}: "
                         f"{type(error).__name__}: {error}"
                     ) from error
+                if child is None:
+                    if part.optional:
+                        continue
+                    raise ConfigurationError(
+                        f"Cannot discover component part {part_path!r}: "
+                        "required part is None"
+                    )
                 visit(child, part_path, part.contract)
 
         for name, component in roots:
@@ -907,41 +940,58 @@ class Optimizer:
         n_population = resolution.get(POPULATION_SIZE, 4 * dim)
         n_archive = resolution.get(INITIAL_ARCHIVE_SIZE, 5 * dim)
 
-        if self.initializer is None:
-            # Ensure archive is at least as large as population, and retain
-            # that invariant in the provenance trace as well.
-            if n_archive < n_population:
-                archive_resolution = resolution.resolved.get(INITIAL_ARCHIVE_SIZE)
-                adjusted_hint = DefaultHint(
-                    key=INITIAL_ARCHIVE_SIZE,
-                    value=n_population,
-                    strength=DefaultStrength.REQUIRED,
-                    source="optimizer",
-                    reason=(
-                        f"Raised to match the resolved population size: {n_population}"
-                    ),
+        # Ensure archive is at least as large as population, and retain that
+        # invariant in the provenance trace as well.  This semantic step must
+        # run even when the initializer was supplied explicitly: otherwise a
+        # second resolve_defaults() call would replace the normalized trace
+        # with the raw resolver result.
+        if n_archive < n_population:
+            archive_resolution = resolution.resolved.get(INITIAL_ARCHIVE_SIZE)
+            if (
+                archive_resolution is not None
+                and archive_resolution.selected_hint.strength
+                == DefaultStrength.REQUIRED
+            ):
+                selected = archive_resolution.selected_hint
+                raise ConfigurationError(
+                    "REQUIRED default for "
+                    f"{INITIAL_ARCHIVE_SIZE.name!r} ({n_archive}) from "
+                    f"{selected.source!r} is smaller than the resolved "
+                    f"population size ({n_population})"
                 )
-                resolution = DefaultResolution(
-                    values={
-                        **resolution.values,
-                        INITIAL_ARCHIVE_SIZE: n_population,
-                    },
-                    resolved={
-                        **resolution.resolved,
-                        INITIAL_ARCHIVE_SIZE: ResolvedDefault(
-                            key=INITIAL_ARCHIVE_SIZE,
-                            value=n_population,
-                            selected_hint=adjusted_hint,
-                            alternatives=(
-                                archive_resolution.alternatives
-                                if archive_resolution is not None
-                                else ()
-                            ),
+
+            adjusted_hint = DefaultHint(
+                key=INITIAL_ARCHIVE_SIZE,
+                value=n_population,
+                strength=DefaultStrength.REQUIRED,
+                source="optimizer",
+                reason=(
+                    f"Raised to match the resolved population size: {n_population}"
+                ),
+            )
+            resolution = DefaultResolution(
+                values={
+                    **resolution.values,
+                    INITIAL_ARCHIVE_SIZE: n_population,
+                },
+                resolved={
+                    **resolution.resolved,
+                    INITIAL_ARCHIVE_SIZE: ResolvedDefault(
+                        key=INITIAL_ARCHIVE_SIZE,
+                        value=n_population,
+                        selected_hint=adjusted_hint,
+                        alternatives=(
+                            archive_resolution.alternatives
+                            if archive_resolution is not None
+                            else ()
                         ),
-                    },
-                    diagnostics=resolution.diagnostics,
-                )
-                n_archive = n_population
+                    ),
+                },
+                diagnostics=resolution.diagnostics,
+            )
+            n_archive = n_population
+
+        if self.initializer is None:
             self.initializer = LHSInitializer(
                 n_init_archive=n_archive, n_init_population=n_population, seed=self.seed
             )
