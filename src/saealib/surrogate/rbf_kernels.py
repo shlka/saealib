@@ -46,6 +46,7 @@ class RBFKernel(ABC):
     """
 
     min_polynomial_degree: ClassVar[int | None] = None
+    auto_polynomial_degree: ClassVar[int | None] = None
 
     def __post_init__(self) -> None:
         self.validate()
@@ -95,6 +96,7 @@ class GaussianKernel(RBFKernel):
 
     length_scale: float | None = None
     min_polynomial_degree: ClassVar[int | None] = None
+    auto_polynomial_degree: ClassVar[int | None] = 0
 
     def validate(self) -> None:
         """Validate ``length_scale``."""
@@ -127,6 +129,7 @@ class ThinPlateSplineKernel(RBFKernel):
     """
 
     min_polynomial_degree: ClassVar[int | None] = 1
+    auto_polynomial_degree: ClassVar[int | None] = 1
 
     def evaluate(self, r: np.ndarray) -> np.ndarray:
         """Evaluate the thin-plate spline kernel for a radial-distance matrix."""
@@ -146,6 +149,7 @@ class LinearKernel(RBFKernel):
     """
 
     min_polynomial_degree: ClassVar[int | None] = 0
+    auto_polynomial_degree: ClassVar[int | None] = 0
 
     def evaluate(self, r: np.ndarray) -> np.ndarray:
         """Evaluate the linear kernel for a radial-distance matrix."""
@@ -163,6 +167,7 @@ class CubicKernel(RBFKernel):
     """
 
     min_polynomial_degree: ClassVar[int | None] = 1
+    auto_polynomial_degree: ClassVar[int | None] = 1
 
     def evaluate(self, r: np.ndarray) -> np.ndarray:
         """Evaluate the cubic kernel for a radial-distance matrix."""
@@ -188,6 +193,7 @@ class MultiquadricKernel(RBFKernel):
 
     length_scale: float | None = None
     min_polynomial_degree: ClassVar[int | None] = 0
+    auto_polynomial_degree: ClassVar[int | None] = 0
 
     def validate(self) -> None:
         """Validate ``length_scale``."""
@@ -230,6 +236,7 @@ class MaternKernel(RBFKernel):
     length_scale: float | None = None
     nu: float = 1.5
     min_polynomial_degree: ClassVar[int | None] = None
+    auto_polynomial_degree: ClassVar[int | None] = 0
 
     def validate(self) -> None:
         """Validate ``length_scale`` and ``nu``."""

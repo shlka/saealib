@@ -216,7 +216,7 @@ def test_additional_cpd_kernels_interpolate_training_points(kernel, polynomial_d
 
 
 @pytest.mark.parametrize("nu", [0.5, 1.5, 2.5])
-def test_matern_kernels_interpolate_training_points_without_polynomial_term(nu):
+def test_matern_kernels_interpolate_training_points_with_default_polynomial_term(nu):
     surrogate = RBFSurrogate(kernel=MaternKernel(nu=nu))
     surrogate.fit(TRAIN_X, TRAIN_Y)
 
@@ -290,11 +290,11 @@ def test_singular_fit_after_failed_fit_warns_again(caplog):
     assert len(warnings) == 2
 
 
-def test_explicit_none_disables_polynomial_term_for_kernel_without_requirement():
-    surrogate = RBFSurrogate(
-        kernel=GaussianKernel(),
-        polynomial_degree=None,
-    )
+@pytest.mark.parametrize("kernel", [GaussianKernel(), MaternKernel()])
+def test_explicit_none_disables_polynomial_term_for_kernel_without_requirement(
+    kernel,
+):
+    surrogate = RBFSurrogate(kernel=kernel, polynomial_degree=None)
 
     assert surrogate.polynomial_degree is None
     assert surrogate.resolved_polynomial_degree is None
@@ -303,12 +303,12 @@ def test_explicit_none_disables_polynomial_term_for_kernel_without_requirement()
 @pytest.mark.parametrize(
     ("kernel", "expected_degree"),
     [
-        (GaussianKernel(), None),
+        (GaussianKernel(), 0),
         (LinearKernel(), 0),
         (CubicKernel(), 1),
         (ThinPlateSplineKernel(), 1),
         (MultiquadricKernel(), 0),
-        (MaternKernel(), None),
+        (MaternKernel(), 0),
     ],
 )
 def test_auto_polynomial_degree_resolution(kernel, expected_degree):
@@ -322,7 +322,7 @@ def test_polynomial_degree_exposes_configured_value_separately():
     surrogate = RBFSurrogate(kernel=GaussianKernel())
 
     assert surrogate.polynomial_degree == "auto"
-    assert surrogate.resolved_polynomial_degree is None
+    assert surrogate.resolved_polynomial_degree == 0
 
     surrogate.polynomial_degree = 1
     assert surrogate.polynomial_degree == 1
@@ -337,7 +337,7 @@ def test_default_polynomial_degree_round_trips_through_registry():
     rebuilt = build(to_spec(RBFSurrogate(kernel=GaussianKernel())))
 
     assert rebuilt.polynomial_degree == "auto"
-    assert rebuilt.resolved_polynomial_degree is None
+    assert rebuilt.resolved_polynomial_degree == 0
 
 
 def test_resolved_kernel_tracks_fit_and_clears_after_failed_fit():
@@ -369,9 +369,29 @@ def test_no_polynomial_term_fits_large_offset_without_centering():
     )
 
     surrogate.fit(train_x, train_y)
-    prediction = surrogate.predict(train_x).value[:, 0]
+    test_x = np.array([[-19.5], [-10.25], [-0.5], [0.5], [10.25], [19.5]])
+    prediction = surrogate.predict(test_x).value[:, 0]
+    kernel_matrix = np.exp(-0.5 * ((train_x - train_x.T) / 2.0) ** 2)
+    test_kernel = np.exp(-0.5 * ((train_x - test_x.T) / 2.0) ** 2)
+    expected = test_kernel.T @ np.linalg.solve(kernel_matrix, train_y)
 
-    np.testing.assert_allclose(prediction, train_y, rtol=1e-6)
+    np.testing.assert_allclose(prediction, expected, rtol=1e-12, atol=1e-5)
+
+
+def test_default_polynomial_term_preserves_holdout_offset_invariance():
+    train_x = np.linspace(-3.0, 3.0, 9).reshape(-1, 1)
+    test_x = np.array([[-2.75], [-1.8], [-1.25], [-0.4], [0.4], [1.25], [1.8], [2.75]])
+    train_values = np.sin(train_x[:, 0]) + 0.1 * train_x[:, 0] ** 2
+    test_values = np.sin(test_x[:, 0]) + 0.1 * test_x[:, 0] ** 2
+    errors = []
+
+    for offset in (0.0, 1e3, 1e6):
+        surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0))
+        surrogate.fit(train_x, train_values + offset)
+        prediction = surrogate.predict(test_x).value[:, 0]
+        errors.append(np.max(np.abs(prediction - (test_values + offset))))
+
+    np.testing.assert_allclose(errors, errors[0], rtol=1e-6, atol=1e-7)
 
 
 @pytest.mark.parametrize(
@@ -472,7 +492,7 @@ def test_incompatible_kernel_swap_preserves_fitted_state():
 
 def test_auto_polynomial_degree_reresolves_on_kernel_swap():
     surrogate = RBFSurrogate(kernel=GaussianKernel())
-    assert surrogate.resolved_polynomial_degree is None
+    assert surrogate.resolved_polynomial_degree == 0
 
     surrogate.kernel = LinearKernel()
 
