@@ -15,6 +15,7 @@ from saealib.registry import register
 from saealib.surrogate.prediction import SurrogatePrediction
 
 if TYPE_CHECKING:
+    from saealib.context import OptimizationState
     from saealib.population import Archive
 
 
@@ -91,7 +92,7 @@ class MeanPrediction(PointwiseAcquisition):
 
 
 @dataclass(frozen=True)
-class _CORSReference:
+class CORSReference:
     """Prepared archive reference and beta for one CORS decision."""
 
     evaluated_x: np.ndarray
@@ -118,11 +119,11 @@ class CORSDistance(PointwiseAcquisition):
     all ``i >= 1`` and ``1 >= beta_1 >= ... >= beta_{N+1} = 0`` in the cited work.
     saealib accepts any non-empty finite sequence of beta values in ``[0, 1]``;
     the paper's ordering and terminal-zero conditions are not required.
-    ``compute_reference()`` resolves one entry of ``search_pattern`` for each
-    call using a component-local cycle counter, so the first call uses
-    ``search_pattern[0]``. The runtime context is accepted by the shared
-    acquisition interface but does not determine the CORS phase. The base
-    ``prepare()`` implementation delegates to ``compute_reference()``.
+    ``prepare()`` resolves the entry of ``search_pattern`` selected by
+    ``ctx.decision_count``; the first decision uses ``search_pattern[0]``.
+    The decision count is supplied by the runtime so repeated preparation
+    caused by archive changes cannot skip a CORS phase. ``compute_reference()``
+    remains available for context-free direct use and returns the first phase.
 
     Regis & Shoemaker (2005) define ``Delta_i`` as the maximin distance
     over the feasible domain D from the previously evaluated points::
@@ -191,7 +192,6 @@ class CORSDistance(PointwiseAcquisition):
                     "CORSDistance.delta must be finite and greater than 0"
                 )
         self.delta = delta
-        self._cycle = 0
         try:
             pattern = tuple(float(beta) for beta in search_pattern)
         except (TypeError, ValueError) as exc:
@@ -211,16 +211,48 @@ class CORSDistance(PointwiseAcquisition):
 
     def compute_reference(
         self, archive: Archive, rng: np.random.Generator | None = None
-    ) -> _CORSReference:
-        """Return the archive reference and advance the local beta cycle."""
-        beta = self.search_pattern[self._cycle % len(self.search_pattern)]
-        self._cycle += 1
-        return _CORSReference(evaluated_x=archive.x, beta=beta)
+    ) -> CORSReference:
+        """Return the archive reference using the first beta phase.
+
+        The runtime calls :meth:`prepare` with an ``OptimizationState`` so
+        that the beta phase is derived from ``ctx.decision_count``. Direct
+        calls to this context-free hook use the first phase and do not retain
+        mutable cycle state.
+        """
+        return CORSReference(
+            evaluated_x=archive.x,
+            beta=self.search_pattern[0],
+        )
+
+    def prepare(
+        self, archive: Archive, ctx: OptimizationState | None = None
+    ) -> CORSReference:
+        """Resolve the CORS reference for the current runtime decision.
+
+        ``ctx.decision_count`` counts confirmed evaluation plans, so it is
+        unchanged by repeated preparation within a decision and advances by
+        one for each new synchronous or asynchronous decision.
+
+        Raises
+        ------
+        ValidationError
+            If no runtime context is supplied. The phase has no reliable
+            source without ``ctx.decision_count``; use ``compute_reference``
+            for context-free direct access to the first phase.
+        """
+        if ctx is None:
+            raise ValidationError(
+                "CORSDistance requires ctx.decision_count; call evaluate() "
+                "with a real OptimizationState, not prepare() directly "
+                "without ctx."
+            )
+        beta = self.search_pattern[ctx.decision_count % len(self.search_pattern)]
+        return CORSReference(evaluated_x=archive.x, beta=beta)
 
     def score(
         self,
         prediction: SurrogatePrediction,
-        reference: Any,
+        reference: CORSReference,
         rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """
@@ -233,7 +265,7 @@ class CORSDistance(PointwiseAcquisition):
             prediction.x must hold the candidate design vectors,
             shape: (n_samples, n_features), aligned row-for-row with
             prediction.value.
-        reference : _CORSReference
+        reference : CORSReference
             The reference returned by :meth:`prepare` or
             :meth:`compute_reference`, including the current beta constraint.
 
@@ -252,11 +284,11 @@ class CORSDistance(PointwiseAcquisition):
             If ``prediction.x`` is missing or its row count does not
             match ``prediction.value``.
         ValidationError
-            If ``reference`` is not an ``_CORSReference``.
+            If ``reference`` is not a ``CORSReference``.
         """
-        if not isinstance(reference, _CORSReference):
+        if not isinstance(reference, CORSReference):
             raise ValidationError(
-                "CORSDistance.score() requires an _CORSReference from "
+                "CORSDistance.score() requires a CORSReference from "
                 "prepare() or compute_reference()."
             )
         evaluated_x = reference.evaluated_x
