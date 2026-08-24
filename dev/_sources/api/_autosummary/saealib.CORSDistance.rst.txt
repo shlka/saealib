@@ -1,0 +1,51 @@
+﻿saealib.CORSDistance
+====================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CORSDistance
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CORSDistance.__init__
+   ~CORSDistance.compute_reference
+   ~CORSDistance.contract
+   ~CORSDistance.evaluate
+   ~CORSDistance.prepare
+   ~CORSDistance.score
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CORSDistance.__init__
+
+
+.. automethod:: saealib.CORSDistance.compute_reference
+
+
+.. automethod:: saealib.CORSDistance.contract
+
+
+.. automethod:: saealib.CORSDistance.evaluate
+
+
+.. automethod:: saealib.CORSDistance.prepare
+
+
+.. automethod:: saealib.CORSDistance.score
+
+
+

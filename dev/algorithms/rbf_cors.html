@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>CORS-RBF (Constrained Optimization using Response Surfaces) &#8212; saealib 0.1.0b5.dev84+gec6002047 documentation</title>
+    <title>CORS-RBF (Constrained Optimization using Response Surfaces) &#8212; saealib 0.1.0b5.dev85+gadbfcdf9f documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=dc44e4d1"></script>
+    <script src="../_static/documentation_options.js?v=2eeeb526"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1025,10 +1025,10 @@ It has been proven that, as long as the search pattern contains at least one non
 <pre  class="mermaid">
         flowchart TD
     INIT[&quot;Initializer&lt;br/&gt;Sample initial population&lt;br/&gt;→ true evaluation&lt;br/&gt;(L1)&quot;] --&gt; ASK
-    subgraph GEN[&quot;One generation (IndividualBasedStrategy.step)&quot;]
+    subgraph GEN[&quot;One generation (PreSelectionStrategy.step)&quot;]
         direction TB
         ASK[&quot;GA.ask()&lt;br/&gt;Generate candidate points&quot;] --&gt; SCORE[&quot;SurrogateManager&lt;br/&gt;Fit RBF (L2)&lt;br/&gt;→ Score with CORSDistance&lt;br/&gt;Apply βᵢΔᵢ distance constraint&lt;br/&gt;(L3)&quot;]
-        SCORE --&gt; SORT[&quot;Select the evaluation_ratio&lt;br/&gt;fraction by CORSDistance score&quot;]
+        SCORE --&gt; SORT[&quot;Select top-1 candidate&lt;br/&gt;by CORSDistance score&quot;]
         SORT --&gt; EVAL[&quot;True evaluation →&lt;br/&gt;add to archive&lt;br/&gt;(L4)&quot;]
         EVAL --&gt; TELL[&quot;GA.tell()&lt;br/&gt;Update population&quot;]
     end
@@ -1063,7 +1063,7 @@ It has been proven that, as long as the search pattern contains at least one non
 <td><p>L2-3</p></td>
 </tr>
 <tr class="row-even"><td><p>Evaluation strategy</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code> (true-evaluates only individuals with the highest <code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code> scores)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy(n_select=1)</span></code> (source-faithful: one true evaluation per CORS decision)</p></td>
 <td><p>L3-4</p></td>
 </tr>
 </tbody>
@@ -1075,7 +1075,7 @@ It has been proven that, as long as the search pattern contains at least one non
     <span class="n">GaussianKernel</span><span class="p">,</span>
     <span class="n">Optimizer</span><span class="p">,</span>
     <span class="n">Problem</span><span class="p">,</span>
-    <span class="n">IndividualBasedStrategy</span><span class="p">,</span>
+    <span class="n">PreSelectionStrategy</span><span class="p">,</span>
     <span class="n">RBFSurrogate</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSDistance</span>
@@ -1101,9 +1101,10 @@ It has been proven that, as long as the search pattern contains at least one non
     <span class="n">TruncationSelection</span><span class="p">(),</span>
 <span class="p">)</span>
 <span class="n">surrogate_manager</span> <span class="o">=</span> <span class="n">GlobalSurrogateManager</span><span class="p">(</span><span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">GaussianKernel</span><span class="p">()))</span>
-<span class="n">delta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">))</span>
-<span class="n">acquisition</span> <span class="o">=</span> <span class="n">CORSDistance</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="n">delta</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
-<span class="n">strategy</span> <span class="o">=</span> <span class="n">IndividualBasedStrategy</span><span class="p">(</span><span class="n">evaluation_ratio</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="c1"># delta=None uses the candidate-pool maximin approximation</span>
+<span class="n">acquisition</span> <span class="o">=</span> <span class="n">CORSDistance</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
+<span class="c1"># n_select=1: source-faithful one-candidate-per-decision cadence</span>
+<span class="n">strategy</span> <span class="o">=</span> <span class="n">PreSelectionStrategy</span><span class="p">(</span><span class="n">n_candidates</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">n_select</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="n">opt</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
@@ -1120,7 +1121,7 @@ It has been proven that, as long as the search pattern contains at least one non
 <section id="differences-from-the-source">
 <h2>Differences from the source<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
 <p>The original CORS procedure selects candidate points sequentially by minimizing a constrained prediction, whereas saealib approximates this minimization by selecting the highest-<code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code> candidates from the pool generated by <code class="docutils literal notranslate"><span class="pre">GA</span></code>.
-<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code> also allows the selected candidates to receive true evaluations as a batch.
+The example above uses <code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy(n_select=1)</span></code> to maintain the source-faithful one-candidate-per-decision cadence.
 The crossover, mutation, parent-selection, and environmental-selection combination in the example is an saealib configuration choice, not part of the CORS definition.
 The paper’s numerical experiments use a thin-plate-spline kernel (<span class="math notranslate nohighlight">\(\phi(r) = r^2 \log r\)</span>) with a first-order polynomial term <span class="math notranslate nohighlight">\(p(x)\)</span>.
 With the <code class="docutils literal notranslate"><span class="pre">kernel=GaussianKernel()</span></code> used above, <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>’s default <code class="docutils literal notranslate"><span class="pre">polynomial_degree=&quot;auto&quot;</span></code> resolves to no polynomial term (<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>’s <code class="docutils literal notranslate"><span class="pre">min_polynomial_degree</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>), so swapping only the kernel does not reproduce the paper’s configuration.
@@ -1130,8 +1131,19 @@ Passing <code class="docutils literal notranslate"><span class="pre">kernel=Thin
 <h2>Parameters and variants<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
 <p><strong>kernel (choice of RBF kernel)</strong>: <code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel=...)</span></code> requires an <code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code> instance; there is no default.
 The example above passes <code class="docutils literal notranslate"><span class="pre">GaussianKernel()</span></code>.</p>
-<p><strong>delta</strong>: Pass the diagonal length of the design-space box bounds to <code class="docutils literal notranslate"><span class="pre">CORSDistance(delta=...)</span></code>.
-This example uses <span class="math notranslate nohighlight">\(\mathrm{norm}(ub-lb)\)</span> and applies <span class="math notranslate nohighlight">\(\beta_i\Delta_i\)</span> as the distance threshold from previously evaluated points.</p>
+<p><strong>delta</strong>: With the default <code class="docutils literal notranslate"><span class="pre">delta=None</span></code>, <code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code> approximates the
+paper’s iteration-specific <span class="math notranslate nohighlight">\(\Delta_i\)</span> with the candidate-pool maximin distance
+<code class="docutils literal notranslate"><span class="pre">max_candidate</span> <span class="pre">min_evaluated</span> <span class="pre">distance</span></code>. A finite positive numeric <code class="docutils literal notranslate"><span class="pre">delta</span></code>
+selects a fixed distance scale instead.</p>
+</section>
+<section id="beta-cadence">
+<h2>Beta cadence<a class="headerlink" href="#beta-cadence" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">CORSDistance.prepare(archive,</span> <span class="pre">ctx)</span></code> selects
+<code class="docutils literal notranslate"><span class="pre">search_pattern[_cycle</span> <span class="pre">%</span> <span class="pre">len(search_pattern)]</span></code> and advances the acquisition’s
+component-local <code class="docutils literal notranslate"><span class="pre">_cycle</span></code> counter. Therefore the first preparation uses
+<code class="docutils literal notranslate"><span class="pre">search_pattern[0]</span></code>, and the pattern repeats cyclically. The runtime context
+does not determine the CORS phase. Repeated <code class="docutils literal notranslate"><span class="pre">score()</span></code> calls use the prepared
+beta and do not advance the pattern.</p>
 </section>
 <section id="related">
 <h2>Related<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
@@ -1140,7 +1152,7 @@ This example uses <span class="math notranslate nohighlight">\(\mathrm{norm}(ub-
 <li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>: List of surrogate models including <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>/<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code></p></li>
 <li><p><a class="reference internal" href="../concepts/surrogate_modeling/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>: List of acquisition functions including distance-constrained <code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code> for CORS</p></li>
 <li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>: Detailed usage of <code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code></p></li>
-<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: List of strategies including <code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>’s <code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code></p></li>
+<li><p><a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>: List of strategies including <code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code></p></li>
 </ul>
 </section>
 </section>
@@ -1198,6 +1210,7 @@ This example uses <span class="math notranslate nohighlight">\(\mathrm{norm}(ub-
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">Configuration in saealib</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">Differences from the source</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">Parameters and variants</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#beta-cadence">Beta cadence</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">Related</a></li>
 </ul>
   </nav></div>
