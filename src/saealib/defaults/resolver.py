@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from collections.abc import Mapping, Sequence
+from typing import Any, Protocol, runtime_checkable
 
 from saealib.defaults.context import DefaultContext
 from saealib.defaults.keys import DefaultKey
@@ -12,9 +13,7 @@ from saealib.defaults.model import (
     DefaultStrength,
     ResolvedDefault,
 )
-
-if TYPE_CHECKING:
-    pass
+from saealib.exceptions import ConfigurationError
 
 
 @runtime_checkable
@@ -43,15 +42,15 @@ class DefaultResolver:
     Collects hints from all components and resolves them based on precedence:
     explicit > REQUIRED > RECOMMENDED > FALLBACK.
 
-    For same-strength hints with different values, the first hint wins
-    (deterministic based on component traversal order).
+    Same-strength hints must agree on their value.  A disagreement is a
+    configuration error rather than an order-dependent choice.
     """
 
     def resolve(
         self,
         ctx: DefaultContext,
-        providers: list,
-        explicit: dict[DefaultKey, Any] | None = None,
+        providers: Sequence[DefaultHintProvider],
+        explicit: Mapping[DefaultKey, Any] | None = None,
     ) -> DefaultResolution:
         """Resolve default values from hints and explicit overrides.
 
@@ -70,48 +69,46 @@ class DefaultResolver:
             The resolved default values.
         """
         explicit = explicit or {}
-        all_hints: dict[str, list[DefaultHint]] = {}
+        all_hints: dict[DefaultKey, list[DefaultHint]] = {}
         diagnostics: list[str] = []
 
         # Collect hints from all providers
         for provider in providers:
             try:
-                hints = provider.default_hints(ctx)
-                for hint in hints:
-                    key_name = hint.key.name
-                    if key_name not in all_hints:
-                        all_hints[key_name] = []
-                    all_hints[key_name].append(hint)
-            except Exception as e:
-                diagnostics.append(
-                    f"Warning: {type(provider).__name__}.default_hints() "
-                    f"raised {type(e).__name__}: {e}"
-                )
+                hints = tuple(provider.default_hints(ctx))
+            except ConfigurationError:
+                raise
+            except Exception as error:
+                raise ConfigurationError(
+                    f"{type(provider).__name__}.default_hints() failed: "
+                    f"{type(error).__name__}: {error}"
+                ) from error
+
+            for index, hint in enumerate(hints):
+                if not isinstance(hint, DefaultHint):
+                    raise ConfigurationError(
+                        f"{type(provider).__name__}.default_hints() returned "
+                        f"item {index} of type {type(hint).__name__}; expected "
+                        "DefaultHint"
+                    )
+                all_hints.setdefault(hint.key, []).append(hint)
 
         # Resolve each key
-        values: dict[str, Any] = {}
-        resolved: dict[str, ResolvedDefault] = {}
+        values: dict[DefaultKey, Any] = {}
+        resolved: dict[DefaultKey, ResolvedDefault] = {}
 
-        for key_name, hints in all_hints.items():
+        for key, hints in all_hints.items():
             if not hints:
                 continue
 
-            # Get the key from the first hint
-            key = hints[0].key
-
             # Check for explicit override
             if key in explicit:
-                values[key_name] = explicit[key]
-                resolved[key_name] = ResolvedDefault(
+                selected = self._explicit_hint(key, explicit[key])
+                values[key] = selected.value
+                resolved[key] = ResolvedDefault(
                     key=key,
-                    value=explicit[key],
-                    selected_hint=DefaultHint(
-                        key=key,
-                        value=explicit[key],
-                        strength=DefaultStrength.REQUIRED,
-                        source="explicit",
-                        reason="Explicitly set by user",
-                    ),
+                    value=selected.value,
+                    selected_hint=selected,
                     alternatives=tuple(hints),
                 )
                 continue
@@ -119,27 +116,46 @@ class DefaultResolver:
             # Sort by strength (highest first), then by order of appearance
             sorted_hints = sorted(hints, key=lambda h: h.strength, reverse=True)
 
-            # Select the highest strength hint
-            selected = sorted_hints[0]
-
-            # Check for conflicts at the same strength level
-            same_strength = [h for h in sorted_hints if h.strength == selected.strength]
-            if len(same_strength) > 1:
-                # Check if they agree on the value
-                unique_values = set(h.value for h in same_strength)
-                if len(unique_values) > 1:
-                    diagnostics.append(
-                        f"Conflict for {key_name}: multiple hints at "
-                        f"strength {selected.strength.name} with different "
-                        f"values. Using first hint from {selected.source}."
+            # Every precedence level is required to be internally consistent.
+            # Checking lower-strength groups too catches contradictory provider
+            # implementations even when a stronger hint happens to mask them.
+            for strength in DefaultStrength:
+                same_strength = [
+                    hint for hint in sorted_hints if hint.strength == strength
+                ]
+                if len(same_strength) > 1 and not all(
+                    _values_equal(same_strength[0].value, hint.value)
+                    for hint in same_strength[1:]
+                ):
+                    details = ", ".join(
+                        f"{hint.source}={hint.value!r}" for hint in same_strength
+                    )
+                    raise ConfigurationError(
+                        f"Conflict for {key.name}: multiple hints at strength "
+                        f"{strength.name} have different values ({details})"
                     )
 
-            values[key_name] = selected.value
-            resolved[key_name] = ResolvedDefault(
+            selected = sorted_hints[0]
+            values[key] = selected.value
+            resolved[key] = ResolvedDefault(
                 key=key,
                 value=selected.value,
                 selected_hint=selected,
                 alternatives=tuple(hints),
+            )
+
+        # Explicit values are useful even when no provider happened to emit a
+        # hint for the key.  Constructing the synthetic hint also validates the
+        # explicit value against the key's declared type.
+        for key, value in explicit.items():
+            if key in values:
+                continue
+            selected = self._explicit_hint(key, value)
+            values[key] = selected.value
+            resolved[key] = ResolvedDefault(
+                key=key,
+                value=selected.value,
+                selected_hint=selected,
             )
 
         return DefaultResolution(
@@ -147,6 +163,35 @@ class DefaultResolver:
             resolved=resolved,
             diagnostics=tuple(diagnostics),
         )
+
+    @staticmethod
+    def _explicit_hint(key: DefaultKey, value: Any) -> DefaultHint:
+        """Build a validated hint for an explicit user-provided value."""
+        try:
+            return DefaultHint(
+                key=key,
+                value=value,
+                strength=DefaultStrength.REQUIRED,
+                source="explicit",
+                reason="Explicitly set by user",
+            )
+        except Exception as error:
+            key_name = getattr(key, "name", repr(key))
+            raise ConfigurationError(
+                f"Explicit default for {key_name!r} is invalid: "
+                f"{type(error).__name__}: {error}"
+            ) from error
+
+
+def _values_equal(left: Any, right: Any) -> bool:
+    """Compare hint values without assuming they are hashable scalars."""
+    try:
+        equal = left == right
+        if isinstance(equal, bool):
+            return equal
+        return bool(equal.all())
+    except (AttributeError, TypeError, ValueError):
+        return False
 
 
 # Global resolver instance

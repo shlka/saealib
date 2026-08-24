@@ -1496,9 +1496,9 @@ class NSGA3Comparator(ParetoComparator):
         Calculates canonical population size from reference points:
         ``n_population = 4 * ceil(n_ref / 4)``
 
-        This ensures the population size is a multiple of 4 and at least
-        as large as the number of reference points, which is necessary for
-        proper NSGA-III niche preservation.
+        This provides the canonical population size for NSGA-III's reference
+        point layout: a multiple of 4 and at least as large as the number of
+        reference points.
 
         Parameters
         ----------
@@ -1524,7 +1524,7 @@ class NSGA3Comparator(ParetoComparator):
                 strength=DefaultStrength.RECOMMENDED,
                 source="NSGA3Comparator",
                 reason=(
-                    f"NSGA-III requires population size aligned with "
+                    f"NSGA-III recommended population size aligned with "
                     f"reference points: 4 * ceil({n_ref} / 4) = {n_population}"
                 ),
             ),
