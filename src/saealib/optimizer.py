@@ -793,11 +793,36 @@ class Optimizer:
                 self.feedback_builder = build(preset["feedback_builder"])
 
         if self.initializer is None:
+            from saealib.defaults import (
+                BUILTIN_DEFAULT_PROVIDER,
+                DEFAULT_RESOLVER,
+                INITIAL_ARCHIVE_SIZE,
+                POPULATION_SIZE,
+                DefaultContext,
+            )
+            from saealib.defaults.resolver import DefaultHintProvider
             from saealib.execution.initializer import LHSInitializer
 
+            # Collect hint providers from components
+            providers = [BUILTIN_DEFAULT_PROVIDER]
+            comparator = self.problem.comparator
+            if isinstance(comparator, DefaultHintProvider):
+                providers.append(comparator)
+
+            # Resolve defaults
+            ctx = DefaultContext(problem=self.problem, seed=self.seed)
+            resolution = DEFAULT_RESOLVER.resolve(ctx, providers)
+
+            # Use resolved values
             dim = self.problem.dim
+            n_population = resolution.get(POPULATION_SIZE, 4 * dim)
+            n_archive = resolution.get(INITIAL_ARCHIVE_SIZE, 5 * dim)
+
+            # Ensure archive is at least as large as population
+            n_archive = max(n_archive, n_population)
+
             self.initializer = LHSInitializer(
-                n_init_archive=5 * dim, n_init_population=4 * dim, seed=self.seed
+                n_init_archive=n_archive, n_init_population=n_population, seed=self.seed
             )
 
         if getattr(self, "termination", None) is None:
