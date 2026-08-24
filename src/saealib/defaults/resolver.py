@@ -70,7 +70,6 @@ class DefaultResolver:
         """
         explicit = explicit or {}
         all_hints: dict[DefaultKey, list[DefaultHint]] = {}
-        diagnostics: list[str] = []
 
         for provider in providers:
             try:
@@ -157,7 +156,6 @@ class DefaultResolver:
         return DefaultResolution(
             values=values,
             resolved=resolved,
-            diagnostics=tuple(diagnostics),
         )
 
     @staticmethod
