@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.Optimizer &#8212; saealib 0.1.0b5.dev85+gadbfcdf9f documentation</title>
+    <title>saealib.Optimizer &#8212; saealib 0.1.0b5.dev86+gb021da0ff documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=2eeeb526"></script>
+    <script src="../../_static/documentation_options.js?v=47211560"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1304,9 +1304,10 @@ are filled first from a user preset (<code class="docutils literal notranslate">
 from a bundled preset selected by (1) the algorithm’s registered
 name if <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> is set, else (2) a Problem-shape rule, else
 (3) the universal fallback preset. <code class="docutils literal notranslate"><span class="pre">initializer</span></code> is computed
-directly from <code class="docutils literal notranslate"><span class="pre">problem.dim</span></code> and is not part of any preset;
-<code class="docutils literal notranslate"><span class="pre">termination</span></code> falls back to <code class="docutils literal notranslate"><span class="pre">200</span> <span class="pre">*</span> <span class="pre">problem.dim</span></code> function
-evaluations only if neither <code class="docutils literal notranslate"><span class="pre">set_*()</span></code> nor a preset supplies one.</p>
+from semantic defaults and is not part of any preset;
+<code class="docutils literal notranslate"><span class="pre">termination</span></code> falls back to the resolved maximum-evaluations default
+(<code class="docutils literal notranslate"><span class="pre">200</span> <span class="pre">*</span> <span class="pre">problem.dim</span></code> unless a provider recommends another value)
+only if neither <code class="docutils literal notranslate"><span class="pre">set_*()</span></code> nor a preset supplies one.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
