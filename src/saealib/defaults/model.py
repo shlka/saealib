@@ -90,7 +90,6 @@ class DefaultResolution:
 
     values: dict[DefaultKey, Any] = field(default_factory=dict)
     resolved: dict[DefaultKey, ResolvedDefault] = field(default_factory=dict)
-    diagnostics: tuple[str, ...] = ()
 
     def get(self, key: DefaultKey, default: Any = None) -> Any:
         """Get a resolved value by key."""

@@ -1154,8 +1154,8 @@ class OptimizationState:
     # Checkpoint: npz (best-effort reproducibility)
     # ------------------------------------------------------------------
 
-    def _save_v3(self, path: str | Path) -> None:
-        """Save every live store entry in the v3 per-key envelope."""
+    def _save_current(self, path: str | Path) -> None:
+        """Save every live store entry in the current per-key envelope."""
         if any(
             not pending.checkpointable and pending.fatal_error is None
             for pending in self.pending_evaluations.values()
@@ -1226,7 +1226,7 @@ class OptimizationState:
 
         The current schema version is ``CURRENT_CHECKPOINT_SCHEMA_VERSION``.
         """
-        self._save_v3(path)
+        self._save_current(path)
 
     def _save_v2(self, path: str | Path) -> None:
         """
@@ -1421,7 +1421,7 @@ class OptimizationState:
             if schema_version == 1:
                 return _load_v1(cls, data, problem)
             if schema_version in (3, 4):
-                return _load_v3(cls, data, problem)
+                return _load_v3_or_later(cls, data, problem)
             return _load_v2(cls, data, problem)
         except CheckpointError:
             raise
@@ -2633,7 +2633,7 @@ def _load_v2(
     )
 
 
-def _load_v3(
+def _load_v3_or_later(
     cls: type[OptimizationState], data: Any, problem: Problem
 ) -> OptimizationState:
     """Load a schema-v3 or schema-v4 checkpoint (v4 only adds decision_count)."""

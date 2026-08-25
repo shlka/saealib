@@ -18,7 +18,7 @@ from saealib import (
     max_gen,
 )
 from saealib.comparators import Comparator, SingleObjectiveComparator, SPEA2Comparator
-from saealib.exceptions import ConfigurationError
+from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import SerialEvaluator
 from saealib.execution.initializer import (
     GenomeInitializer,
@@ -172,16 +172,16 @@ class TestInitializerContract:
 
 @pytest.mark.parametrize(
     "initializer_class",
-    [RandomInitializer, SobolInitializer, LHSInitializer],
-    ids=["random", "sobol", "lhs"],
+    [GenomeInitializer, RandomInitializer, SobolInitializer, LHSInitializer],
+    ids=["genome", "random", "sobol", "lhs"],
 )
 class TestInitializerSizeValidation:
     def test_population_larger_than_archive_raises(self, initializer_class):
-        with pytest.raises(ValueError, match="n_init_population"):
+        with pytest.raises(ValidationError, match="n_init_population"):
             initializer_class(3, 5)
 
     def test_negative_sizes_raise(self, initializer_class):
-        with pytest.raises(ValueError, match="non-negative"):
+        with pytest.raises(ValidationError, match="non-negative"):
             initializer_class(-1, 0)
 
     def test_equal_sizes_are_allowed(self, initializer_class):

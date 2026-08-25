@@ -230,9 +230,9 @@ class GenomeInitializer(Initializer):
         self, n_init_archive: int, n_init_population: int, seed: int | None = None
     ) -> None:
         if n_init_archive < 0 or n_init_population < 0:
-            raise ValueError("initial sizes must be non-negative")
+            raise ValidationError("initial sizes must be non-negative")
         if n_init_population > n_init_archive:
-            raise ValueError("n_init_population cannot exceed n_init_archive")
+            raise ValidationError("n_init_population cannot exceed n_init_archive")
         self.n_init_archive = n_init_archive
         self.n_init_population = n_init_population
         self.seed = seed
@@ -329,9 +329,9 @@ class LHSInitializer(Initializer):
         self, n_init_archive: int, n_init_population: int, seed: int | None = None
     ):
         if n_init_archive < 0 or n_init_population < 0:
-            raise ValueError("initial sizes must be non-negative")
+            raise ValidationError("initial sizes must be non-negative")
         if n_init_population > n_init_archive:
-            raise ValueError("n_init_population cannot exceed n_init_archive")
+            raise ValidationError("n_init_population cannot exceed n_init_archive")
         self.n_init_archive = n_init_archive
         self.n_init_population = n_init_population
         self.seed = seed
@@ -475,9 +475,9 @@ class RandomInitializer(Initializer):
         self, n_init_archive: int, n_init_population: int, seed: int | None = None
     ):
         if n_init_archive < 0 or n_init_population < 0:
-            raise ValueError("initial sizes must be non-negative")
+            raise ValidationError("initial sizes must be non-negative")
         if n_init_population > n_init_archive:
-            raise ValueError("n_init_population cannot exceed n_init_archive")
+            raise ValidationError("n_init_population cannot exceed n_init_archive")
         self.n_init_archive = n_init_archive
         self.n_init_population = n_init_population
         self.seed = seed
@@ -618,9 +618,9 @@ class SobolInitializer(Initializer):
         self, n_init_archive: int, n_init_population: int, seed: int | None = None
     ):
         if n_init_archive < 0 or n_init_population < 0:
-            raise ValueError("initial sizes must be non-negative")
+            raise ValidationError("initial sizes must be non-negative")
         if n_init_population > n_init_archive:
-            raise ValueError("n_init_population cannot exceed n_init_archive")
+            raise ValidationError("n_init_population cannot exceed n_init_archive")
         self.n_init_archive = n_init_archive
         self.n_init_population = n_init_population
         self.seed = seed

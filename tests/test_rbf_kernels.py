@@ -78,6 +78,15 @@ def test_min_polynomial_degree_metadata():
     assert MaternKernel.min_polynomial_degree is None
 
 
+def test_auto_polynomial_degree_metadata():
+    assert GaussianKernel.auto_polynomial_degree == 0
+    assert ThinPlateSplineKernel.auto_polynomial_degree == 1
+    assert LinearKernel.auto_polynomial_degree == 0
+    assert CubicKernel.auto_polynomial_degree == 1
+    assert MultiquadricKernel.auto_polynomial_degree == 0
+    assert MaternKernel.auto_polynomial_degree == 0
+
+
 @pytest.mark.parametrize(
     "kernel_cls", [GaussianKernel, MultiquadricKernel, MaternKernel]
 )

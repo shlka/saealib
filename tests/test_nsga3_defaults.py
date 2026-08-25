@@ -13,14 +13,13 @@ import math
 import numpy as np
 
 from saealib.comparators.comparators import NSGA3Comparator
-from saealib.defaults import (
-    BUILTIN_DEFAULT_PROVIDER,
-    DEFAULT_RESOLVER,
+from saealib.defaults.builtin import BUILTIN_DEFAULT_PROVIDER
+from saealib.defaults.context import DefaultContext
+from saealib.defaults.keys import (
     INITIAL_ARCHIVE_SIZE,
     POPULATION_SIZE,
-    DefaultContext,
-    DefaultHintProvider,
 )
+from saealib.defaults.resolver import DEFAULT_RESOLVER, DefaultHintProvider
 from saealib.execution.initializer import LHSInitializer
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem

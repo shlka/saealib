@@ -57,7 +57,7 @@ from saealib.termination import max_fe as max_fe_cond
 
 if TYPE_CHECKING:
     from saealib.algorithms.base import Algorithm
-    from saealib.defaults import DefaultResolution
+    from saealib.defaults.model import DefaultResolution
     from saealib.execution.initializer import Initializer
     from saealib.problem import Problem
     from saealib.strategies.base import OptimizationStrategy
@@ -340,11 +340,6 @@ class Optimizer:
     def executable_plan(self) -> ExecutablePlan | None:
         """Return the plan produced by the most recent execution preparation."""
         return self._executable_plan
-
-    @property
-    def default_resolution(self) -> DefaultResolution | None:
-        """Return the semantic defaults resolved for the current configuration."""
-        return self._default_resolution
 
     def describe(self) -> str:
         """Describe the most recently compiled plan, if one exists."""
@@ -711,7 +706,7 @@ class Optimizer:
         ``ComponentContract.parts`` keeps discovery independent of concrete
         component classes and supports arbitrarily nested custom components.
         """
-        from saealib.defaults import BUILTIN_DEFAULT_PROVIDER
+        from saealib.defaults.builtin import BUILTIN_DEFAULT_PROVIDER
 
         roots = (
             ("initializer", getattr(self, "initializer", None)),
@@ -910,12 +905,11 @@ class Optimizer:
             ):
                 self.feedback_builder = build(preset["feedback_builder"])
 
-        from saealib.defaults import (
-            DEFAULT_RESOLVER,
+        from saealib.defaults.context import DefaultContext
+        from saealib.defaults.keys import (
             INITIAL_ARCHIVE_SIZE,
             MAX_EVALUATIONS,
             POPULATION_SIZE,
-            DefaultContext,
         )
         from saealib.defaults.model import (
             DefaultHint,
@@ -923,6 +917,7 @@ class Optimizer:
             DefaultStrength,
             ResolvedDefault,
         )
+        from saealib.defaults.resolver import DEFAULT_RESOLVER
         from saealib.execution.initializer import LHSInitializer
 
         # Resolve semantic defaults for the complete configured composition,
@@ -987,7 +982,6 @@ class Optimizer:
                         ),
                     ),
                 },
-                diagnostics=resolution.diagnostics,
             )
             n_archive = n_population
 

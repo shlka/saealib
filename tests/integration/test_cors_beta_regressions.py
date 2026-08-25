@@ -2,9 +2,10 @@
 
 These tests verify the source-faithful CORS configuration:
 - 1 decision = 1 true evaluation
-- beta advances per compute_reference() call via the acquisition's local cycle
+- beta is derived from the runtime decision count
 - search pattern cycles correctly
 - delta=None approximation works
+- checkpoint restore preserves the beta phase
 """
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ from saealib import (
 from saealib.acquisition.mean import CORSDistance
 from saealib.callback import AcquisitionEndEvent
 from saealib.comparators import SingleObjectiveComparator
+from saealib.context import OptimizationState
 from saealib.policies.evaluation import TopKEvaluation
 from saealib.problem import Problem
 from saealib.strategies.ps import PreSelectionStrategy
@@ -45,8 +47,8 @@ class _RecordingCORSDistance(CORSDistance):
         super().__init__(*args, **kwargs)
         self.records: list[float] = []
 
-    def compute_reference(self, archive, rng=None):
-        reference = super().compute_reference(archive, rng)
+    def prepare(self, archive, ctx=None):
+        reference = super().prepare(archive, ctx)
         self.records.append(reference.beta)
         return reference
 
@@ -146,3 +148,22 @@ def test_cors_search_pattern_cycles():
     expected_betas = [0.8, 0.0, 0.8, 0.0, 0.8]
     np.testing.assert_allclose(acquisition.records, expected_betas)
     assert states[-1].decision_count == 5
+
+
+def test_cors_beta_phase_survives_checkpoint_restore(tmp_path):
+    """The persisted decision count selects the same beta after restore."""
+    acquisition = _RecordingCORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN)
+    optimizer = _make_canonical_optimizer(_make_problem(), acquisition, n_gen=3)
+    states = list(optimizer.iterate())
+    saved = states[2]
+    checkpoint = tmp_path / "cors.npz"
+
+    saved.save(checkpoint)
+    restored = OptimizationState.load(checkpoint, _make_problem())
+    resumed_acquisition = CORSDistance(delta=1.0, search_pattern=SEARCH_PATTERN)
+
+    assert restored.decision_count == saved.decision_count == 2
+    assert (
+        resumed_acquisition.prepare(restored.archive, restored).beta
+        == SEARCH_PATTERN[2]
+    )

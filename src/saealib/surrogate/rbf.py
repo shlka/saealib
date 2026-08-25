@@ -26,7 +26,7 @@ def _resolve_polynomial_degree(
     if type(polynomial_degree) is bool:
         raise ValidationError("polynomial_degree must be 'auto', None, 0, or 1")
     if polynomial_degree == "auto":
-        return kernel.min_polynomial_degree
+        return kernel.auto_polynomial_degree
     if polynomial_degree not in (None, 0, 1):
         raise ValidationError("polynomial_degree must be 'auto', None, 0, or 1")
     if kernel.min_polynomial_degree is not None and (
@@ -82,7 +82,6 @@ class _RBFModel:
         self.weights: np.ndarray | None = None
         self.poly_coeffs: np.ndarray | None = None
         self.kernel_matrix: np.ndarray | None = None
-        self._last_ill_conditioned = False
         self._last_singular = False
 
     def fit(self, train_x: np.ndarray, train_y_1d: np.ndarray) -> None:
@@ -131,19 +130,13 @@ class _RBFModel:
             a[:n_samples, :n_samples] += self.alpha * np.eye(n_samples)
 
         self.kernel_matrix = a
-        rcond = 1 / np.linalg.cond(a)
-        ill_conditioned = rcond < np.finfo(a.dtype).eps
-        if ill_conditioned:
-            logger.debug(f"Kernel matrix is ill-conditioned. RCOND: {rcond}")
-        self._last_ill_conditioned = ill_conditioned
-
         try:
             if self.solver == "lstsq":
                 solution = np.linalg.lstsq(a, rhs, rcond=None)[0]
             else:
                 solution = np.linalg.solve(a, rhs)
         except np.linalg.LinAlgError:
-            logger.debug(f"Kernel matrix solve failed (singular). RCOND: {rcond}")
+            logger.debug("Kernel matrix solve failed (singular).")
             self._last_singular = True
             # Deliberate recoverable surrogate failure: expose NaN predictions
             # so downstream acquisition/feedback code can handle this candidate.
@@ -392,11 +385,8 @@ class RBFSurrogate(RegressionSurrogate):
         self._resolved_kernel = resolved_kernel
         self.n_features_in_ = train_x_arr.shape[1]
 
-        # _RBFModel instances are rebuilt fresh on every fit() (Item B), so
-        # per-model singularity suppression can't persist across calls;
-        # aggregate and suppress repeat warnings here instead, at the
-        # RBFSurrogate level, which does persist across successive fit()s
-        # (e.g. one per candidate in LocalSurrogateManager.predict()).
+        # Aggregate per-model failures here to suppress repeat warnings across
+        # successive fits at the RBFSurrogate level.
         any_singular = any(model._last_singular for model in new_models)
         if any_singular:
             if not self._last_singular:

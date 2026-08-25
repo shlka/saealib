@@ -27,9 +27,12 @@ from saealib.comparators.nds import (
     spea2_fitness,
     spea2_truncation_order,
 )
+from saealib.defaults.keys import POPULATION_SIZE
+from saealib.defaults.model import DefaultHint, DefaultStrength
 from saealib.identity import PopulationAttribute
 
 if TYPE_CHECKING:
+    from saealib.defaults.context import DefaultContext
     from saealib.population import Population
     from saealib.problem import Problem
 
@@ -1490,7 +1493,7 @@ class NSGA3Comparator(ParetoComparator):
     def rng(self, value: np.random.Generator) -> None:
         self._rng = value
 
-    def default_hints(self, ctx: object) -> tuple:
+    def default_hints(self, ctx: DefaultContext) -> tuple[DefaultHint, ...]:
         """Provide default hints based on reference points.
 
         Calculates canonical population size from reference points:
@@ -1510,9 +1513,6 @@ class NSGA3Comparator(ParetoComparator):
         tuple[DefaultHint, ...]
             Hints for population size based on reference points.
         """
-        from saealib.defaults.keys import POPULATION_SIZE
-        from saealib.defaults.model import DefaultHint, DefaultStrength
-
         n_ref = len(self._reference_points)
         n_population = 4 * math.ceil(n_ref / 4)
 

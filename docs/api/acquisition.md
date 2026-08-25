@@ -28,6 +28,7 @@ related_layers: [layer3]
    saealib.MaxUncertainty
    saealib.MeanPrediction
    saealib.CORSDistance
+   saealib.acquisition.CORSReference
    saealib.ProbabilityOfFeasibility
    saealib.ProductOfFeasibility
    saealib.EHVIAcquisition
@@ -42,10 +43,10 @@ related_layers: [layer3]
 ## CORSDistance
 
 `CORSDistance` applies the CORS distance constraint to predicted-mean scores.
-It selects the beta value with
-an internal cycle counter in `prepare(archive, ctx)`, so the first decision
-uses the first search-pattern entry and later decisions repeat the pattern
-cyclically. The canonical source-faithful configuration sends one
+`prepare(archive, ctx)` selects the beta value from `ctx.decision_count` and
+returns a `CORSReference` carrying it alongside the evaluated points, so the
+first decision uses the first search-pattern entry and later decisions repeat
+the pattern cyclically. The canonical source-faithful configuration sends one
 candidate to true evaluation per decision, for example with
 `PreSelectionStrategy(..., n_select=1)` or `TopKEvaluation(1)`.
 

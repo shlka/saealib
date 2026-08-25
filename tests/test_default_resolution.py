@@ -8,16 +8,15 @@ import pytest
 
 from saealib.context import OptimizationState
 from saealib.core.contracts import ComponentContract, PartSpec
-from saealib.defaults import (
-    DEFAULT_RESOLVER,
+from saealib.defaults.context import DefaultContext
+from saealib.defaults.keys import (
     INITIAL_ARCHIVE_SIZE,
     MAX_EVALUATIONS,
     POPULATION_SIZE,
-    DefaultContext,
-    DefaultHint,
     DefaultKey,
-    DefaultStrength,
 )
+from saealib.defaults.model import DefaultHint, DefaultStrength
+from saealib.defaults.resolver import DEFAULT_RESOLVER
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.initializer import LHSInitializer
 from saealib.optimizer import Optimizer
@@ -222,7 +221,7 @@ def test_optimizer_discovers_custom_nested_providers_and_uses_all_keys() -> None
         is True
     )
 
-    resolution = optimizer.default_resolution
+    resolution = optimizer._default_resolution
     assert resolution is not None
     assert resolution.resolved[POPULATION_SIZE].selected_hint.source == "nested-leaf"
     assert resolution.get(INITIAL_ARCHIVE_SIZE) == 92
@@ -244,14 +243,14 @@ def test_resolution_normalization_is_idempotent_and_matches_initializer() -> Non
     optimizer = Optimizer(_problem(dim=25)).set_strategy(_NestedRoot())
 
     optimizer.resolve_defaults()
-    first = optimizer.default_resolution
+    first = optimizer._default_resolution
     assert first is not None
     initializer = cast(LHSInitializer, optimizer.initializer)
     assert first.get(POPULATION_SIZE) == initializer.n_init_population
     assert first.get(INITIAL_ARCHIVE_SIZE) == initializer.n_init_archive
 
     optimizer.resolve_defaults()
-    second = optimizer.default_resolution
+    second = optimizer._default_resolution
     assert second is not None
     assert second == first
     assert second.get(INITIAL_ARCHIVE_SIZE) == 92
@@ -270,7 +269,7 @@ def test_added_root_component_provider_is_discovered() -> None:
 
     optimizer.resolve_defaults()
 
-    resolution = optimizer.default_resolution
+    resolution = optimizer._default_resolution
     assert resolution is not None
     assert resolution.get(MAX_EVALUATIONS) == 41
     assert resolution.resolved[MAX_EVALUATIONS].selected_hint.source == (
@@ -288,9 +287,9 @@ def test_semantic_resolution_runs_with_explicit_initializer() -> None:
     optimizer.resolve_defaults()
 
     assert optimizer.initializer is explicit
-    assert optimizer.default_resolution is not None
-    assert optimizer.default_resolution.get(POPULATION_SIZE) == 92
-    assert optimizer.default_resolution.get(INITIAL_ARCHIVE_SIZE) == 92
+    assert optimizer._default_resolution is not None
+    assert optimizer._default_resolution.get(POPULATION_SIZE) == 92
+    assert optimizer._default_resolution.get(INITIAL_ARCHIVE_SIZE) == 92
 
 
 def test_default_resolution_uses_default_key_mapping() -> None:
