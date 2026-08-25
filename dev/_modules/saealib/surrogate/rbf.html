@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.surrogate.rbf &#8212; saealib 0.1.0b5.dev86+gb021da0ff documentation</title>
+    <title>saealib.surrogate.rbf &#8212; saealib 0.1.0b5.dev87+g864b56a6a documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=47211560"></script>
+    <script src="../../../_static/documentation_options.js?v=8f8c623a"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -984,7 +984,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">polynomial_degree</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;polynomial_degree must be &#39;auto&#39;, None, 0, or 1&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">polynomial_degree</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">kernel</span><span class="o">.</span><span class="n">min_polynomial_degree</span>
+        <span class="k">return</span> <span class="n">kernel</span><span class="o">.</span><span class="n">auto_polynomial_degree</span>
     <span class="k">if</span> <span class="n">polynomial_degree</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;polynomial_degree must be &#39;auto&#39;, None, 0, or 1&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">kernel</span><span class="o">.</span><span class="n">min_polynomial_degree</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
@@ -1040,7 +1040,6 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">poly_coeffs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">kernel_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_last_ill_conditioned</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_singular</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">train_y_1d</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1089,19 +1088,13 @@ window.runMermaid = runMermaid;</script>
             <span class="n">a</span><span class="p">[:</span><span class="n">n_samples</span><span class="p">,</span> <span class="p">:</span><span class="n">n_samples</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_samples</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">kernel_matrix</span> <span class="o">=</span> <span class="n">a</span>
-        <span class="n">rcond</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
-        <span class="n">ill_conditioned</span> <span class="o">=</span> <span class="n">rcond</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
-        <span class="k">if</span> <span class="n">ill_conditioned</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Kernel matrix is ill-conditioned. RCOND: </span><span class="si">{</span><span class="n">rcond</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_last_ill_conditioned</span> <span class="o">=</span> <span class="n">ill_conditioned</span>
-
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span> <span class="o">==</span> <span class="s2">&quot;lstsq&quot;</span><span class="p">:</span>
                 <span class="n">solution</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">rhs</span><span class="p">,</span> <span class="n">rcond</span><span class="o">=</span><span class="kc">None</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">solution</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Kernel matrix solve failed (singular). RCOND: </span><span class="si">{</span><span class="n">rcond</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Kernel matrix solve failed (singular).&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_last_singular</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="c1"># Deliberate recoverable surrogate failure: expose NaN predictions</span>
             <span class="c1"># so downstream acquisition/feedback code can handle this candidate.</span>
@@ -1357,11 +1350,8 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolved_kernel</span> <span class="o">=</span> <span class="n">resolved_kernel</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_features_in_</span> <span class="o">=</span> <span class="n">train_x_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="c1"># _RBFModel instances are rebuilt fresh on every fit() (Item B), so</span>
-        <span class="c1"># per-model singularity suppression can&#39;t persist across calls;</span>
-        <span class="c1"># aggregate and suppress repeat warnings here instead, at the</span>
-        <span class="c1"># RBFSurrogate level, which does persist across successive fit()s</span>
-        <span class="c1"># (e.g. one per candidate in LocalSurrogateManager.predict()).</span>
+        <span class="c1"># Aggregate per-model failures here to suppress repeat warnings across</span>
+        <span class="c1"># successive fits at the RBFSurrogate level.</span>
         <span class="n">any_singular</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_last_singular</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">new_models</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">any_singular</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_singular</span><span class="p">:</span>

@@ -49,7 +49,7 @@ Archive-based criteria such as `NoveltyAcquisition` instead receive candidate an
 
 | Parameter | Values | Role |
 |---|---|---|
-| `polynomial_degree` | `"auto"` (default) / `None` / `0` / `1` | Augments the system with a polynomial term (from `kernel.min_polynomial_degree` / none / constant / linear); required for conditionally positive definite kernels like `ThinPlateSplineKernel`, unneeded for strictly positive definite ones like `GaussianKernel`. |
+| `polynomial_degree` | `"auto"` (default) / `None` / `0` / `1` | Augments the system with a polynomial term (from `kernel.auto_polynomial_degree` / none / constant / linear). A conditionally positive definite kernel such as `ThinPlateSplineKernel` requires one; a strictly positive definite kernel such as `GaussianKernel` does not, but resolves `"auto"` to a constant term so that predictions stay unchanged when a constant is added to every objective value. |
 | `solver` | `"solve"` (default) / `"lstsq"` / `"tikhonov"` | How the (possibly augmented) linear system is solved: direct / least squares (tolerant of rank-deficient systems) / ridge-regularized via `alpha`. |
 | `alpha` | `1e-8` (default) | Ridge regularization strength, used only when `solver="tikhonov"`. |
 
@@ -58,14 +58,18 @@ Reassigning `kernel`/`polynomial_degree`/`solver`/`alpha` invalidates any fitted
 
 Kernels carrying a `length_scale` field (in the same distance units as the input data) resolve it automatically to the median pairwise training-point distance when left `None`.
 
-| Kernel | Formula | Requires `polynomial_degree` |
-|---|---|---|
-| `GaussianKernel` | $\exp\left(-\dfrac{r^2}{2\,\ell^2}\right)$ | `None` (none) |
-| `ThinPlateSplineKernel` | $r^2 \log r$ (no `length_scale`) | `1` (linear) |
-| `LinearKernel` | $r$ (no `length_scale`) | `0` (constant) |
-| `CubicKernel` | $r^3$ (no `length_scale`) | `1` (linear) |
-| `MultiquadricKernel` | $\sqrt{r^2 + \ell^2}$ | `0` (constant) |
-| `MaternKernel` (`nu=0.5/1.5/2.5`) | Matérn covariance, `length_scale` = $\ell$ | `None` (none) |
+Each kernel declares two independent degrees. `min_polynomial_degree` is the lowest degree the kernel accepts — passing anything below it, `None` included, raises `ValidationError`. `auto_polynomial_degree` is what `polynomial_degree="auto"` resolves to, which may be higher than the minimum.
+
+| Kernel | Formula | `min_polynomial_degree` | `"auto"` resolves to |
+|---|---|---|---|
+| `GaussianKernel` | $\exp\left(-\dfrac{r^2}{2\,\ell^2}\right)$ | none | `0` (constant) |
+| `ThinPlateSplineKernel` | $r^2 \log r$ (no `length_scale`) | `1` (linear) | `1` (linear) |
+| `LinearKernel` | $r$ (no `length_scale`) | `0` (constant) | `0` (constant) |
+| `CubicKernel` | $r^3$ (no `length_scale`) | `1` (linear) | `1` (linear) |
+| `MultiquadricKernel` | $\sqrt{r^2 + \ell^2}$ | `0` (constant) | `0` (constant) |
+| `MaternKernel` (`nu=0.5/1.5/2.5`) | Matérn covariance, `length_scale` = $\ell$ | none | `0` (constant) |
+
+All six kernels and all three `solver` values are supported: each is covered by tests and usable as shipped. Passing `polynomial_degree=None` to `GaussianKernel` or `MaternKernel` is likewise supported, and drops the constant term that `"auto"` would have added.
 
 **`PerObjectiveSurrogate(surrogates)`**: A `RegressionSurrogate` subclass, a composite class that assigns a different surrogate per objective.
 Raises `ValueError` at `fit` time if `train_y`'s column count doesn't match `len(surrogates)`.

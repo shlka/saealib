@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>獲得関数 &#8212; saealib 0.1.0b5.dev86+gb021da0ff ドキュメント</title>
+    <title>獲得関数 &#8212; saealib 0.1.0b5.dev87+g864b56a6a ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=de3baece"></script>
+    <script src="../_static/documentation_options.js?v=1696d994"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -726,6 +726,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.MaxUncertainty.html">saealib.MaxUncertainty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.MeanPrediction.html">saealib.MeanPrediction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CORSDistance.html">saealib.CORSDistance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.acquisition.CORSReference.html">saealib.acquisition.CORSReference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ProbabilityOfFeasibility.html">saealib.ProbabilityOfFeasibility</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ProductOfFeasibility.html">saealib.ProductOfFeasibility</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EHVIAcquisition.html">saealib.EHVIAcquisition</a></li>
@@ -924,21 +925,24 @@
 <td><p>予測平均値（活用）に基づく獲得関数です。</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.CORSDistance.html#saealib.CORSDistance" title="saealib.CORSDistance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.CORSDistance</span></code></a></p></td>
-<td><p>CORS distance-constrained predicted-mean acquisition function.</p></td>
+<td><p>予測平均にCORSの距離制約を課す獲得関数です。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility" title="saealib.ProbabilityOfFeasibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ProbabilityOfFeasibility</span></code></a>・獲得関数</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.acquisition.CORSReference.html#saealib.acquisition.CORSReference" title="saealib.acquisition.CORSReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.acquisition.CORSReference</span></code></a></p></td>
+<td><p>CORSの判断1回分について用意した、アーカイブ参照とbetaの組です。</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility" title="saealib.ProbabilityOfFeasibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ProbabilityOfFeasibility</span></code></a>・獲得関数</p></td>
 <td><p>実行可能性確率（PoF）の獲得関数です。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility" title="saealib.ProductOfFeasibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ProductOfFeasibility</span></code></a>・獲得関数</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility" title="saealib.ProductOfFeasibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ProductOfFeasibility</span></code></a>・獲得関数</p></td>
 <td><p>すべての制約列にわたる実行可能性の同時確率です。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.EHVIAcquisition.html#saealib.EHVIAcquisition" title="saealib.EHVIAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EHVIAcquisition</span></code></a>・獲得関数</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.EHVIAcquisition.html#saealib.EHVIAcquisition" title="saealib.EHVIAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EHVIAcquisition</span></code></a>・獲得関数</p></td>
 <td><p>期待超体積改善量（EHVI）の獲得関数です。</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ParEGOAcquisition.html#saealib.ParEGOAcquisition" title="saealib.ParEGOAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ParEGOAcquisition</span></code></a>・獲得関数</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ParEGOAcquisition.html#saealib.ParEGOAcquisition" title="saealib.ParEGOAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ParEGOAcquisition</span></code></a>・獲得関数</p></td>
 <td><p>多目的ベイズ最適化用のParEGO獲得関数です。</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SMSEGOAcquisition.html#saealib.SMSEGOAcquisition" title="saealib.SMSEGOAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SMSEGOAcquisition</span></code></a>・獲得関数</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SMSEGOAcquisition.html#saealib.SMSEGOAcquisition" title="saealib.SMSEGOAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SMSEGOAcquisition</span></code></a>・獲得関数</p></td>
 <td><p>多目的ベイズ最適化用のSMS-EGO獲得関数です。</p></td>
 </tr>
 </tbody>
@@ -948,7 +952,7 @@
 <dt class="sig sig-object py" id="saealib.gp_ucb_beta_schedule">
 <span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">gp_ucb_beta_schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/saealib/acquisition/lcb.html#gp_ucb_beta_schedule"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.gp_ucb_beta_schedule" title="Link to this definition">#</a></dt>
 <dd><p><code class="docutils literal notranslate"><span class="pre">beta_schedule</span></code>に渡す、有限領域向けGP-UCBの<code class="docutils literal notranslate"><span class="pre">beta_t</span></code>スケジュールを返します。</p>
-<p>有限の意思決定集合向けのスケジュール<code class="docutils literal notranslate"><span class="pre">beta_t</span> <span class="pre">=</span> <span class="pre">2</span> <span class="pre">log(domain_size</span> <span class="pre">*</span> <span class="pre">t^2</span> <span class="pre">*</span> <span class="pre">pi^2</span> <span class="pre">/</span> <span class="pre">(6</span> <span class="pre">*</span> <span class="pre">delta))</span></code>を実装します :cite:<code class="docutils literal notranslate"><span class="pre">srinivas2012gpucb</span></code>。ここで <code class="docutils literal notranslate"><span class="pre">domain_size</span></code>は有限の意思決定集合の要素数<code class="docutils literal notranslate"><span class="pre">|D|</span></code>です。このヘルパーは、引用文献にある連続領域向けの別のスケジュール（コンパクト領域を対象とする異なる式）を実装しません。連続探索空間に<code class="docutils literal notranslate"><span class="pre">domain_size</span></code>を渡しても、この有限領域向けの式に数値を代入するだけであり、それだけで有限領域定理の後悔保証が得られるわけではありません。その保証に必要な追加条件については、ドキュメントの「GP-UCB」アルゴリズムページを参照してください。</p>
+<p>有限の意思決定集合向けのスケジュール<code class="docutils literal notranslate"><span class="pre">beta_t</span> <span class="pre">=</span> <span class="pre">2</span> <span class="pre">log(domain_size</span> <span class="pre">*</span> <span class="pre">t^2</span> <span class="pre">*</span> <span class="pre">pi^2</span> <span class="pre">/</span> <span class="pre">(6</span> <span class="pre">*</span> <span class="pre">delta))</span></code>を実装します <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id43" title="Niranjan Srinivas, Andreas Krause, Sham M. Kakade, and Matthias W. Seeger. Information-theoretic regret bounds for gaussian process optimization in the bandit setting. IEEE Transactions on Information Theory, 58(5):3250–3265, 2012. doi:10.1109/TIT.2011.2182033.">25</a>]</span>。ここで <code class="docutils literal notranslate"><span class="pre">domain_size</span></code>は有限の意思決定集合の要素数<code class="docutils literal notranslate"><span class="pre">|D|</span></code>です。このヘルパーは、引用文献にある連続領域向けの別のスケジュール（コンパクト領域を対象とする異なる式）を実装しません。連続探索空間に<code class="docutils literal notranslate"><span class="pre">domain_size</span></code>を渡しても、この有限領域向けの式に数値を代入するだけであり、それだけで有限領域定理の後悔保証が得られるわけではありません。その保証に必要な追加条件については、ドキュメントの「GP-UCB」アルゴリズムページを参照してください。</p>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -957,7 +961,7 @@
 </ul>
 </dd>
 <dt class="field-even">戻り値<span class="colon">:</span></dt>
-<dd class="field-even"><p>pickle可能な<code class="docutils literal notranslate"><span class="pre">schedule(t)</span> <span class="pre">-&gt;</span> <span class="pre">float</span></code>。反復回数<code class="docutils literal notranslate"><span class="pre">t</span></code>（int型、1始まり）に対して増加します。<code class="docutils literal notranslate"><span class="pre">t</span></code>が整数でない場合、または<code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">&lt;</span> <span class="pre">1</span></code>の場合は :class:<code class="docutils literal notranslate"><span class="pre">~saealib.exceptions.ValidationError</span></code> を送出します。</p>
+<dd class="field-even"><p>pickle可能な<code class="docutils literal notranslate"><span class="pre">schedule(t)</span> <span class="pre">-&gt;</span> <span class="pre">float</span></code>。反復回数<code class="docutils literal notranslate"><span class="pre">t</span></code>（int型、1始まり）に対して増加します。<code class="docutils literal notranslate"><span class="pre">t</span></code>が整数でない場合、または<code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">&lt;</span> <span class="pre">1</span></code>の場合は <a class="reference internal" href="_autosummary/saealib.ValidationError.html#saealib.ValidationError" title="saealib.exceptions.ValidationError"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValidationError</span></code></a> を送出します。</p>
 </dd>
 <dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
 <dd class="field-odd"><p>callable</p>
@@ -971,16 +975,8 @@
 </section>
 <section id="corsdistance">
 <h2>CORSDistance<a class="headerlink" href="#corsdistance" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code> applies the CORS distance constraint to predicted-mean scores.
-It selects the beta value with
-an internal cycle counter in <code class="docutils literal notranslate"><span class="pre">prepare(archive,</span> <span class="pre">ctx)</span></code>, so the first decision
-uses the first search-pattern entry and later decisions repeat the pattern
-cyclically. The canonical source-faithful configuration sends one
-candidate to true evaluation per decision, for example with
-<code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy(...,</span> <span class="pre">n_select=1)</span></code> or <code class="docutils literal notranslate"><span class="pre">TopKEvaluation(1)</span></code>.</p>
-<p>With <code class="docutils literal notranslate"><span class="pre">delta=None</span></code>, the distance scale is approximated from the current
-candidate pool as the maximum minimum distance to the evaluated archive. A
-finite positive <code class="docutils literal notranslate"><span class="pre">delta</span></code> can be supplied for a fixed scale.</p>
+<p><code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code>は、予測平均のスコアにCORSの距離制約を課します。<code class="docutils literal notranslate"><span class="pre">prepare(archive,</span> <span class="pre">ctx)</span></code>は<code class="docutils literal notranslate"><span class="pre">ctx.decision_count</span></code>からbetaを選び、評価済み点と合わせて保持する<code class="docutils literal notranslate"><span class="pre">CORSReference</span></code>を返します。そのため最初の判断では探索パターンの先頭要素が使われ、以降の判断はパターンを巡回します。原法に忠実な標準構成では、判断1回につき1点だけを真の評価に送ります。たとえば<code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy(...,</span> <span class="pre">n_select=1)</span></code>や<code class="docutils literal notranslate"><span class="pre">TopKEvaluation(1)</span></code>を使います。</p>
+<p><code class="docutils literal notranslate"><span class="pre">delta=None</span></code>のとき、距離スケールは現在の候補プールから、評価済みアーカイブへの最小距離の最大値として近似されます。固定のスケールを使いたい場合は、有限の正の<code class="docutils literal notranslate"><span class="pre">delta</span></code>を渡します。</p>
 </section>
 </section>
 

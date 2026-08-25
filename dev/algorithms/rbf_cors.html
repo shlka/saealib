@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>CORS-RBF (Constrained Optimization using Response Surfaces) &#8212; saealib 0.1.0b5.dev86+gb021da0ff documentation</title>
+    <title>CORS-RBF (Constrained Optimization using Response Surfaces) &#8212; saealib 0.1.0b5.dev87+g864b56a6a documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=47211560"></script>
+    <script src="../_static/documentation_options.js?v=8f8c623a"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1051,7 +1051,7 @@ It has been proven that, as long as the search pattern contains at least one non
 <td><p>L3</p></td>
 </tr>
 <tr class="row-odd"><td><p>Surrogate model</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code> (RBF interpolation; this example uses <code class="docutils literal notranslate"><span class="pre">GaussianKernel()</span></code> with no polynomial term, but <code class="docutils literal notranslate"><span class="pre">kernel</span></code> is a required argument and any <code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>/<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code> can be injected — see Differences from the source)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code> (RBF interpolation; this example uses <code class="docutils literal notranslate"><span class="pre">GaussianKernel()</span></code>, whose default <code class="docutils literal notranslate"><span class="pre">polynomial_degree=&quot;auto&quot;</span></code> adds a constant term, but <code class="docutils literal notranslate"><span class="pre">kernel</span></code> is a required argument and any <code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>/<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code> can be injected — see Differences from the source)</p></td>
 <td><p>L2</p></td>
 </tr>
 <tr class="row-even"><td><p>Acquisition function</p></td>
@@ -1124,7 +1124,7 @@ It has been proven that, as long as the search pattern contains at least one non
 The example above uses <code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy(n_select=1)</span></code> to maintain the source-faithful one-candidate-per-decision cadence.
 The crossover, mutation, parent-selection, and environmental-selection combination in the example is an saealib configuration choice, not part of the CORS definition.
 The paper’s numerical experiments use a thin-plate-spline kernel (<span class="math notranslate nohighlight">\(\phi(r) = r^2 \log r\)</span>) with a first-order polynomial term <span class="math notranslate nohighlight">\(p(x)\)</span>.
-With the <code class="docutils literal notranslate"><span class="pre">kernel=GaussianKernel()</span></code> used above, <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>’s default <code class="docutils literal notranslate"><span class="pre">polynomial_degree=&quot;auto&quot;</span></code> resolves to no polynomial term (<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>’s <code class="docutils literal notranslate"><span class="pre">min_polynomial_degree</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>), so swapping only the kernel does not reproduce the paper’s configuration.
+With the <code class="docutils literal notranslate"><span class="pre">kernel=GaussianKernel()</span></code> used above, <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>’s default <code class="docutils literal notranslate"><span class="pre">polynomial_degree=&quot;auto&quot;</span></code> resolves to a constant term (<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>’s <code class="docutils literal notranslate"><span class="pre">auto_polynomial_degree</span></code> is <code class="docutils literal notranslate"><span class="pre">0</span></code>), so swapping only the kernel does not reproduce the paper’s first-order term.
 Passing <code class="docutils literal notranslate"><span class="pre">kernel=ThinPlateSplineKernel()</span></code> together with <code class="docutils literal notranslate"><span class="pre">polynomial_degree=1</span></code> reproduces it, since a linear polynomial term is what makes the interpolation system well-posed for a conditionally positive definite kernel such as thin-plate-spline.</p>
 </section>
 <section id="parameters-and-variants">
@@ -1139,11 +1139,13 @@ selects a fixed distance scale instead.</p>
 <section id="beta-cadence">
 <h2>Beta cadence<a class="headerlink" href="#beta-cadence" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">CORSDistance.prepare(archive,</span> <span class="pre">ctx)</span></code> selects
-<code class="docutils literal notranslate"><span class="pre">search_pattern[_cycle</span> <span class="pre">%</span> <span class="pre">len(search_pattern)]</span></code> and advances the acquisition’s
-component-local <code class="docutils literal notranslate"><span class="pre">_cycle</span></code> counter. Therefore the first preparation uses
-<code class="docutils literal notranslate"><span class="pre">search_pattern[0]</span></code>, and the pattern repeats cyclically. The runtime context
-does not determine the CORS phase. Repeated <code class="docutils literal notranslate"><span class="pre">score()</span></code> calls use the prepared
-beta and do not advance the pattern.</p>
+<code class="docutils literal notranslate"><span class="pre">search_pattern[ctx.decision_count</span> <span class="pre">%</span> <span class="pre">len(search_pattern)]</span></code>. <code class="docutils literal notranslate"><span class="pre">decision_count</span></code>
+counts the evaluation plans the runtime has confirmed, so the first decision
+uses <code class="docutils literal notranslate"><span class="pre">search_pattern[0]</span></code> and the pattern repeats cyclically, one entry per
+decision. Preparing the same decision a second time — after an archive change
+invalidates a cached reference, for instance — reuses that decision’s entry
+instead of skipping ahead. Repeated <code class="docutils literal notranslate"><span class="pre">score()</span></code> calls use the prepared beta and
+do not advance the pattern.</p>
 </section>
 <section id="related">
 <h2>Related<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>

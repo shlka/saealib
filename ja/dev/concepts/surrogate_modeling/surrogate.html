@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Surrogate &#8212; saealib 0.1.0b5.dev86+gb021da0ff ドキュメント</title>
+    <title>Surrogate &#8212; saealib 0.1.0b5.dev87+g864b56a6a ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=de3baece"></script>
+    <script src="../../_static/documentation_options.js?v=1696d994"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -644,7 +644,7 @@
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>（既定） / <code class="docutils literal notranslate"><span class="pre">None</span></code> / <code class="docutils literal notranslate"><span class="pre">0</span></code> / <code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
-<td><p>補間系を多項式項で拡張します（<code class="docutils literal notranslate"><span class="pre">kernel.min_polynomial_degree</span></code>から決定 / なし / 定数 / 線形）。<code class="docutils literal notranslate"><span class="pre">ThinPlateSplineKernel</span></code>のような条件付き正定値カーネルには必要ですが、<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>のような狭義正定値カーネルには不要です。</p></td>
+<td><p>補間系を多項式項で拡張します（<code class="docutils literal notranslate"><span class="pre">kernel.auto_polynomial_degree</span></code>から決定 / なし / 定数 / 線形）。<code class="docutils literal notranslate"><span class="pre">ThinPlateSplineKernel</span></code>のような条件付き正定値カーネルには多項式項が必要です。<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>のような狭義正定値カーネルには不要ですが、<code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>は定数項に解決されます。目的関数値すべてに同じ定数を足しても予測が変わらないようにするためです。</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">solver</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">&quot;solve&quot;</span></code>（既定） / <code class="docutils literal notranslate"><span class="pre">&quot;lstsq&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">&quot;tikhonov&quot;</span></code></p></td>
@@ -659,41 +659,50 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">kernel</span></code>と<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code>は設定した値そのものです。<code class="docutils literal notranslate"><span class="pre">resolved_kernel</span></code>と<code class="docutils literal notranslate"><span class="pre">resolved_polynomial_degree</span></code>は、<code class="docutils literal notranslate"><span class="pre">fit()</span></code>が実際に解決して使う値を公開し、設定した<code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>インスタンス自体は不変に保ちます。<code class="docutils literal notranslate"><span class="pre">kernel</span></code>/<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code>/<code class="docutils literal notranslate"><span class="pre">solver</span></code>/<code class="docutils literal notranslate"><span class="pre">alpha</span></code>を再設定すると、fit済みの状態は無効になり、次の<code class="docutils literal notranslate"><span class="pre">fit()</span></code>まで<code class="docutils literal notranslate"><span class="pre">predict()</span></code>は<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code>を送出します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">length_scale</span></code>フィールドを持つカーネル（入力データと同じ距離単位）は、<code class="docutils literal notranslate"><span class="pre">None</span></code>のままにすると訓練点間のペアワイズ距離の中央値へ自動的に解決されます。</p>
+<p>各カーネルは独立した2つの次数を宣言します。<code class="docutils literal notranslate"><span class="pre">min_polynomial_degree</span></code>はそのカーネルが受け付ける最小の次数で、これを下回る値（<code class="docutils literal notranslate"><span class="pre">None</span></code>を含む）を渡すと<code class="docutils literal notranslate"><span class="pre">ValidationError</span></code>になります。<code class="docutils literal notranslate"><span class="pre">auto_polynomial_degree</span></code>は<code class="docutils literal notranslate"><span class="pre">polynomial_degree=&quot;auto&quot;</span></code>の解決先で、最小次数より高いことがあります。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>カーネル</p></th>
 <th class="head"><p>式</p></th>
-<th class="head"><p>必要な<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">min_polynomial_degree</span></code></p></th>
+<th class="head"><p><code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>の解決先</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code></p></td>
 <td><p><span class="math notranslate nohighlight">\(\exp\left(-\dfrac{r^2}{2\,\ell^2}\right)\)</span></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code>（なし）</p></td>
+<td><p>なし</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code>（定数）</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ThinPlateSplineKernel</span></code></p></td>
 <td><p><span class="math notranslate nohighlight">\(r^2 \log r\)</span>（<code class="docutils literal notranslate"><span class="pre">length_scale</span></code>は未使用）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code>（線形）</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">1</span></code>（線形）</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LinearKernel</span></code></p></td>
 <td><p><span class="math notranslate nohighlight">\(r\)</span>（<code class="docutils literal notranslate"><span class="pre">length_scale</span></code>は未使用）</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">0</span></code>（定数）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code>（定数）</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CubicKernel</span></code></p></td>
 <td><p><span class="math notranslate nohighlight">\(r^3\)</span>（<code class="docutils literal notranslate"><span class="pre">length_scale</span></code>は未使用）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code>（線形）</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">1</span></code>（線形）</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MultiquadricKernel</span></code></p></td>
 <td><p><span class="math notranslate nohighlight">\(\sqrt{r^2 + \ell^2}\)</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">0</span></code>（定数）</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code>（定数）</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MaternKernel</span></code>（<code class="docutils literal notranslate"><span class="pre">nu=0.5/1.5/2.5</span></code>）</p></td>
 <td><p>Matérn共分散。<code class="docutils literal notranslate"><span class="pre">length_scale</span></code> = <span class="math notranslate nohighlight">\(\ell\)</span></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code>（なし）</p></td>
+<td><p>なし</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code>（定数）</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+<p>6種類のカーネルと3種類の<code class="docutils literal notranslate"><span class="pre">solver</span></code>はいずれもサポート対象です。それぞれテストで検証されており、そのまま利用できます。<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>や<code class="docutils literal notranslate"><span class="pre">MaternKernel</span></code>に<code class="docutils literal notranslate"><span class="pre">polynomial_degree=None</span></code>を渡すこともサポートしており、<code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>が追加する定数項を落とせます。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">PerObjectiveSurrogate(surrogates)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">RegressionSurrogate</span></code>のサブクラスで、目的ごとに異なるサロゲートを割り当てる合成クラス。 <code class="docutils literal notranslate"><span class="pre">fit</span></code>時に<code class="docutils literal notranslate"><span class="pre">train_y</span></code>の列数と<code class="docutils literal notranslate"><span class="pre">len(surrogates)</span></code>が一致しないと<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>になります。 <code class="docutils literal notranslate"><span class="pre">provides_uncertainty</span></code>は、構成する全サロゲートが<code class="docutils literal notranslate"><span class="pre">True</span></code>の場合のみ<code class="docutils literal notranslate"><span class="pre">True</span></code>を返す複合判定になっています。</p>
 <section id="external-library-adapters">
 <h3>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>

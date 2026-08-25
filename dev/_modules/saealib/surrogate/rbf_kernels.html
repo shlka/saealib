@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.surrogate.rbf_kernels &#8212; saealib 0.1.0b5.dev86+gb021da0ff documentation</title>
+    <title>saealib.surrogate.rbf_kernels &#8212; saealib 0.1.0b5.dev87+g864b56a6a documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=47211560"></script>
+    <script src="../../../_static/documentation_options.js?v=8f8c623a"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1006,6 +1006,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">min_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">auto_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
@@ -1070,6 +1071,7 @@ window.runMermaid = runMermaid;</script>
 
     <span class="n">length_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">min_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">auto_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
 <div class="viewcode-block" id="GaussianKernel.validate">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.GaussianKernel.html#saealib.GaussianKernel.validate">[docs]</a>
@@ -1114,6 +1116,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">min_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">auto_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="ThinPlateSplineKernel.evaluate">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.ThinPlateSplineKernel.html#saealib.ThinPlateSplineKernel.evaluate">[docs]</a>
@@ -1139,6 +1142,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">min_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">auto_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
 <div class="viewcode-block" id="LinearKernel.evaluate">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.LinearKernel.html#saealib.LinearKernel.evaluate">[docs]</a>
@@ -1162,6 +1166,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">min_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">auto_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
 <div class="viewcode-block" id="CubicKernel.evaluate">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.CubicKernel.html#saealib.CubicKernel.evaluate">[docs]</a>
@@ -1193,6 +1198,7 @@ window.runMermaid = runMermaid;</script>
 
     <span class="n">length_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">min_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">auto_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
 <div class="viewcode-block" id="MultiquadricKernel.validate">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.MultiquadricKernel.html#saealib.MultiquadricKernel.validate">[docs]</a>
@@ -1247,6 +1253,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">length_scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.5</span>
     <span class="n">min_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">auto_polynomial_degree</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
 <div class="viewcode-block" id="MaternKernel.validate">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.MaternKernel.html#saealib.MaternKernel.validate">[docs]</a>

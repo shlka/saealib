@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev86+gb021da0ff documentation</title>
+    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev87+g864b56a6a documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=47211560"></script>
+    <script src="../../_static/documentation_options.js?v=8f8c623a"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1015,7 +1015,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Algorithm</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultResolution</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultResolution</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Initializer</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationStrategy</span>
@@ -1306,11 +1306,6 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">executable_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutablePlan</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the plan produced by the most recent execution preparation.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">default_resolution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DefaultResolution</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the semantic defaults resolved for the current configuration.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_resolution</span>
 
 <div class="viewcode-block" id="Optimizer.describe">
 <a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.describe">[docs]</a>
@@ -1731,7 +1726,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ``ComponentContract.parts`` keeps discovery independent of concrete</span>
 <span class="sd">        component classes and supports arbitrarily nested custom components.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="n">BUILTIN_DEFAULT_PROVIDER</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.builtin</span><span class="w"> </span><span class="kn">import</span> <span class="n">BUILTIN_DEFAULT_PROVIDER</span>
 
         <span class="n">roots</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">(</span><span class="s2">&quot;initializer&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;initializer&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
@@ -1932,12 +1927,11 @@ window.runMermaid = runMermaid;</script>
             <span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">preset</span><span class="p">[</span><span class="s2">&quot;feedback_builder&quot;</span><span class="p">])</span>
 
-        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-            <span class="n">DEFAULT_RESOLVER</span><span class="p">,</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultContext</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.keys</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
             <span class="n">INITIAL_ARCHIVE_SIZE</span><span class="p">,</span>
             <span class="n">MAX_EVALUATIONS</span><span class="p">,</span>
             <span class="n">POPULATION_SIZE</span><span class="p">,</span>
-            <span class="n">DefaultContext</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.model</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
             <span class="n">DefaultHint</span><span class="p">,</span>
@@ -1945,6 +1939,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">DefaultStrength</span><span class="p">,</span>
             <span class="n">ResolvedDefault</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_RESOLVER</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LHSInitializer</span>
 
         <span class="c1"># Resolve semantic defaults for the complete configured composition,</span>
@@ -2009,7 +2004,6 @@ window.runMermaid = runMermaid;</script>
                         <span class="p">),</span>
                     <span class="p">),</span>
                 <span class="p">},</span>
-                <span class="n">diagnostics</span><span class="o">=</span><span class="n">resolution</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">n_archive</span> <span class="o">=</span> <span class="n">n_population</span>
 

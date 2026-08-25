@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.acquisition.mean &#8212; saealib 0.1.0b5.dev86+gb021da0ff ドキュメント</title>
+    <title>saealib.acquisition.mean &#8212; saealib 0.1.0b5.dev87+g864b56a6a ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=de3baece"></script>
+    <script src="../../../_static/documentation_options.js?v=1696d994"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -974,6 +974,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogatePrediction</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span>
 
 
@@ -1061,12 +1062,15 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<div class="viewcode-block" id="CORSReference">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.acquisition.CORSReference.html#saealib.CORSReference">[ドキュメント]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">_CORSReference</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CORSReference</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Prepared archive reference and beta for one CORS decision.&quot;&quot;&quot;</span>
 
     <span class="n">evaluated_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span></div>
+
 
 
 <div class="viewcode-block" id="CORSDistance">
@@ -1091,11 +1095,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    all ``i &gt;= 1`` and ``1 &gt;= beta_1 &gt;= ... &gt;= beta_{N+1} = 0`` in the cited work.</span>
 <span class="sd">    saealib accepts any non-empty finite sequence of beta values in ``[0, 1]``;</span>
 <span class="sd">    the paper&#39;s ordering and terminal-zero conditions are not required.</span>
-<span class="sd">    ``compute_reference()`` resolves one entry of ``search_pattern`` for each</span>
-<span class="sd">    call using a component-local cycle counter, so the first call uses</span>
-<span class="sd">    ``search_pattern[0]``. The runtime context is accepted by the shared</span>
-<span class="sd">    acquisition interface but does not determine the CORS phase. The base</span>
-<span class="sd">    ``prepare()`` implementation delegates to ``compute_reference()``.</span>
+<span class="sd">    ``prepare()`` resolves the entry of ``search_pattern`` selected by</span>
+<span class="sd">    ``ctx.decision_count``; the first decision uses ``search_pattern[0]``.</span>
+<span class="sd">    The decision count is supplied by the runtime so repeated preparation</span>
+<span class="sd">    caused by archive changes cannot skip a CORS phase. ``compute_reference()``</span>
+<span class="sd">    remains available for context-free direct use and returns the first phase.</span>
 
 <span class="sd">    Regis &amp; Shoemaker (2005) define ``Delta_i`` as the maximin distance</span>
 <span class="sd">    over the feasible domain D from the previously evaluated points::</span>
@@ -1166,7 +1170,6 @@ window.runMermaid = runMermaid;</script>
                     <span class="s2">&quot;CORSDistance.delta must be finite and greater than 0&quot;</span>
                 <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">=</span> <span class="n">delta</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cycle</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">pattern</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="k">for</span> <span class="n">beta</span> <span class="ow">in</span> <span class="n">search_pattern</span><span class="p">)</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
@@ -1189,11 +1192,46 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.CORSDistance.html#saealib.CORSDistance.compute_reference">[ドキュメント]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_reference</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_CORSReference</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the archive reference and advance the local beta cycle.&quot;&quot;&quot;</span>
-        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_pattern</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_cycle</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">search_pattern</span><span class="p">)]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cycle</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="n">_CORSReference</span><span class="p">(</span><span class="n">evaluated_x</span><span class="o">=</span><span class="n">archive</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span></div>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CORSReference</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the archive reference using the first beta phase.</span>
+
+<span class="sd">        The runtime calls :meth:`prepare` with an ``OptimizationState`` so</span>
+<span class="sd">        that the beta phase is derived from ``ctx.decision_count``. Direct</span>
+<span class="sd">        calls to this context-free hook use the first phase and do not retain</span>
+<span class="sd">        mutable cycle state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">CORSReference</span><span class="p">(</span>
+            <span class="n">evaluated_x</span><span class="o">=</span><span class="n">archive</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+            <span class="n">beta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">search_pattern</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CORSDistance.prepare">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.CORSDistance.html#saealib.CORSDistance.prepare">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CORSReference</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the CORS reference for the current runtime decision.</span>
+
+<span class="sd">        ``ctx.decision_count`` counts confirmed evaluation plans, so it is</span>
+<span class="sd">        unchanged by repeated preparation within a decision and advances by</span>
+<span class="sd">        one for each new synchronous or asynchronous decision.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValidationError</span>
+<span class="sd">            If no runtime context is supplied. The phase has no reliable</span>
+<span class="sd">            source without ``ctx.decision_count``; use ``compute_reference``</span>
+<span class="sd">            for context-free direct access to the first phase.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;CORSDistance requires ctx.decision_count; call evaluate() &quot;</span>
+                <span class="s2">&quot;with a real OptimizationState, not prepare() directly &quot;</span>
+                <span class="s2">&quot;without ctx.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_pattern</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">decision_count</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">search_pattern</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">CORSReference</span><span class="p">(</span><span class="n">evaluated_x</span><span class="o">=</span><span class="n">archive</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="CORSDistance.score">
@@ -1201,7 +1239,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">prediction</span><span class="p">:</span> <span class="n">SurrogatePrediction</span><span class="p">,</span>
-        <span class="n">reference</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">reference</span><span class="p">:</span> <span class="n">CORSReference</span><span class="p">,</span>
         <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1214,7 +1252,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            prediction.x must hold the candidate design vectors,</span>
 <span class="sd">            shape: (n_samples, n_features), aligned row-for-row with</span>
 <span class="sd">            prediction.value.</span>
-<span class="sd">        reference : _CORSReference</span>
+<span class="sd">        reference : CORSReference</span>
 <span class="sd">            The reference returned by :meth:`prepare` or</span>
 <span class="sd">            :meth:`compute_reference`, including the current beta constraint.</span>
 
@@ -1233,11 +1271,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            If ``prediction.x`` is missing or its row count does not</span>
 <span class="sd">            match ``prediction.value``.</span>
 <span class="sd">        ValidationError</span>
-<span class="sd">            If ``reference`` is not an ``_CORSReference``.</span>
+<span class="sd">            If ``reference`` is not a ``CORSReference``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">_CORSReference</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">CORSReference</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                <span class="s2">&quot;CORSDistance.score() requires an _CORSReference from &quot;</span>
+                <span class="s2">&quot;CORSDistance.score() requires a CORSReference from &quot;</span>
                 <span class="s2">&quot;prepare() or compute_reference().&quot;</span>
             <span class="p">)</span>
         <span class="n">evaluated_x</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">evaluated_x</span>

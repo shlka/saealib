@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.comparators.comparators &#8212; saealib 0.1.0b5.dev86+gb021da0ff documentation</title>
+    <title>saealib.comparators.comparators &#8212; saealib 0.1.0b5.dev87+g864b56a6a documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=47211560"></script>
+    <script src="../../../_static/documentation_options.js?v=8f8c623a"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -985,9 +985,12 @@ window.runMermaid = runMermaid;</script>
     <span class="n">spea2_fitness</span><span class="p">,</span>
     <span class="n">spea2_truncation_order</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.keys</span><span class="w"> </span><span class="kn">import</span> <span class="n">POPULATION_SIZE</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultHint</span><span class="p">,</span> <span class="n">DefaultStrength</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">PopulationAttribute</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultContext</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Population</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
 
@@ -2578,7 +2581,7 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="NSGA3Comparator.default_hints">
 <a class="viewcode-back" href="../../../api/_autosummary/saealib.NSGA3Comparator.html#saealib.NSGA3Comparator.default_hints">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">default_hints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default_hints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">DefaultContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">DefaultHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Provide default hints based on reference points.</span>
 
 <span class="sd">        Calculates canonical population size from reference points:</span>
@@ -2598,9 +2601,6 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        tuple[DefaultHint, ...]</span>
 <span class="sd">            Hints for population size based on reference points.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.keys</span><span class="w"> </span><span class="kn">import</span> <span class="n">POPULATION_SIZE</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultHint</span><span class="p">,</span> <span class="n">DefaultStrength</span>
-
         <span class="n">n_ref</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference_points</span><span class="p">)</span>
         <span class="n">n_population</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n_ref</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
 

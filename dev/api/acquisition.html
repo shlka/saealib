@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Acquisition Functions &#8212; saealib 0.1.0b5.dev86+gb021da0ff documentation</title>
+    <title>Acquisition Functions &#8212; saealib 0.1.0b5.dev87+g864b56a6a documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=47211560"></script>
+    <script src="../_static/documentation_options.js?v=8f8c623a"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -725,6 +725,7 @@
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.MaxUncertainty.html">saealib.MaxUncertainty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.MeanPrediction.html">saealib.MeanPrediction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.CORSDistance.html">saealib.CORSDistance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.acquisition.CORSReference.html">saealib.acquisition.CORSReference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ProbabilityOfFeasibility.html">saealib.ProbabilityOfFeasibility</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.ProductOfFeasibility.html">saealib.ProductOfFeasibility</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_autosummary/saealib.EHVIAcquisition.html">saealib.EHVIAcquisition</a></li>
@@ -925,19 +926,22 @@
 <tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.CORSDistance.html#saealib.CORSDistance" title="saealib.CORSDistance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.CORSDistance</span></code></a></p></td>
 <td><p>CORS distance-constrained predicted-mean acquisition function.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility" title="saealib.ProbabilityOfFeasibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ProbabilityOfFeasibility</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.acquisition.CORSReference.html#saealib.acquisition.CORSReference" title="saealib.acquisition.CORSReference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.acquisition.CORSReference</span></code></a></p></td>
+<td><p>Prepared archive reference and beta for one CORS decision.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ProbabilityOfFeasibility.html#saealib.ProbabilityOfFeasibility" title="saealib.ProbabilityOfFeasibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ProbabilityOfFeasibility</span></code></a></p></td>
 <td><p>Probability of Feasibility (PoF) acquisition function.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility" title="saealib.ProductOfFeasibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ProductOfFeasibility</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ProductOfFeasibility.html#saealib.ProductOfFeasibility" title="saealib.ProductOfFeasibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ProductOfFeasibility</span></code></a></p></td>
 <td><p>Joint probability of feasibility across all constraint columns.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.EHVIAcquisition.html#saealib.EHVIAcquisition" title="saealib.EHVIAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EHVIAcquisition</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.EHVIAcquisition.html#saealib.EHVIAcquisition" title="saealib.EHVIAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.EHVIAcquisition</span></code></a></p></td>
 <td><p>Expected Hypervolume Improvement (EHVI) acquisition function.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.ParEGOAcquisition.html#saealib.ParEGOAcquisition" title="saealib.ParEGOAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ParEGOAcquisition</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.ParEGOAcquisition.html#saealib.ParEGOAcquisition" title="saealib.ParEGOAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.ParEGOAcquisition</span></code></a></p></td>
 <td><p>ParEGO acquisition function for multi-objective Bayesian optimisation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_autosummary/saealib.SMSEGOAcquisition.html#saealib.SMSEGOAcquisition" title="saealib.SMSEGOAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SMSEGOAcquisition</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_autosummary/saealib.SMSEGOAcquisition.html#saealib.SMSEGOAcquisition" title="saealib.SMSEGOAcquisition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saealib.SMSEGOAcquisition</span></code></a></p></td>
 <td><p>SMS-EGO acquisition function for multi-objective Bayesian optimisation.</p></td>
 </tr>
 </tbody>
@@ -985,10 +989,10 @@ or <code class="docutils literal notranslate"><span class="pre">t</span> <span c
 <section id="corsdistance">
 <h2>CORSDistance<a class="headerlink" href="#corsdistance" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code> applies the CORS distance constraint to predicted-mean scores.
-It selects the beta value with
-an internal cycle counter in <code class="docutils literal notranslate"><span class="pre">prepare(archive,</span> <span class="pre">ctx)</span></code>, so the first decision
-uses the first search-pattern entry and later decisions repeat the pattern
-cyclically. The canonical source-faithful configuration sends one
+<code class="docutils literal notranslate"><span class="pre">prepare(archive,</span> <span class="pre">ctx)</span></code> selects the beta value from <code class="docutils literal notranslate"><span class="pre">ctx.decision_count</span></code> and
+returns a <code class="docutils literal notranslate"><span class="pre">CORSReference</span></code> carrying it alongside the evaluated points, so the
+first decision uses the first search-pattern entry and later decisions repeat
+the pattern cyclically. The canonical source-faithful configuration sends one
 candidate to true evaluation per decision, for example with
 <code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy(...,</span> <span class="pre">n_select=1)</span></code> or <code class="docutils literal notranslate"><span class="pre">TopKEvaluation(1)</span></code>.</p>
 <p>With <code class="docutils literal notranslate"><span class="pre">delta=None</span></code>, the distance scale is approximated from the current

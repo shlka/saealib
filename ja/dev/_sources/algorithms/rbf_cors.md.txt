@@ -60,7 +60,7 @@ flowchart TD
 | Role | saealib implementation | Corresponding step |
 |---|---|---|
 | Search algorithm | `GA` (the specific combination of crossover, mutation, and selection is not part of CORS's definition) | L3 |
-| Surrogate model | `RBFSurrogate` (RBF interpolation; this example uses `GaussianKernel()` with no polynomial term, but `kernel` is a required argument and any `RBFKernel`/`polynomial_degree` can be injected — see Differences from the source) | L2 |
+| Surrogate model | `RBFSurrogate` (RBF interpolation; this example uses `GaussianKernel()`, whose default `polynomial_degree="auto"` adds a constant term, but `kernel` is a required argument and any `RBFKernel`/`polynomial_degree` can be injected — see Differences from the source) | L2 |
 | Acquisition function | `CORSDistance` (applies a $\beta_i\Delta_i$ distance constraint to the predictive mean) | L3 |
 | Surrogate management | `GlobalSurrogateManager` (fits the RBF over the entire archive) | L2-3 |
 | Evaluation strategy | `PreSelectionStrategy(n_select=1)` (source-faithful: one true evaluation per CORS decision) | L3-4 |
@@ -120,7 +120,7 @@ The original CORS procedure selects candidate points sequentially by minimizing 
 The example above uses `PreSelectionStrategy(n_select=1)` to maintain the source-faithful one-candidate-per-decision cadence.
 The crossover, mutation, parent-selection, and environmental-selection combination in the example is an saealib configuration choice, not part of the CORS definition.
 The paper's numerical experiments use a thin-plate-spline kernel ($\phi(r) = r^2 \log r$) with a first-order polynomial term $p(x)$.
-With the `kernel=GaussianKernel()` used above, `RBFSurrogate`'s default `polynomial_degree="auto"` resolves to no polynomial term (`GaussianKernel`'s `min_polynomial_degree` is `None`), so swapping only the kernel does not reproduce the paper's configuration.
+With the `kernel=GaussianKernel()` used above, `RBFSurrogate`'s default `polynomial_degree="auto"` resolves to a constant term (`GaussianKernel`'s `auto_polynomial_degree` is `0`), so swapping only the kernel does not reproduce the paper's first-order term.
 Passing `kernel=ThinPlateSplineKernel()` together with `polynomial_degree=1` reproduces it, since a linear polynomial term is what makes the interpolation system well-posed for a conditionally positive definite kernel such as thin-plate-spline.
 
 ## Parameters and variants
@@ -136,11 +136,13 @@ selects a fixed distance scale instead.
 ## Beta cadence
 
 `CORSDistance.prepare(archive, ctx)` selects
-`search_pattern[_cycle % len(search_pattern)]` and advances the acquisition's
-component-local `_cycle` counter. Therefore the first preparation uses
-`search_pattern[0]`, and the pattern repeats cyclically. The runtime context
-does not determine the CORS phase. Repeated `score()` calls use the prepared
-beta and do not advance the pattern.
+`search_pattern[ctx.decision_count % len(search_pattern)]`. `decision_count`
+counts the evaluation plans the runtime has confirmed, so the first decision
+uses `search_pattern[0]` and the pattern repeats cyclically, one entry per
+decision. Preparing the same decision a second time — after an archive change
+invalidates a cached reference, for instance — reuses that decision's entry
+instead of skipping ahead. Repeated `score()` calls use the prepared beta and
+do not advance the pattern.
 
 ## Related
 
