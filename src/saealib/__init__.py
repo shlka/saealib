@@ -453,6 +453,12 @@ _LAZY_EXPORTS: dict[str, str] = {
     "CubicKernel": "saealib.surrogate.rbf_kernels",
     "MultiquadricKernel": "saealib.surrogate.rbf_kernels",
     "MaternKernel": "saealib.surrogate.rbf_kernels",
+    "gd": "saealib.utils.indicators",
+    "gd_plus": "saealib.utils.indicators",
+    "igd": "saealib.utils.indicators",
+    "igd_plus": "saealib.utils.indicators",
+    "spacing": "saealib.utils.indicators",
+    "spread": "saealib.utils.indicators",
     # utils
     "uniform_weight_vectors": "saealib.utils.weight_vectors",
 }
