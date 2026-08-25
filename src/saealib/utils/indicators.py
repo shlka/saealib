@@ -5,6 +5,287 @@ from __future__ import annotations
 import numpy as np
 
 from saealib.comparators import ParetoDominator
+from saealib.exceptions import ValidationError
+
+
+def _objective_array(values: np.ndarray, n_obj: int | None = None) -> np.ndarray:
+    """Convert objective values to a two-dimensional floating-point array."""
+    values = np.asarray(values, dtype=float)
+    if values.ndim == 1:
+        if values.size == 0 and n_obj is not None:
+            values = values.reshape(0, n_obj)
+        else:
+            values = values.reshape((0, 0) if values.size == 0 else (1, -1))
+    if values.ndim != 2:
+        raise ValueError("objective values must be a one- or two-dimensional array")
+    if n_obj is not None and values.shape[1] != n_obj:
+        raise ValueError("objective arrays must have the same number of objectives")
+    return values
+
+
+def _pairwise_distances(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Return Euclidean distances between every row of ``a`` and ``b``."""
+    return np.linalg.norm(a[:, None, :] - b[None, :, :], axis=2)
+
+
+def _pairwise_manhattan_distances(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Return Manhattan distances between every row of ``a`` and ``b``."""
+    return np.abs(a[:, None, :] - b[None, :, :]).sum(axis=2)
+
+
+def _pairwise_plus_distances(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Return minimization positive-part distances between rows of ``a`` and ``b``."""
+    return np.linalg.norm(np.maximum(a[:, None, :] - b[None, :, :], 0.0), axis=2)
+
+
+def gd(f: np.ndarray, reference_front: np.ndarray) -> float:
+    """Compute the generational distance (GD), using minimization objectives.
+
+    GD is the mean distance from each solution to its nearest reference-front
+    point.  An empty obtained front returns ``np.nan``; an empty reference
+    front raises :class:`~saealib.exceptions.ValidationError`.  Singleton and
+    duplicate points are handled by the same nearest-neighbor formula.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Obtained objective matrix, shape (n, n_obj).
+    reference_front : np.ndarray
+        Reference-front objective matrix, shape (n_ref, n_obj).
+
+    Returns
+    -------
+    float
+        Mean nearest-reference Euclidean distance.
+
+    References
+    ----------
+    Li, B., Li, J., Tang, K., & Yao, X. (2015).
+        Many-objective evolutionary algorithms: A survey.
+        *ACM Computing Surveys*, 48(1), Article 13.
+        https://doi.org/10.1145/2792984
+    """
+    f, reference_front = _validated_pair(f, reference_front)
+    if len(f) == 0:
+        return np.nan
+    return float(np.min(_pairwise_distances(f, reference_front), axis=1).mean())
+
+
+def igd(f: np.ndarray, reference_front: np.ndarray) -> float:
+    """Compute inverted generational distance (IGD) for minimization objectives.
+
+    IGD is the arithmetic mean of the Euclidean distances from each
+    reference-front point to its nearest solution. An empty obtained front
+    returns ``np.nan``; an empty reference front raises
+    :class:`~saealib.exceptions.ValidationError`. Singleton and duplicate
+    points use the same nearest-neighbor formula.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Obtained objective matrix, shape (n, n_obj).
+    reference_front : np.ndarray
+        Reference-front objective matrix, shape (n_ref, n_obj).
+
+    Returns
+    -------
+    float
+        Mean nearest-solution Euclidean distance.
+
+    References
+    ----------
+    Bosman, P. A. N., & Thierens, D. (2003).
+        The balance between proximity and diversity in multi-objective
+        evolutionary algorithms. *IEEE Transactions on Evolutionary
+        Computation*, 7(2).
+    """
+    f, reference_front = _validated_pair(f, reference_front)
+    if len(f) == 0:
+        return np.nan
+    return float(np.min(_pairwise_distances(reference_front, f), axis=1).mean())
+
+
+def gd_plus(f: np.ndarray, reference_front: np.ndarray) -> float:
+    """Compute generational distance plus (GD+) for minimization objectives.
+
+    GD+ is the arithmetic mean of the nearest positive-part distances from
+    each solution to the reference front. Only objective-wise deterioration of
+    a solution relative to a reference point contributes. An empty obtained
+    front returns ``np.nan``; an empty reference front raises
+    :class:`~saealib.exceptions.ValidationError`.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Obtained objective matrix, shape (n, n_obj).
+    reference_front : np.ndarray
+        Reference-front objective matrix, shape (n_ref, n_obj).
+
+    Returns
+    -------
+    float
+        Mean nearest positive-part distance.
+
+    References
+    ----------
+    Ishibuchi, H., Masuda, H., Tanigaki, Y., & Nojima, Y. (2015).
+        Modified distance calculation in generational distance and inverted
+        generational distance. *Evolutionary Multi-Criterion Optimization*.
+        Springer.
+    """
+    f, reference_front = _validated_pair(f, reference_front)
+    if len(f) == 0:
+        return np.nan
+    return float(np.min(_pairwise_plus_distances(f, reference_front), axis=1).mean())
+
+
+def igd_plus(f: np.ndarray, reference_front: np.ndarray) -> float:
+    """Compute inverted generational distance plus (IGD+) for minimization objectives.
+
+    IGD+ is the arithmetic mean, over reference-front points, of the nearest
+    positive-part distance from a solution. Only objective-wise deterioration
+    contributes. An empty obtained front returns ``np.nan``; an empty
+    reference front raises :class:`~saealib.exceptions.ValidationError`.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Obtained objective matrix, shape (n, n_obj).
+    reference_front : np.ndarray
+        Reference-front objective matrix, shape (n_ref, n_obj).
+
+    Returns
+    -------
+    float
+        Mean nearest positive-part distance.
+
+    References
+    ----------
+    Ishibuchi, H., Masuda, H., Tanigaki, Y., & Nojima, Y. (2015).
+        Modified distance calculation in generational distance and inverted
+        generational distance. *Evolutionary Multi-Criterion Optimization*.
+        Springer.
+    """
+    f, reference_front = _validated_pair(f, reference_front)
+    if len(f) == 0:
+        return np.nan
+    return float(np.min(_pairwise_plus_distances(f, reference_front), axis=0).mean())
+
+
+def spacing(f: np.ndarray) -> float:
+    """Compute the spacing indicator for an obtained front.
+
+    The indicator is the sample standard deviation of each point's nearest
+    other-point Manhattan distance. Empty and singleton sets return
+    ``np.nan`` because the sample standard deviation is undefined. Duplicate-
+    only sets with at least two points return ``0.0``; duplicates therefore
+    contribute zero nearest-neighbor distances.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Obtained objective matrix, shape (n, n_obj).
+
+    Returns
+    -------
+    float
+        Sample standard deviation of nearest-neighbor Manhattan distances.
+
+    References
+    ----------
+    Schott, J. R. (1995).
+        *Fault Tolerant Design using Single and Multicriteria Genetic
+        Algorithm Optimization*. Master's thesis, Massachusetts Institute of
+        Technology.
+    """
+    f = _objective_array(f)
+    if len(f) < 2:
+        return np.nan
+    distances = _pairwise_manhattan_distances(f, f)
+    np.fill_diagonal(distances, np.inf)
+    nearest = np.min(distances, axis=1)
+    return float(np.sqrt(np.sum((nearest - nearest.mean()) ** 2) / (len(f) - 1)))
+
+
+def spread(f: np.ndarray, reference_front: np.ndarray) -> float:
+    """Compute Zhou et al.'s generalized spread indicator.
+
+    ``f`` and ``reference_front`` use minimization objectives.  Follows
+    Equation (12) of Zhou et al. (2006): each reference-front point is
+    measured against its nearest obtained solution, and the indicator reports
+    the deviation of those distances from their mean.  The per-point distance
+    ``d(X, S)`` allows a zero self-distance when ``X`` also belongs to ``S``
+    (the ``Y != X`` exclusion is not applied across sets), so that a well
+    distributed front covering the extremes yields ``0.0``.  This differs from
+    jMetal-style implementations, which measure nearest-neighbor distances
+    within the obtained front.  An empty obtained front returns ``np.nan``;
+    an empty reference front raises
+    :class:`~saealib.exceptions.ValidationError`. Singleton and duplicate-only
+    obtained sets are evaluated by the generalized formula.
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Obtained objective matrix, shape (n, n_obj).
+    reference_front : np.ndarray
+        Reference-front objective matrix, shape (n_ref, n_obj).
+
+    Returns
+    -------
+    float
+        Generalized spread value.
+
+    References
+    ----------
+    Zhou, A., Jin, Y., Zhang, Q., Sendhoff, B., & Tsang, E. P. K. (2006).
+        Combining model-based and genetics-based offspring generation for
+        multi-objective optimization using a convergence criterion. *IEEE
+        Congress on Evolutionary Computation*.
+
+    Deb, K., Pratap, A., Agarwal, S., & Meyarivan, T. (2002).
+        A fast and elitist multiobjective genetic algorithm: NSGA-II. *IEEE
+        Transactions on Evolutionary Computation*, 6(2).
+        https://doi.org/10.1109/4235.996017
+    """
+    f, reference_front = _validated_pair(f, reference_front)
+    if len(f) == 0:
+        return np.nan
+
+    nearest = np.min(_pairwise_distances(reference_front, f), axis=1)
+    mean_distance = nearest.mean()
+    extreme_points = np.vstack(
+        [
+            reference_front[np.argmax(reference_front[:, j])]
+            for j in range(reference_front.shape[1])
+        ]
+    )
+    extremes = np.unique(extreme_points, axis=0)
+    boundary = np.min(_pairwise_distances(extremes, f), axis=1).sum()
+    denominator = boundary + len(reference_front) * mean_distance
+    if denominator == 0.0:
+        return 0.0
+    return float((boundary + np.sum(np.abs(nearest - mean_distance))) / denominator)
+
+
+def _validated_pair(
+    f: np.ndarray, reference_front: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Normalize and validate a solution/reference-front pair."""
+    f_raw = np.asarray(f, dtype=float)
+    reference_raw = np.asarray(reference_front, dtype=float)
+    if f_raw.ndim == 1 and f_raw.size:
+        f_raw = f_raw.reshape(1, -1)
+    if reference_raw.ndim == 1 and reference_raw.size:
+        reference_raw = reference_raw.reshape(1, -1)
+    if f_raw.ndim == 1 and f_raw.size == 0 and reference_raw.ndim == 2:
+        f_raw = f_raw.reshape(0, reference_raw.shape[1])
+    if reference_raw.ndim == 1 and reference_raw.size == 0 and f_raw.ndim == 2:
+        reference_raw = reference_raw.reshape(0, f_raw.shape[1])
+    reference_front = _objective_array(reference_raw)
+    if len(reference_front) == 0:
+        raise ValidationError("reference_front must not be empty")
+    f = _objective_array(f_raw, reference_front.shape[1])
+    return f, reference_front
 
 
 def hypervolume(f: np.ndarray, reference_point: np.ndarray) -> float:
