@@ -22,6 +22,7 @@ from saealib.core.state import (
     PROPOSALS_CURRENT,
     RUNTIME_ASYNC_FATAL,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_RNG,
 )
@@ -74,7 +75,15 @@ def test_initializer_contract_declares_population_and_rng_effects() -> None:
     assert output.data.kind == "Population"
     assert output.data.bindings["candidate_count"] == Fixed(value=5)
     assert contract.state == StateContract(
-        reads=(RUNTIME_RNG, RUNTIME_CANDIDATE_ID_ALLOCATOR, EVALUATIONS_COUNT),
+        reads=(
+            RUNTIME_RNG,
+            EVALUATIONS_COUNT,
+            RUNTIME_GENERATION,
+            RUNTIME_DECISION_COUNT,
+            POPULATIONS_MAIN,
+            ARCHIVES_PARETO,
+            RUNTIME_CANDIDATE_ID_ALLOCATOR,
+        ),
         writes=(
             POPULATIONS_MAIN,
             ARCHIVES_MAIN,

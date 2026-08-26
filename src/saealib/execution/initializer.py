@@ -30,10 +30,16 @@ from saealib.core.state import (
     EVALUATIONS_COUNT,
     POPULATIONS_MAIN,
     RUNTIME_CANDIDATE_ID_ALLOCATOR,
+    RUNTIME_DECISION_COUNT,
     RUNTIME_GENERATION,
     RUNTIME_RNG,
 )
 from saealib.exceptions import ConfigurationError, ValidationError
+from saealib.execution.history import (
+    History,
+    record_generation,
+    record_initial_evaluation,
+)
 from saealib.optimizer import ComponentProvider
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import Problem
@@ -151,7 +157,14 @@ class Initializer(ABC):
                 ),
             },
             state=StateContract(
-                reads=(RUNTIME_RNG,),
+                reads=(
+                    RUNTIME_RNG,
+                    EVALUATIONS_COUNT,
+                    RUNTIME_GENERATION,
+                    RUNTIME_DECISION_COUNT,
+                    POPULATIONS_MAIN,
+                    ARCHIVES_PARETO,
+                ),
                 writes=(
                     POPULATIONS_MAIN,
                     ARCHIVES_MAIN,
@@ -178,6 +191,7 @@ class Initializer(ABC):
     def _create_context(
         self,
         problem: Problem,
+        provider: ComponentProvider,
         archive: Archive,
         pareto_archive: ParetoArchive,
         population: Population,
@@ -197,6 +211,9 @@ class Initializer(ABC):
             rng=rng,
             fe=len(archive),
             gen=0,
+            history=History(
+                channels=getattr(provider, "history_channels", ("summary",))
+            ),
         )
 
     @abstractmethod
@@ -275,7 +292,9 @@ class GenomeInitializer(Initializer):
         pareto_archive = provider.algorithm.create_pareto_archive(
             attrs=attrs, init_capacity=self.n_init_archive, problem=problem
         )
-        ctx = self._create_context(problem, archive, pareto_archive, population, rng)
+        ctx = self._create_context(
+            problem, provider, archive, pareto_archive, population, rng
+        )
 
         genomes = problem.space.sample(self.n_init_archive, rng)
         validation = problem.space.validate(genomes)
@@ -298,6 +317,7 @@ class GenomeInitializer(Initializer):
             archive.add(data)
             pareto_archive.add(data)
 
+        record_initial_evaluation(ctx, result, ids)
         ctx.count_fe(self.n_init_archive)
         provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
 
@@ -308,6 +328,7 @@ class GenomeInitializer(Initializer):
         population._extend_internal(
             archive[: self.n_init_population], preserve_ids=True
         )
+        record_generation(ctx)
         return ctx
 
 
@@ -348,7 +369,6 @@ class LHSInitializer(Initializer):
                 reads=(
                     *contract.state.reads,
                     RUNTIME_CANDIDATE_ID_ALLOCATOR,
-                    EVALUATIONS_COUNT,
                 ),
                 writes=(*contract.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
             ),
@@ -413,7 +433,9 @@ class LHSInitializer(Initializer):
         )
         pareto_archive._dense_numeric_view = _resolved_dense_view(problem)
 
-        ctx = self._create_context(problem, archive, pareto_archive, population, rng)
+        ctx = self._create_context(
+            problem, provider, archive, pareto_archive, population, rng
+        )
 
         bounds_srv = cast(
             BoundsService, problem.space.services.require("BoundsService")
@@ -441,6 +463,7 @@ class LHSInitializer(Initializer):
             archive.add(data)
             pareto_archive.add(data)
 
+        record_initial_evaluation(ctx, result, ids)
         ctx.count_fe(self.n_init_archive)
 
         provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
@@ -453,6 +476,7 @@ class LHSInitializer(Initializer):
         population._extend_internal(
             archive[: self.n_init_population], preserve_ids=True
         )
+        record_generation(ctx)
 
         return ctx
 
@@ -494,7 +518,6 @@ class RandomInitializer(Initializer):
                 reads=(
                     *contract.state.reads,
                     RUNTIME_CANDIDATE_ID_ALLOCATOR,
-                    EVALUATIONS_COUNT,
                 ),
                 writes=(*contract.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
             ),
@@ -559,7 +582,9 @@ class RandomInitializer(Initializer):
         )
         pareto_archive._dense_numeric_view = _resolved_dense_view(problem)
 
-        ctx = self._create_context(problem, archive, pareto_archive, population, rng)
+        ctx = self._create_context(
+            problem, provider, archive, pareto_archive, population, rng
+        )
 
         bounds_srv = cast(
             BoundsService, problem.space.services.require("BoundsService")
@@ -584,6 +609,7 @@ class RandomInitializer(Initializer):
             archive.add(data)
             pareto_archive.add(data)
 
+        record_initial_evaluation(ctx, result, ids)
         ctx.count_fe(self.n_init_archive)
 
         provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
@@ -596,6 +622,7 @@ class RandomInitializer(Initializer):
         population._extend_internal(
             archive[: self.n_init_population], preserve_ids=True
         )
+        record_generation(ctx)
 
         return ctx
 
@@ -637,7 +664,6 @@ class SobolInitializer(Initializer):
                 reads=(
                     *contract.state.reads,
                     RUNTIME_CANDIDATE_ID_ALLOCATOR,
-                    EVALUATIONS_COUNT,
                 ),
                 writes=(*contract.state.writes, RUNTIME_CANDIDATE_ID_ALLOCATOR),
             ),
@@ -702,7 +728,9 @@ class SobolInitializer(Initializer):
         )
         pareto_archive._dense_numeric_view = _resolved_dense_view(problem)
 
-        ctx = self._create_context(problem, archive, pareto_archive, population, rng)
+        ctx = self._create_context(
+            problem, provider, archive, pareto_archive, population, rng
+        )
 
         bounds_srv = cast(
             BoundsService, problem.space.services.require("BoundsService")
@@ -730,6 +758,7 @@ class SobolInitializer(Initializer):
             archive.add(data)
             pareto_archive.add(data)
 
+        record_initial_evaluation(ctx, result, ids)
         ctx.count_fe(self.n_init_archive)
 
         provider.dispatch(InitialEvaluationEndEvent(ctx=ctx, archive=archive))
@@ -742,5 +771,6 @@ class SobolInitializer(Initializer):
         population._extend_internal(
             archive[: self.n_init_population], preserve_ids=True
         )
+        record_generation(ctx)
 
         return ctx

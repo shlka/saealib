@@ -7,6 +7,8 @@ from typing import Any
 
 from saealib.context import OptimizationState
 from saealib.core.runtime import ExecutionRuntime, RuntimeSession
+from saealib.exceptions import ValidationError
+from saealib.execution.history import History
 from saealib.execution.runtime import create_runtime, resolve_plan
 
 
@@ -45,6 +47,22 @@ class Runner:
         self, state: OptimizationState
     ) -> Generator[OptimizationState, None, None]:
         """Drive runtime steps from an initial or checkpoint state."""
+        configured_channels = tuple(
+            getattr(self.optimizer, "history_channels", ("summary",))
+        )
+        requested_channels = frozenset(configured_channels)
+        if state.history is None:
+            state.history = History(configured_channels)
+        elif getattr(self.optimizer, "history_channels_explicit", False) and (
+            requested_channels != state.history.enabled
+        ):
+            raise ValidationError(
+                "Cannot resume with different history channel sets: "
+                f"requested channels={sorted(requested_channels)!r}, "
+                f"checkpoint channels={sorted(state.history.enabled)!r}. "
+                "Use set_history() to match the checkpoint channels, "
+                "or start a new run."
+            )
         plan = resolve_plan(self.optimizer)
         runtime = self._runtime_factory(self.optimizer)
         session: RuntimeSession = runtime.initialize(plan, state)

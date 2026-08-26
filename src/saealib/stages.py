@@ -1576,6 +1576,11 @@ class EvaluationCollectStage(Stage):
             delivered = self._evaluator.collect(handle)
             all_updates[planned_id] = list(previous_updates) + list(delivered)
             if delivered:
+                # A graph-native stage sees a proxy with no history field key.
+                history = getattr(state, "_state", state).history
+                if history is not None:
+                    for _delivered in delivered:
+                        history._observe_evaluation(_delivered, 0)
                 expected = planned_pending.last_delivered_sequence + 1
                 for update in delivered:
                     if (

@@ -15,6 +15,7 @@ from saealib.execution.evaluator import (
     SerialEvaluator,
     ThreadPoolEvaluator,
 )
+from saealib.execution.history import History
 from saealib.execution.initializer import (
     GenomeInitializer,
     Initializer,
@@ -44,6 +45,7 @@ __all__ = [
     "EvaluationUpdate",
     "Evaluator",
     "GenomeInitializer",
+    "History",
     "Initializer",
     "JoblibEvaluator",
     "LHSInitializer",
