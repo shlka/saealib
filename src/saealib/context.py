@@ -53,6 +53,7 @@ if TYPE_CHECKING:
         EvaluationUpdate,
         PendingEvaluation,
     )
+    from saealib.execution.history import History
     from saealib.policies.evaluation import EvaluationPlan
     from saealib.policies.feedback import FeedbackResult
     from saealib.population import Archive, ParetoArchive, Population
@@ -60,8 +61,8 @@ if TYPE_CHECKING:
     from saealib.surrogate.prediction import SurrogatePrediction
 
 
-CURRENT_CHECKPOINT_SCHEMA_VERSION = 4
-SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS = frozenset({1, 2, 3, 4})
+CURRENT_CHECKPOINT_SCHEMA_VERSION = 5
+SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS = frozenset({1, 2, 3, 4, 5})
 _SAFE_EMPTY_PENDING = frozenset(
     pickle.dumps({}, protocol=protocol)
     for protocol in range(pickle.HIGHEST_PROTOCOL + 1)
@@ -388,6 +389,9 @@ class OptimizationState:
     proposal_id_allocator : IDAllocator
         Allocates stable, unique int64 proposal IDs.  When omitted, it starts
         at the current request allocator value for legacy compatibility.
+    history : History or None
+        Optional execution history accumulator. Summary-channel rows are
+        persisted by schema-v5 checkpoints.
     fe : int
         Number of function evaluations.
     gen : int
@@ -438,6 +442,7 @@ class OptimizationState:
     candidate_id_allocator: IDAllocator = field(default_factory=IDAllocator)
     proposal_id_allocator: IDAllocator = field(default_factory=IDAllocator)
     request_id_allocator: IDAllocator = field(default_factory=IDAllocator)
+    history: History | None = None
 
     fe: int = 0
     gen: int = 0
@@ -655,6 +660,7 @@ class OptimizationState:
         candidate_id_allocator: IDAllocator | None = None,
         proposal_id_allocator: IDAllocator | None = None,
         request_id_allocator: IDAllocator | None = None,
+        history: History | None = None,
         fe: int = 0,
         gen: int = 0,
         decision_count: int = 0,
@@ -722,6 +728,7 @@ class OptimizationState:
             if proposal_id_allocator is not None
             else IDAllocator(self.request_id_allocator.next_value)
         )
+        self.history = history
         self.fe = fe
         self.gen = gen
         self.decision_count = decision_count
@@ -1215,6 +1222,27 @@ class OptimizationState:
                     "value": encoded,
                 }
             )
+        if self.history is not None:
+            channels = sorted(self.history.enabled)
+            history_columns: dict[str, list[str]] = {}
+            history_blocks: dict[str, list[str]] = {}
+            for channel in channels:
+                channel_columns = self.history.channel(channel)
+                history_columns[channel] = list(channel_columns)
+                for column, values in channel_columns.items():
+                    arrays[f"_history__{channel}__{column}"] = values
+                block_storage = self.history._block_storage(channel)
+                history_blocks[channel] = list(block_storage)
+                for column, (values, offsets) in block_storage.items():
+                    arrays[f"_history__{channel}__{column}"] = values
+                    arrays[f"_history__{channel}__{column}__offsets"] = offsets
+            arrays["_history_meta"] = _json_array(
+                {
+                    "channels": channels,
+                    "columns": history_columns,
+                    "blocks": history_blocks,
+                }
+            )
         arrays["_checkpoint_schema_version"] = np.array(
             CURRENT_CHECKPOINT_SCHEMA_VERSION, dtype=np.int64
         )
@@ -1420,7 +1448,7 @@ class OptimizationState:
                 )
             if schema_version == 1:
                 return _load_v1(cls, data, problem)
-            if schema_version in (3, 4):
+            if schema_version in (3, 4, 5):
                 return _load_v3_or_later(cls, data, problem)
             return _load_v2(cls, data, problem)
         except CheckpointError:
@@ -2636,7 +2664,7 @@ def _load_v2(
 def _load_v3_or_later(
     cls: type[OptimizationState], data: Any, problem: Problem
 ) -> OptimizationState:
-    """Load a schema-v3 or schema-v4 checkpoint (v4 only adds decision_count)."""
+    """Load a schema-v3, schema-v4, or schema-v5 checkpoint."""
     genome_codec = problem.space.services.get("GenomeCodec")
     dense_numeric_view = problem.space.services.get("DenseNumericView")
     entries = _read_json(data, "_state_entries")
@@ -2756,6 +2784,71 @@ def _load_v3_or_later(
         "_custom_state": custom,
         "data": values.pop("data", {}),
     }
+    history = None
+    if "_history_meta" in data.files:
+        from saealib.execution.history import History
+
+        metadata = _read_json(data, "_history_meta")
+        if not isinstance(metadata, dict):
+            raise CheckpointError("checkpoint history metadata is malformed")
+        channels = metadata.get("channels")
+        columns_by_channel = metadata.get("columns")
+        blocks_by_channel = metadata.get(
+            "blocks",
+            {channel: [] for channel in channels}
+            if isinstance(channels, list)
+            else None,
+        )
+        if (
+            not isinstance(channels, list)
+            or any(not isinstance(channel, str) for channel in channels)
+            or len(set(channels)) != len(channels)
+            or not isinstance(columns_by_channel, dict)
+            or set(columns_by_channel) != set(channels)
+            or not isinstance(blocks_by_channel, dict)
+            or set(blocks_by_channel) != set(channels)
+        ):
+            raise CheckpointError("checkpoint history metadata is malformed")
+
+        history = History(channels=channels)
+        for channel in channels:
+            column_names = columns_by_channel[channel]
+            if (
+                not isinstance(column_names, list)
+                or any(not isinstance(column, str) for column in column_names)
+                or len(set(column_names)) != len(column_names)
+            ):
+                raise CheckpointError("checkpoint history metadata is malformed")
+            columns: dict[str, np.ndarray] = {}
+            for column in column_names:
+                array_key = f"_history__{channel}__{column}"
+                if array_key not in data.files:
+                    raise CheckpointError(f"Checkpoint is missing array {array_key!r}")
+                columns[column] = np.asarray(data[array_key])
+            history._restore_channel(channel, columns)
+            block_names = blocks_by_channel[channel]
+            if (
+                not isinstance(block_names, list)
+                or any(not isinstance(column, str) for column in block_names)
+                or len(set(block_names)) != len(block_names)
+            ):
+                raise CheckpointError("checkpoint history metadata is malformed")
+            block_columns: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+            for column in block_names:
+                value_key = f"_history__{channel}__{column}"
+                offsets_key = f"{value_key}__offsets"
+                if value_key not in data.files:
+                    raise CheckpointError(f"Checkpoint is missing array {value_key!r}")
+                if offsets_key not in data.files:
+                    raise CheckpointError(
+                        f"Checkpoint is missing array {offsets_key!r}"
+                    )
+                block_columns[column] = (
+                    np.asarray(data[value_key]),
+                    np.asarray(data[offsets_key]),
+                )
+            history._restore_blocks(channel, block_columns)
+    kwargs["history"] = history
     kwargs.update(values)
     kwargs["fe"] = int(kwargs.get("fe", 0))
     kwargs["gen"] = int(kwargs.get("gen", 0))

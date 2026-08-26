@@ -7,7 +7,7 @@ import dataclasses
 import importlib.util
 import pickle
 import warnings
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
@@ -41,6 +41,7 @@ from saealib.core.contracts import ComponentContract
 from saealib.core.state import OPTIMIZATION_STATE_INITIAL_KEYS
 from saealib.exceptions import ConfigurationError, ValidationError
 from saealib.execution.evaluator import Evaluator, SerialEvaluator
+from saealib.execution.history import SUPPORTED_HISTORY_CHANNELS
 from saealib.execution.runner import Runner
 from saealib.execution.runtime import default_runtime_registry
 from saealib.execution.scheduler import AsyncEvaluationScheduler
@@ -116,8 +117,18 @@ class ComponentProvider(Protocol):
         ...
 
     @property
+    def history_channels(self) -> Sequence[str]:
+        """Return the enabled execution history channels."""
+        ...
+
+    @property
     def feedback_builder_explicit(self) -> bool:
         """Return whether the feedback builder was explicitly configured."""
+        ...
+
+    @property
+    def history_channels_explicit(self) -> bool:
+        """Return whether history channels were explicitly configured."""
         ...
 
     @property
@@ -197,7 +208,9 @@ class Optimizer:
         self._evaluation_planner: EvaluationPlanner | None = None
         self.feedback_builder: FeedbackBuilder | None = None
         self.feedback_builder_explicit = False
+        self.history_channels_explicit = False
         self.async_evaluation_scheduler: AsyncEvaluationScheduler | None = None
+        self.history_channels: tuple[str, ...] = ("summary",)
         self.instance_name: str = ""
         self._preset: dict | None = None
         self._default_resolution: DefaultResolution | None = None
@@ -376,6 +389,21 @@ class Optimizer:
     def set_seed(self, seed: int | None) -> Self:
         """Set the master random seed. Returns self."""
         self.seed = seed
+        return self
+
+    def set_history(self, channels: Sequence[str]) -> Self:
+        """Set execution history channels and return self.
+
+        On resume, the checkpoint's channels take precedence unless this method
+        was called; calling it with a different set fails validation. Assigning
+        to ``history_channels`` directly does not count as calling it.
+        """
+        requested = tuple(channels)
+        unknown = sorted(set(requested) - SUPPORTED_HISTORY_CHANNELS)
+        if unknown:
+            raise ValidationError(f"Unknown history channel(s): {', '.join(unknown)}")
+        self.history_channels = requested
+        self.history_channels_explicit = True
         return self
 
     def set_initializer(self, initializer: Initializer) -> Self:

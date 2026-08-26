@@ -63,6 +63,11 @@ from saealib.core.state import (
 from saealib.core.state.patch import StatePatch
 from saealib.core.state.readonly import _unwrap_readonly
 from saealib.exceptions import ConfigurationError, EvaluationFatalError, ValidationError
+from saealib.execution.history import (
+    record_decision,
+    record_evaluations,
+    record_generation,
+)
 
 __all__ = [
     "AsyncPipelineRuntime",
@@ -148,6 +153,12 @@ class _ExecutionOutcome:
 class _ExecutionHaltError(Exception):
     def __init__(self, outcome: _ExecutionOutcome) -> None:
         self.outcome = outcome
+
+
+def _record_history_observation(state: OptimizationState) -> None:
+    """Record all history channels at one existing runtime observation point."""
+    record_decision(state)
+    record_evaluations(state)
 
 
 @dataclass(frozen=True)
@@ -593,6 +604,7 @@ def _execute_structured(
     frames: tuple[RegionFrame, ...] = (),
     *,
     dispatch: Callable[[Event], None] | None = None,
+    observe: Callable[[OptimizationState], None] | None = None,
     leaf_executor: Callable[
         [StructuredPlan, ComponentNode, OptimizationState, _BoundStateView],
         _LeafExecution,
@@ -756,6 +768,8 @@ def _execute_structured(
         patch = _bound_patch(plan, node, result.patch)
         if result.status is not NodeStatus.FAILED and (patch.writes or patch.deletes):
             _apply_structured_patch(current, patch)
+            if observe is not None:
+                observe(current)
         if dispatch is not None:
             for event in result.events:
                 dispatch(event)
@@ -815,7 +829,9 @@ def _execute_sequential_plan(
     *,
     dispatch: Callable[[Event], None] | None = None,
 ) -> OptimizationState:
-    return _execute_with_metadata(plan, state, dispatch=dispatch).state
+    return _execute_with_metadata(
+        plan, state, dispatch=dispatch, observe=_record_history_observation
+    ).state
 
 
 def _execute_with_metadata(
@@ -823,6 +839,7 @@ def _execute_with_metadata(
     state: OptimizationState,
     *,
     dispatch: Callable[[Event], None] | None = None,
+    observe: Callable[[OptimizationState], None] | None = None,
 ) -> _ExecutionOutcome:
     from saealib.core.graph_builder import StageNodeAdapter
     from saealib.pipeline import Stage
@@ -842,6 +859,8 @@ def _execute_with_metadata(
                     "OptimizationState"
                 )
             current = next_state
+            if observe is not None:
+                observe(current)
             results.append(NodeResult(patch=StatePatch(writes={})))
             continue
         aliases = _node_state_aliases(plan, node)
@@ -867,6 +886,8 @@ def _execute_with_metadata(
         patch = _bound_patch(plan, node, result.patch)
         if result.status is not NodeStatus.FAILED and (patch.writes or patch.deletes):
             current._store = current._store.apply_patch(patch)
+            if observe is not None:
+                observe(current)
         if dispatch is not None:
             for event in result.events:
                 dispatch(event)
@@ -949,7 +970,12 @@ class _OptimizerEnvironment:
             raise ValidationError(
                 "sequential environment cannot execute a structured plan"
             )
-        return _execute_with_metadata(self.plan, state, dispatch=self.dispatch)
+        return _execute_with_metadata(
+            self.plan,
+            state,
+            dispatch=self.dispatch,
+            observe=_record_history_observation,
+        )
 
     def _fingerprint(self) -> tuple[object, ...]:
         strategy = getattr(self.optimizer, "strategy", None)
@@ -1064,7 +1090,10 @@ class _OptimizerEnvironment:
         if async_index is None:
             # Custom plans without the evaluation protocol still run normally.
             return _execute_with_metadata(
-                sequential_plan, state, dispatch=self.dispatch
+                sequential_plan,
+                state,
+                dispatch=self.dispatch,
+                observe=_record_history_observation,
             )
         current = state
         prefix_outcome: _ExecutionOutcome | None = None
@@ -1077,7 +1106,10 @@ class _OptimizerEnvironment:
                 execution_nodes=sequential_plan.execution_nodes[:async_index],
             )
             prefix_outcome = _execute_with_metadata(
-                prefix_plan, value, dispatch=self.dispatch
+                prefix_plan,
+                value,
+                dispatch=self.dispatch,
+                observe=_record_history_observation,
             )
             if prefix_outcome.terminated or any(
                 result.status is not NodeStatus.COMPLETED
@@ -1106,6 +1138,7 @@ class _OptimizerEnvironment:
             )
         except _ExecutionHaltError as halt:
             return halt.outcome
+        _record_history_observation(result)
         if prefix_outcome is not None:
             return _ExecutionOutcome(
                 state=result,
@@ -1150,6 +1183,7 @@ class _OptimizerEnvironment:
         manager = getattr(self.optimizer, "surrogate_manager", None)
         if manager is not None:
             manager.on_generation_end(state.gen, state.archive, state)
+        record_generation(state)
         self.dispatch(GenerationEndEvent(ctx=state))
 
     def fatal(self, state: OptimizationState) -> None:
@@ -1311,6 +1345,7 @@ class PipelineRuntime:
                     session.plan,
                     session.state,
                     session.frames,
+                    observe=_record_history_observation,
                 )
                 if metadata.recompile_requested:
                     raise ValidationError(
@@ -1372,6 +1407,7 @@ class PipelineRuntime:
                 state,
                 session.frames,
                 dispatch=env.dispatch,
+                observe=_record_history_observation,
             )
             if metadata.recompile_requested:
                 if not _structured_recompile_accepted(metadata):
@@ -1460,7 +1496,11 @@ class PipelineRuntime:
                 "PipelineRuntime.advance requires a SequentialPlan session"
             )
         if self.environment is None:
-            metadata = _execute_with_metadata(session.plan, session.state)
+            metadata = _execute_with_metadata(
+                session.plan,
+                session.state,
+                observe=_record_history_observation,
+            )
             if metadata.recompile_requested:
                 raise ValidationError(
                     "PipelineRuntime cannot satisfy RequestRecompile without "
@@ -1668,6 +1708,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 structured_plan,
                 session.state,
                 session.frames,
+                observe=_record_history_observation,
                 leaf_executor=_structured_async_leaf_executor({}),
                 async_control=True,
             )
@@ -1723,6 +1764,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
             if callable(poll):
                 result = poll(state)
                 state = result.state
+                _record_history_observation(state)
                 resume_async_driver = not state.pending_evaluations and not (
                     _structured_async_plan_complete(state)
                 )
@@ -1761,6 +1803,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
             state,
             session.frames,
             dispatch=environment.dispatch,
+            observe=_record_history_observation,
             leaf_executor=_structured_async_leaf_executor(
                 self._async_leaf_kwargs(environment)
             ),
@@ -1870,6 +1913,7 @@ class AsyncPipelineRuntime(PipelineRuntime):
                 state = env.reattach(state)
             result = env.poll(state)
             state = result.state
+            _record_history_observation(state)
             if state.pending_evaluations:
                 if env.is_terminated(state):
                     if not result.progressed:

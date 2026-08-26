@@ -15,6 +15,7 @@ from saealib.execution.evaluator import JoblibEvaluator as JoblibEvaluator
 from saealib.execution.evaluator import PendingEvaluation as PendingEvaluation
 from saealib.execution.evaluator import SerialEvaluator as SerialEvaluator
 from saealib.execution.evaluator import ThreadPoolEvaluator as ThreadPoolEvaluator
+from saealib.execution.history import History as History
 from saealib.execution.initializer import GenomeInitializer as GenomeInitializer
 from saealib.execution.initializer import Initializer as Initializer
 from saealib.execution.initializer import LHSInitializer as LHSInitializer
@@ -44,6 +45,7 @@ __all__: list[str] = [
     "EvaluationUpdate",
     "Evaluator",
     "GenomeInitializer",
+    "History",
     "Initializer",
     "JoblibEvaluator",
     "LHSInitializer",

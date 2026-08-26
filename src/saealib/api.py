@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -14,6 +14,7 @@ from saealib.acquisition.winrate import WinRateAcquisition
 from saealib.callback import GenerationStartEvent, logging_generation
 from saealib.context import OptimizationState
 from saealib.exceptions import ValidationError
+from saealib.execution.history import History
 from saealib.execution.initializer import LHSInitializer
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
@@ -58,6 +59,8 @@ class Result:
         Total number of true function evaluations used.
     gen : int
         Total number of generations completed.
+    history : History or None
+        Execution history recorded during the run.
     ctx : OptimizationState
         Full optimization context providing access to the archive and more.
     """
@@ -67,6 +70,7 @@ class Result:
     fe: int
     gen: int
     ctx: OptimizationState
+    history: History | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -215,7 +219,14 @@ def _build_result(ctx: OptimizationState) -> Result:
             best_x = archive_x[pareto_idx]
             best_f = archive_f[pareto_idx]
 
-    return Result(x=best_x, f=best_f, fe=ctx.fe, gen=ctx.gen, ctx=ctx)
+    return Result(
+        x=best_x,
+        f=best_f,
+        fe=ctx.fe,
+        gen=ctx.gen,
+        history=ctx.history,
+        ctx=ctx,
+    )
 
 
 def _run(
@@ -228,6 +239,7 @@ def _run(
     seed: int | None,
     verbose: bool,
     preset: str | Path | dict | None,
+    history_channels: Sequence[str] | None,
 ) -> Result:
     dim = problem.dim
     if pop_size is None:
@@ -243,6 +255,8 @@ def _run(
     termination = Termination(max_fe_cond(max_fe))
 
     opt = Optimizer(problem).set_initializer(initializer).set_termination(termination)
+    if history_channels is not None:
+        opt.set_history(history_channels)
 
     if preset is not None:
         opt.set_preset(preset)
@@ -288,6 +302,7 @@ def minimize(
     max_fe: int | None = None,
     pop_size: int | None = None,
     seed: int | None = None,
+    history_channels: Sequence[str] | None = None,
     verbose: bool = True,
 ) -> Result:
     """Run surrogate-assisted minimization.
@@ -332,6 +347,10 @@ def minimize(
         Population size. Default: ``4 * dim``.
     seed : int or None
         Random seed for :class:`LHSInitializer`.
+    history_channels : sequence of str or None
+        Execution history channels to record. ``None`` keeps the default
+        summary history. Include ``"evaluation"`` to record every true
+        evaluation result.
     verbose : bool
         If ``False``, suppress per-generation log output. Default: ``True``.
 
@@ -359,6 +378,7 @@ def minimize(
         seed,
         verbose,
         preset,
+        history_channels,
     )
 
 
@@ -377,6 +397,7 @@ def maximize(
     max_fe: int | None = None,
     pop_size: int | None = None,
     seed: int | None = None,
+    history_channels: Sequence[str] | None = None,
     verbose: bool = True,
 ) -> Result:
     """Run surrogate-assisted maximization.
@@ -423,6 +444,10 @@ def maximize(
         Population size. Default: ``4 * dim``.
     seed : int or None
         Random seed for :class:`LHSInitializer`.
+    history_channels : sequence of str or None
+        Execution history channels to record. ``None`` keeps the default
+        summary history. Include ``"evaluation"`` to record every true
+        evaluation result.
     verbose : bool
         If ``False``, suppress per-generation log output. Default: ``True``.
 
@@ -450,4 +475,5 @@ def maximize(
         seed,
         verbose,
         preset,
+        history_channels,
     )

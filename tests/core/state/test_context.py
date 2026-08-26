@@ -88,6 +88,7 @@ def test_runtime_context_restricts_graph_native_context_capabilities() -> None:
         "get_state",
         "bind_compiled_services",
         "_store",
+        "history",
     )
     for name in forbidden:
         assert not hasattr(runtime_context, name)

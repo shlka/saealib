@@ -696,6 +696,10 @@ class AsyncEvaluationScheduler:
             plan_updates.setdefault(request_id, []).append(update)
             current = current.replace(evaluation_plan_updates=plan_updates)
         current_pending = current.pending_evaluations[request_id]
+        if not replay:
+            history = current.history
+            if history is not None:
+                history._observe_evaluation(update, current_pending.retry_count)
         if current_pending.feedback_result is not None:
             current = current.replace(feedback_result=current_pending.feedback_result)
         current_plan = current.evaluation_plan
@@ -860,6 +864,9 @@ class AsyncEvaluationScheduler:
             and current_pending.retry_count < self.retry_limit
         ):
             retried = True
+            reopen_history = current.history
+            if reopen_history is not None:
+                reopen_history._reopen_request(request_id)
             rows = np.asarray(
                 [
                     int(
