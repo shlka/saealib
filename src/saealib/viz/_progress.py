@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Hashable, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -15,6 +16,7 @@ from saealib.viz._history import (
     _require_channel,
 )
 from saealib.viz._matplotlib import _require_matplotlib
+from saealib.viz._trials import _aggregate_convergence, _prepare_convergence
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -43,22 +45,52 @@ def _front_arrays(
 
 
 def plot_convergence(
-    result: Result, *, label: str | None = None, ax: Axes | None = None
+    result: Result | Sequence[Result],
+    *,
+    groups: Sequence[Hashable] | None = None,
+    labels: str | Mapping[Hashable, str] | None = None,
+    fe_range: str = "common",
+    ax: Axes | None = None,
 ) -> Figure:
-    """Plot the best objective value in the Pareto archive at each generation.
+    """Plot convergence for one result or aggregate several results.
 
-    The curve uses the value recorded for each generation's Pareto archive; it
-    is not a best-so-far curve. Consequently, the curve can rise for a
-    constrained problem when the archive's feasible population changes.
+    A single result is plotted using the objective value recorded for each
+    generation's Pareto archive. Multiple results are converted to per-run
+    best-so-far step functions and summarized with a median line and an
+    interquartile band on a common function-evaluation axis.
 
     Parameters
     ----------
-    result : saealib.api.Result
-        Optimization result with ``summary`` history.
-    label : str or None, optional
-        Label for the plotted line. A legend is shown when supplied.
+    result : saealib.api.Result or sequence of saealib.api.Result
+        Optimization result or results with ``summary`` history.
+    groups : sequence of hashable or None, optional
+        Group key for each result. Results sharing a key are aggregated into
+        separate median and interquartile curves.
+    labels : str, mapping, or None, optional
+        Display label for an ungrouped curve, or a mapping from group keys to
+        display labels.
+    fe_range : {"common", "full"}, optional
+        Function-evaluation range used for multi-result aggregation. ``"common"``
+        ends at the shortest run; ``"full"`` extends to the longest run and
+        holds shorter runs at their final values.
     ax : matplotlib.axes.Axes or None, optional
         Axes to draw on.
+
+    Notes
+    -----
+    ``summary.fe`` is recorded at generation boundaries. Synchronous and
+    asynchronous runtimes advance it at different lifecycle points, so
+    aggregating runs across execution modes can introduce a bounded offset on
+    the function-evaluation axis. The ``evaluation`` channel can provide a
+    different source when that distinction is required, but it is not used by
+    this function.
+
+    ``f_min_0`` and ``f_max_0`` describe the best value in the Pareto archive
+    at each generation, not a best-so-far value. For multi-result aggregation,
+    each run is therefore converted to best-so-far before the statistics are
+    computed. With ``fe_range="full"``, a run that finishes earlier contributes
+    its final value over the remaining range. This frozen tail is a limitation
+    of the full-range view, not an observation after the run ended.
 
     Returns
     -------
@@ -66,28 +98,41 @@ def plot_convergence(
         Figure containing the plot.
     """
     _require_matplotlib()
-    summary = _require_channel(result, "summary", "plot_convergence")
-    problem = result.ctx.problem
-    if problem.n_obj > 1:
-        raise ValidationError(
-            "plot_convergence requires a single objective. Use "
-            "plot_hypervolume or plot_indicator for multi-objective results."
-        )
-    direction = _direction(result, 1)
-    value_name = "f_min_0" if direction[0] < 0 else "f_max_0"
-    fe = _history_column(summary, "fe", len(summary.get("fe", ())), "plot_convergence")
-    values = _history_column(summary, value_name, len(fe), "plot_convergence").astype(
-        float, copy=False
+    group_values, series, direction = _prepare_convergence(
+        result, groups, labels, fe_range
     )
-    mask = ~np.isnan(values)
 
     fig, axes = _resolve_axes(ax)
-    line_kwargs = {"label": label} if label is not None else {}
-    axes.plot(fe[mask], values[mask], **line_kwargs)
+    if len(series) == 1:
+        fe, values = series[0]
+        line_label: str | None = None
+        if groups is None:
+            if isinstance(labels, str):
+                line_label = labels
+        elif isinstance(labels, Mapping):
+            line_label = labels[group_values[0]]
+        line_kwargs = {"label": line_label} if line_label is not None else {}
+        axes.plot(fe, values, **line_kwargs)
+        if line_label is not None:
+            axes.legend()
+    else:
+        grid, aggregates = _aggregate_convergence(
+            series, group_values, direction, fe_range
+        )
+        for group, median, q1, q3 in aggregates:
+            line_label = None
+            if groups is None:
+                if isinstance(labels, str):
+                    line_label = labels
+            elif isinstance(labels, Mapping):
+                line_label = labels[group]
+            line_kwargs = {"label": line_label} if line_label is not None else {}
+            axes.plot(grid, median, **line_kwargs)
+            axes.fill_between(grid, q1, q3, alpha=0.25)
+        if labels is not None:
+            axes.legend()
     axes.set_xlabel("Function evaluations")
     axes.set_ylabel("Objective value")
-    if label is not None:
-        axes.legend()
     return fig
 
 

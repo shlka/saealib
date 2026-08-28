@@ -83,7 +83,7 @@ def _front_result(
 def test_plot_convergence_uses_summary_fe_and_minimum_value() -> None:
     result = _summary_result()
 
-    fig = plot_convergence(result, label="run")
+    fig = plot_convergence(result, labels="run")
 
     assert isinstance(fig, Figure)
     ax = fig.axes[0]
