@@ -29,12 +29,16 @@ from saealib.viz._progress import (
     plot_running_metric,
 )
 from saealib.viz._surrogate import (
+    plot_acquisition,
     plot_prescreening,
+    plot_surrogate,
     plot_surrogate_accuracy,
     plot_surrogate_error_history,
+    plot_surrogate_uncertainty,
 )
 
 __all__ = [
+    "plot_acquisition",
     "plot_archive",
     "plot_constraint_violation",
     "plot_convergence",
@@ -49,7 +53,9 @@ __all__ = [
     "plot_prescreening",
     "plot_radar",
     "plot_running_metric",
+    "plot_surrogate",
     "plot_surrogate_accuracy",
     "plot_surrogate_error_history",
+    "plot_surrogate_uncertainty",
     "plot_variable_distribution",
 ]

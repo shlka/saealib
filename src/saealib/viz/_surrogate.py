@@ -9,6 +9,10 @@ from typing import TYPE_CHECKING, Any, cast
 import numpy as np
 
 from saealib.exceptions import ValidationError
+from saealib.population import DenseVectorBatch
+from saealib.space import BoundsService, DenseNumericView
+from saealib.space.space import encode_features
+from saealib.surrogate import Surrogate
 from saealib.viz._common import _resolve_axes
 from saealib.viz._history import (
     _history_column,
@@ -22,7 +26,239 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
+    from saealib.acquisition import AcquisitionFunction
     from saealib.api import Result
+
+
+_DENSE_ERROR = "The search space does not provide a dense numeric view."
+
+
+def _landscape_grid(
+    result: Result,
+    function: str,
+    variables: tuple[int, int] | None,
+    fixed: Mapping[int, float] | None,
+    resolution: int,
+) -> tuple[np.ndarray, np.ndarray, tuple[int, int]]:
+    """Validate landscape inputs and return design and encoded grid arrays."""
+    try:
+        services = result.ctx.problem.space.services
+        dense = services.get("DenseNumericView")
+        bounds_service = services.get("BoundsService")
+    except AttributeError as exc:
+        raise ValidationError(f"{function}: {_DENSE_ERROR}") from exc
+    if dense is None:
+        raise ValidationError(f"{function}: {_DENSE_ERROR}")
+    if bounds_service is None:
+        raise ValidationError(f"{function} requires the BoundsService service.")
+    try:
+        lower, upper = cast(BoundsService, bounds_service).bounds
+        lower = np.asarray(lower, dtype=float).reshape(-1)
+        upper = np.asarray(upper, dtype=float).reshape(-1)
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise ValidationError(f"{function} requires valid bounds.") from exc
+    if (
+        lower.shape != upper.shape
+        or lower.size < 2
+        or not np.all(np.isfinite(lower))
+        or not np.all(np.isfinite(upper))
+        or np.any(upper < lower)
+    ):
+        raise ValidationError(f"{function} requires at least two matching bounds.")
+    dimension = lower.size
+    if (
+        not isinstance(resolution, (int, np.integer))
+        or isinstance(resolution, (bool, np.bool_))
+        or resolution < 2
+    ):
+        raise ValidationError("resolution must be an integer of at least 2.")
+    if variables is None:
+        if dimension != 2:
+            raise ValidationError(
+                f"{function} requires variables=(i, j) when dimension is greater "
+                "than two."
+            )
+        selected = (0, 1)
+    else:
+        try:
+            selected_raw = tuple(variables)
+        except TypeError as exc:
+            raise ValidationError(
+                f"{function} variables must contain two indices."
+            ) from exc
+        if len(selected_raw) != 2 or any(
+            isinstance(i, (bool, np.bool_)) or not isinstance(i, (int, np.integer))
+            for i in selected_raw
+        ):
+            raise ValidationError(f"{function} variables must contain two indices.")
+        selected = (int(selected_raw[0]), int(selected_raw[1]))
+        if selected[0] == selected[1] or any(i < 0 or i >= dimension for i in selected):
+            raise ValidationError(f"{function} variables contain invalid indices.")
+    if fixed is None:
+        fixed_items = ()
+    elif isinstance(fixed, Mapping):
+        fixed_items = fixed.items()
+    else:
+        raise ValidationError(f"{function} fixed must be a mapping of index to value.")
+    fixed_values: dict[int, float] = {}
+    for raw_index, value in fixed_items:
+        index = raw_index
+        if isinstance(index, (bool, np.bool_)) or not isinstance(
+            index, (int, np.integer)
+        ):
+            raise ValidationError(f"{function} fixed contains an invalid index.")
+        index = int(index)
+        if index < 0 or index >= dimension:
+            raise ValidationError(
+                f"{function} fixed contains an index outside the bounds."
+            )
+        if index in selected:
+            raise ValidationError(f"{function} fixed overlaps variables.")
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValidationError(f"{function} fixed values must be numeric.") from exc
+        if not np.isfinite(numeric) or numeric < lower[index] or numeric > upper[index]:
+            raise ValidationError(f"{function} fixed value is outside its bounds.")
+        fixed_values[index] = numeric
+    missing = set(range(dimension)) - set(selected) - set(fixed_values)
+    if missing:
+        raise ValidationError(
+            f"{function} requires fixed values for dimensions {sorted(missing)}."
+        )
+    axis_x = np.linspace(lower[selected[0]], upper[selected[0]], int(resolution))
+    axis_y = np.linspace(lower[selected[1]], upper[selected[1]], int(resolution))
+    grid = np.empty((int(resolution) ** 2, dimension), dtype=float)
+    grid[:] = 0.0
+    for index, value in fixed_values.items():
+        grid[:, index] = value
+    xx, yy = np.meshgrid(axis_x, axis_y)
+    grid[:, selected[0]] = xx.ravel()
+    grid[:, selected[1]] = yy.ravel()
+    batch = DenseVectorBatch(grid)
+    try:
+        features = np.asarray(
+            encode_features(result.ctx.problem.space, batch), dtype=np.float64
+        )
+    except ValidationError:
+        raise
+    except (AttributeError, TypeError, ValueError, OverflowError) as exc:
+        raise ValidationError(
+            f"{function} could not encode the landscape grid."
+        ) from exc
+    if features.ndim != 2 or features.shape[0] != len(grid):
+        raise ValidationError(
+            f"{function} requires a two-dimensional encoded grid with one row "
+            "per design point."
+        )
+    return grid, features, selected
+
+
+def _landscape_objective(result: Result, objective: int | None, function: str) -> int:
+    try:
+        n_obj_value = result.ctx.problem.n_obj
+    except AttributeError as exc:
+        raise ValidationError(f"{function} requires objective metadata.") from exc
+    if (
+        isinstance(n_obj_value, (bool, np.bool_))
+        or not isinstance(n_obj_value, (int, np.integer))
+        or n_obj_value < 1
+    ):
+        raise ValidationError(f"{function} requires a positive objective count.")
+    n_obj = int(n_obj_value)
+    if n_obj > 1 and objective is None:
+        raise ValidationError(
+            f"{function} requires objective for multi-objective data."
+        )
+    index = 0 if objective is None else objective
+    if (
+        isinstance(index, (bool, np.bool_))
+        or not isinstance(index, (int, np.integer))
+        or index < 0
+        or index >= n_obj
+    ):
+        raise ValidationError(
+            f"{function} objective is outside the available objective range."
+        )
+    return int(index)
+
+
+def _landscape_plot(
+    result: Result,
+    surrogate: Surrogate,
+    *,
+    variables: tuple[int, int] | None,
+    fixed: Mapping[int, float] | None,
+    resolution: int,
+    cmap: str | None,
+    ax: Axes | None,
+    objective: int | None,
+    uncertainty: bool = False,
+) -> Figure:
+    _require_matplotlib()
+    if not isinstance(surrogate, Surrogate):
+        raise ValidationError("surrogate must be a fitted Surrogate, not a manager.")
+    grid, features, selected = _landscape_grid(
+        result,
+        "plot_surrogate_uncertainty" if uncertainty else "plot_surrogate",
+        variables,
+        fixed,
+        resolution,
+    )
+    index = _landscape_objective(
+        result,
+        objective,
+        "plot_surrogate_uncertainty" if uncertainty else "plot_surrogate",
+    )
+    prediction = surrogate.predict(features)
+    values = prediction.std if uncertainty else prediction.value
+    if uncertainty and values is None:
+        raise ValidationError(
+            "This surrogate does not provide uncertainty. Use a surrogate with "
+            "Surrogate.provides_uncertainty=True, such as SklearnGPRSurrogate."
+        )
+    assert values is not None
+    values = np.asarray(values)
+    expected = int(resolution) ** 2
+    if values.ndim != 2 or values.shape[0] != expected or values.shape[1] <= index:
+        raise ValidationError(
+            "surrogate prediction shape does not match the landscape grid."
+        )
+    fig, ax = _resolve_axes(ax)
+    image = ax.imshow(
+        values[:, index].reshape((int(resolution), int(resolution))),
+        origin="lower",
+        extent=(
+            grid[:, selected[0]].min(),
+            grid[:, selected[0]].max(),
+            grid[:, selected[1]].min(),
+            grid[:, selected[1]].max(),
+        ),
+        cmap=cmap,
+        aspect="auto",
+    )
+    colorbar = fig.colorbar(image, ax=ax)
+    colorbar.set_label(
+        "Prediction standard deviation" if uncertainty else "Predicted objective"
+    )
+    if not uncertainty:
+        dense = cast(
+            DenseNumericView, result.ctx.problem.space.services.get("DenseNumericView")
+        )
+        try:
+            points = np.asarray(dense.get_view(result.ctx.archive.genomes), dtype=float)
+        except ValidationError:
+            raise
+        except (AttributeError, TypeError, ValueError, OverflowError) as exc:
+            raise ValidationError(
+                "plot_surrogate requires numeric archive design data."
+            ) from exc
+        if points.ndim != 2 or points.shape[1] != grid.shape[1]:
+            raise ValidationError("archive design data is not dense numeric data.")
+        ax.scatter(points[:, selected[0]], points[:, selected[1]])
+    ax.set_xlabel(f"x{selected[0]}")
+    ax.set_ylabel(f"x{selected[1]}")
+    return fig
 
 
 def _accuracy_rows(
@@ -414,4 +650,208 @@ def plot_prescreening(
     ax.scatter(ranks[selected], scores[selected], marker="o")
     ax.set_xlabel("Candidate rank by acquisition score")
     ax.set_ylabel("Acquisition score")
+    return fig
+
+
+def plot_surrogate(
+    result: Result,
+    surrogate: Surrogate,
+    *,
+    variables: tuple[int, int] | None = None,
+    fixed: Mapping[int, float] | None = None,
+    resolution: int = 50,
+    objective: int | None = None,
+    cmap: str | None = None,
+    ax: Axes | None = None,
+) -> Figure:
+    """Plot the mean landscape of a fitted surrogate.
+
+    This is a visualization of the snapshot of the fitted surrogate passed to
+    this function. It is not the global landscape representing the
+    candidate-wise policy of a ``LocalSurrogateManager``. ``manager.surrogate``
+    is an attribute of the concrete global/local manager classes, not part of
+    the ``SurrogateManager`` ABC contract. For a local manager, the surrogate
+    immediately after a run may be fitted around only the last evaluated
+    candidate. To see a global landscape, refit a surrogate on the complete
+    archive and pass that fitted surrogate.
+
+    Parameters
+    ----------
+    result : saealib.api.Result
+        Optimization result providing the search space and archive.
+    surrogate : saealib.surrogate.Surrogate
+        Fitted surrogate snapshot to evaluate.
+    variables : tuple of int or None, optional
+        Two axes to plot. ``None`` selects ``(0, 1)`` only in two dimensions.
+    fixed : mapping of int to float or None, optional
+        Values for every non-plotted dimension.
+    resolution : int, optional
+        Number of grid points per axis.
+    objective : int or None, optional
+        Objective to plot; required for multi-objective problems.
+    cmap : str or None, optional
+        Matplotlib colormap.
+    ax : matplotlib.axes.Axes or None, optional
+        Axes to draw on.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure containing the mean image, colorbar, and archive points.
+    """
+    return _landscape_plot(
+        result,
+        surrogate,
+        variables=variables,
+        fixed=fixed,
+        resolution=resolution,
+        cmap=cmap,
+        ax=ax,
+        objective=objective,
+    )
+
+
+def plot_surrogate_uncertainty(
+    result: Result,
+    surrogate: Surrogate,
+    *,
+    variables: tuple[int, int] | None = None,
+    fixed: Mapping[int, float] | None = None,
+    resolution: int = 50,
+    objective: int | None = None,
+    cmap: str | None = None,
+    ax: Axes | None = None,
+) -> Figure:
+    """Plot the predictive standard-deviation landscape.
+
+    This is a visualization of the snapshot of the fitted surrogate passed to
+    this function, not the global candidate-wise policy of a
+    ``LocalSurrogateManager``. ``manager.surrogate`` is an attribute of the
+    concrete manager classes and is not an ABC contract of
+    ``SurrogateManager``. For a local manager, the surrogate immediately after
+    a run may be fitted around only the last evaluated candidate. For a global
+    landscape, refit on the complete archive and pass that surrogate.
+
+    Parameters
+    ----------
+    result : saealib.api.Result
+        Optimization result providing the search space.
+    surrogate : saealib.surrogate.Surrogate
+        Fitted surrogate snapshot providing uncertainty.
+    variables : tuple of int or None, optional
+        Two axes to plot; ``None`` is valid only for two dimensions.
+    fixed : mapping of int to float or None, optional
+        Values for every non-plotted dimension.
+    resolution : int, optional
+        Number of grid points per axis.
+    objective : int or None, optional
+        Objective to plot; required for multi-objective problems.
+    cmap : str or None, optional
+        Matplotlib colormap.
+    ax : matplotlib.axes.Axes or None, optional
+        Axes to draw on.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure containing the uncertainty image and colorbar.
+    """
+    return _landscape_plot(
+        result,
+        surrogate,
+        variables=variables,
+        fixed=fixed,
+        resolution=resolution,
+        cmap=cmap,
+        ax=ax,
+        objective=objective,
+        uncertainty=True,
+    )
+
+
+def plot_acquisition(
+    result: Result,
+    surrogate: Surrogate,
+    acquisition: AcquisitionFunction,
+    *,
+    variables: tuple[int, int] | None = None,
+    fixed: Mapping[int, float] | None = None,
+    resolution: int = 50,
+    rng: np.random.Generator | int | None = None,
+    cmap: str | None = None,
+    ax: Axes | None = None,
+) -> Figure:
+    """Plot acquisition scores over a two-dimensional design landscape.
+
+    This is a visualization of the snapshot of the fitted surrogate passed to
+    this function, not the global candidate-wise policy of a
+    ``LocalSurrogateManager``. ``manager.surrogate`` belongs to concrete
+    manager classes and is not part of the ``SurrogateManager`` ABC contract.
+    For a local manager, the surrogate immediately after a run may be fitted
+    around only the last evaluated candidate. To obtain a global landscape,
+    refit on the complete archive and pass that surrogate.
+
+    Parameters
+    ----------
+    result : saealib.api.Result
+        Optimization result providing the search space, archive, and context.
+    surrogate : saealib.surrogate.Surrogate
+        Fitted surrogate snapshot.
+    acquisition : saealib.acquisition.AcquisitionFunction
+        Acquisition function used to score the encoded grid.
+    variables : tuple of int or None, optional
+        Two axes to plot; ``None`` is valid only for two dimensions.
+    fixed : mapping of int to float or None, optional
+        Values for every non-plotted dimension.
+    resolution : int, optional
+        Number of grid points per axis.
+    rng : numpy.random.Generator, int, or None, optional
+        Detached random generator, seed, or a request for a fresh generator.
+    cmap : str or None, optional
+        Matplotlib colormap.
+    ax : matplotlib.axes.Axes or None, optional
+        Axes to draw on.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure containing the acquisition-score image and colorbar.
+    """
+    _require_matplotlib()
+    if not isinstance(surrogate, Surrogate):
+        raise ValidationError("surrogate must be a fitted Surrogate, not a manager.")
+    grid, features, selected = _landscape_grid(
+        result, "plot_acquisition", variables, fixed, resolution
+    )
+    prediction = surrogate.predict(features)
+    if rng is None:
+        plot_rng = np.random.default_rng()
+    elif isinstance(rng, np.random.Generator):
+        plot_rng = rng
+    elif isinstance(rng, (int, np.integer)) and not isinstance(rng, (bool, np.bool_)):
+        plot_rng = np.random.default_rng(int(rng))
+    else:
+        raise ValidationError("rng must be a numpy Generator, integer seed, or None.")
+    plot_ctx = result.ctx.replace(rng=plot_rng)
+    outcome = acquisition.evaluate(features, prediction, result.ctx.archive, plot_ctx)
+    scores = None if outcome is None else outcome.scores
+    expected = int(resolution) ** 2
+    if scores is None or np.asarray(scores).shape != (expected,):
+        raise ValidationError("acquisition scores must have one value per grid point.")
+    fig, ax = _resolve_axes(ax)
+    image = ax.imshow(
+        np.asarray(scores).reshape((int(resolution), int(resolution))),
+        origin="lower",
+        extent=(
+            grid[:, selected[0]].min(),
+            grid[:, selected[0]].max(),
+            grid[:, selected[1]].min(),
+            grid[:, selected[1]].max(),
+        ),
+        cmap=cmap,
+        aspect="auto",
+    )
+    fig.colorbar(image, ax=ax, label="Acquisition score")
+    ax.set_xlabel(f"x{selected[0]}")
+    ax.set_ylabel(f"x{selected[1]}")
     return fig
