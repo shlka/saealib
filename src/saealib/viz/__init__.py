@@ -22,6 +22,11 @@ from saealib.viz._progress import (
     plot_indicator,
     plot_running_metric,
 )
+from saealib.viz._surrogate import (
+    plot_prescreening,
+    plot_surrogate_accuracy,
+    plot_surrogate_error_history,
+)
 
 __all__ = [
     "plot_constraint_violation",
@@ -32,6 +37,9 @@ __all__ = [
     "plot_pareto",
     "plot_pareto_evolution",
     "plot_pcp",
+    "plot_prescreening",
     "plot_radar",
     "plot_running_metric",
+    "plot_surrogate_accuracy",
+    "plot_surrogate_error_history",
 ]
