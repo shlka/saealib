@@ -28,6 +28,7 @@ from saealib.viz._progress import (
     plot_indicator,
     plot_running_metric,
 )
+from saealib.viz._structure import plot_island_migration, plot_weight_vectors
 from saealib.viz._surrogate import (
     plot_acquisition,
     plot_prescreening,
@@ -46,6 +47,7 @@ __all__ = [
     "plot_diversity",
     "plot_hypervolume",
     "plot_indicator",
+    "plot_island_migration",
     "plot_objective_heatmap",
     "plot_pareto",
     "plot_pareto_evolution",
@@ -58,4 +60,5 @@ __all__ = [
     "plot_surrogate_error_history",
     "plot_surrogate_uncertainty",
     "plot_variable_distribution",
+    "plot_weight_vectors",
 ]
