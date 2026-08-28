@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.execution.runtime &#8212; saealib 0.1.0b5.dev87+g864b56a6a documentation</title>
+    <title>saealib.execution.runtime &#8212; saealib 0.1.0b5.dev89+g38f4e2425 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=8f8c623a"></script>
+    <script src="../../../_static/documentation_options.js?v=4c5850f5"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1021,6 +1021,11 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.state.patch</span><span class="w"> </span><span class="kn">import</span> <span class="n">StatePatch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.state.readonly</span><span class="w"> </span><span class="kn">import</span> <span class="n">_unwrap_readonly</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigurationError</span><span class="p">,</span> <span class="n">EvaluationFatalError</span><span class="p">,</span> <span class="n">ValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.history</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">record_decision</span><span class="p">,</span>
+    <span class="n">record_evaluations</span><span class="p">,</span>
+    <span class="n">record_generation</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;AsyncPipelineRuntime&quot;</span><span class="p">,</span>
@@ -1106,6 +1111,12 @@ window.runMermaid = runMermaid;</script>
 <span class="k">class</span><span class="w"> </span><span class="nc">_ExecutionHaltError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcome</span><span class="p">:</span> <span class="n">_ExecutionOutcome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">outcome</span> <span class="o">=</span> <span class="n">outcome</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_record_history_observation</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Record all history channels at one existing runtime observation point.&quot;&quot;&quot;</span>
+    <span class="n">record_decision</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+    <span class="n">record_evaluations</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
 
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1551,6 +1562,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">frames</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RegionFrame</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">dispatch</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Event</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">observe</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">OptimizationState</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">leaf_executor</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
         <span class="p">[</span><span class="n">StructuredPlan</span><span class="p">,</span> <span class="n">ComponentNode</span><span class="p">,</span> <span class="n">OptimizationState</span><span class="p">,</span> <span class="n">_BoundStateView</span><span class="p">],</span>
         <span class="n">_LeafExecution</span><span class="p">,</span>
@@ -1714,6 +1726,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">patch</span> <span class="o">=</span> <span class="n">_bound_patch</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">patch</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">NodeStatus</span><span class="o">.</span><span class="n">FAILED</span> <span class="ow">and</span> <span class="p">(</span><span class="n">patch</span><span class="o">.</span><span class="n">writes</span> <span class="ow">or</span> <span class="n">patch</span><span class="o">.</span><span class="n">deletes</span><span class="p">):</span>
             <span class="n">_apply_structured_patch</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">patch</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">observe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">observe</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dispatch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
                 <span class="n">dispatch</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
@@ -1773,7 +1787,9 @@ window.runMermaid = runMermaid;</script>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">dispatch</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Event</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">_execute_with_metadata</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">dispatch</span><span class="o">=</span><span class="n">dispatch</span><span class="p">)</span><span class="o">.</span><span class="n">state</span>
+    <span class="k">return</span> <span class="n">_execute_with_metadata</span><span class="p">(</span>
+        <span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">dispatch</span><span class="o">=</span><span class="n">dispatch</span><span class="p">,</span> <span class="n">observe</span><span class="o">=</span><span class="n">_record_history_observation</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">state</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_execute_with_metadata</span><span class="p">(</span>
@@ -1781,6 +1797,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">dispatch</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Event</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">observe</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">OptimizationState</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ExecutionOutcome</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.graph_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">StageNodeAdapter</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Stage</span>
@@ -1800,6 +1817,8 @@ window.runMermaid = runMermaid;</script>
                     <span class="s2">&quot;OptimizationState&quot;</span>
                 <span class="p">)</span>
             <span class="n">current</span> <span class="o">=</span> <span class="n">next_state</span>
+            <span class="k">if</span> <span class="n">observe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">observe</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
             <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NodeResult</span><span class="p">(</span><span class="n">patch</span><span class="o">=</span><span class="n">StatePatch</span><span class="p">(</span><span class="n">writes</span><span class="o">=</span><span class="p">{})))</span>
             <span class="k">continue</span>
         <span class="n">aliases</span> <span class="o">=</span> <span class="n">_node_state_aliases</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
@@ -1825,6 +1844,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">patch</span> <span class="o">=</span> <span class="n">_bound_patch</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">patch</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">NodeStatus</span><span class="o">.</span><span class="n">FAILED</span> <span class="ow">and</span> <span class="p">(</span><span class="n">patch</span><span class="o">.</span><span class="n">writes</span> <span class="ow">or</span> <span class="n">patch</span><span class="o">.</span><span class="n">deletes</span><span class="p">):</span>
             <span class="n">current</span><span class="o">.</span><span class="n">_store</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">apply_patch</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">observe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">observe</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dispatch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
                 <span class="n">dispatch</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
@@ -1907,7 +1928,12 @@ window.runMermaid = runMermaid;</script>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;sequential environment cannot execute a structured plan&quot;</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">_execute_with_metadata</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">dispatch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_execute_with_metadata</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">dispatch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">,</span>
+            <span class="n">observe</span><span class="o">=</span><span class="n">_record_history_observation</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_fingerprint</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
         <span class="n">strategy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="s2">&quot;strategy&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -2022,7 +2048,10 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="n">async_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Custom plans without the evaluation protocol still run normally.</span>
             <span class="k">return</span> <span class="n">_execute_with_metadata</span><span class="p">(</span>
-                <span class="n">sequential_plan</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">dispatch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span>
+                <span class="n">sequential_plan</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">dispatch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">,</span>
+                <span class="n">observe</span><span class="o">=</span><span class="n">_record_history_observation</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">current</span> <span class="o">=</span> <span class="n">state</span>
         <span class="n">prefix_outcome</span><span class="p">:</span> <span class="n">_ExecutionOutcome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -2035,7 +2064,10 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">execution_nodes</span><span class="o">=</span><span class="n">sequential_plan</span><span class="o">.</span><span class="n">execution_nodes</span><span class="p">[:</span><span class="n">async_index</span><span class="p">],</span>
             <span class="p">)</span>
             <span class="n">prefix_outcome</span> <span class="o">=</span> <span class="n">_execute_with_metadata</span><span class="p">(</span>
-                <span class="n">prefix_plan</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dispatch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span>
+                <span class="n">prefix_plan</span><span class="p">,</span>
+                <span class="n">value</span><span class="p">,</span>
+                <span class="n">dispatch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">,</span>
+                <span class="n">observe</span><span class="o">=</span><span class="n">_record_history_observation</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">prefix_outcome</span><span class="o">.</span><span class="n">terminated</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
                 <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">NodeStatus</span><span class="o">.</span><span class="n">COMPLETED</span>
@@ -2064,6 +2096,7 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">_ExecutionHaltError</span> <span class="k">as</span> <span class="n">halt</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">halt</span><span class="o">.</span><span class="n">outcome</span>
+        <span class="n">_record_history_observation</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">prefix_outcome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span>
                 <span class="n">state</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
@@ -2108,6 +2141,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">manager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="s2">&quot;surrogate_manager&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">manager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">manager</span><span class="o">.</span><span class="n">on_generation_end</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">gen</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">archive</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="n">record_generation</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">GenerationEndEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">state</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fatal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -2269,6 +2303,7 @@ window.runMermaid = runMermaid;</script>
                     <span class="n">session</span><span class="o">.</span><span class="n">plan</span><span class="p">,</span>
                     <span class="n">session</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
                     <span class="n">session</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span>
+                    <span class="n">observe</span><span class="o">=</span><span class="n">_record_history_observation</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">recompile_requested</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -2330,6 +2365,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">session</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span>
                 <span class="n">dispatch</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">dispatch</span><span class="p">,</span>
+                <span class="n">observe</span><span class="o">=</span><span class="n">_record_history_observation</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">recompile_requested</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">_structured_recompile_accepted</span><span class="p">(</span><span class="n">metadata</span><span class="p">):</span>
@@ -2418,7 +2454,11 @@ window.runMermaid = runMermaid;</script>
                 <span class="s2">&quot;PipelineRuntime.advance requires a SequentialPlan session&quot;</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">metadata</span> <span class="o">=</span> <span class="n">_execute_with_metadata</span><span class="p">(</span><span class="n">session</span><span class="o">.</span><span class="n">plan</span><span class="p">,</span> <span class="n">session</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">_execute_with_metadata</span><span class="p">(</span>
+                <span class="n">session</span><span class="o">.</span><span class="n">plan</span><span class="p">,</span>
+                <span class="n">session</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">observe</span><span class="o">=</span><span class="n">_record_history_observation</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">recompile_requested</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="s2">&quot;PipelineRuntime cannot satisfy RequestRecompile without &quot;</span>
@@ -2626,6 +2666,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">structured_plan</span><span class="p">,</span>
                 <span class="n">session</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
                 <span class="n">session</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span>
+                <span class="n">observe</span><span class="o">=</span><span class="n">_record_history_observation</span><span class="p">,</span>
                 <span class="n">leaf_executor</span><span class="o">=</span><span class="n">_structured_async_leaf_executor</span><span class="p">({}),</span>
                 <span class="n">async_control</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
@@ -2681,6 +2722,7 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">poll</span><span class="p">):</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">poll</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
                 <span class="n">state</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">state</span>
+                <span class="n">_record_history_observation</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
                 <span class="n">resume_async_driver</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">state</span><span class="o">.</span><span class="n">pending_evaluations</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
                     <span class="n">_structured_async_plan_complete</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
                 <span class="p">)</span>
@@ -2719,6 +2761,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">state</span><span class="p">,</span>
             <span class="n">session</span><span class="o">.</span><span class="n">frames</span><span class="p">,</span>
             <span class="n">dispatch</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">dispatch</span><span class="p">,</span>
+            <span class="n">observe</span><span class="o">=</span><span class="n">_record_history_observation</span><span class="p">,</span>
             <span class="n">leaf_executor</span><span class="o">=</span><span class="n">_structured_async_leaf_executor</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_async_leaf_kwargs</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
             <span class="p">),</span>
@@ -2828,6 +2871,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">state</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reattach</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
             <span class="n">state</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">state</span>
+            <span class="n">_record_history_observation</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">pending_evaluations</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">is_terminated</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">progressed</span><span class="p">:</span>

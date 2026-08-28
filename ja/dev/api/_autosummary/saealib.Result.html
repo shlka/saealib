@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.Result &#8212; saealib 0.1.0b5.dev87+g864b56a6a ドキュメント</title>
+    <title>saealib.Result &#8212; saealib 0.1.0b5.dev89+g38f4e2425 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=1696d994"></script>
+    <script src="../../_static/documentation_options.js?v=d542eb5b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -899,7 +899,7 @@
 <h1>saealib.Result<a class="headerlink" href="#saealib-result" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.Result">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">Result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/api.html#Result"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.Result" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">Result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/api.html#Result"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.Result" title="Link to this definition">#</a></dt>
 <dd><p>ベースクラス: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Optimization result returned by <a class="reference internal" href="../highlevel.html#saealib.minimize" title="saealib.minimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">minimize()</span></code></a> / <a class="reference internal" href="../highlevel.html#saealib.maximize" title="saealib.maximize"><code class="xref py py-func docutils literal notranslate"><span class="pre">maximize()</span></code></a>.</p>
 <dl class="field-list simple">
@@ -910,6 +910,7 @@
 <li><p><strong>fe</strong> (<em>int</em>)</p></li>
 <li><p><strong>gen</strong> (<em>int</em>)</p></li>
 <li><p><strong>ctx</strong> (<em>OptimizationState</em>)</p></li>
+<li><p><strong>history</strong> (<em>History</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -960,6 +961,17 @@
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="saealib.Result.history">
+<span class="sig-name descname"><span class="pre">history</span></span><a class="headerlink" href="#saealib.Result.history" title="Link to this definition">#</a></dt>
+<dd><p>Execution history recorded during the run.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>History or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="saealib.Result.ctx">
 <span class="sig-name descname"><span class="pre">ctx</span></span><a class="headerlink" href="#saealib.Result.ctx" title="Link to this definition">#</a></dt>
 <dd><p>Full optimization context providing access to the archive and more.</p>
@@ -984,7 +996,7 @@
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Result.__init__">
-<span class="sig-prename descclassname"><span class="pre">Result.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Result.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">Result.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saealib.Result.__init__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -993,6 +1005,7 @@
 <li><p><strong>fe</strong> (<em>int</em>)</p></li>
 <li><p><strong>gen</strong> (<em>int</em>)</p></li>
 <li><p><strong>ctx</strong> (<em>OptimizationState</em>)</p></li>
+<li><p><strong>history</strong> (<em>History</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">戻り値の型<span class="colon">:</span></dt>
@@ -1055,6 +1068,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Result.f"><code class="docutils literal notranslate"><span class="pre">Result.f</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Result.fe"><code class="docutils literal notranslate"><span class="pre">Result.fe</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Result.gen"><code class="docutils literal notranslate"><span class="pre">Result.gen</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Result.history"><code class="docutils literal notranslate"><span class="pre">Result.history</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib.Result.ctx"><code class="docutils literal notranslate"><span class="pre">Result.ctx</span></code></a></li>
 </ul>
 </li>

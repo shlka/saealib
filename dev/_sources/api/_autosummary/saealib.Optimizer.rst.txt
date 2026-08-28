@@ -34,6 +34,7 @@
    ~Optimizer.set_evaluation_planner
    ~Optimizer.set_evaluator
    ~Optimizer.set_feedback_builder
+   ~Optimizer.set_history
    ~Optimizer.set_initializer
    ~Optimizer.set_instance_name
    ~Optimizer.set_preset
@@ -107,6 +108,9 @@
 
 
 .. automethod:: saealib.Optimizer.set_feedback_builder
+
+
+.. automethod:: saealib.Optimizer.set_history
 
 
 .. automethod:: saealib.Optimizer.set_initializer

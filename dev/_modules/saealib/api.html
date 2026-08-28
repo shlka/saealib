@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.api &#8212; saealib 0.1.0b5.dev87+g864b56a6a documentation</title>
+    <title>saealib.api &#8212; saealib 0.1.0b5.dev89+g38f4e2425 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=8f8c623a"></script>
+    <script src="../../_static/documentation_options.js?v=4c5850f5"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -960,7 +960,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
@@ -972,6 +972,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerationStartEvent</span><span class="p">,</span> <span class="n">logging_generation</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.history</span><span class="w"> </span><span class="kn">import</span> <span class="n">History</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LHSInitializer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
@@ -1018,6 +1019,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Total number of true function evaluations used.</span>
 <span class="sd">    gen : int</span>
 <span class="sd">        Total number of generations completed.</span>
+<span class="sd">    history : History or None</span>
+<span class="sd">        Execution history recorded during the run.</span>
 <span class="sd">    ctx : OptimizationState</span>
 <span class="sd">        Full optimization context providing access to the archive and more.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1026,7 +1029,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
     <span class="n">fe</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">gen</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span></div>
+    <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span>
+    <span class="n">history</span><span class="p">:</span> <span class="n">History</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -1176,7 +1180,14 @@ window.runMermaid = runMermaid;</script>
             <span class="n">best_x</span> <span class="o">=</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">pareto_idx</span><span class="p">]</span>
             <span class="n">best_f</span> <span class="o">=</span> <span class="n">archive_f</span><span class="p">[</span><span class="n">pareto_idx</span><span class="p">]</span>
 
-    <span class="k">return</span> <span class="n">Result</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">best_x</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="n">best_f</span><span class="p">,</span> <span class="n">fe</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">fe</span><span class="p">,</span> <span class="n">gen</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">gen</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Result</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">best_x</span><span class="p">,</span>
+        <span class="n">f</span><span class="o">=</span><span class="n">best_f</span><span class="p">,</span>
+        <span class="n">fe</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">fe</span><span class="p">,</span>
+        <span class="n">gen</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">gen</span><span class="p">,</span>
+        <span class="n">history</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">history</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">(</span>
@@ -1189,6 +1200,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">history_channels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">:</span>
     <span class="n">dim</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">dim</span>
     <span class="k">if</span> <span class="n">pop_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1204,6 +1216,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">termination</span> <span class="o">=</span> <span class="n">Termination</span><span class="p">(</span><span class="n">max_fe_cond</span><span class="p">(</span><span class="n">max_fe</span><span class="p">))</span>
 
     <span class="n">opt</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span><span class="o">.</span><span class="n">set_initializer</span><span class="p">(</span><span class="n">initializer</span><span class="p">)</span><span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">termination</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">history_channels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">set_history</span><span class="p">(</span><span class="n">history_channels</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">preset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">opt</span><span class="o">.</span><span class="n">set_preset</span><span class="p">(</span><span class="n">preset</span><span class="p">)</span>
@@ -1251,6 +1265,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">max_fe</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">pop_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">history_channels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run surrogate-assisted minimization.</span>
@@ -1295,6 +1310,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Population size. Default: ``4 * dim``.</span>
 <span class="sd">    seed : int or None</span>
 <span class="sd">        Random seed for :class:`LHSInitializer`.</span>
+<span class="sd">    history_channels : sequence of str or None</span>
+<span class="sd">        Execution history channels to record. ``None`` keeps the default</span>
+<span class="sd">        summary history. Include ``&quot;evaluation&quot;`` to record every true</span>
+<span class="sd">        evaluation result.</span>
 <span class="sd">    verbose : bool</span>
 <span class="sd">        If ``False``, suppress per-generation log output. Default: ``True``.</span>
 
@@ -1322,6 +1341,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">seed</span><span class="p">,</span>
         <span class="n">verbose</span><span class="p">,</span>
         <span class="n">preset</span><span class="p">,</span>
+        <span class="n">history_channels</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -1343,6 +1363,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">max_fe</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">pop_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">history_channels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run surrogate-assisted maximization.</span>
@@ -1389,6 +1410,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Population size. Default: ``4 * dim``.</span>
 <span class="sd">    seed : int or None</span>
 <span class="sd">        Random seed for :class:`LHSInitializer`.</span>
+<span class="sd">    history_channels : sequence of str or None</span>
+<span class="sd">        Execution history channels to record. ``None`` keeps the default</span>
+<span class="sd">        summary history. Include ``&quot;evaluation&quot;`` to record every true</span>
+<span class="sd">        evaluation result.</span>
 <span class="sd">    verbose : bool</span>
 <span class="sd">        If ``False``, suppress per-generation log output. Default: ``True``.</span>
 
@@ -1416,6 +1441,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">seed</span><span class="p">,</span>
         <span class="n">verbose</span><span class="p">,</span>
         <span class="n">preset</span><span class="p">,</span>
+        <span class="n">history_channels</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>

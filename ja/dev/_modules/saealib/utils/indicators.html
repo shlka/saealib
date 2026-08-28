@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.utils.indicators &#8212; saealib 0.1.0b5.dev87+g864b56a6a ドキュメント</title>
+    <title>saealib.utils.indicators &#8212; saealib 0.1.0b5.dev89+g38f4e2425 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=1696d994"></script>
+    <script src="../../../_static/documentation_options.js?v=d542eb5b"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -964,6 +964,287 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParetoDominator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_objective_array</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n_obj</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert objective values to a two-dimensional floating-point array.&quot;&quot;&quot;</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n_obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_obj</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;objective values must be a one- or two-dimensional array&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n_obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">n_obj</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;objective arrays must have the same number of objectives&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">values</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pairwise_distances</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return Euclidean distances between every row of ``a`` and ``b``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">a</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pairwise_manhattan_distances</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return Manhattan distances between every row of ``a`` and ``b``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">a</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pairwise_plus_distances</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return minimization positive-part distances between rows of ``a`` and ``b``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">a</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">gd</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the generational distance (GD), using minimization objectives.</span>
+
+<span class="sd">    GD is the mean distance from each solution to its nearest reference-front</span>
+<span class="sd">    point.  An empty obtained front returns ``np.nan``; an empty reference</span>
+<span class="sd">    front raises :class:`~saealib.exceptions.ValidationError`.  Singleton and</span>
+<span class="sd">    duplicate points are handled by the same nearest-neighbor formula.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f : np.ndarray</span>
+<span class="sd">        Obtained objective matrix, shape (n, n_obj).</span>
+<span class="sd">    reference_front : np.ndarray</span>
+<span class="sd">        Reference-front objective matrix, shape (n_ref, n_obj).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Mean nearest-reference Euclidean distance.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Li, B., Li, J., Tang, K., &amp; Yao, X. (2015).</span>
+<span class="sd">        Many-objective evolutionary algorithms: A survey.</span>
+<span class="sd">        *ACM Computing Surveys*, 48(1), Article 13.</span>
+<span class="sd">        https://doi.org/10.1145/2792984</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span> <span class="o">=</span> <span class="n">_validated_pair</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">_pairwise_distances</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">igd</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute inverted generational distance (IGD) for minimization objectives.</span>
+
+<span class="sd">    IGD is the arithmetic mean of the Euclidean distances from each</span>
+<span class="sd">    reference-front point to its nearest solution. An empty obtained front</span>
+<span class="sd">    returns ``np.nan``; an empty reference front raises</span>
+<span class="sd">    :class:`~saealib.exceptions.ValidationError`. Singleton and duplicate</span>
+<span class="sd">    points use the same nearest-neighbor formula.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f : np.ndarray</span>
+<span class="sd">        Obtained objective matrix, shape (n, n_obj).</span>
+<span class="sd">    reference_front : np.ndarray</span>
+<span class="sd">        Reference-front objective matrix, shape (n_ref, n_obj).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Mean nearest-solution Euclidean distance.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Bosman, P. A. N., &amp; Thierens, D. (2003).</span>
+<span class="sd">        The balance between proximity and diversity in multi-objective</span>
+<span class="sd">        evolutionary algorithms. *IEEE Transactions on Evolutionary</span>
+<span class="sd">        Computation*, 7(2).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span> <span class="o">=</span> <span class="n">_validated_pair</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">_pairwise_distances</span><span class="p">(</span><span class="n">reference_front</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">gd_plus</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute generational distance plus (GD+) for minimization objectives.</span>
+
+<span class="sd">    GD+ is the arithmetic mean of the nearest positive-part distances from</span>
+<span class="sd">    each solution to the reference front. Only objective-wise deterioration of</span>
+<span class="sd">    a solution relative to a reference point contributes. An empty obtained</span>
+<span class="sd">    front returns ``np.nan``; an empty reference front raises</span>
+<span class="sd">    :class:`~saealib.exceptions.ValidationError`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f : np.ndarray</span>
+<span class="sd">        Obtained objective matrix, shape (n, n_obj).</span>
+<span class="sd">    reference_front : np.ndarray</span>
+<span class="sd">        Reference-front objective matrix, shape (n_ref, n_obj).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Mean nearest positive-part distance.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Ishibuchi, H., Masuda, H., Tanigaki, Y., &amp; Nojima, Y. (2015).</span>
+<span class="sd">        Modified distance calculation in generational distance and inverted</span>
+<span class="sd">        generational distance. *Evolutionary Multi-Criterion Optimization*.</span>
+<span class="sd">        Springer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span> <span class="o">=</span> <span class="n">_validated_pair</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">_pairwise_plus_distances</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">igd_plus</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute inverted generational distance plus (IGD+) for minimization objectives.</span>
+
+<span class="sd">    IGD+ is the arithmetic mean, over reference-front points, of the nearest</span>
+<span class="sd">    positive-part distance from a solution. Only objective-wise deterioration</span>
+<span class="sd">    contributes. An empty obtained front returns ``np.nan``; an empty</span>
+<span class="sd">    reference front raises :class:`~saealib.exceptions.ValidationError`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f : np.ndarray</span>
+<span class="sd">        Obtained objective matrix, shape (n, n_obj).</span>
+<span class="sd">    reference_front : np.ndarray</span>
+<span class="sd">        Reference-front objective matrix, shape (n_ref, n_obj).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Mean nearest positive-part distance.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Ishibuchi, H., Masuda, H., Tanigaki, Y., &amp; Nojima, Y. (2015).</span>
+<span class="sd">        Modified distance calculation in generational distance and inverted</span>
+<span class="sd">        generational distance. *Evolutionary Multi-Criterion Optimization*.</span>
+<span class="sd">        Springer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span> <span class="o">=</span> <span class="n">_validated_pair</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">_pairwise_plus_distances</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">spacing</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the spacing indicator for an obtained front.</span>
+
+<span class="sd">    The indicator is the sample standard deviation of each point&#39;s nearest</span>
+<span class="sd">    other-point Manhattan distance. Empty and singleton sets return</span>
+<span class="sd">    ``np.nan`` because the sample standard deviation is undefined. Duplicate-</span>
+<span class="sd">    only sets with at least two points return ``0.0``; duplicates therefore</span>
+<span class="sd">    contribute zero nearest-neighbor distances.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f : np.ndarray</span>
+<span class="sd">        Obtained objective matrix, shape (n, n_obj).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Sample standard deviation of nearest-neighbor Manhattan distances.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Schott, J. R. (1995).</span>
+<span class="sd">        *Fault Tolerant Design using Single and Multicriteria Genetic</span>
+<span class="sd">        Algorithm Optimization*. Master&#39;s thesis, Massachusetts Institute of</span>
+<span class="sd">        Technology.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">_objective_array</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">distances</span> <span class="o">=</span> <span class="n">_pairwise_manhattan_distances</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+    <span class="n">nearest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">nearest</span> <span class="o">-</span> <span class="n">nearest</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">spread</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute Zhou et al.&#39;s generalized spread indicator.</span>
+
+<span class="sd">    ``f`` and ``reference_front`` use minimization objectives.  Follows</span>
+<span class="sd">    Equation (12) of Zhou et al. (2006): each reference-front point is</span>
+<span class="sd">    measured against its nearest obtained solution, and the indicator reports</span>
+<span class="sd">    the deviation of those distances from their mean.  The per-point distance</span>
+<span class="sd">    ``d(X, S)`` allows a zero self-distance when ``X`` also belongs to ``S``</span>
+<span class="sd">    (the ``Y != X`` exclusion is not applied across sets), so that a well</span>
+<span class="sd">    distributed front covering the extremes yields ``0.0``.  This differs from</span>
+<span class="sd">    jMetal-style implementations, which measure nearest-neighbor distances</span>
+<span class="sd">    within the obtained front.  An empty obtained front returns ``np.nan``;</span>
+<span class="sd">    an empty reference front raises</span>
+<span class="sd">    :class:`~saealib.exceptions.ValidationError`. Singleton and duplicate-only</span>
+<span class="sd">    obtained sets are evaluated by the generalized formula.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f : np.ndarray</span>
+<span class="sd">        Obtained objective matrix, shape (n, n_obj).</span>
+<span class="sd">    reference_front : np.ndarray</span>
+<span class="sd">        Reference-front objective matrix, shape (n_ref, n_obj).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        Generalized spread value.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Zhou, A., Jin, Y., Zhang, Q., Sendhoff, B., &amp; Tsang, E. P. K. (2006).</span>
+<span class="sd">        Combining model-based and genetics-based offspring generation for</span>
+<span class="sd">        multi-objective optimization using a convergence criterion. *IEEE</span>
+<span class="sd">        Congress on Evolutionary Computation*.</span>
+
+<span class="sd">    Deb, K., Pratap, A., Agarwal, S., &amp; Meyarivan, T. (2002).</span>
+<span class="sd">        A fast and elitist multiobjective genetic algorithm: NSGA-II. *IEEE</span>
+<span class="sd">        Transactions on Evolutionary Computation*, 6(2).</span>
+<span class="sd">        https://doi.org/10.1109/4235.996017</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span> <span class="o">=</span> <span class="n">_validated_pair</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">nearest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">_pairwise_distances</span><span class="p">(</span><span class="n">reference_front</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">mean_distance</span> <span class="o">=</span> <span class="n">nearest</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">extreme_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">reference_front</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">reference_front</span><span class="p">[:,</span> <span class="n">j</span><span class="p">])]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">reference_front</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">extremes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">extreme_points</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">boundary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">_pairwise_distances</span><span class="p">(</span><span class="n">extremes</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">denominator</span> <span class="o">=</span> <span class="n">boundary</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">reference_front</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean_distance</span>
+    <span class="k">if</span> <span class="n">denominator</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">((</span><span class="n">boundary</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">nearest</span> <span class="o">-</span> <span class="n">mean_distance</span><span class="p">)))</span> <span class="o">/</span> <span class="n">denominator</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validated_pair</span><span class="p">(</span>
+    <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize and validate a solution/reference-front pair.&quot;&quot;&quot;</span>
+    <span class="n">f_raw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">reference_raw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">reference_front</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">f_raw</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">f_raw</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+        <span class="n">f_raw</span> <span class="o">=</span> <span class="n">f_raw</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">reference_raw</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">reference_raw</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+        <span class="n">reference_raw</span> <span class="o">=</span> <span class="n">reference_raw</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">f_raw</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">f_raw</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">reference_raw</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">f_raw</span> <span class="o">=</span> <span class="n">f_raw</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">reference_raw</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">reference_raw</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">reference_raw</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">f_raw</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">reference_raw</span> <span class="o">=</span> <span class="n">reference_raw</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">f_raw</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">reference_front</span> <span class="o">=</span> <span class="n">_objective_array</span><span class="p">(</span><span class="n">reference_raw</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">reference_front</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;reference_front must not be empty&quot;</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">_objective_array</span><span class="p">(</span><span class="n">f_raw</span><span class="p">,</span> <span class="n">reference_front</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span>
 
 
 <div class="viewcode-block" id="hypervolume">

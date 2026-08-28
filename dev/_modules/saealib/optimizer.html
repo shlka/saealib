@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev87+g864b56a6a documentation</title>
+    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev89+g38f4e2425 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=8f8c623a"></script>
+    <script src="../../_static/documentation_options.js?v=4c5850f5"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -965,7 +965,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -999,6 +999,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">OPTIMIZATION_STATE_INITIAL_KEYS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigurationError</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Evaluator</span><span class="p">,</span> <span class="n">SerialEvaluator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.history</span><span class="w"> </span><span class="kn">import</span> <span class="n">SUPPORTED_HISTORY_CHANNELS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">Runner</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_runtime_registry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncEvaluationScheduler</span>
@@ -1074,8 +1075,18 @@ window.runMermaid = runMermaid;</script>
         <span class="o">...</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">history_channels</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the enabled execution history channels.&quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">feedback_builder_explicit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether the feedback builder was explicitly configured.&quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">history_channels_explicit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether history channels were explicitly configured.&quot;&quot;&quot;</span>
         <span class="o">...</span>
 
     <span class="nd">@property</span>
@@ -1159,7 +1170,9 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_evaluation_planner</span><span class="p">:</span> <span class="n">EvaluationPlanner</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span><span class="p">:</span> <span class="n">FeedbackBuilder</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder_explicit</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history_channels_explicit</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span><span class="p">:</span> <span class="n">AsyncEvaluationScheduler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history_channels</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;summary&quot;</span><span class="p">,)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">instance_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_preset</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_default_resolution</span><span class="p">:</span> <span class="n">DefaultResolution</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1347,6 +1360,24 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the master random seed. Returns self.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">seed</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="Optimizer.set_history">
+<a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.set_history">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set execution history channels and return self.</span>
+
+<span class="sd">        On resume, the checkpoint&#39;s channels take precedence unless this method</span>
+<span class="sd">        was called; calling it with a different set fails validation. Assigning</span>
+<span class="sd">        to ``history_channels`` directly does not count as calling it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">requested</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">requested</span><span class="p">)</span> <span class="o">-</span> <span class="n">SUPPORTED_HISTORY_CHANNELS</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown history channel(s): </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history_channels</span> <span class="o">=</span> <span class="n">requested</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history_channels_explicit</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 

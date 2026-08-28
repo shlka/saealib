@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.execution.initializer &#8212; saealib 0.1.0b5.dev87+g864b56a6a ドキュメント</title>
+    <title>saealib.execution.initializer &#8212; saealib 0.1.0b5.dev89+g38f4e2425 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=1696d994"></script>
+    <script src="../../../_static/documentation_options.js?v=d542eb5b"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -989,10 +989,16 @@ window.runMermaid = runMermaid;</script>
     <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
     <span class="n">POPULATIONS_MAIN</span><span class="p">,</span>
     <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">,</span>
+    <span class="n">RUNTIME_DECISION_COUNT</span><span class="p">,</span>
     <span class="n">RUNTIME_GENERATION</span><span class="p">,</span>
     <span class="n">RUNTIME_RNG</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigurationError</span><span class="p">,</span> <span class="n">ValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.history</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">History</span><span class="p">,</span>
+    <span class="n">record_generation</span><span class="p">,</span>
+    <span class="n">record_initial_evaluation</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentProvider</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.population</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span><span class="p">,</span> <span class="n">ParetoArchive</span><span class="p">,</span> <span class="n">Population</span><span class="p">,</span> <span class="n">PopulationAttribute</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
@@ -1114,7 +1120,14 @@ window.runMermaid = runMermaid;</script>
                 <span class="p">),</span>
             <span class="p">},</span>
             <span class="n">state</span><span class="o">=</span><span class="n">StateContract</span><span class="p">(</span>
-                <span class="n">reads</span><span class="o">=</span><span class="p">(</span><span class="n">RUNTIME_RNG</span><span class="p">,),</span>
+                <span class="n">reads</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">RUNTIME_RNG</span><span class="p">,</span>
+                    <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
+                    <span class="n">RUNTIME_GENERATION</span><span class="p">,</span>
+                    <span class="n">RUNTIME_DECISION_COUNT</span><span class="p">,</span>
+                    <span class="n">POPULATIONS_MAIN</span><span class="p">,</span>
+                    <span class="n">ARCHIVES_PARETO</span><span class="p">,</span>
+                <span class="p">),</span>
                 <span class="n">writes</span><span class="o">=</span><span class="p">(</span>
                     <span class="n">POPULATIONS_MAIN</span><span class="p">,</span>
                     <span class="n">ARCHIVES_MAIN</span><span class="p">,</span>
@@ -1142,6 +1155,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_context</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+        <span class="n">provider</span><span class="p">:</span> <span class="n">ComponentProvider</span><span class="p">,</span>
         <span class="n">archive</span><span class="p">:</span> <span class="n">Archive</span><span class="p">,</span>
         <span class="n">pareto_archive</span><span class="p">:</span> <span class="n">ParetoArchive</span><span class="p">,</span>
         <span class="n">population</span><span class="p">:</span> <span class="n">Population</span><span class="p">,</span>
@@ -1161,6 +1175,9 @@ window.runMermaid = runMermaid;</script>
             <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
             <span class="n">fe</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">archive</span><span class="p">),</span>
             <span class="n">gen</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">history</span><span class="o">=</span><span class="n">History</span><span class="p">(</span>
+                <span class="n">channels</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;history_channels&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;summary&quot;</span><span class="p">,))</span>
+            <span class="p">),</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="Initializer.initialize">
@@ -1250,7 +1267,9 @@ window.runMermaid = runMermaid;</script>
         <span class="n">pareto_archive</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">create_pareto_archive</span><span class="p">(</span>
             <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">init_capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span> <span class="n">problem</span><span class="o">=</span><span class="n">problem</span>
         <span class="p">)</span>
-        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span>
+            <span class="n">problem</span><span class="p">,</span> <span class="n">provider</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span>
+        <span class="p">)</span>
 
         <span class="n">genomes</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
         <span class="n">validation</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">genomes</span><span class="p">)</span>
@@ -1273,6 +1292,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
             <span class="n">pareto_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
+        <span class="n">record_initial_evaluation</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
         <span class="n">ctx</span><span class="o">.</span><span class="n">count_fe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">)</span>
         <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">InitialEvaluationEndEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">archive</span><span class="o">=</span><span class="n">archive</span><span class="p">))</span>
 
@@ -1283,6 +1303,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span>
             <span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">],</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
+        <span class="n">record_generation</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ctx</span></div>
 </div>
 
@@ -1332,7 +1353,6 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">reads</span><span class="o">=</span><span class="p">(</span>
                     <span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">reads</span><span class="p">,</span>
                     <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">,</span>
-                    <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
                 <span class="p">),</span>
                 <span class="n">writes</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">writes</span><span class="p">,</span> <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">),</span>
             <span class="p">),</span>
@@ -1400,7 +1420,9 @@ window.runMermaid = runMermaid;</script>
         <span class="p">)</span>
         <span class="n">pareto_archive</span><span class="o">.</span><span class="n">_dense_numeric_view</span> <span class="o">=</span> <span class="n">_resolved_dense_view</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
 
-        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span>
+            <span class="n">problem</span><span class="p">,</span> <span class="n">provider</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span>
+        <span class="p">)</span>
 
         <span class="n">bounds_srv</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
             <span class="n">BoundsService</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s2">&quot;BoundsService&quot;</span><span class="p">)</span>
@@ -1428,6 +1450,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
             <span class="n">pareto_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
+        <span class="n">record_initial_evaluation</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
         <span class="n">ctx</span><span class="o">.</span><span class="n">count_fe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">)</span>
 
         <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">InitialEvaluationEndEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">archive</span><span class="o">=</span><span class="n">archive</span><span class="p">))</span>
@@ -1440,6 +1463,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span>
             <span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">],</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
+        <span class="n">record_generation</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ctx</span></div>
 </div>
@@ -1490,7 +1514,6 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">reads</span><span class="o">=</span><span class="p">(</span>
                     <span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">reads</span><span class="p">,</span>
                     <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">,</span>
-                    <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
                 <span class="p">),</span>
                 <span class="n">writes</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">writes</span><span class="p">,</span> <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">),</span>
             <span class="p">),</span>
@@ -1558,7 +1581,9 @@ window.runMermaid = runMermaid;</script>
         <span class="p">)</span>
         <span class="n">pareto_archive</span><span class="o">.</span><span class="n">_dense_numeric_view</span> <span class="o">=</span> <span class="n">_resolved_dense_view</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
 
-        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span>
+            <span class="n">problem</span><span class="p">,</span> <span class="n">provider</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span>
+        <span class="p">)</span>
 
         <span class="n">bounds_srv</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
             <span class="n">BoundsService</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s2">&quot;BoundsService&quot;</span><span class="p">)</span>
@@ -1583,6 +1608,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
             <span class="n">pareto_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
+        <span class="n">record_initial_evaluation</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
         <span class="n">ctx</span><span class="o">.</span><span class="n">count_fe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">)</span>
 
         <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">InitialEvaluationEndEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">archive</span><span class="o">=</span><span class="n">archive</span><span class="p">))</span>
@@ -1595,6 +1621,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span>
             <span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">],</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
+        <span class="n">record_generation</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ctx</span></div>
 </div>
@@ -1645,7 +1672,6 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">reads</span><span class="o">=</span><span class="p">(</span>
                     <span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">reads</span><span class="p">,</span>
                     <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">,</span>
-                    <span class="n">EVALUATIONS_COUNT</span><span class="p">,</span>
                 <span class="p">),</span>
                 <span class="n">writes</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">writes</span><span class="p">,</span> <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">),</span>
             <span class="p">),</span>
@@ -1713,7 +1739,9 @@ window.runMermaid = runMermaid;</script>
         <span class="p">)</span>
         <span class="n">pareto_archive</span><span class="o">.</span><span class="n">_dense_numeric_view</span> <span class="o">=</span> <span class="n">_resolved_dense_view</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
 
-        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span><span class="p">)</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">(</span>
+            <span class="n">problem</span><span class="p">,</span> <span class="n">provider</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">pareto_archive</span><span class="p">,</span> <span class="n">population</span><span class="p">,</span> <span class="n">rng</span>
+        <span class="p">)</span>
 
         <span class="n">bounds_srv</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
             <span class="n">BoundsService</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s2">&quot;BoundsService&quot;</span><span class="p">)</span>
@@ -1741,6 +1769,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
             <span class="n">pareto_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
+        <span class="n">record_initial_evaluation</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
         <span class="n">ctx</span><span class="o">.</span><span class="n">count_fe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_init_archive</span><span class="p">)</span>
 
         <span class="n">provider</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">InitialEvaluationEndEvent</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">archive</span><span class="o">=</span><span class="n">archive</span><span class="p">))</span>
@@ -1753,6 +1782,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">population</span><span class="o">.</span><span class="n">_extend_internal</span><span class="p">(</span>
             <span class="n">archive</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_init_population</span><span class="p">],</span> <span class="n">preserve_ids</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
+        <span class="n">record_generation</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ctx</span></div>
 </div>
