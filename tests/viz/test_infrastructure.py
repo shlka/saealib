@@ -102,17 +102,16 @@ def test_resolve_axes_projection_when_creating() -> None:
     assert ax.name == "3d"
 
 
-def test_resolve_axes_ignores_projection_when_provided() -> None:
+def test_resolve_axes_rejects_projection_mismatch_when_provided() -> None:
     from matplotlib.figure import Figure
 
     from saealib.viz._common import _resolve_axes
 
     fig = Figure()
     ax = fig.add_subplot(111)
-    out_fig, out_ax = _resolve_axes(ax=ax, projection="3d")
-    assert out_fig is fig
-    assert out_ax is ax
-    assert ax.name != "3d"
+    with pytest.raises(ValidationError, match=r'projection="3d"') as excinfo:
+        _resolve_axes(ax=ax, projection="3d")
+    assert 'fig.add_subplot(111, projection="3d")' in str(excinfo.value)
 
 
 def test_minimize_sign_scalar() -> None:

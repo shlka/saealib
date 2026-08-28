@@ -10,9 +10,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from saealib.exceptions import ValidationError
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+
+    from saealib.api import Result
 
 from saealib.viz._matplotlib import _require_matplotlib
 
@@ -26,8 +30,8 @@ def _resolve_axes(ax: Axes | None = None, **kwargs: object) -> tuple[Figure, Axe
         Target axes. When ``None`` a new ``Figure`` and ``Axes`` are created.
     **kwargs
         Forwarded to ``Figure.add_subplot`` when new axes are created (e.g.
-        ``projection="3d"``). Ignored when ``ax`` is supplied, because the
-        provided axes already exist with their own projection.
+        ``projection="3d"``). When ``ax`` is supplied, a requested projection
+        is checked against ``ax.name`` and other arguments are ignored.
 
     Returns
     -------
@@ -42,12 +46,31 @@ def _resolve_axes(ax: Axes | None = None, **kwargs: object) -> tuple[Figure, Axe
         ax = fig.add_subplot(111, **kwargs)
         return fig, ax
 
+    required_projection = kwargs.get("projection")
+    if required_projection is not None and ax.name != required_projection:
+        raise ValidationError(
+            f'This plot requires an Axes with projection="{required_projection}". '
+            "Pass an Axes created with "
+            f'fig.add_subplot(111, projection="{required_projection}") or equivalent.'
+        )
+
     from matplotlib.figure import SubFigure
 
     fig = ax.figure
     while isinstance(fig, SubFigure):
         fig = fig.figure
     return fig, ax
+
+
+def _direction(result: Result, n_obj: int | None = None) -> np.ndarray:
+    """Return the objective direction as a one-dimensional array."""
+    try:
+        direction = np.asarray(result.ctx.problem.direction, dtype=float).reshape(-1)
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise ValidationError("A valid objective direction is required.") from exc
+    if direction.size == 0 or (n_obj is not None and direction.size != n_obj):
+        raise ValidationError("Objective direction does not match the objective data.")
+    return direction
 
 
 def _minimize_sign(direction: float | np.ndarray | None) -> float | np.ndarray:

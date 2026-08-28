@@ -128,3 +128,29 @@ def _require_block(
             "This block is recorded only when the search space provides "
             "the DenseNumericView service."
         ) from exc
+
+
+def _history_column(
+    columns: Mapping[str, np.ndarray], name: str, count: int, function: str
+) -> np.ndarray:
+    try:
+        values = np.asarray(columns[name])
+    except KeyError as exc:
+        raise ValidationError(
+            f'{function} requires the "{name}" column in its history channel.'
+        ) from exc
+    if values.ndim != 1 or len(values) != count:
+        raise ValidationError(
+            f'{function} requires a one-dimensional "{name}" history column '
+            "with one value per record."
+        )
+    return values
+
+
+def _front_history(
+    result: _HasHistory, function: str
+) -> tuple[History, Mapping[str, np.ndarray], tuple[np.ndarray, ...]]:
+    history = _require_history(result, function)
+    columns = _require_channel(result, "front", function)
+    blocks = _require_block(history, "front", "f", function)
+    return history, columns, blocks
