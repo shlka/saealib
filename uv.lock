@@ -2078,6 +2078,7 @@ dependencies = [
 all = [
     { name = "joblib" },
     { name = "lightgbm" },
+    { name = "matplotlib" },
     { name = "pymoo" },
     { name = "scikit-learn", version = "1.7.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -2100,6 +2101,9 @@ sklearn = [
 torch = [
     { name = "torch" },
 ]
+viz = [
+    { name = "matplotlib" },
+]
 xgboost = [
     { name = "xgboost" },
 ]
@@ -2107,6 +2111,7 @@ xgboost = [
 [package.dev-dependencies]
 dev = [
     { name = "lightgbm" },
+    { name = "matplotlib" },
     { name = "opfunu" },
     { name = "pymoo" },
     { name = "pytest" },
@@ -2143,6 +2148,8 @@ requires-dist = [
     { name = "joblib", marker = "extra == 'parallel'", specifier = ">=1.0.0" },
     { name = "lightgbm", marker = "extra == 'all'", specifier = ">=3.0.0" },
     { name = "lightgbm", marker = "extra == 'lightgbm'", specifier = ">=3.0.0" },
+    { name = "matplotlib", marker = "extra == 'all'", specifier = ">=3.5.0" },
+    { name = "matplotlib", marker = "extra == 'viz'", specifier = ">=3.5.0" },
     { name = "numpy", specifier = ">=1.22.1" },
     { name = "pymoo", marker = "extra == 'all'", specifier = ">=0.6.2,<0.7" },
     { name = "pymoo", marker = "extra == 'pymoo'", specifier = ">=0.6.2,<0.7" },
@@ -2156,11 +2163,12 @@ requires-dist = [
     { name = "xgboost", marker = "extra == 'all'", specifier = ">=1.7.0" },
     { name = "xgboost", marker = "extra == 'xgboost'", specifier = ">=1.7.0" },
 ]
-provides-extras = ["all", "lightgbm", "parallel", "pymoo", "sklearn", "torch", "xgboost"]
+provides-extras = ["all", "lightgbm", "parallel", "pymoo", "sklearn", "torch", "viz", "xgboost"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "lightgbm", specifier = ">=3.0.0" },
+    { name = "matplotlib", specifier = ">=3.5.0" },
     { name = "opfunu", specifier = ">=1.0.4" },
     { name = "pymoo", specifier = ">=0.6.2,<0.7" },
     { name = "pytest", specifier = ">=9.0.2" },
