@@ -8,6 +8,12 @@ through :mod:`saealib.viz._matplotlib` and raise an actionable
 
 from __future__ import annotations
 
+from saealib.viz._design import (
+    plot_archive,
+    plot_design_pcp,
+    plot_diversity,
+    plot_variable_distribution,
+)
 from saealib.viz._objective import (
     plot_objective_heatmap,
     plot_pareto,
@@ -29,8 +35,11 @@ from saealib.viz._surrogate import (
 )
 
 __all__ = [
+    "plot_archive",
     "plot_constraint_violation",
     "plot_convergence",
+    "plot_design_pcp",
+    "plot_diversity",
     "plot_hypervolume",
     "plot_indicator",
     "plot_objective_heatmap",
@@ -42,4 +51,5 @@ __all__ = [
     "plot_running_metric",
     "plot_surrogate_accuracy",
     "plot_surrogate_error_history",
+    "plot_variable_distribution",
 ]
