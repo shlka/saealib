@@ -2,14 +2,39 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+from saealib.exceptions import ValidationError
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
     from saealib.execution.history import History
+
+
+@dataclass(frozen=True)
+class HistorySeries:
+    """A history series and the names used to describe its coordinates.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Values for the independent coordinate.
+    y : np.ndarray
+        Values for the dependent coordinate.
+    x_name : str
+        Display name for the independent coordinate.
+    y_name : str
+        Display name for the dependent coordinate.
+    """
+
+    x: np.ndarray
+    y: np.ndarray
+    x_name: str
+    y_name: str
 
 
 @dataclass
@@ -103,3 +128,91 @@ class Result:
     def population(self):
         """Return the population referenced by the optimization state."""
         return self.ctx.population
+
+    def history_series(
+        self,
+        value: str | Callable[[Mapping[str, Any]], float],
+        *,
+        x: str = "fe",
+        channel: str | None = None,
+        **value_kwargs: Any,
+    ) -> HistorySeries:
+        """Return one scalar value per recorded history generation."""
+        if x not in {"fe", "gen"}:
+            raise ValidationError('x must be either "fe" or "gen".')
+        if self.history is None:
+            raise ValidationError(
+                "history_series requires execution history, but the result has none. "
+                "Record it by passing history_channels=[...] to minimize() or by "
+                "enabling it on the Optimizer with set_history([...])."
+            )
+
+        if isinstance(value, str):
+            from saealib._series_values import _HISTORY_VALUES, _builtin_values
+
+            try:
+                spec = _HISTORY_VALUES[value]
+            except KeyError as exc:
+                valid = ", ".join(_HISTORY_VALUES)
+                raise ValidationError(
+                    f"Unknown history value {value!r}. Choose one of: {valid}."
+                ) from exc
+            required_channel = spec.channel
+            if not self.history.is_enabled(required_channel):
+                raise ValidationError(
+                    f'history_series value "{value}" requires the '
+                    f'"{required_channel}" history channel. '
+                    "Enable it with minimize(..., history_channels=[...]) or "
+                    "Optimizer.set_history([...]), then rerun the optimization."
+                )
+            y = _builtin_values(self, value, spec, value_kwargs)
+            y_name = value
+        elif callable(value):
+            if channel is None:
+                raise ValidationError(
+                    "A callable history value requires channel=... so its "
+                    "records can be selected."
+                )
+            required_channel = channel
+            if not self.history.is_enabled(channel):
+                raise ValidationError(
+                    f'history_series callable value requires the "{channel}" '
+                    "history channel. Enable it with "
+                    "minimize(..., history_channels=[...]) or "
+                    "Optimizer.set_history([...]), then rerun the optimization."
+                )
+            records = list(self.history.records(channel))
+            try:
+                y = [float(value(record)) for record in records]
+                x_values = [float(record[x]) for record in records]
+            except KeyError as exc:
+                raise ValidationError(
+                    f'history channel {channel!r} is missing the "{x}" column.'
+                ) from exc
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValidationError(
+                    "A callable history value must return a scalar number."
+                ) from exc
+            return HistorySeries(
+                x=np.asarray(x_values, dtype=float),
+                y=np.asarray(y, dtype=float),
+                x_name="Function evaluations" if x == "fe" else "Generations",
+                y_name=getattr(value, "__name__", "callable"),
+            )
+        else:
+            raise ValidationError("value must be a registered name or callable.")
+
+        if not self.history.is_enabled(required_channel):
+            raise ValidationError(
+                f'history_series value "{value}" requires the '
+                f'"{required_channel}" history channel. '
+                "Enable it with minimize(..., history_channels=[...]) or "
+                "Optimizer.set_history([...]), then rerun the optimization."
+            )
+        x_values = self.history.get(required_channel, x)
+        return HistorySeries(
+            x=np.asarray(x_values, dtype=float).copy(),
+            y=np.asarray(y, dtype=float),
+            x_name="Function evaluations" if x == "fe" else "Generations",
+            y_name=y_name,
+        )
