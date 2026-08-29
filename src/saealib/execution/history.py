@@ -1337,7 +1337,11 @@ def record_initial_evaluation(
 
 
 def record_generation(state: OptimizationState) -> None:
-    """Append enabled generation-channel rows for the current state."""
+    """Append enabled generation-channel rows for the current state.
+
+    ``best_f`` uses ``state.problem.eps_cv`` deliberately; ``feasible_ratio``
+    and ``min_cv`` use ``handler.feasibility_threshold`` for their legacy behavior.
+    """
     history = state.history
     if history is None:
         return
@@ -1358,6 +1362,15 @@ def record_generation(state: OptimizationState) -> None:
             "decision_count": state.decision_count,
             "front_size": front_size,
         }
+        if n_obj == 1 and len(state.archive):
+            archive_f = state.archive.get_array("f")
+            cv = state.archive.get_array("cv")
+            feasible = np.where(cv <= state.problem.eps_cv)[0]
+            pool = feasible if len(feasible) else np.array([int(np.argmin(cv))])
+            best = pool[np.argmax(archive_f[pool] @ state.direction)]
+            columns["best_f"] = float(archive_f[best, 0])
+        else:
+            columns["best_f"] = np.nan
         if front_size:
             objective_values = pareto_archive.f
             f_min = np.min(objective_values, axis=0)

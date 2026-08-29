@@ -163,6 +163,7 @@ class Initializer(ABC):
                     RUNTIME_GENERATION,
                     RUNTIME_DECISION_COUNT,
                     POPULATIONS_MAIN,
+                    ARCHIVES_MAIN,
                     ARCHIVES_PARETO,
                 ),
                 writes=(
