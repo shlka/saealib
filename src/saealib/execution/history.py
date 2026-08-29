@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, cast
@@ -376,6 +376,48 @@ class History:
             view.flags.writeable = False
             result.append(view)
         return tuple(result)
+
+    def get(self, channel: str, column: str) -> np.ndarray | tuple[np.ndarray, ...]:
+        """Return a scalar or block column using its existing read-only views."""
+        if not self.is_enabled(channel):
+            raise ValidationError(f"History channel {channel!r} is not enabled")
+
+        if column in self._columns[channel]:
+            return self.channel(channel)[column]
+        if column in self._block_columns[channel]:
+            return self.blocks(channel, column)
+
+        scalar_names = sorted(self._columns[channel])
+        block_names = sorted(self._block_columns[channel])
+        raise ValidationError(
+            f"History column {channel!r}/{column!r} is not available; "
+            f"available scalar columns: {scalar_names!r}; "
+            f"available block columns: {block_names!r}"
+        )
+
+    def records(self, channel: str) -> Iterator[Mapping[str, Any]]:
+        """Iterate over read-only, row-aligned records without copying data."""
+        if not self.is_enabled(channel):
+            raise ValidationError(f"History channel {channel!r} is not enabled")
+
+        scalar_columns = self.channel(channel)
+        block_columns = {
+            column: self.blocks(channel, column)
+            for column in self._block_columns[channel]
+        }
+        row_count = self._rows[channel]
+
+        def iter_records() -> Iterator[Mapping[str, Any]]:
+            for row in range(row_count):
+                record: dict[str, Any] = {
+                    column: values[row].item()
+                    for column, values in scalar_columns.items()
+                }
+                for column, blocks in block_columns.items():
+                    record.setdefault(column, blocks[row])
+                yield MappingProxyType(record)
+
+        return iter_records()
 
     def _restore_channel(self, name: str, columns: Mapping[str, np.ndarray]) -> None:
         """Restore a channel's columns without appending rows one at a time."""
