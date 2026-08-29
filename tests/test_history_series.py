@@ -19,7 +19,7 @@ def _result(channels=("summary",), n_obj=1):
     history = History(channels)
     problem = SimpleNamespace(n_obj=n_obj, direction=np.full(n_obj, -1.0))
     ctx = SimpleNamespace(problem=problem)
-    return Result(np.array([0.0]), np.array([0.0]), 0, 0, ctx, history), history
+    return Result(np.array([0.0]), np.array([0.0]), 0, 0, ctx, history), history  # ty: ignore[invalid-argument-type]
 
 
 def _population_result(services):
@@ -30,7 +30,7 @@ def _population_result(services):
         space=SimpleNamespace(services=services),
     )
     ctx = SimpleNamespace(problem=problem)
-    return Result(np.array([0.0]), np.array([0.0]), 0, 0, ctx, history), history
+    return Result(np.array([0.0]), np.array([0.0]), 0, 0, ctx, history), history  # ty: ignore[invalid-argument-type]
 
 
 def test_summary_values_and_generation_axis():

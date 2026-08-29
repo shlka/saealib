@@ -59,7 +59,7 @@ def test_records_support_mixed_channels_and_preserve_row_count() -> None:
     assert records[1]["x"].shape == (1, 1)
     assert records[0]["x"].flags.writeable is False
     with pytest.raises(TypeError):
-        records[0]["gen"] = 10  # type: ignore[index]
+        records[0]["gen"] = 10  # ty: ignore[invalid-assignment]
     with pytest.raises(ValueError, match="read-only"):
         records[0]["x"][0, 0] = 10
 

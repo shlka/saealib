@@ -49,7 +49,7 @@ def _result(n_obj: int = 2, dim: int = 3) -> Result:
         population=population,
         pareto_archive=archive,
     )
-    return Result(x=x[0], f=f[0], fe=1, gen=1, ctx=ctx)
+    return Result(x=x[0], f=f[0], fe=1, gen=1, ctx=ctx)  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.parametrize("source", ["result", "archive", "population"])
@@ -98,7 +98,7 @@ def test_one_dimension_is_not_a_supported_plot() -> None:
 )
 def test_invalid_plot_options_raise(kwargs: dict[str, object]) -> None:
     with pytest.raises(ValidationError):
-        plot_result(_result(4), **kwargs)
+        plot_result(_result(4), **kwargs)  # ty: ignore[invalid-argument-type]
 
 
 @pytest.mark.parametrize(
@@ -107,12 +107,12 @@ def test_invalid_plot_options_raise(kwargs: dict[str, object]) -> None:
 )
 def test_unknown_options_raise(key: str, value: str) -> None:
     with pytest.raises(ValidationError):
-        plot_result(_result(), **{key: value})
+        plot_result(_result(), **{key: value})  # ty: ignore[invalid-argument-type]
 
 
 def test_existing_axes_and_subfigure_return_root_figure() -> None:
     root = Figure()
-    subfigure = root.subfigures(1)
+    subfigure = root.add_subfigure(root.add_gridspec(1, 1)[0])
     ax = subfigure.add_subplot(111)
 
     assert plot_result(_result(), ax=ax) is root
@@ -133,14 +133,14 @@ def test_state_is_accepted() -> None:
         gen=1,
         history=None,
     )
-    fig = plot_result(state, space="objective")
+    fig = plot_result(state, space="objective")  # ty: ignore[invalid-argument-type]
 
     assert isinstance(fig, Figure) is True
 
 
 def test_decision_requires_dense_numeric_view() -> None:
     result = _result()
-    result.ctx.problem.space.services = SimpleNamespace(get=lambda name: None)
+    result.ctx.problem.space.services = SimpleNamespace(get=lambda name: None)  # ty: ignore[invalid-assignment]
 
     with pytest.raises(ValidationError, match="dense numeric view"):
         plot_result(result, space="decision", source="archive")

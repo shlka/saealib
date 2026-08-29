@@ -71,7 +71,7 @@ def test_from_state_matches_minimize_and_maximize():
         "verbose": False,
     }
     for optimize in (minimize, maximize):
-        result = optimize(lambda x: np.sum(x**2), **kwargs)
+        result = optimize(lambda x: np.sum(x**2), **kwargs)  # ty: ignore[invalid-argument-type]
         rebuilt = Result.from_state(result.ctx)
         np.testing.assert_array_equal(rebuilt.x, result.x)
         np.testing.assert_array_equal(rebuilt.f, result.f)

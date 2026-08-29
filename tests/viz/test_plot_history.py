@@ -22,7 +22,7 @@ def _result() -> Result:
         f=np.array([0.0]),
         fe=0,
         gen=0,
-        ctx=SimpleNamespace(),
+        ctx=SimpleNamespace(),  # ty: ignore[invalid-argument-type]
     )
 
 
@@ -57,8 +57,12 @@ def test_plot_history_delegates_and_labels_axes() -> None:
     )
     assert ax.get_xlabel() == "Generations"
     assert ax.get_ylabel() == "best"
-    np.testing.assert_allclose(ax.lines[0].get_xdata(), [1.0, 2.0])
-    np.testing.assert_allclose(ax.lines[0].get_ydata(), [3.0, 4.0])
+    np.testing.assert_allclose(
+        np.asarray(ax.lines[0].get_xdata(), dtype=float), [1.0, 2.0]
+    )
+    np.testing.assert_allclose(
+        np.asarray(ax.lines[0].get_ydata(), dtype=float), [3.0, 4.0]
+    )
 
 
 def test_plot_history_converts_state_to_result(monkeypatch) -> None:
@@ -75,7 +79,7 @@ def test_plot_history_converts_state_to_result(monkeypatch) -> None:
     from_state = Mock(return_value=result)
     monkeypatch.setattr(Result, "from_state", from_state)
 
-    plot_history(state, "metric")
+    plot_history(state, "metric")  # ty: ignore[invalid-argument-type]
 
     from_state.assert_called_once_with(state)
     result.history_series.assert_called_once_with("metric", x="fe", channel=None)
