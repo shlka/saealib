@@ -8,57 +8,7 @@ through :mod:`saealib.viz._matplotlib` and raise an actionable
 
 from __future__ import annotations
 
-from saealib.viz._design import (
-    plot_archive,
-    plot_design_pcp,
-    plot_diversity,
-    plot_variable_distribution,
-)
-from saealib.viz._objective import (
-    plot_objective_heatmap,
-    plot_pareto,
-    plot_pareto_evolution,
-    plot_pcp,
-    plot_radar,
-)
-from saealib.viz._progress import (
-    plot_constraint_violation,
-    plot_convergence,
-    plot_hypervolume,
-    plot_indicator,
-    plot_running_metric,
-)
-from saealib.viz._structure import plot_island_migration, plot_weight_vectors
-from saealib.viz._surrogate import (
-    plot_acquisition,
-    plot_prescreening,
-    plot_surrogate,
-    plot_surrogate_accuracy,
-    plot_surrogate_error_history,
-    plot_surrogate_uncertainty,
-)
+from saealib.viz._plot_history import plot_history
+from saealib.viz._plot_result import plot_result
 
-__all__ = [
-    "plot_acquisition",
-    "plot_archive",
-    "plot_constraint_violation",
-    "plot_convergence",
-    "plot_design_pcp",
-    "plot_diversity",
-    "plot_hypervolume",
-    "plot_indicator",
-    "plot_island_migration",
-    "plot_objective_heatmap",
-    "plot_pareto",
-    "plot_pareto_evolution",
-    "plot_pcp",
-    "plot_prescreening",
-    "plot_radar",
-    "plot_running_metric",
-    "plot_surrogate",
-    "plot_surrogate_accuracy",
-    "plot_surrogate_error_history",
-    "plot_surrogate_uncertainty",
-    "plot_variable_distribution",
-    "plot_weight_vectors",
-]
+__all__ = ["plot_history", "plot_result"]
