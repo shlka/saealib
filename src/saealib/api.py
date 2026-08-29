@@ -1,9 +1,8 @@
-"""High-level API: minimize / maximize functions and Result dataclass."""
+"""High-level API: minimize / maximize functions."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -14,10 +13,10 @@ from saealib.acquisition.winrate import WinRateAcquisition
 from saealib.callback import GenerationStartEvent, logging_generation
 from saealib.context import OptimizationState
 from saealib.exceptions import ValidationError
-from saealib.execution.history import History
 from saealib.execution.initializer import LHSInitializer
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
+from saealib.result import Result
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
@@ -41,36 +40,6 @@ class _UnsetType:
 
 
 _UNSET = _UnsetType()
-
-
-@dataclass
-class Result:
-    """Optimization result returned by :func:`minimize` / :func:`maximize`.
-
-    Attributes
-    ----------
-    x : np.ndarray
-        Best design variables. Shape ``(dim,)`` for single-objective,
-        ``(n_pareto, dim)`` for multi-objective.
-    f : np.ndarray
-        Best objective values. Shape ``(n_obj,)`` for single-objective,
-        ``(n_pareto, n_obj)`` for multi-objective.
-    fe : int
-        Total number of true function evaluations used.
-    gen : int
-        Total number of generations completed.
-    history : History or None
-        Execution history recorded during the run.
-    ctx : OptimizationState
-        Full optimization context providing access to the archive and more.
-    """
-
-    x: np.ndarray
-    f: np.ndarray
-    fe: int
-    gen: int
-    ctx: OptimizationState
-    history: History | None = None
 
 
 # ---------------------------------------------------------------------------

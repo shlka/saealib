@@ -17,7 +17,7 @@ from saealib.acquisition import (
     PointwiseAcquisition,
 )
 from saealib.algorithms import GA, PSO, Algorithm, AskTellAlgorithm, GenomeGA
-from saealib.api import Result, maximize, minimize
+from saealib.api import maximize, minimize
 from saealib.callback import (
     CallbackManager,
     Event,
@@ -122,6 +122,7 @@ from saealib.problem import (
 # framework compiler import vector implementation modules.
 from saealib.profiles.vector import activate as _activate_vector_profile
 from saealib.registry import register
+from saealib.result import Result
 from saealib.stages import (
     AcquisitionStage,
     ArchiveUpdateStage,

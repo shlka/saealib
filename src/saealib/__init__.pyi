@@ -41,7 +41,6 @@ from saealib.algorithms import GenomeGA as GenomeGA
 
 # algorithms (less common)
 from saealib.algorithms import PymooAlgorithm as PymooAlgorithm
-from saealib.api import Result as Result
 from saealib.api import maximize as maximize
 from saealib.api import minimize as minimize
 from saealib.callback import AcquisitionEndEvent as AcquisitionEndEvent
@@ -208,6 +207,7 @@ from saealib.problem import StaticToleranceHandler as StaticToleranceHandler
 from saealib.problem import exponential_epsilon_schedule as exponential_epsilon_schedule
 from saealib.problem import linear_epsilon_schedule as linear_epsilon_schedule
 from saealib.registry import register as register
+from saealib.result import Result as Result
 
 # stages
 from saealib.stages import AcquisitionStage as AcquisitionStage
