@@ -1346,6 +1346,12 @@ def record_generation(state: OptimizationState) -> None:
     using the running ``problem.handler.feasibility_threshold`` to expose ε's
     effect. These are different questions despite sharing a summary row.
     ``min_cv`` is the raw minimum cv in ``state.population`` and uses no threshold.
+
+    The ``front`` channel stores the Pareto archive's objective values alone and
+    has no cv column, so a front recorded while that archive holds no feasible
+    solution is indistinguishable from a feasible one; ``front_size`` collapsing
+    to a single point is the only sign, and ``min_cv`` cannot serve here because
+    it describes the population rather than the archive.
     """
     history = state.history
     if history is None:

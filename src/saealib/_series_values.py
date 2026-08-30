@@ -1,4 +1,9 @@
-"""Built-in values for :meth:`Result.history_series`."""
+"""Built-in values for :meth:`Result.history_series`.
+
+A front-based value is computed in minimize-space: the recorded front and the
+caller's reference are multiplied by the problem's minimize sign before the
+indicator runs, and neither is normalized.
+"""
 
 from __future__ import annotations
 

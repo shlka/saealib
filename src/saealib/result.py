@@ -159,7 +159,55 @@ class Result:
         channel: str | None = None,
         **value_kwargs: Any,
     ) -> HistorySeries:
-        """Return one scalar value per recorded history generation."""
+        """Return one scalar value per recorded history generation.
+
+        Parameters
+        ----------
+        value : str or callable
+            Registered value name, or a callable mapping one history record to
+            a scalar. A callable also requires *channel*.
+        x : {"fe", "gen", "decision_count"}, optional
+            Column supplying the independent coordinate.
+        channel : str, optional
+            History channel whose records feed a callable *value*.
+        **value_kwargs
+            Arguments required by the registered value: ``reference_point``
+            for ``"hypervolume"``, ``reference_front`` for ``"gd"``,
+            ``"gd_plus"``, ``"igd"``, ``"igd_plus"`` and ``"spread"``.
+
+        Returns
+        -------
+        HistorySeries
+            The series and the display names of its two coordinates.
+
+        Raises
+        ------
+        ValidationError
+            If *x* or *value* is unknown, the channel the value needs was not
+            recorded, or a reference argument has the wrong shape.
+
+        Notes
+        -----
+        A reference is supplied in the objective space of the problem, the same
+        orientation as :attr:`Result.f`. Front and reference are both converted
+        to minimize-space before an indicator runs, and neither is normalized,
+        so an indicator value keeps raw objective units.
+
+        Indicators read the ``front`` channel, a per-generation snapshot of the
+        Pareto archive holding objective values alone, with no constraint
+        violation column. That archive judges feasibility by its own ``eps_cv``,
+        which the built-in algorithms leave at ``0.0``, so it admits a solution
+        as feasible only at exactly zero violation. While it holds no such
+        solution, constrained dominance reduces the front to the lowest-cv
+        solutions and an indicator over that generation describes an infeasible
+        front; ``front_size`` collapsing to a single point is the visible sign.
+
+        Feasibility elsewhere in the series rests on different thresholds:
+        ``"best"`` selects from the archive under ``problem.eps_cv``, and
+        ``"feasible_ratio"`` counts the population under the running
+        ``problem.handler.feasibility_threshold``. The three are independent
+        and can disagree, most visibly while epsilon is relaxed.
+        """
         if x not in _HISTORY_X:
             valid = ", ".join(f'"{name}"' for name in _HISTORY_X_NAMES)
             raise ValidationError(f"x must be one of: {valid}.")
