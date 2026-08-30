@@ -81,6 +81,7 @@ def test_initializer_contract_declares_population_and_rng_effects() -> None:
             RUNTIME_GENERATION,
             RUNTIME_DECISION_COUNT,
             POPULATIONS_MAIN,
+            ARCHIVES_MAIN,
             ARCHIVES_PARETO,
             RUNTIME_CANDIDATE_ID_ALLOCATOR,
         ),

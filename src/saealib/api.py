@@ -1,9 +1,8 @@
-"""High-level API: minimize / maximize functions and Result dataclass."""
+"""High-level API: minimize / maximize functions."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -12,12 +11,11 @@ from saealib.acquisition.base import AcquisitionFunction
 from saealib.acquisition.mean import MeanPrediction
 from saealib.acquisition.winrate import WinRateAcquisition
 from saealib.callback import GenerationStartEvent, logging_generation
-from saealib.context import OptimizationState
 from saealib.exceptions import ValidationError
-from saealib.execution.history import History
 from saealib.execution.initializer import LHSInitializer
 from saealib.optimizer import Optimizer
 from saealib.problem import Problem
+from saealib.result import Result
 from saealib.strategies.gb import GenerationBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
 from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
@@ -41,36 +39,6 @@ class _UnsetType:
 
 
 _UNSET = _UnsetType()
-
-
-@dataclass
-class Result:
-    """Optimization result returned by :func:`minimize` / :func:`maximize`.
-
-    Attributes
-    ----------
-    x : np.ndarray
-        Best design variables. Shape ``(dim,)`` for single-objective,
-        ``(n_pareto, dim)`` for multi-objective.
-    f : np.ndarray
-        Best objective values. Shape ``(n_obj,)`` for single-objective,
-        ``(n_pareto, n_obj)`` for multi-objective.
-    fe : int
-        Total number of true function evaluations used.
-    gen : int
-        Total number of generations completed.
-    history : History or None
-        Execution history recorded during the run.
-    ctx : OptimizationState
-        Full optimization context providing access to the archive and more.
-    """
-
-    x: np.ndarray
-    f: np.ndarray
-    fe: int
-    gen: int
-    ctx: OptimizationState
-    history: History | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -192,43 +160,6 @@ def _resolve_strategy(
     return strategy
 
 
-def _build_result(ctx: OptimizationState) -> Result:
-    archive_x = ctx.archive.get_array("x")
-    archive_f = ctx.archive.get_array("f")
-    archive_cv = ctx.archive.get_array("cv")
-    direction = ctx.problem.direction
-    eps = ctx.problem.eps_cv
-
-    feasible = np.where(archive_cv <= eps)[0]
-    pool = feasible if len(feasible) else np.array([int(np.argmin(archive_cv))])
-
-    if ctx.problem.n_obj == 1:
-        scores = archive_f[pool] @ direction
-        best_idx = pool[int(np.argmax(scores))]
-        best_x = archive_x[best_idx]
-        best_f = archive_f[best_idx]
-    else:
-        if len(ctx.pareto_archive) > 0:
-            best_x = ctx.pareto_archive.get_array("x")
-            best_f = ctx.pareto_archive.get_array("f")
-        else:
-            from saealib.comparators import non_dominated_sort
-
-            _, fronts = non_dominated_sort(archive_f[pool], direction=direction)
-            pareto_idx = pool[fronts[0]]
-            best_x = archive_x[pareto_idx]
-            best_f = archive_f[pareto_idx]
-
-    return Result(
-        x=best_x,
-        f=best_f,
-        fe=ctx.fe,
-        gen=ctx.gen,
-        history=ctx.history,
-        ctx=ctx,
-    )
-
-
 def _run(
     problem: Problem,
     algorithm: str | Algorithm | None,
@@ -278,8 +209,7 @@ def _run(
     if not verbose:
         opt.cbmanager.unregister(GenerationStartEvent, logging_generation)
 
-    ctx = opt.run()
-    return _build_result(ctx)
+    return Result.from_state(opt.run())
 
 
 # ---------------------------------------------------------------------------

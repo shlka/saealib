@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, cast
@@ -376,6 +376,48 @@ class History:
             view.flags.writeable = False
             result.append(view)
         return tuple(result)
+
+    def get(self, channel: str, column: str) -> np.ndarray | tuple[np.ndarray, ...]:
+        """Return a scalar or block column using its existing read-only views."""
+        if not self.is_enabled(channel):
+            raise ValidationError(f"History channel {channel!r} is not enabled")
+
+        if column in self._columns[channel]:
+            return self.channel(channel)[column]
+        if column in self._block_columns[channel]:
+            return self.blocks(channel, column)
+
+        scalar_names = sorted(self._columns[channel])
+        block_names = sorted(self._block_columns[channel])
+        raise ValidationError(
+            f"History column {channel!r}/{column!r} is not available; "
+            f"available scalar columns: {scalar_names!r}; "
+            f"available block columns: {block_names!r}"
+        )
+
+    def records(self, channel: str) -> Iterator[Mapping[str, Any]]:
+        """Iterate over read-only, row-aligned records without copying data."""
+        if not self.is_enabled(channel):
+            raise ValidationError(f"History channel {channel!r} is not enabled")
+
+        scalar_columns = self.channel(channel)
+        block_columns = {
+            column: self.blocks(channel, column)
+            for column in self._block_columns[channel]
+        }
+        row_count = self._rows[channel]
+
+        def iter_records() -> Iterator[Mapping[str, Any]]:
+            for row in range(row_count):
+                record: dict[str, Any] = {
+                    column: values[row].item()
+                    for column, values in scalar_columns.items()
+                }
+                for column, blocks in block_columns.items():
+                    record.setdefault(column, blocks[row])
+                yield MappingProxyType(record)
+
+        return iter_records()
 
     def _restore_channel(self, name: str, columns: Mapping[str, np.ndarray]) -> None:
         """Restore a channel's columns without appending rows one at a time."""
@@ -1295,7 +1337,22 @@ def record_initial_evaluation(
 
 
 def record_generation(state: OptimizationState) -> None:
-    """Append enabled generation-channel rows for the current state."""
+    """Append enabled generation-channel rows for the current state.
+
+    ``best_f`` is the reported answer: it selects from ``state.archive`` using
+    the strict user-declared ``problem.eps_cv``, preserving reported solutions
+    and ``history_series("best")`` from relaxed ε values during exploration.
+    ``feasible_ratio`` is an exploration diagnostic from ``state.population``
+    using the running ``problem.handler.feasibility_threshold`` to expose ε's
+    effect. These are different questions despite sharing a summary row.
+    ``min_cv`` is the raw minimum cv in ``state.population`` and uses no threshold.
+
+    The ``front`` channel stores the Pareto archive's objective values alone and
+    has no cv column, so a front recorded while that archive holds no feasible
+    solution is indistinguishable from a feasible one; ``front_size`` collapsing
+    to a single point is the only sign, and ``min_cv`` cannot serve here because
+    it describes the population rather than the archive.
+    """
     history = state.history
     if history is None:
         return
@@ -1316,6 +1373,15 @@ def record_generation(state: OptimizationState) -> None:
             "decision_count": state.decision_count,
             "front_size": front_size,
         }
+        if n_obj == 1 and len(state.archive):
+            archive_f = state.archive.get_array("f")
+            cv = state.archive.get_array("cv")
+            feasible = np.where(cv <= state.problem.eps_cv)[0]
+            pool = feasible if len(feasible) else np.array([int(np.argmin(cv))])
+            best = pool[np.argmax(archive_f[pool] @ state.direction)]
+            columns["best_f"] = float(archive_f[best, 0])
+        else:
+            columns["best_f"] = np.nan
         if front_size:
             objective_values = pareto_archive.f
             f_min = np.min(objective_values, axis=0)

@@ -10,15 +10,22 @@ import numpy as np
 import pytest
 
 from saealib import (
+    GA,
+    CrossoverBLXAlpha,
+    GenerationEndEvent,
     LHSInitializer,
+    MutationUniform,
     Optimizer,
     Problem,
     RandomInitializer,
     RepeatedEvaluation,
+    SequentialSelection,
     SobolInitializer,
     Termination,
+    TruncationSelection,
     max_fe,
     max_gen,
+    maximize,
     minimize,
 )
 from saealib.acquisition import AcquisitionFunction, AcquisitionResult
@@ -44,9 +51,20 @@ from saealib.execution.history import (
 )
 from saealib.policies.evaluation import EvaluateAll
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
+from saealib.problem import (
+    ConstraintHandler,
+    EpsilonConstraintHandler,
+    InequalityConstraint,
+    linear_epsilon_schedule,
+)
+from saealib.result import Result
 from saealib.space import ObjectSpace
 from saealib.stages import AsyncEvaluationSubmitStage, EvaluationPlanStage
-from saealib.strategies import DirectStrategy, GenerationBasedStrategy
+from saealib.strategies import (
+    DirectStrategy,
+    GenerationBasedStrategy,
+    IndividualBasedStrategy,
+)
 from saealib.surrogate import PredictionChannel, SurrogatePrediction
 
 
@@ -703,6 +721,7 @@ def test_empty_archive_and_population_record_nan_summary_values() -> None:
     assert summary["front_size"][0] == 0
     assert np.isnan(summary["f_min_0"][0])
     assert np.isnan(summary["f_max_0"][0])
+    assert np.isnan(summary["best_f"][0])
     assert np.isnan(summary["feasible_ratio"][0])
     assert np.isnan(summary["min_cv"][0])
 
@@ -728,6 +747,99 @@ def test_feasible_ratio_uses_constraint_handler_threshold() -> None:
     assert summary["feasible_ratio"][0] == pytest.approx(0.75)
 
 
+def test_epsilon_summary_channels_keep_reporting_and_diagnostics_distinct() -> None:
+    n_gen = 8
+
+    def make_optimizer(handler: ConstraintHandler) -> Optimizer:
+        problem = Problem(
+            func=lambda x: float(x[0]),
+            dim=1,
+            n_obj=1,
+            direction=np.array([-1.0]),
+            lb=[0.0],
+            ub=[1.0],
+            eps_cv=1e-6,
+            constraints=[InequalityConstraint(lambda x: 0.5 - x[0])],
+            handler=handler,
+        )
+        return (
+            Optimizer(problem, seed=0)
+            .set_initializer(
+                LHSInitializer(n_init_archive=2, n_init_population=2, seed=0)
+            )
+            .set_algorithm(
+                GA(
+                    crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
+                    mutation=MutationUniform(prob_var=0.1),
+                    parent_selection=SequentialSelection(),
+                    survivor_selection=TruncationSelection(),
+                )
+            )
+            .set_strategy(IndividualBasedStrategy(evaluation_ratio=1.0))
+            .set_termination(Termination(max_gen(n_gen)))
+            .set_history(["summary"])
+        )
+
+    calibration = make_optimizer(
+        EpsilonConstraintHandler(linear_epsilon_schedule(eps0=0.5, n_gen=n_gen))
+    )
+    calibration_state = calibration.run()
+    measured_cv_max = float(np.max(calibration_state.archive.get_array("cv")))
+    assert 0.0 < measured_cv_max <= 0.25
+    eps0 = measured_cv_max
+
+    problem = Problem(
+        func=lambda x: float(x[0]),
+        dim=1,
+        n_obj=1,
+        direction=np.array([-1.0]),
+        lb=[0.0],
+        ub=[1.0],
+        eps_cv=1e-6,
+        constraints=[InequalityConstraint(lambda x: 0.5 - x[0])],
+        handler=EpsilonConstraintHandler(
+            linear_epsilon_schedule(eps0=eps0, n_gen=n_gen)
+        ),
+    )
+    optimizer = make_optimizer(problem.handler)
+    archive_snapshots: dict[int, tuple[np.ndarray, np.ndarray, float]] = {}
+    population_snapshots: dict[int, np.ndarray] = {}
+
+    def capture_archive(event: GenerationEndEvent) -> None:
+        archive_snapshots[event.ctx.gen] = (
+            event.ctx.archive.get_array("f").copy(),
+            event.ctx.archive.get_array("cv").copy(),
+            float(event.ctx.problem.handler.feasibility_threshold),
+        )
+        population_snapshots[event.ctx.gen] = event.ctx.population.cv.copy()
+
+    optimizer.cbmanager.register(GenerationEndEvent, capture_archive)
+    state = optimizer.run()
+
+    assert state.history is not None
+    summary = state.history.channel("summary")
+    best = summary["best_f"]
+    feasible_ratio = summary["feasible_ratio"]
+    min_cv = summary["min_cv"]
+
+    score = best * problem.direction[0]
+    assert np.all(np.diff(score) >= 0.0)
+    assert np.ptp(best) > 0.0
+    assert any(
+        np.any(
+            (cv > problem.eps_cv)
+            & (cv <= threshold)
+            & (f[:, 0] < best[int(np.flatnonzero(summary["gen"] == gen)[0])])
+        )
+        for gen, (f, cv, threshold) in archive_snapshots.items()
+    )
+    assert feasible_ratio[0] > feasible_ratio[-1]
+    assert set(archive_snapshots) == set(summary["gen"][1:])
+    for gen, cv in population_snapshots.items():
+        row = int(np.flatnonzero(summary["gen"] == gen)[0])
+        assert min_cv[row] == pytest.approx(float(np.min(cv)))
+
+
 def test_multiobjective_summary_has_each_objective_column() -> None:
     result = minimize(_problem(2), max_fe=13, pop_size=3, seed=7, verbose=False)
     assert result.history is not None
@@ -736,6 +848,50 @@ def test_multiobjective_summary_has_each_objective_column() -> None:
     for index in range(2):
         assert f"f_min_{index}" in summary
         assert f"f_max_{index}" in summary
+    assert np.all(np.isnan(summary["best_f"]))
+
+
+@pytest.mark.parametrize("run", [minimize, maximize], ids=["minimize", "maximize"])
+def test_singleobjective_summary_best_f_matches_result(run) -> None:
+    result = run(_problem(), max_fe=13, pop_size=3, seed=7, verbose=False)
+    assert result.history is not None
+    best_f = result.history.channel("summary")["best_f"]
+
+    assert best_f.dtype == np.float64
+    assert best_f[-1] == pytest.approx(float(result.f[0]))
+
+
+def test_summary_best_f_uses_archive_selection_for_equal_infeasible_cv() -> None:
+    state = _empty_state()
+    state.archive.extend(
+        {
+            "x": np.zeros((2, 2)),
+            "f": np.array([[1.0], [3.0]]),
+            "g": np.zeros((2, 0)),
+            "cv": np.array([1.0, 1.0]),
+            "id": np.array([-1, -1]),
+        }
+    )
+    state.pareto_archive.extend(
+        {
+            "x": np.zeros((1, 2)),
+            "f": np.array([[2.0]]),
+            "g": np.zeros((1, 0)),
+            "cv": np.array([1.0]),
+            "id": np.array([-1]),
+        }
+    )
+
+    record_generation(state)
+
+    assert state.history is not None
+    summary = state.history.channel("summary")
+    result = Result.from_state(state)
+    assert summary["best_f"][0] == pytest.approx(float(result.f[0]))
+    assert summary["best_f"][0] not in {
+        summary["f_min_0"][0],
+        summary["f_max_0"][0],
+    }
 
 
 def test_set_history_rejects_unknown_channel() -> None:
@@ -772,6 +928,57 @@ def test_checkpoint_roundtrip_restores_summary_history(tmp_path: Path) -> None:
         "columns": {"summary": list(expected)},
         "blocks": {"summary": []},
     }
+
+
+def test_legacy_summary_checkpoint_backfills_best_f_and_resume_appends_real_value(
+    tmp_path: Path,
+) -> None:
+    state = _run_optimizer(_problem(), ["summary"])
+    source = tmp_path / "current.npz"
+    legacy = tmp_path / "schema5.npz"
+    state.save(source)
+
+    raw = dict(np.load(source, allow_pickle=False).items())
+    metadata = json.loads(bytes(raw["_history_meta"]).decode())
+    metadata["columns"]["summary"].remove("best_f")
+    raw.pop("_history__summary__best_f")
+    raw["_history_meta"] = np.frombuffer(
+        json.dumps(metadata, separators=(",", ":")).encode(), dtype=np.uint8
+    )
+    raw["_checkpoint_schema_version"] = np.array(5, dtype=np.int64)
+    np.savez(legacy, **raw)
+
+    restored = OptimizationState.load(legacy, state.problem)
+    assert restored.history is not None
+    restored_best_f = restored.history.channel("summary")["best_f"]
+    assert np.all(np.isnan(restored_best_f))
+
+    optimizer = (
+        Optimizer(state.problem, seed=7)
+        .set_initializer(LHSInitializer(10, 3))
+        .set_termination(Termination(max_gen(state.gen + 1)))
+        .set_history(["summary"])
+    )
+    optimizer.resolve_defaults()
+    resumed = optimizer.run_from(restored)
+    assert resumed.history is not None
+    summary = resumed.history.channel("summary")
+    assert np.all(np.isnan(summary["best_f"][: len(restored_best_f)]))
+    assert np.isfinite(summary["best_f"][len(restored_best_f) :]).all()
+
+
+def test_current_summary_checkpoint_roundtrip_retains_best_f(tmp_path: Path) -> None:
+    state = _run_optimizer(_problem(), ["summary"])
+    assert state.history is not None
+    path = tmp_path / "roundtrip.npz"
+    state.save(path)
+    restored = OptimizationState.load(path, state.problem)
+
+    assert restored.history is not None
+    np.testing.assert_array_equal(
+        restored.history.channel("summary")["best_f"],
+        state.history.channel("summary")["best_f"],
+    )
 
 
 def _resume_optimizer(

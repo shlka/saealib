@@ -61,8 +61,8 @@ if TYPE_CHECKING:
     from saealib.surrogate.prediction import SurrogatePrediction
 
 
-CURRENT_CHECKPOINT_SCHEMA_VERSION = 5
-SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS = frozenset({1, 2, 3, 4, 5})
+CURRENT_CHECKPOINT_SCHEMA_VERSION = 6
+SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS = frozenset({1, 2, 3, 4, 5, 6})
 _SAFE_EMPTY_PENDING = frozenset(
     pickle.dumps({}, protocol=protocol)
     for protocol in range(pickle.HIGHEST_PROTOCOL + 1)
@@ -391,7 +391,7 @@ class OptimizationState:
         at the current request allocator value for legacy compatibility.
     history : History or None
         Optional execution history accumulator. Summary-channel rows are
-        persisted by schema-v5 checkpoints.
+        persisted by schema-v6 checkpoints.
     fe : int
         Number of function evaluations.
     gen : int
@@ -1448,7 +1448,7 @@ class OptimizationState:
                 )
             if schema_version == 1:
                 return _load_v1(cls, data, problem)
-            if schema_version in (3, 4, 5):
+            if schema_version in (3, 4, 5, 6):
                 return _load_v3_or_later(cls, data, problem)
             return _load_v2(cls, data, problem)
         except CheckpointError:
@@ -2664,7 +2664,8 @@ def _load_v2(
 def _load_v3_or_later(
     cls: type[OptimizationState], data: Any, problem: Problem
 ) -> OptimizationState:
-    """Load a schema-v3, schema-v4, or schema-v5 checkpoint."""
+    """Load a schema-v3, schema-v4, schema-v5, or schema-v6 checkpoint."""
+    schema_version = _scalar_int(data["_checkpoint_schema_version"])
     genome_codec = problem.space.services.get("GenomeCodec")
     dense_numeric_view = problem.space.services.get("DenseNumericView")
     entries = _read_json(data, "_state_entries")
@@ -2825,6 +2826,14 @@ def _load_v3_or_later(
                 if array_key not in data.files:
                     raise CheckpointError(f"Checkpoint is missing array {array_key!r}")
                 columns[column] = np.asarray(data[array_key])
+            if (
+                schema_version < 6
+                and channel == "summary"
+                and "best_f" not in columns
+                and columns
+            ):
+                row_count = len(next(iter(columns.values())))
+                columns["best_f"] = np.full(row_count, np.nan)
             history._restore_channel(channel, columns)
             block_names = blocks_by_channel[channel]
             if (
