@@ -90,6 +90,18 @@ def test_unknown_and_multi_objective_best_values_raise():
         result.history_series("best")
 
 
+def test_removed_diversity_name_is_unknown():
+    result, _ = _result()
+    with pytest.raises(ValidationError) as exc_info:
+        result.history_series("diversity")
+
+    message = str(exc_info.value)
+    assert "Unknown history value 'diversity'. Choose one of:" in message
+    candidates = message.split("Choose one of: ", 1)[1].rstrip(".").split(", ")
+    assert "mean_normalized_pairwise_distance" in candidates
+    assert "diversity" not in candidates
+
+
 def test_front_channel_error_is_actionable():
     result, _ = _result()
     with pytest.raises(ValidationError, match=r"front.*history_channels.*set_history"):
@@ -100,9 +112,9 @@ def test_population_channel_error_is_actionable():
     result, _ = _result()
     with pytest.raises(
         ValidationError,
-        match=r"diversity.*population.*history_channels.*set_history",
+        match=r"mean_normalized_pairwise_distance.*population.*history_channels.*set_history",
     ):
-        result.history_series("diversity")
+        result.history_series("mean_normalized_pairwise_distance")
 
 
 def test_callable_uses_records():
@@ -190,7 +202,7 @@ def test_reference_shapes_and_empty_fronts_are_validated():
         result.history_series("gd", reference_front=np.ones((2, 3)))
 
 
-def test_diversity_uses_bounds_and_population_x_block():
+def test_mean_normalized_pairwise_distance_uses_bounds_and_population_x_block():
     dense = object()
     bounds = SimpleNamespace(bounds=(np.array([0.0, 10.0]), np.array([1.0, 10.0])))
     services = SimpleNamespace(
@@ -207,10 +219,12 @@ def test_diversity_uses_bounds_and_population_x_block():
         fe=2,
         size=3,
     )
-    np.testing.assert_allclose(result.history_series("diversity").y, [2.0 / 3.0])
+    np.testing.assert_allclose(
+        result.history_series("mean_normalized_pairwise_distance").y, [2.0 / 3.0]
+    )
 
 
-def test_diversity_requires_services_and_x_block():
+def test_mean_normalized_pairwise_distance_requires_services_and_x_block():
     result, history = _population_result(SimpleNamespace(get=lambda name: None))
     history.append_block(
         "population",
@@ -220,7 +234,7 @@ def test_diversity_requires_services_and_x_block():
         size=2,
     )
     with pytest.raises(ValidationError, match="DenseNumericView"):
-        result.history_series("diversity")
+        result.history_series("mean_normalized_pairwise_distance")
 
     bounds = SimpleNamespace(bounds=(np.zeros(2), np.ones(2)))
     result, history = _population_result(
@@ -236,7 +250,7 @@ def test_diversity_requires_services_and_x_block():
         size=2,
     )
     with pytest.raises(ValidationError, match=r"population.*x"):
-        result.history_series("diversity")
+        result.history_series("mean_normalized_pairwise_distance")
 
 
 def test_series_modules_do_not_import_matplotlib():

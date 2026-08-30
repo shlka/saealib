@@ -48,7 +48,13 @@ def _spacing(front: np.ndarray) -> float:
     return float(spacing(front))
 
 
-def _diversity(block: np.ndarray, *, lower: np.ndarray, upper: np.ndarray) -> float:
+def _mean_normalized_pairwise_distance(
+    block: np.ndarray, *, lower: np.ndarray, upper: np.ndarray
+) -> float:
+    """Return mean pairwise distance in bounds-normalized design space.
+
+    The distance is divided by the unit-hypercube diagonal to yield values in [0, 1].
+    """
     if len(block) < 2:
         return np.nan
     active = upper != lower
@@ -80,7 +86,9 @@ _HISTORY_VALUES: dict[str, _ValueSpec] = {
         "front", reference="reference_front", compute=_indicator("spread")
     ),
     "spacing": _ValueSpec("front", compute=_spacing),
-    "diversity": _ValueSpec("population", column="x", compute=_diversity),
+    "mean_normalized_pairwise_distance": _ValueSpec(
+        "population", column="x", compute=_mean_normalized_pairwise_distance
+    ),
 }
 
 
@@ -121,20 +129,30 @@ def _service_bounds(result: Any) -> tuple[np.ndarray, np.ndarray]:
         bounds_service = services.get("BoundsService")
     except AttributeError as exc:
         raise ValidationError(
-            "diversity requires DenseNumericView and BoundsService services."
+            "mean_normalized_pairwise_distance requires DenseNumericView and "
+            "BoundsService services."
         ) from exc
     if dense_service is None:
-        raise ValidationError("diversity requires the DenseNumericView service.")
+        raise ValidationError(
+            "mean_normalized_pairwise_distance requires the DenseNumericView service."
+        )
     if bounds_service is None:
-        raise ValidationError("diversity requires the BoundsService service.")
+        raise ValidationError(
+            "mean_normalized_pairwise_distance requires the BoundsService service."
+        )
     try:
         lower, upper = bounds_service.bounds
         lower = np.asarray(lower, dtype=float).reshape(-1)
         upper = np.asarray(upper, dtype=float).reshape(-1)
     except (AttributeError, TypeError, ValueError) as exc:
-        raise ValidationError("diversity requires valid bounds.") from exc
+        raise ValidationError(
+            "mean_normalized_pairwise_distance requires valid bounds."
+        ) from exc
     if lower.shape != upper.shape or not np.any(upper != lower):
-        raise ValidationError("diversity requires at least one non-fixed variable.")
+        raise ValidationError(
+            "mean_normalized_pairwise_distance requires at least one non-fixed "
+            "variable."
+        )
     return lower, upper
 
 
@@ -152,7 +170,7 @@ def _builtin_values(
         column = history.get("summary", spec.column or value)
         return [float(item) for item in column]
 
-    if value == "diversity":
+    if value == "mean_normalized_pairwise_distance":
         lower, upper = _service_bounds(result)
         blocks = history.get("population", "x")
         values = []
@@ -160,9 +178,12 @@ def _builtin_values(
             array = np.asarray(block, dtype=float)
             if array.ndim != 2 or array.shape[1] != len(lower):
                 raise ValidationError(
-                    "diversity population dimensions do not match bounds."
+                    "mean_normalized_pairwise_distance population dimensions do "
+                    "not match bounds."
                 )
-            values.append(_diversity(array, lower=lower, upper=upper))
+            values.append(
+                _mean_normalized_pairwise_distance(array, lower=lower, upper=upper)
+            )
         return values
 
     blocks = history.get(spec.channel, spec.column or "f")
