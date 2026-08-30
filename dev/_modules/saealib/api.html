@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.api &#8212; saealib 0.1.0b5.dev89+g38f4e2425 documentation</title>
+    <title>saealib.api &#8212; saealib 0.1.0b5.dev90+gb98152d19 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=4c5850f5"></script>
+    <script src="../../_static/documentation_options.js?v=eea61bab"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -956,12 +956,11 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <h1>Source code for saealib.api</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;High-level API: minimize / maximize functions and Result dataclass.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;High-level API: minimize / maximize functions.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -970,12 +969,11 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.mean</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanPrediction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.winrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">WinRateAcquisition</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerationStartEvent</span><span class="p">,</span> <span class="n">logging_generation</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.history</span><span class="w"> </span><span class="kn">import</span> <span class="n">History</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LHSInitializer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.result</span><span class="w"> </span><span class="kn">import</span> <span class="n">Result</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.gb</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerationBasedStrategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.ps</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreSelectionStrategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSurrogateManager</span><span class="p">,</span> <span class="n">SurrogateManager</span>
@@ -999,39 +997,6 @@ window.runMermaid = runMermaid;</script>
 
 
 <span class="n">_UNSET</span> <span class="o">=</span> <span class="n">_UnsetType</span><span class="p">()</span>
-
-
-<div class="viewcode-block" id="Result">
-<a class="viewcode-back" href="../../api/_autosummary/saealib.Result.html#saealib.Result">[docs]</a>
-<span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Result</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optimization result returned by :func:`minimize` / :func:`maximize`.</span>
-
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    x : np.ndarray</span>
-<span class="sd">        Best design variables. Shape ``(dim,)`` for single-objective,</span>
-<span class="sd">        ``(n_pareto, dim)`` for multi-objective.</span>
-<span class="sd">    f : np.ndarray</span>
-<span class="sd">        Best objective values. Shape ``(n_obj,)`` for single-objective,</span>
-<span class="sd">        ``(n_pareto, n_obj)`` for multi-objective.</span>
-<span class="sd">    fe : int</span>
-<span class="sd">        Total number of true function evaluations used.</span>
-<span class="sd">    gen : int</span>
-<span class="sd">        Total number of generations completed.</span>
-<span class="sd">    history : History or None</span>
-<span class="sd">        Execution history recorded during the run.</span>
-<span class="sd">    ctx : OptimizationState</span>
-<span class="sd">        Full optimization context providing access to the archive and more.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
-    <span class="n">fe</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">gen</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span>
-    <span class="n">history</span><span class="p">:</span> <span class="n">History</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
-
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -1153,43 +1118,6 @@ window.runMermaid = runMermaid;</script>
     <span class="k">return</span> <span class="n">strategy</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_build_result</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">:</span>
-    <span class="n">archive_x</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
-    <span class="n">archive_f</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
-    <span class="n">archive_cv</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;cv&quot;</span><span class="p">)</span>
-    <span class="n">direction</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span>
-    <span class="n">eps</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">eps_cv</span>
-
-    <span class="n">feasible</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">archive_cv</span> <span class="o">&lt;=</span> <span class="n">eps</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">pool</span> <span class="o">=</span> <span class="n">feasible</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">feasible</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">archive_cv</span><span class="p">))])</span>
-
-    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">scores</span> <span class="o">=</span> <span class="n">archive_f</span><span class="p">[</span><span class="n">pool</span><span class="p">]</span> <span class="o">@</span> <span class="n">direction</span>
-        <span class="n">best_idx</span> <span class="o">=</span> <span class="n">pool</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">scores</span><span class="p">))]</span>
-        <span class="n">best_x</span> <span class="o">=</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
-        <span class="n">best_f</span> <span class="o">=</span> <span class="n">archive_f</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">best_x</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
-            <span class="n">best_f</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.comparators</span><span class="w"> </span><span class="kn">import</span> <span class="n">non_dominated_sort</span>
-
-            <span class="n">_</span><span class="p">,</span> <span class="n">fronts</span> <span class="o">=</span> <span class="n">non_dominated_sort</span><span class="p">(</span><span class="n">archive_f</span><span class="p">[</span><span class="n">pool</span><span class="p">],</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">)</span>
-            <span class="n">pareto_idx</span> <span class="o">=</span> <span class="n">pool</span><span class="p">[</span><span class="n">fronts</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-            <span class="n">best_x</span> <span class="o">=</span> <span class="n">archive_x</span><span class="p">[</span><span class="n">pareto_idx</span><span class="p">]</span>
-            <span class="n">best_f</span> <span class="o">=</span> <span class="n">archive_f</span><span class="p">[</span><span class="n">pareto_idx</span><span class="p">]</span>
-
-    <span class="k">return</span> <span class="n">Result</span><span class="p">(</span>
-        <span class="n">x</span><span class="o">=</span><span class="n">best_x</span><span class="p">,</span>
-        <span class="n">f</span><span class="o">=</span><span class="n">best_f</span><span class="p">,</span>
-        <span class="n">fe</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">fe</span><span class="p">,</span>
-        <span class="n">gen</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">gen</span><span class="p">,</span>
-        <span class="n">history</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">history</span><span class="p">,</span>
-        <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
-    <span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">(</span>
     <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
     <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Algorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -1239,8 +1167,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="n">opt</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">unregister</span><span class="p">(</span><span class="n">GenerationStartEvent</span><span class="p">,</span> <span class="n">logging_generation</span><span class="p">)</span>
 
-    <span class="n">ctx</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">_build_result</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Result</span><span class="o">.</span><span class="n">from_state</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">run</span><span class="p">())</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>

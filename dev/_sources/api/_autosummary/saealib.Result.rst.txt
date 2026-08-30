@@ -16,6 +16,8 @@
 
 
    ~Result.__init__
+   ~Result.from_state
+   ~Result.history_series
 
 
 
@@ -26,6 +28,12 @@
 
 
 .. automethod:: saealib.Result.__init__
+
+
+.. automethod:: saealib.Result.from_state
+
+
+.. automethod:: saealib.Result.history_series
 
 
 

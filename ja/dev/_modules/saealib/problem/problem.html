@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.problem.problem &#8212; saealib 0.1.0b5.dev89+g38f4e2425 ドキュメント</title>
+    <title>saealib.problem.problem &#8212; saealib 0.1.0b5.dev90+gb98152d19 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=d542eb5b"></script>
+    <script src="../../../_static/documentation_options.js?v=77bca005"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1018,7 +1018,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        mutating this attribute afterwards has no runtime effect. The actual</span>
 <span class="sd">        running threshold is ``handler.feasibility_threshold``, which the</span>
 <span class="sd">        ``Runner`` syncs into ``comparator``/``pareto_archive`` every</span>
-<span class="sd">        generation.</span>
+<span class="sd">        generation. Explicit handlers may therefore use a running threshold</span>
+<span class="sd">        intentionally different from this value. This value remains the</span>
+<span class="sd">        feasibility basis for ``Result`` and summary ``best_f``; an explicit</span>
+<span class="sd">        handler with a different running threshold can therefore make reported</span>
+<span class="sd">        solutions disagree with the comparator&#39;s criterion.</span>
 <span class="sd">    eps_obj : float</span>
 <span class="sd">        Epsilon for objective value equality comparison.</span>
 <span class="sd">    func : callable -&gt; float</span>
