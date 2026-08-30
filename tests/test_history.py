@@ -52,6 +52,7 @@ from saealib.execution.history import (
 from saealib.policies.evaluation import EvaluateAll
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
 from saealib.problem import (
+    ConstraintHandler,
     EpsilonConstraintHandler,
     InequalityConstraint,
     linear_epsilon_schedule,
@@ -749,7 +750,7 @@ def test_feasible_ratio_uses_constraint_handler_threshold() -> None:
 def test_epsilon_summary_channels_keep_reporting_and_diagnostics_distinct() -> None:
     n_gen = 8
 
-    def make_optimizer(handler: object) -> Optimizer:
+    def make_optimizer(handler: ConstraintHandler) -> Optimizer:
         problem = Problem(
             func=lambda x: float(x[0]),
             dim=1,

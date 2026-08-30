@@ -204,6 +204,7 @@ def test_iterate_result_copies_are_stable_after_continuing():
     try:
         state = next(iterator)
         result = Result.from_state(state)
+        assert result.x is not None
         x_before = result.x.copy()
         f_before = result.f.copy()
         next(iterator)
@@ -217,6 +218,7 @@ def test_iterate_result_copies_are_stable_after_continuing():
 def test_direct_result_from_state_copies_arrays_and_normalizes_counters():
     state = _state([[1]], [0], [-1])
     result = Result.from_state(state)
+    assert result.x is not None
     state.archive._arrays["x"][0, 0] = 99
     state.archive._arrays["f"][0, 0] = 99
     assert result.x[0] != 99

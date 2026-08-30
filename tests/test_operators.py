@@ -2337,4 +2337,5 @@ class TestGABatchedCrossoverSmoke:
         )
         assert result.fe > 0
         assert np.isfinite(result.f).all()
+        assert result.x is not None
         assert np.all(result.x >= lb) and np.all(result.x <= ub)

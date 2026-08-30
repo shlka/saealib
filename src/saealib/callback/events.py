@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from saealib.acquisition.base import AcquisitionResult
     from saealib.execution.evaluator import EvaluationStatus
     from saealib.population import Archive, Population
+    from saealib.problem import Problem
     from saealib.surrogate.base import Surrogate
 
 
@@ -31,6 +32,12 @@ class _EventContext(Protocol):
 
     @property
     def fe(self) -> int: ...
+
+    @property
+    def problem(self) -> Problem: ...
+
+    @property
+    def population(self) -> Population: ...
 
 
 @dataclass

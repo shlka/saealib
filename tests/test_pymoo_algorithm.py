@@ -461,6 +461,7 @@ class TestPymooAlgorithmEndToEnd:
             verbose=False,
         )
         assert result.fe > 0
+        assert result.x is not None
         assert result.x.shape[-1] == 10
 
     def test_preselection_partial_tell_uses_policy_feedback(self):
