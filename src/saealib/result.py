@@ -75,7 +75,11 @@ class Result:
 
     @classmethod
     def from_state(cls, state: OptimizationState) -> Result:
-        """Build a result from the final or currently observed state."""
+        """Build a result from the final or currently observed state.
+
+        Result feasibility uses ``problem.eps_cv`` and intentionally differs
+        from ``problem.handler.feasibility_threshold``.
+        """
         archive_f = state.archive.get_array("f")
         archive_cv = state.archive.get_array("cv")
         direction = state.problem.direction

@@ -57,7 +57,11 @@ class Problem:
         mutating this attribute afterwards has no runtime effect. The actual
         running threshold is ``handler.feasibility_threshold``, which the
         ``Runner`` syncs into ``comparator``/``pareto_archive`` every
-        generation.
+        generation. Explicit handlers may therefore use a running threshold
+        intentionally different from this value. This value remains the
+        feasibility basis for ``Result`` and summary ``best_f``; an explicit
+        handler with a different running threshold can therefore make reported
+        solutions disagree with the comparator's criterion.
     eps_obj : float
         Epsilon for objective value equality comparison.
     func : callable -> float

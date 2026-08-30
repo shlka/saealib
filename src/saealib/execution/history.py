@@ -1339,8 +1339,13 @@ def record_initial_evaluation(
 def record_generation(state: OptimizationState) -> None:
     """Append enabled generation-channel rows for the current state.
 
-    ``best_f`` uses ``state.problem.eps_cv`` deliberately; ``feasible_ratio``
-    and ``min_cv`` use ``handler.feasibility_threshold`` for their legacy behavior.
+    ``best_f`` is the reported answer: it selects from ``state.archive`` using
+    the strict user-declared ``problem.eps_cv``, preserving reported solutions
+    and ``history_series("best")`` from relaxed ε values during exploration.
+    ``feasible_ratio`` is an exploration diagnostic from ``state.population``
+    using the running ``problem.handler.feasibility_threshold`` to expose ε's
+    effect. These are different questions despite sharing a summary row.
+    ``min_cv`` is the raw minimum cv in ``state.population`` and uses no threshold.
     """
     history = state.history
     if history is None:

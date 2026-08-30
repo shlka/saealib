@@ -10,13 +10,19 @@ import numpy as np
 import pytest
 
 from saealib import (
+    GA,
+    CrossoverBLXAlpha,
+    GenerationEndEvent,
     LHSInitializer,
+    MutationUniform,
     Optimizer,
     Problem,
     RandomInitializer,
     RepeatedEvaluation,
+    SequentialSelection,
     SobolInitializer,
     Termination,
+    TruncationSelection,
     max_fe,
     max_gen,
     maximize,
@@ -45,10 +51,19 @@ from saealib.execution.history import (
 )
 from saealib.policies.evaluation import EvaluateAll
 from saealib.population import Archive, ParetoArchive, Population, PopulationAttribute
+from saealib.problem import (
+    EpsilonConstraintHandler,
+    InequalityConstraint,
+    linear_epsilon_schedule,
+)
 from saealib.result import Result
 from saealib.space import ObjectSpace
 from saealib.stages import AsyncEvaluationSubmitStage, EvaluationPlanStage
-from saealib.strategies import DirectStrategy, GenerationBasedStrategy
+from saealib.strategies import (
+    DirectStrategy,
+    GenerationBasedStrategy,
+    IndividualBasedStrategy,
+)
 from saealib.surrogate import PredictionChannel, SurrogatePrediction
 
 
@@ -729,6 +744,99 @@ def test_feasible_ratio_uses_constraint_handler_threshold() -> None:
     expected = float(np.count_nonzero(cv <= threshold) / len(cv))
     assert summary["feasible_ratio"][0] == pytest.approx(expected)
     assert summary["feasible_ratio"][0] == pytest.approx(0.75)
+
+
+def test_epsilon_summary_channels_keep_reporting_and_diagnostics_distinct() -> None:
+    n_gen = 8
+
+    def make_optimizer(handler: object) -> Optimizer:
+        problem = Problem(
+            func=lambda x: float(x[0]),
+            dim=1,
+            n_obj=1,
+            direction=np.array([-1.0]),
+            lb=[0.0],
+            ub=[1.0],
+            eps_cv=1e-6,
+            constraints=[InequalityConstraint(lambda x: 0.5 - x[0])],
+            handler=handler,
+        )
+        return (
+            Optimizer(problem, seed=0)
+            .set_initializer(
+                LHSInitializer(n_init_archive=2, n_init_population=2, seed=0)
+            )
+            .set_algorithm(
+                GA(
+                    crossover=CrossoverBLXAlpha(prob=0.9, alpha=0.4),
+                    mutation=MutationUniform(prob_var=0.1),
+                    parent_selection=SequentialSelection(),
+                    survivor_selection=TruncationSelection(),
+                )
+            )
+            .set_strategy(IndividualBasedStrategy(evaluation_ratio=1.0))
+            .set_termination(Termination(max_gen(n_gen)))
+            .set_history(["summary"])
+        )
+
+    calibration = make_optimizer(
+        EpsilonConstraintHandler(linear_epsilon_schedule(eps0=0.5, n_gen=n_gen))
+    )
+    calibration_state = calibration.run()
+    measured_cv_max = float(np.max(calibration_state.archive.get_array("cv")))
+    assert 0.0 < measured_cv_max <= 0.25
+    eps0 = measured_cv_max
+
+    problem = Problem(
+        func=lambda x: float(x[0]),
+        dim=1,
+        n_obj=1,
+        direction=np.array([-1.0]),
+        lb=[0.0],
+        ub=[1.0],
+        eps_cv=1e-6,
+        constraints=[InequalityConstraint(lambda x: 0.5 - x[0])],
+        handler=EpsilonConstraintHandler(
+            linear_epsilon_schedule(eps0=eps0, n_gen=n_gen)
+        ),
+    )
+    optimizer = make_optimizer(problem.handler)
+    archive_snapshots: dict[int, tuple[np.ndarray, np.ndarray, float]] = {}
+    population_snapshots: dict[int, np.ndarray] = {}
+
+    def capture_archive(event: GenerationEndEvent) -> None:
+        archive_snapshots[event.ctx.gen] = (
+            event.ctx.archive.get_array("f").copy(),
+            event.ctx.archive.get_array("cv").copy(),
+            float(event.ctx.problem.handler.feasibility_threshold),
+        )
+        population_snapshots[event.ctx.gen] = event.ctx.population.cv.copy()
+
+    optimizer.cbmanager.register(GenerationEndEvent, capture_archive)
+    state = optimizer.run()
+
+    assert state.history is not None
+    summary = state.history.channel("summary")
+    best = summary["best_f"]
+    feasible_ratio = summary["feasible_ratio"]
+    min_cv = summary["min_cv"]
+
+    score = best * problem.direction[0]
+    assert np.all(np.diff(score) >= 0.0)
+    assert np.ptp(best) > 0.0
+    assert any(
+        np.any(
+            (cv > problem.eps_cv)
+            & (cv <= threshold)
+            & (f[:, 0] < best[int(np.flatnonzero(summary["gen"] == gen)[0])])
+        )
+        for gen, (f, cv, threshold) in archive_snapshots.items()
+    )
+    assert feasible_ratio[0] > feasible_ratio[-1]
+    assert set(archive_snapshots) == set(summary["gen"][1:])
+    for gen, cv in population_snapshots.items():
+        row = int(np.flatnonzero(summary["gen"] == gen)[0])
+        assert min_cv[row] == pytest.approx(float(np.min(cv)))
 
 
 def test_multiobjective_summary_has_each_objective_column() -> None:
