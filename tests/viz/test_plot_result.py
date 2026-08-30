@@ -12,8 +12,24 @@ import numpy as np
 import pytest
 from matplotlib.figure import Figure
 
+from saealib import (
+    DirectStrategy,
+    GenomeInitializer,
+    Optimizer,
+    Problem,
+    Termination,
+    max_gen,
+)
+from saealib.algorithms import GenomeGA
 from saealib.exceptions import ValidationError
+from saealib.operators import (
+    OrderCrossover,
+    SequentialSelection,
+    SwapMutation,
+    TruncationSelection,
+)
 from saealib.result import Result
+from saealib.space import PermutationSpace
 from saealib.viz import plot_result
 
 
@@ -144,3 +160,45 @@ def test_decision_requires_dense_numeric_view() -> None:
 
     with pytest.raises(ValidationError, match="dense numeric view"):
         plot_result(result, space="decision", source="archive")
+
+
+def _non_dense_state(n_obj: int = 2):
+    space = PermutationSpace(8)
+    problem = Problem(
+        func=lambda x: np.asarray(
+            [
+                float(sum(i * v for i, v in enumerate(x))),
+                float(sum((7 - i) * v for i, v in enumerate(x))),
+            ][:n_obj]
+        ),
+        dim=space.dim,
+        n_obj=n_obj,
+        direction=np.full(n_obj, -1.0),
+        space=space,
+    )
+    ga = GenomeGA(
+        OrderCrossover(),
+        SwapMutation(),
+        SequentialSelection(),
+        TruncationSelection(),
+    )
+    return (
+        Optimizer(problem, seed=1)
+        .set_algorithm(ga)
+        .set_strategy(DirectStrategy())
+        .set_initializer(GenomeInitializer(24, 24))
+        .set_termination(Termination(max_gen(3)))
+        .set_history(["summary", "front", "population"])
+        .run()
+    )
+
+
+def test_non_dense_state_objective_plot_succeeds():
+    fig = plot_result(_non_dense_state(), space="objective")
+
+    assert isinstance(fig, Figure)
+
+
+def test_non_dense_state_decision_plot_raises_dense_view_error():
+    with pytest.raises(ValidationError, match="does not provide a dense numeric view"):
+        plot_result(_non_dense_state(), space="decision")

@@ -5,6 +5,8 @@ from types import SimpleNamespace
 import numpy as np
 
 from saealib import (
+    DirectStrategy,
+    GenomeInitializer,
     LHSInitializer,
     Optimizer,
     Problem,
@@ -14,8 +16,16 @@ from saealib import (
     maximize,
     minimize,
 )
+from saealib.algorithms import GenomeGA
 from saealib.context import OptimizationState
+from saealib.operators import (
+    OrderCrossover,
+    SequentialSelection,
+    SwapMutation,
+    TruncationSelection,
+)
 from saealib.result import Result
+from saealib.space import PermutationSpace
 
 
 class _Archive:
@@ -128,6 +138,52 @@ def test_optimizer_run_state_can_build_result():
     result = Result.from_state(state)
     assert result.ctx is state
     assert isinstance(state, OptimizationState)
+    assert isinstance(result.x, np.ndarray)
+
+
+def _permutation_state(n_obj: int) -> OptimizationState:
+    space = PermutationSpace(8)
+    problem = Problem(
+        func=lambda x: np.asarray(
+            [
+                float(sum(i * v for i, v in enumerate(x))),
+                float(sum((7 - i) * v for i, v in enumerate(x))),
+            ][:n_obj]
+        ),
+        dim=space.dim,
+        n_obj=n_obj,
+        direction=np.full(n_obj, -1.0),
+        space=space,
+    )
+    ga = GenomeGA(
+        OrderCrossover(),
+        SwapMutation(),
+        SequentialSelection(),
+        TruncationSelection(),
+    )
+    opt = (
+        Optimizer(problem, seed=1)
+        .set_algorithm(ga)
+        .set_strategy(DirectStrategy())
+        .set_initializer(GenomeInitializer(24, 24))
+        .set_termination(Termination(max_gen(3)))
+        .set_history(["summary", "front", "population"])
+    )
+    return opt.run()
+
+
+def test_non_dense_single_objective_result_has_no_x():
+    result = Result.from_state(_permutation_state(1))
+
+    assert result.x is None
+    assert isinstance(result.f, np.ndarray)
+
+
+def test_non_dense_multi_objective_result_has_no_x():
+    result = Result.from_state(_permutation_state(2))
+
+    assert result.x is None
+    assert result.f.ndim == 2
 
 
 def test_iterate_result_copies_are_stable_after_continuing():

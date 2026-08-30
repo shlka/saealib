@@ -12,7 +12,23 @@ matplotlib.use("Agg")
 import numpy as np
 from matplotlib.figure import Figure
 
+from saealib import (
+    DirectStrategy,
+    GenomeInitializer,
+    Optimizer,
+    Problem,
+    Termination,
+    max_gen,
+)
+from saealib.algorithms import GenomeGA
+from saealib.operators import (
+    OrderCrossover,
+    SequentialSelection,
+    SwapMutation,
+    TruncationSelection,
+)
 from saealib.result import HistorySeries, Result
+from saealib.space import PermutationSpace
 from saealib.viz import plot_history
 
 
@@ -83,3 +99,31 @@ def test_plot_history_converts_state_to_result(monkeypatch) -> None:
 
     from_state.assert_called_once_with(state)
     result.history_series.assert_called_once_with("metric", x="fe", channel=None)
+
+
+def test_non_dense_state_best_history_plot_succeeds():
+    space = PermutationSpace(8)
+    problem = Problem(
+        func=lambda x: np.asarray([float(sum(i * v for i, v in enumerate(x)))]),
+        dim=space.dim,
+        n_obj=1,
+        direction=np.array([-1.0]),
+        space=space,
+    )
+    ga = GenomeGA(
+        OrderCrossover(),
+        SwapMutation(),
+        SequentialSelection(),
+        TruncationSelection(),
+    )
+    state = (
+        Optimizer(problem, seed=1)
+        .set_algorithm(ga)
+        .set_strategy(DirectStrategy())
+        .set_initializer(GenomeInitializer(24, 24))
+        .set_termination(Termination(max_gen(3)))
+        .set_history(["summary", "front", "population"])
+        .run()
+    )
+
+    assert isinstance(plot_history(state, "best"), Figure)

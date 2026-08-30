@@ -24,6 +24,11 @@ class _ServiceRegistry(Protocol):
     def get(self, name: str) -> object | None: ...
 
 
+_DENSE_NUMERIC_VIEW_ERROR = (
+    "{function}: The search space does not provide a dense numeric view."
+)
+
+
 def _select_dimensions(
     dimension: int, dimensions: Sequence[int] | None
 ) -> tuple[int, ...]:
@@ -72,12 +77,10 @@ def _services(result: Result, function: str) -> DenseNumericView:
         dense = services.get("DenseNumericView")
     except AttributeError as exc:
         raise ValidationError(
-            f"{function}: The search space does not provide a dense numeric view."
+            _DENSE_NUMERIC_VIEW_ERROR.format(function=function)
         ) from exc
     if dense is None:
-        raise ValidationError(
-            f"{function}: The search space does not provide a dense numeric view."
-        )
+        raise ValidationError(_DENSE_NUMERIC_VIEW_ERROR.format(function=function))
     return cast(DenseNumericView, dense)
 
 
@@ -86,6 +89,8 @@ def _values(result: Result, space: str, source: str) -> np.ndarray:
     if space == "objective" and source == "result":
         return _matrix(result.f, function, reshape_vector=True)
     if space == "decision" and source == "result":
+        if result.x is None:
+            raise ValidationError(_DENSE_NUMERIC_VIEW_ERROR.format(function=function))
         return _matrix(result.x, function, reshape_vector=True)
 
     collection = result.archive if source == "archive" else result.population

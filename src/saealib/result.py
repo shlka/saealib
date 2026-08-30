@@ -48,9 +48,11 @@ class Result:
 
     Attributes
     ----------
-    x : np.ndarray
+    x : np.ndarray or None
         Best design variables. Shape ``(dim,)`` for single-objective,
-        ``(n_pareto, dim)`` for multi-objective.
+        ``(n_pareto, dim)`` for multi-objective. ``None`` for non-dense
+        spaces; use ``problem.space.services`` to convert
+        ``result.ctx.archive.genomes`` when dense design variables are needed.
     f : np.ndarray
         Best objective values. Shape ``(n_obj,)`` for single-objective,
         ``(n_pareto, n_obj)`` for multi-objective.
@@ -64,7 +66,7 @@ class Result:
         Full optimization context providing access to the archive and more.
     """
 
-    x: np.ndarray
+    x: np.ndarray | None
     f: np.ndarray
     fe: int
     gen: int
@@ -74,7 +76,6 @@ class Result:
     @classmethod
     def from_state(cls, state: OptimizationState) -> Result:
         """Build a result from the final or currently observed state."""
-        archive_x = state.archive.get_array("x")
         archive_f = state.archive.get_array("f")
         archive_cv = state.archive.get_array("cv")
         direction = state.problem.direction
@@ -86,22 +87,31 @@ class Result:
         if state.problem.n_obj == 1:
             scores = archive_f[pool] @ direction
             best_idx = pool[int(np.argmax(scores))]
-            best_x = archive_x[best_idx]
+            try:
+                best_x = state.archive.get_array("x")[best_idx]
+            except AttributeError:
+                best_x = None
             best_f = archive_f[best_idx]
         else:
             if len(state.pareto_archive) > 0:
-                best_x = state.pareto_archive.get_array("x")
+                try:
+                    best_x = state.pareto_archive.get_array("x")
+                except AttributeError:
+                    best_x = None
                 best_f = state.pareto_archive.get_array("f")
             else:
                 from saealib.comparators import non_dominated_sort
 
                 _, fronts = non_dominated_sort(archive_f[pool], direction=direction)
                 pareto_idx = pool[fronts[0]]
-                best_x = archive_x[pareto_idx]
+                try:
+                    best_x = state.archive.get_array("x")[pareto_idx]
+                except AttributeError:
+                    best_x = None
                 best_f = archive_f[pareto_idx]
 
         return cls(
-            x=np.array(best_x, copy=True),
+            x=None if best_x is None else np.array(best_x, copy=True),
             f=np.array(best_f, copy=True),
             fe=int(state.fe),
             gen=int(state.gen),
