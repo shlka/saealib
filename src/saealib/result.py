@@ -15,6 +15,14 @@ if TYPE_CHECKING:
     from saealib.execution.history import History
 
 
+_HISTORY_X_NAMES = {
+    "fe": "Function evaluations",
+    "gen": "Generations",
+    "decision_count": "Decisions",
+}
+_HISTORY_X = frozenset(_HISTORY_X_NAMES)
+
+
 @dataclass(frozen=True)
 class HistorySeries:
     """A history series and the names used to describe its coordinates.
@@ -152,8 +160,9 @@ class Result:
         **value_kwargs: Any,
     ) -> HistorySeries:
         """Return one scalar value per recorded history generation."""
-        if x not in {"fe", "gen"}:
-            raise ValidationError('x must be either "fe" or "gen".')
+        if x not in _HISTORY_X:
+            valid = ", ".join(f'"{name}"' for name in _HISTORY_X_NAMES)
+            raise ValidationError(f"x must be one of: {valid}.")
         if self.history is None:
             raise ValidationError(
                 "history_series requires execution history, but the result has none. "
@@ -171,11 +180,10 @@ class Result:
                 raise ValidationError(
                     f"Unknown history value {value!r}. Choose one of: {valid}."
                 ) from exc
-            required_channel = spec.channel
-            if not self.history.is_enabled(required_channel):
+            if not self.history.is_enabled(spec.channel):
                 raise ValidationError(
                     f'history_series value "{value}" requires the '
-                    f'"{required_channel}" history channel. '
+                    f'"{spec.channel}" history channel. '
                     "Enable it with minimize(..., history_channels=[...]) or "
                     "Optimizer.set_history([...]), then rerun the optimization."
                 )
@@ -187,7 +195,6 @@ class Result:
                     "A callable history value requires channel=... so its "
                     "records can be selected."
                 )
-            required_channel = channel
             if not self.history.is_enabled(channel):
                 raise ValidationError(
                     f'history_series callable value requires the "{channel}" '
@@ -210,23 +217,16 @@ class Result:
             return HistorySeries(
                 x=np.asarray(x_values, dtype=float),
                 y=np.asarray(y, dtype=float),
-                x_name="Function evaluations" if x == "fe" else "Generations",
+                x_name=_HISTORY_X_NAMES[x],
                 y_name=getattr(value, "__name__", "callable"),
             )
         else:
             raise ValidationError("value must be a registered name or callable.")
 
-        if not self.history.is_enabled(required_channel):
-            raise ValidationError(
-                f'history_series value "{value}" requires the '
-                f'"{required_channel}" history channel. '
-                "Enable it with minimize(..., history_channels=[...]) or "
-                "Optimizer.set_history([...]), then rerun the optimization."
-            )
-        x_values = self.history.get(required_channel, x)
+        x_values = self.history.get(spec.channel, x)
         return HistorySeries(
             x=np.asarray(x_values, dtype=float).copy(),
             y=np.asarray(y, dtype=float),
-            x_name="Function evaluations" if x == "fe" else "Generations",
+            x_name=_HISTORY_X_NAMES[x],
             y_name=y_name,
         )

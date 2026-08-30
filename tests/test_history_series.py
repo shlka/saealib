@@ -36,11 +36,21 @@ def _population_result(services):
 def test_summary_values_and_generation_axis():
     result, history = _result()
     history.append(
-        "summary", gen=1, fe=4, best_f=3.0, min_cv=0.0, feasible_ratio=1.0, front_size=2
+        "summary",
+        gen=1,
+        fe=4,
+        decision_count=7,
+        best_f=3.0,
+        min_cv=0.0,
+        feasible_ratio=1.0,
+        front_size=2,
     )
     series = result.history_series("best", x="gen")
     assert series.x_name == "Generations"
     assert series.y.tolist() == [3.0]
+    series = result.history_series("best", x="decision_count")
+    np.testing.assert_array_equal(series.x, [7])
+    assert series.x_name == "Decisions"
 
 
 def test_history_series_is_frozen_and_summary_builtins_are_available():
@@ -119,10 +129,17 @@ def test_population_channel_error_is_actionable():
 
 def test_callable_uses_records():
     result, history = _result(("front",))
-    history.append_block("front", {"f": np.array([[1.0], [2.0]])}, gen=2, fe=8)
+    history.append_block(
+        "front", {"f": np.array([[1.0], [2.0]])}, gen=2, fe=8, decision_count=3
+    )
     series = result.history_series(lambda record: record["f"].mean(), channel="front")
     assert series.x.tolist() == [8.0]
     assert series.y.tolist() == [1.5]
+    series = result.history_series(
+        lambda record: record["f"].mean(), channel="front", x="decision_count"
+    )
+    assert series.x.tolist() == [3.0]
+    assert series.x_name == "Decisions"
 
 
 def test_callable_requires_channel_and_converts_invalid_returns():
@@ -137,8 +154,12 @@ def test_callable_requires_channel_and_converts_invalid_returns():
 
 def test_invalid_x_and_missing_history_raise():
     result, _ = _result()
-    with pytest.raises(ValidationError, match=r"fe.*gen"):
+    with pytest.raises(ValidationError) as exc_info:
         result.history_series("min_cv", x="invalid")
+    message = str(exc_info.value)
+    assert '"fe"' in message
+    assert '"gen"' in message
+    assert '"decision_count"' in message
 
     no_history = Result(
         np.array([0.0]),
@@ -150,6 +171,16 @@ def test_invalid_x_and_missing_history_raise():
     )
     with pytest.raises(ValidationError, match=r"history_channels.*set_history"):
         no_history.history_series("min_cv")
+
+
+def test_front_channel_supports_decision_count_axis():
+    result, history = _result(("front",))
+    history.append_block(
+        "front", {"f": np.array([[1.0], [2.0]])}, gen=1, fe=2, decision_count=5
+    )
+    series = result.history_series("spacing", x="decision_count")
+    assert series.x.tolist() == [5.0]
+    assert series.x_name == "Decisions"
 
 
 def test_front_metric_and_reference_validation():
