@@ -74,8 +74,16 @@ locale_dirs = ["locale/"]
 gettext_compact = False
 
 # -- HTML output -------------------------------------------------------------
-html_baseurl = "https://saealib.github.io/saealib/"
+SITE_ROOT = "https://saealib.github.io/saealib"
+
+# Every build is deployed under /<lang>/<version>/, never at the site root, so
+# the canonical URL is only known once language and version are resolved --
+# _set_canonical_baseurl() fills it in at config-inited.
+html_baseurl = SITE_ROOT + "/"
 sitemap_url_scheme = "{link}"
+# The lang/version segments already live in html_baseurl, so an autodetected
+# alternate would repeat the current URL under the wrong hreflang.
+sitemap_locales = [None]
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 html_extra_path = ["googleb2b2a6492b1c5bc1.html"]
@@ -122,7 +130,7 @@ html_theme_options = {
     ],
     "header_links_before_dropdown": 6,
     "switcher": {
-        "json_url": html_baseurl.rstrip("/") + "/versions.json",
+        "json_url": SITE_ROOT + "/versions.json",
         # Placeholder; overwritten per-build by _set_version_switcher_match()
         # below via the config-inited hook.
         "version_match": "dev",
@@ -180,6 +188,12 @@ def _set_version_switcher_match(app, config):
         switcher["version_match"] = config.smv_current_version or "dev"
 
 
+def _set_canonical_baseurl(app, config):
+    lang = f"/{config.language}" if config.language != "en" else ""
+    config.html_baseurl = f"{SITE_ROOT}{lang}/{config.smv_current_version or 'dev'}/"
+
+
 def setup(app):
-    """Register the version-switcher match hook (Sphinx extension entry point)."""
+    """Register the config-inited hooks (Sphinx extension entry point)."""
     app.connect("config-inited", _set_version_switcher_match)
+    app.connect("config-inited", _set_canonical_baseurl)
