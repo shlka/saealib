@@ -348,10 +348,11 @@ class EpsilonConstraintHandler(ConstraintHandler):
     very different scales will not contribute evenly to ``cv``.
 
     The ε-constrained method itself originates from Takahama & Sakai
-    (2006); that paper has not been obtained, so it is credited here by
-    name only. The details above are supported by the Mezura-Montes & Coello
-    Coello (2011) survey, which was read directly and attributes the
-    method to Takahama & Sakai in its own text.
+    (2006). The aggregation described above is the one given by the
+    Mezura-Montes & Coello Coello (2011) survey, which attributes the method
+    to them; it is not Takahama & Sakai's own, which raises the inequality
+    and equality terms to one shared exponent rather than squaring only the
+    inequalities.
 
     References
     ----------

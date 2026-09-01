@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Framework redesign, experiment execution, and result analysis.
+
+### Added
+
+- **Modular framework**: component contracts, graph/plan compilation, and an explicit runtime boundary, replacing the implicit wiring between algorithm, strategy, and surrogate ([#226](https://github.com/shlka/saealib/issues/226)) ([#234](https://github.com/shlka/saealib/issues/234))
+- **Execution history**: per-generation recording of summary, front, population, surrogate accuracy, decision, and evaluation channels ([#228](https://github.com/shlka/saealib/issues/228))
+- **Performance indicators**: IGD, IGD+, GD, GD+, spacing, and generalized spread ([#229](https://github.com/shlka/saealib/issues/229))
+- **Result analysis and visualization**: `Result.history_series()` with a built-in value registry, and `saealib.viz` (`plot_result` / `plot_history`) behind the `viz` extra ([#231](https://github.com/shlka/saealib/issues/231))
+- **Experiment execution**: `saealib.experiment` for multi-trial sweeps over problems, algorithms, and seeds, with YAML configuration, parallel execution, per-trial checkpointing and resume, progress reporting, summary and aggregate output, and a `saealib` command-line entry point ([#230](https://github.com/shlka/saealib/issues/230))
+- **pymoo adapters**: `PymooCrossover`, `PymooMutation`, `PymooAlgorithm`, and `PymooProblem` ([#222](https://github.com/shlka/saealib/issues/222))
+- **DEAP adapters**: `DeapCrossover`, `DeapMutation`, and `DeapGenerateUpdateAlgorithm`, bridging saealib's generator to DEAP's global random state ([#262](https://github.com/shlka/saealib/issues/262))
+- **Asynchronous evaluation**: a resumable scheduler for out-of-order and partial evaluation results ([#226](https://github.com/shlka/saealib/issues/226))
+- **`spacing(squared=...)`**: Schott's variance form alongside the standard-deviation form the surrounding ecosystem reports ([#263](https://github.com/shlka/saealib/issues/263))
+- **`HypervolumeComparator(last_front_only=...)`**: restricts hypervolume contributions to the last front, as in the original SMS-EMOA ([#263](https://github.com/shlka/saealib/issues/263))
+- **Optional extras**: `viz`, `tqdm`, `rich`, `hdf5`, `deap`
+
+### Changed
+
+- **`AcquisitionFunction` separated from `SurrogateManager`** (breaking): scoring and fit/predict coordination are now distinct responsibilities ([#226](https://github.com/shlka/saealib/issues/226))
+- **Top-level `Registry` surface reduced to `register`** (breaking) ([#203](https://github.com/shlka/saealib/issues/203))
+- **APIs deprecated for removal in 0.1.0 were removed** (breaking) ([#205](https://github.com/shlka/saealib/issues/205))
+- **Checkpoint state is versioned with per-entry migration**, so an older checkpoint stays readable as the schema moves ([#226](https://github.com/shlka/saealib/issues/226))
+- **Portable checkpointing is refused for components holding non-exportable state**, naming the component, instead of silently resuming from an incomplete state ([#264](https://github.com/shlka/saealib/issues/264))
+
+### Fixed
+
+- **`RBFSurrogate` polynomial term**, without which the CORS-RBF paper configuration could not be reproduced ([#235](https://github.com/shlka/saealib/issues/235))
+- **`LowerConfidenceBound` beta_t schedule**, restoring the GP-UCB theoretical guarantee ([#236](https://github.com/shlka/saealib/issues/236))
+- **SPEA2 fitness persistence** across environmental and mating selection ([#237](https://github.com/shlka/saealib/issues/237))
+- **CORS beta cadence**, which advanced per generation rather than per evaluation ([#238](https://github.com/shlka/saealib/issues/238))
+- **NSGA-III default population size**, which did not scale with the reference-point count ([#239](https://github.com/shlka/saealib/issues/239))
+- **Comparator fidelity to their source papers** across SPEA2, R-NSGA-II, NSGA-III, MaxUncertainty, CORS, and the hypervolume comparator ([#209](https://github.com/shlka/saealib/issues/209)) ([#210](https://github.com/shlka/saealib/issues/210)) ([#211](https://github.com/shlka/saealib/issues/211)) ([#212](https://github.com/shlka/saealib/issues/212)) ([#213](https://github.com/shlka/saealib/issues/213)) ([#214](https://github.com/shlka/saealib/issues/214))
+- **npz checkpointing**, which aborted the run when the surrogate predicted a non-finite value ([#265](https://github.com/shlka/saealib/issues/265))
+- **Eight example scripts** that had failed on import since the `weight` to `direction` unification, and CI now runs every example ([#253](https://github.com/shlka/saealib/issues/253))
+
 ## [0.1.0b4] - 2026-06-15
 
 Multi-objective optimization and constraint surrogate — full MOO algorithm stack, decomposition strategies, and surrogate-assisted constraint handling.
