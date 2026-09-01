@@ -7,7 +7,7 @@ primary_layer: layer1
 ## 動作要件
 - Python >= 3.10 対応
 
-依存パッケージの正確なバージョンは[pyproject.toml](https://github.com/shlka/saealib/blob/main/pyproject.toml)を参照してください。
+依存パッケージの正確なバージョンは[pyproject.toml](https://github.com/saealib/saealib/blob/main/pyproject.toml)を参照してください。
 
 ## インストール方法
 
@@ -66,5 +66,5 @@ python -c "import saealib; print(saealib.__version__)"
 ```
 
 :::{seealso}
-ソースからの開発用インストールについては[CONTRIBUTING.md](https://github.com/shlka/saealib/blob/main/CONTRIBUTING.md)を参照してください。
+ソースからの開発用インストールについては[CONTRIBUTING.md](https://github.com/saealib/saealib/blob/main/CONTRIBUTING.md)を参照してください。
 :::
