@@ -6,6 +6,7 @@ here automatically.
 """
 
 __all__: list[str]
+__version__: str
 
 # ---------------------------------------------------------------------------
 # Eager root surface

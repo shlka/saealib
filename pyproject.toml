@@ -36,14 +36,21 @@ xgboost = ["xgboost>=1.7.0"]
 lightgbm = ["lightgbm>=3.0.0"]
 torch = ["torch>=2.0.0"]
 pymoo = ["pymoo>=0.6.2,<0.7"]
+deap = ["deap>=1.4"]
 viz = ["matplotlib>=3.5.0"]
-all = ["saealib[parallel,sklearn,xgboost,lightgbm,torch,pymoo,viz]"]
+tqdm = ["tqdm>=4.60"]
+rich = ["rich>=13.0"]
+hdf5 = ["h5py>=3.0"]
+all = ["saealib[parallel,sklearn,xgboost,lightgbm,torch,pymoo,deap,viz,tqdm,rich,hdf5]"]
 
 [project.urls]
 Homepage = "https://github.com/shlka/saealib"
 Repository = "https://github.com/shlka/saealib"
 Documentation = "https://shlka.github.io/saealib/"
 "Bug Tracker" = "https://github.com/shlka/saealib/issues"
+
+[project.scripts]
+saealib = "saealib.experiment._cli:main"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
