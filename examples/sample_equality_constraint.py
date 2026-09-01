@@ -39,7 +39,7 @@ def main():
         func=lambda x: float(x[0] ** 2 + x[1] ** 2),
         dim=dim,
         n_obj=1,
-        weight=np.array([-1.0]),
+        direction=np.array([-1.0]),
         lb=lb,
         ub=ub,
         constraints=[equality],
@@ -47,10 +47,10 @@ def main():
 
     result = minimize(problem, max_fe=400, seed=seed)
 
-    x = result.X
+    x = result.x
     h = x[0] + x[1] - 1.0
     print(f"x = {x} (optimum: [0.5, 0.5])")
-    print(f"f(x) = {result.F[0]:.6f} (optimum: 0.5)")
+    print(f"f(x) = {result.f[0]:.6f} (optimum: 0.5)")
     print(f"h(x) = x1 + x2 - 1 = {h:.6e} (|h| <= {equality.tolerance:g})")
 
 
