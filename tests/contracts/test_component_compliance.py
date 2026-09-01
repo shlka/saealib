@@ -77,6 +77,19 @@ _OPTIONAL_IMPORT_MODULES = frozenset(
         "saealib.surrogate.torch_surrogate",
     }
 )
+_DEAP_OPTIONAL_CONTRACT_MODULES = frozenset(
+    {
+        "saealib.algorithms.deap_algorithm",
+        "saealib.operators.deap_crossover",
+        "saealib.operators.deap_mutation",
+    }
+)
+try:
+    importlib.import_module("deap")
+except ImportError:
+    _DEAP_AVAILABLE = False
+else:
+    _DEAP_AVAILABLE = True
 
 
 class _PymooVariableStub:
@@ -165,6 +178,8 @@ def _qualified_name(cls: type[Any]) -> str:
 def _discover_contract_classes() -> tuple[type[Any], ...]:
     discovered: dict[type[Any], None] = {}
     for module_info in pkgutil.walk_packages(saealib.__path__, saealib.__name__ + "."):
+        if not _DEAP_AVAILABLE and module_info.name in _DEAP_OPTIONAL_CONTRACT_MODULES:
+            continue
         try:
             module = importlib.import_module(module_info.name)
         except ImportError as error:
@@ -174,6 +189,10 @@ def _discover_contract_classes() -> tuple[type[Any], ...]:
             if (
                 inspect.isclass(obj)
                 and obj.__module__.startswith("saealib.")
+                and (
+                    _DEAP_AVAILABLE
+                    or obj.__module__ not in _DEAP_OPTIONAL_CONTRACT_MODULES
+                )
                 and not getattr(obj, "_is_protocol", False)
                 # Stage contracts are audited by the component inventory
                 # tests.  They are a separate execution-boundary protocol,
@@ -434,6 +453,26 @@ def _build_qualified(path: str, **params: Any) -> Any:
     return build({"type": path, "params": params})
 
 
+class _DeapCrossoverStub:
+    def __call__(
+        self, ind1: list[float], ind2: list[float]
+    ) -> tuple[list[float], list[float]]:
+        return ind1, ind2
+
+
+class _DeapMutationStub:
+    def __call__(self, individual: list[float]) -> tuple[list[float]]:
+        return (individual,)
+
+
+class _DeapStrategyStub:
+    def generate(self, ind_init: Any) -> list[Any]:
+        return [ind_init(np.zeros(1, dtype=float))]
+
+    def update(self, population: list[Any]) -> None:
+        del population
+
+
 _RECIPES: dict[str, Callable[[], Any]] = {
     _qualified_name(
         _REGISTRY["LocalSurrogateManager"]
@@ -535,10 +574,30 @@ _RECIPES: dict[str, Callable[[], Any]] = {
         "saealib.operators.pymoo_mutation.PymooMutation",
         operator=_PymooMutationStub(),
     ),
+    "saealib.operators.deap_crossover.DeapCrossover": lambda: _build_qualified(
+        "saealib.operators.deap_crossover.DeapCrossover",
+        operator=_DeapCrossoverStub(),
+    ),
+    "saealib.operators.deap_mutation.DeapMutation": lambda: _build_qualified(
+        "saealib.operators.deap_mutation.DeapMutation",
+        operator=_DeapMutationStub(),
+    ),
+    "saealib.algorithms.deap_algorithm.DeapGenerateUpdateAlgorithm": (
+        lambda: _build_qualified(
+            "saealib.algorithms.deap_algorithm.DeapGenerateUpdateAlgorithm",
+            strategy=_DeapStrategyStub(),
+        )
+    ),
     "saealib.operators.selection.TournamentSelection": lambda: _build_qualified(
         "saealib.operators.selection.TournamentSelection", tournament_size=2
     ),
 }
+if not _DEAP_AVAILABLE:
+    _RECIPES = {
+        path: recipe
+        for path, recipe in _RECIPES.items()
+        if path.rsplit(".", 1)[0] not in _DEAP_OPTIONAL_CONTRACT_MODULES
+    }
 
 
 def _builtin_classes() -> dict[str, type[Any]]:
