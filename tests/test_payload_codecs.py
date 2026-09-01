@@ -8,7 +8,7 @@ import pytest
 from saealib.context import (
     EvaluationPlanState,
     OptimizationState,
-    _decode_v3_value,
+    _decode_state_value,
     _pending_to_json,
     _request_from_json,
     _request_to_json,
@@ -388,7 +388,7 @@ def test_old_v3_v1_evaluation_keys_load_to_current_v2_keys() -> None:
         },
     }
     old_key = StateKey(namespace="evaluations", name="plan", schema_version=1)
-    decoded = _decode_v3_value(old_key, encoded, {}, "test")
+    decoded = _decode_state_value(old_key, encoded, {}, "test")
     migrated_key, migrated = STATE_MIGRATORS.migrate(old_key, decoded, target_version=2)
 
     assert isinstance(migrated, EvaluationPlan)

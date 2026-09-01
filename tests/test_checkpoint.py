@@ -150,7 +150,7 @@ def test_npz_roundtrip(tmp_path):
 
 
 def test_npz_load_defaults_decision_count_when_absent(tmp_path):
-    """A pre-decision_count (v3) checkpoint resumes with decision_count == 0."""
+    """A checkpoint without decision_count resumes with decision_count == 0."""
     problem = _make_problem()
     ctx = _make_optimizer(problem, seed=0, n_gen=2).run()
     assert ctx.decision_count > 0
@@ -166,12 +166,11 @@ def test_npz_load_defaults_decision_count_when_absent(tmp_path):
             item["key"]["namespace"] == "runtime"
             and item["key"]["name"] == "decision_count"
         ):
-            item["key"]["name"] = "decision_count_absent_in_v3"
+            item["key"]["name"] = "decision_count_absent"
             break
     else:
         raise AssertionError("runtime/decision_count entry was not found")
     raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
-    raw["_checkpoint_schema_version"] = np.array(3, dtype=np.int64)
     np.savez(p, **raw)
 
     loaded = OptimizationState.load(p, problem)

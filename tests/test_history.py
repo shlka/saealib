@@ -930,43 +930,6 @@ def test_checkpoint_roundtrip_restores_summary_history(tmp_path: Path) -> None:
     }
 
 
-def test_legacy_summary_checkpoint_backfills_best_f_and_resume_appends_real_value(
-    tmp_path: Path,
-) -> None:
-    state = _run_optimizer(_problem(), ["summary"])
-    source = tmp_path / "current.npz"
-    legacy = tmp_path / "schema5.npz"
-    state.save(source)
-
-    raw = dict(np.load(source, allow_pickle=False).items())
-    metadata = json.loads(bytes(raw["_history_meta"]).decode())
-    metadata["columns"]["summary"].remove("best_f")
-    raw.pop("_history__summary__best_f")
-    raw["_history_meta"] = np.frombuffer(
-        json.dumps(metadata, separators=(",", ":")).encode(), dtype=np.uint8
-    )
-    raw["_checkpoint_schema_version"] = np.array(5, dtype=np.int64)
-    np.savez(legacy, **raw)
-
-    restored = OptimizationState.load(legacy, state.problem)
-    assert restored.history is not None
-    restored_best_f = restored.history.channel("summary")["best_f"]
-    assert np.all(np.isnan(restored_best_f))
-
-    optimizer = (
-        Optimizer(state.problem, seed=7)
-        .set_initializer(LHSInitializer(10, 3))
-        .set_termination(Termination(max_gen(state.gen + 1)))
-        .set_history(["summary"])
-    )
-    optimizer.resolve_defaults()
-    resumed = optimizer.run_from(restored)
-    assert resumed.history is not None
-    summary = resumed.history.channel("summary")
-    assert np.all(np.isnan(summary["best_f"][: len(restored_best_f)]))
-    assert np.isfinite(summary["best_f"][len(restored_best_f) :]).all()
-
-
 def test_current_summary_checkpoint_roundtrip_retains_best_f(tmp_path: Path) -> None:
     state = _run_optimizer(_problem(), ["summary"])
     assert state.history is not None
@@ -1800,26 +1763,19 @@ def test_checkpoint_resume_continues_summary_history(tmp_path: Path) -> None:
     assert np.unique(summary["gen"]).size == len(summary["gen"])
 
 
-def test_v4_checkpoint_load_keeps_history_absent(tmp_path: Path) -> None:
+def test_checkpoint_without_history_arrays_loads_history_none(tmp_path: Path) -> None:
     state = _run_optimizer(_problem(), ["summary"])
     source = tmp_path / "history.npz"
-    legacy = tmp_path / "history_v4.npz"
+    stripped = tmp_path / "history_without_arrays.npz"
     state.save(source)
 
     raw = dict(np.load(source, allow_pickle=False).items())
     history_keys = [
         key for key in raw if key == "_history_meta" or key.startswith("_history__")
     ]
-    _rewrite_npz(
-        source,
-        legacy,
-        **{
-            **{key: None for key in history_keys},
-            "_checkpoint_schema_version": np.array(4, dtype=np.int64),
-        },
-    )
+    _rewrite_npz(source, stripped, **{key: None for key in history_keys})
 
-    restored = OptimizationState.load(legacy, state.problem)
+    restored = OptimizationState.load(stripped, state.problem)
     assert restored.history is None
 
 
@@ -1834,17 +1790,16 @@ def test_checkpoint_without_history_rows_starts_recording_on_resume(
     )
     state = optimizer.run()
     source = tmp_path / "history.npz"
-    legacy = tmp_path / "history_v4.npz"
+    stripped = tmp_path / "history_without_arrays.npz"
     state.save(source)
 
     raw = dict(np.load(source, allow_pickle=False).items())
     for key in list(raw):
         if key == "_history_meta" or key.startswith("_history__"):
             del raw[key]
-    raw["_checkpoint_schema_version"] = np.array(4, dtype=np.int64)
-    np.savez(legacy, **raw)
+    np.savez(stripped, **raw)
 
-    restored = OptimizationState.load(legacy, state.problem)
+    restored = OptimizationState.load(stripped, state.problem)
     assert restored.history is None
     resume_optimizer = (
         Optimizer(state.problem, seed=7)
@@ -1906,21 +1861,6 @@ def test_async_runtime_records_one_decision_row_per_decision() -> None:
     assert state.history is not None
     channel = state.history.channel("decision_candidates")
     assert len(channel["decision_count"]) == state.decision_count
-
-
-def test_v2_checkpoint_load_keeps_history_absent(tmp_path: Path) -> None:
-    state = _run_optimizer(_problem(), ["summary"])
-    path = tmp_path / "history-v2.npz"
-    state._save_v2(path)
-
-    raw = np.load(path, allow_pickle=False)
-    assert int(raw["_checkpoint_schema_version"]) == 2
-    assert not any(
-        key == "_history_meta" or key.startswith("_history__") for key in raw.files
-    )
-
-    restored = OptimizationState.load(path, state.problem)
-    assert restored.history is None
 
 
 def test_decision_candidate_history_has_one_record_per_decision() -> None:
