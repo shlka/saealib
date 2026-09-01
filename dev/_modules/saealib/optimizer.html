@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev90+gb98152d19 documentation</title>
+    <title>saealib.optimizer &#8212; saealib 0.1.0b5.dev99+g684939d98 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=eea61bab"></script>
+    <script src="../../_static/documentation_options.js?v=5c07919f"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -963,6 +963,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Sequence</span>
@@ -1014,6 +1015,8 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">max_fe</span> <span class="k">as</span> <span class="n">max_fe_cond</span>
 
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.algorithms.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Algorithm</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultResolution</span>
@@ -1021,6 +1024,23 @@ window.runMermaid = runMermaid;</script>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationStrategy</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Surrogate</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_default_acquisition_spec</span><span class="p">(</span><span class="n">manager_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">get</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">manager_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="n">manager_cls</span> <span class="o">=</span> <span class="n">manager_type</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">manager_cls</span> <span class="o">=</span> <span class="n">get</span><span class="p">(</span><span class="n">manager_type</span><span class="p">)</span> <span class="k">if</span> <span class="n">manager_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="n">ValidationError</span><span class="p">:</span>
+            <span class="n">manager_cls</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">manager_cls</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span>
+        <span class="n">manager_cls</span><span class="p">,</span> <span class="n">PairwiseSurrogateManager</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;WinRateAcquisition&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{}}</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;MeanPrediction&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;direction&quot;</span><span class="p">:</span> <span class="n">direction</span><span class="p">}}</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Dispatchable</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
@@ -1881,6 +1901,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">algorithm</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">strategy</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;strategy&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">surrogate_manager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;surrogate_manager&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">bundled_preset_name</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="n">user_preset</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_preset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">user_preset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1933,9 +1954,16 @@ window.runMermaid = runMermaid;</script>
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">feedback_builder</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">):</span>
             <span class="n">defaults</span> <span class="o">=</span> <span class="n">load_defaults</span><span class="p">()</span>
-            <span class="n">preset</span> <span class="o">=</span> <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;presets&quot;</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">_select_preset_name</span><span class="p">(</span><span class="n">defaults</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)]</span>
+            <span class="n">bundled_preset_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_select_preset_name</span><span class="p">(</span><span class="n">defaults</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span>
+            <span class="n">preset</span> <span class="o">=</span> <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;presets&quot;</span><span class="p">][</span><span class="n">bundled_preset_name</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;algorithm&quot;</span> <span class="ow">in</span> <span class="n">preset</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">preset</span><span class="p">[</span><span class="s2">&quot;algorithm&quot;</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span>
+                    <span class="n">_inject_params</span><span class="p">(</span>
+                        <span class="n">preset</span><span class="p">[</span><span class="s2">&quot;algorithm&quot;</span><span class="p">],</span>
+                        <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                        <span class="n">direction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
             <span class="k">if</span> <span class="n">surrogate_manager</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;surrogate_manager&quot;</span> <span class="ow">in</span> <span class="n">preset</span><span class="p">:</span>
                 <span class="n">manager</span><span class="p">,</span> <span class="n">acquisition</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_components_from_spec</span><span class="p">(</span>
                     <span class="n">preset</span><span class="p">[</span><span class="s2">&quot;surrogate_manager&quot;</span><span class="p">]</span>
@@ -1944,7 +1972,13 @@ window.runMermaid = runMermaid;</script>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">acquisition</span> <span class="o">=</span> <span class="n">acquisition</span>
             <span class="k">if</span> <span class="n">strategy</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;strategy&quot;</span> <span class="ow">in</span> <span class="n">preset</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span><span class="n">preset</span><span class="p">[</span><span class="s2">&quot;strategy&quot;</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span>
+                    <span class="n">_inject_params</span><span class="p">(</span>
+                        <span class="n">preset</span><span class="p">[</span><span class="s2">&quot;strategy&quot;</span><span class="p">],</span>
+                        <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                        <span class="n">direction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="n">use_bundled_policies</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_planner</span> <span class="ow">is</span> <span class="kc">None</span>
@@ -2049,7 +2083,27 @@ window.runMermaid = runMermaid;</script>
             <span class="n">max_evaluations</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">MAX_EVALUATIONS</span><span class="p">,</span> <span class="mi">200</span> <span class="o">*</span> <span class="n">dim</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">termination</span> <span class="o">=</span> <span class="n">Termination</span><span class="p">(</span><span class="n">max_fe_cond</span><span class="p">(</span><span class="n">max_evaluations</span><span class="p">))</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">async_evaluation_scheduler</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span>
+
+        <span class="n">component_types</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">component</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="s2">&quot;algorithm&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;strategy&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;surrogate_manager&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;acquisition&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;evaluation_planner&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;feedback_builder&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;termination&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;initializer&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">component</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">}</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Resolved defaults: bundled_preset=</span><span class="si">%s</span><span class="s2"> components=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">bundled_preset_name</span><span class="p">,</span>
+            <span class="n">component_types</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -2082,21 +2136,10 @@ window.runMermaid = runMermaid;</script>
             <span class="k">yield</span> <span class="n">acquisition</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_select_preset_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">defaults</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="n">Algorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">preset_name</span> <span class="o">=</span> <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;by_algorithm&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">preset_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">preset_name</span>
-        <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;by_problem_shape&quot;</span><span class="p">]:</span>
-            <span class="n">when</span> <span class="o">=</span> <span class="n">rule</span><span class="p">[</span><span class="s2">&quot;when&quot;</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
-                <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">when</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-            <span class="p">):</span>
-                <span class="k">return</span> <span class="n">rule</span><span class="p">[</span><span class="s2">&quot;preset&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;fallback&quot;</span><span class="p">]</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_preset_name</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_surrogate_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateManager</span><span class="p">:</span>
-        <span class="n">manager</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_components_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">manager</span>
+        <span class="n">algorithm_name</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">return</span> <span class="n">select_preset_name</span><span class="p">(</span><span class="n">defaults</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">algorithm_name</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_components_from_spec</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span>
@@ -2107,55 +2150,32 @@ window.runMermaid = runMermaid;</script>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_components_from_spec_static</span><span class="p">(</span>
-        <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">direction</span>
+        <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">surrogate</span><span class="p">:</span> <span class="n">Surrogate</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SurrogateManager</span><span class="p">,</span> <span class="n">AcquisitionFunction</span><span class="p">]:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">_inject_params</span><span class="p">,</span> <span class="n">build</span>
 
         <span class="n">manager_spec</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">manager_spec</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
-            <span class="s2">&quot;surrogate&quot;</span><span class="p">,</span>
-            <span class="p">{</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;RBFSurrogate&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="n">GaussianKernel</span><span class="p">()},</span>
-            <span class="p">},</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">surrogate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="s2">&quot;surrogate&quot;</span><span class="p">,</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;RBFSurrogate&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="n">GaussianKernel</span><span class="p">()},</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s2">&quot;surrogate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">surrogate</span>
         <span class="n">acquisition_spec</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;acquisition&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">acquisition_spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">acquisition_spec</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;WinRateAcquisition&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{}}</span>
-                <span class="k">if</span> <span class="n">manager_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;PairwiseSurrogateManager&quot;</span>
-                <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;MeanPrediction&quot;</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;direction&quot;</span><span class="p">:</span> <span class="n">direction</span><span class="p">}}</span>
+            <span class="n">acquisition_spec</span> <span class="o">=</span> <span class="n">_default_acquisition_spec</span><span class="p">(</span>
+                <span class="n">manager_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">),</span> <span class="n">direction</span>
             <span class="p">)</span>
         <span class="n">manager_spec</span> <span class="o">=</span> <span class="n">_inject_params</span><span class="p">(</span><span class="n">manager_spec</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">)</span>
         <span class="n">acquisition_spec</span> <span class="o">=</span> <span class="n">_inject_params</span><span class="p">(</span>
-            <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">acquisition_spec</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span>
+            <span class="n">acquisition_spec</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">build</span><span class="p">(</span><span class="n">manager_spec</span><span class="p">),</span> <span class="n">build</span><span class="p">(</span><span class="n">acquisition_spec</span><span class="p">)</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_surrogate_manager_from_spec</span><span class="p">(</span>
-        <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">direction</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateManager</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build a surrogate_manager preset spec, injecting dim/direction defaults.</span>
-
-<span class="sd">        Shared by ``Optimizer._resolve_defaults()`` and ``saealib.api``&#39;s</span>
-<span class="sd">        ``&#39;rbf&#39;`` surrogate shorthand, so the injection logic is defined once.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">_inject_params</span><span class="p">,</span> <span class="n">build</span>
-
-        <span class="n">spec</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
-            <span class="s2">&quot;surrogate&quot;</span><span class="p">,</span>
-            <span class="p">{</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;RBFSurrogate&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="n">GaussianKernel</span><span class="p">()},</span>
-            <span class="p">},</span>
-        <span class="p">)</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;acquisition&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">spec</span> <span class="o">=</span> <span class="n">_inject_params</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">build</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_register_checkpoint</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2174,6 +2194,24 @@ window.runMermaid = runMermaid;</script>
             <span class="n">optimizer</span><span class="o">=</span><span class="bp">self</span> <span class="k">if</span> <span class="nb">format</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;pickle&quot;</span><span class="p">,</span> <span class="s2">&quot;both&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">cb</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cbmanager</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_checkpointable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reject portable checkpoints for components with non-exportable state.&quot;&quot;&quot;</span>
+        <span class="n">plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executable_plan</span>
+        <span class="k">if</span> <span class="n">plan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">snapshots</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">plan</span><span class="o">.</span><span class="n">contract_snapshots</span><span class="p">)</span>
+        <span class="n">rejected</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">component_id</span><span class="p">,</span> <span class="n">contract</span> <span class="ow">in</span> <span class="n">snapshots</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">contract</span><span class="o">.</span><span class="n">assumptions</span><span class="p">[</span><span class="s2">&quot;state.checkpointable&quot;</span><span class="p">]:</span>
+                <span class="n">component</span> <span class="o">=</span> <span class="n">plan</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node_by_id</span><span class="p">(</span><span class="n">component_id</span><span class="p">)</span><span class="o">.</span><span class="n">component</span>
+                <span class="n">component_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="s2">&quot;component&quot;</span><span class="p">,</span> <span class="n">component</span><span class="p">)</span>
+                <span class="n">rejected</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">component_id</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">component_name</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rejected</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ConfigurationError</span><span class="p">(</span>
+                <span class="s2">&quot;Portable checkpointing requires state.checkpointable=True; &quot;</span>
+                <span class="s2">&quot;non-checkpointable component(s): &quot;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rejected</span><span class="p">)</span>
+            <span class="p">)</span>
 
 <div class="viewcode-block" id="Optimizer.iterate">
 <a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.iterate">[docs]</a>
@@ -2213,6 +2251,8 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inject_acquisition_directions</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">checkpoint_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">checkpoint_format</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;npz&quot;</span><span class="p">,</span> <span class="s2">&quot;both&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_validate_checkpointable</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_register_checkpoint</span><span class="p">(</span>
                 <span class="n">checkpoint_path</span><span class="p">,</span>
                 <span class="n">checkpoint_interval</span><span class="p">,</span>
@@ -2251,6 +2291,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        OptimizationState</span>
 <span class="sd">            The optimization context.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Optimization run started: dim=</span><span class="si">%s</span><span class="s2"> n_obj=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">n_obj</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolve_defaults</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_compile_plan</span><span class="p">()</span>
         <span class="n">issues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
@@ -2260,19 +2305,32 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inject_acquisition_directions</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">checkpoint_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">checkpoint_format</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;npz&quot;</span><span class="p">,</span> <span class="s2">&quot;both&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_validate_checkpointable</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_register_checkpoint</span><span class="p">(</span>
                 <span class="n">checkpoint_path</span><span class="p">,</span>
                 <span class="n">checkpoint_interval</span><span class="p">,</span>
                 <span class="n">checkpoint_format</span><span class="p">,</span>
                 <span class="n">checkpoint_delete_on_success</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">Runner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">Runner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Optimization run finished: fe=</span><span class="si">%s</span><span class="s2"> gen=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;fe&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;gen&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span></div>
 
 
 <div class="viewcode-block" id="Optimizer.iterate_from">
 <a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.iterate_from">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">iterate_from</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">checkpoint_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">checkpoint_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">checkpoint_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;npz&quot;</span><span class="p">,</span>
+        <span class="n">checkpoint_delete_on_success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">OptimizationState</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Resume iteration from an existing context (e.g. loaded from checkpoint).</span>
@@ -2283,6 +2341,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ----------</span>
 <span class="sd">        ctx : OptimizationState</span>
 <span class="sd">            Context to resume from.</span>
+<span class="sd">        checkpoint_path : str, Path, or None, optional</span>
+<span class="sd">            If provided, checkpoints are saved to this directory every</span>
+<span class="sd">            *checkpoint_interval* generations.</span>
+<span class="sd">        checkpoint_interval : int, optional</span>
+<span class="sd">            Generations between checkpoints.  Default: 1.</span>
+<span class="sd">        checkpoint_format : {&#39;npz&#39;, &#39;pickle&#39;, &#39;both&#39;}, optional</span>
+<span class="sd">            Checkpoint format.  Default: ``&#39;npz&#39;``.</span>
+<span class="sd">        checkpoint_delete_on_success : bool, optional</span>
+<span class="sd">            Delete checkpoints on normal termination.  Default: False.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -2295,12 +2362,28 @@ window.runMermaid = runMermaid;</script>
                 <span class="s2">&quot;Optimizer misconfigured:</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">issues</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inject_acquisition_directions</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">checkpoint_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">checkpoint_format</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;npz&quot;</span><span class="p">,</span> <span class="s2">&quot;both&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_validate_checkpointable</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_register_checkpoint</span><span class="p">(</span>
+                <span class="n">checkpoint_path</span><span class="p">,</span>
+                <span class="n">checkpoint_interval</span><span class="p">,</span>
+                <span class="n">checkpoint_format</span><span class="p">,</span>
+                <span class="n">checkpoint_delete_on_success</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">Runner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">iterate_from</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Optimizer.run_from">
 <a class="viewcode-back" href="../../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer.run_from">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">run_from</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_from</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
+        <span class="n">checkpoint_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">checkpoint_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">checkpoint_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;npz&quot;</span><span class="p">,</span>
+        <span class="n">checkpoint_delete_on_success</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Resume and run to completion from an existing context.</span>
 
@@ -2308,6 +2391,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ----------</span>
 <span class="sd">        ctx : OptimizationState</span>
 <span class="sd">            Context to resume from.</span>
+<span class="sd">        checkpoint_path : str, Path, or None, optional</span>
+<span class="sd">            If provided, checkpoints are saved to this directory every</span>
+<span class="sd">            *checkpoint_interval* generations.</span>
+<span class="sd">        checkpoint_interval : int, optional</span>
+<span class="sd">            Generations between checkpoints.  Default: 1.</span>
+<span class="sd">        checkpoint_format : {&#39;npz&#39;, &#39;pickle&#39;, &#39;both&#39;}, optional</span>
+<span class="sd">            Checkpoint format.  Default: ``&#39;npz&#39;``.</span>
+<span class="sd">        checkpoint_delete_on_success : bool, optional</span>
+<span class="sd">            Delete checkpoints on normal termination.  Default: False.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -2321,6 +2413,15 @@ window.runMermaid = runMermaid;</script>
                 <span class="s2">&quot;Optimizer misconfigured:</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">issues</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inject_acquisition_directions</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">checkpoint_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">checkpoint_format</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;npz&quot;</span><span class="p">,</span> <span class="s2">&quot;both&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_validate_checkpointable</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_register_checkpoint</span><span class="p">(</span>
+                <span class="n">checkpoint_path</span><span class="p">,</span>
+                <span class="n">checkpoint_interval</span><span class="p">,</span>
+                <span class="n">checkpoint_format</span><span class="p">,</span>
+                <span class="n">checkpoint_delete_on_success</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">Runner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">run_from</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 
 

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.Optimizer &#8212; saealib 0.1.0b5.dev90+gb98152d19 documentation</title>
+    <title>saealib.Optimizer &#8212; saealib 0.1.0b5.dev99+g684939d98 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=eea61bab"></script>
+    <script src="../../_static/documentation_options.js?v=5c07919f"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1265,12 +1265,19 @@ or <code class="docutils literal notranslate"><span class="pre">iterate()</span>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Optimizer.iterate_from">
-<span class="sig-prename descclassname"><span class="pre">Optimizer.</span></span><span class="sig-name descname"><span class="pre">iterate_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/optimizer.html#Optimizer.iterate_from"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Optimizer.iterate_from" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">Optimizer.</span></span><span class="sig-name descname"><span class="pre">iterate_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'npz'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_delete_on_success</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/optimizer.html#Optimizer.iterate_from"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Optimizer.iterate_from" title="Link to this definition">#</a></dt>
 <dd><p>Resume iteration from an existing context (e.g. loaded from checkpoint).</p>
 <p>Does not call the initializer; all other components must be configured.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ctx</strong> (<em>OptimizationState</em>) – Context to resume from.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>OptimizationState</em>) – Context to resume from.</p></li>
+<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>Path</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) – If provided, checkpoints are saved to this directory every
+<em>checkpoint_interval</em> generations.</p></li>
+<li><p><strong>checkpoint_interval</strong> (<em>int</em><em>, </em><em>optional</em>) – Generations between checkpoints.  Default: 1.</p></li>
+<li><p><strong>checkpoint_format</strong> (<em>{'npz'</em><em>, </em><em>'pickle'</em><em>, </em><em>'both'}</em><em>, </em><em>optional</em>) – Checkpoint format.  Default: <code class="docutils literal notranslate"><span class="pre">'npz'</span></code>.</p></li>
+<li><p><strong>checkpoint_delete_on_success</strong> (<em>bool</em><em>, </em><em>optional</em>) – Delete checkpoints on normal termination.  Default: False.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>Generator[OptimizationState, None, None]</p>
@@ -1344,11 +1351,18 @@ only if neither <code class="docutils literal notranslate"><span class="pre">set
 
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.Optimizer.run_from">
-<span class="sig-prename descclassname"><span class="pre">Optimizer.</span></span><span class="sig-name descname"><span class="pre">run_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/optimizer.html#Optimizer.run_from"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Optimizer.run_from" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">Optimizer.</span></span><span class="sig-name descname"><span class="pre">run_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'npz'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_delete_on_success</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/optimizer.html#Optimizer.run_from"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#saealib.Optimizer.run_from" title="Link to this definition">#</a></dt>
 <dd><p>Resume and run to completion from an existing context.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ctx</strong> (<em>OptimizationState</em>) – Context to resume from.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>OptimizationState</em>) – Context to resume from.</p></li>
+<li><p><strong>checkpoint_path</strong> (<em>str</em><em>, </em><em>Path</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) – If provided, checkpoints are saved to this directory every
+<em>checkpoint_interval</em> generations.</p></li>
+<li><p><strong>checkpoint_interval</strong> (<em>int</em><em>, </em><em>optional</em>) – Generations between checkpoints.  Default: 1.</p></li>
+<li><p><strong>checkpoint_format</strong> (<em>{'npz'</em><em>, </em><em>'pickle'</em><em>, </em><em>'both'}</em><em>, </em><em>optional</em>) – Checkpoint format.  Default: <code class="docutils literal notranslate"><span class="pre">'npz'</span></code>.</p></li>
+<li><p><strong>checkpoint_delete_on_success</strong> (<em>bool</em><em>, </em><em>optional</em>) – Delete checkpoints on normal termination.  Default: False.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The final optimization context.</p>

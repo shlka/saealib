@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.comparators.comparators &#8212; saealib 0.1.0b5.dev90+gb98152d19 ドキュメント</title>
+    <title>saealib.comparators.comparators &#8212; saealib 0.1.0b5.dev99+g684939d98 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=77bca005"></script>
+    <script src="../../../_static/documentation_options.js?v=c51d2a31"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1953,10 +1953,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        **Generalization from SMS-EMOA.** The original SMS-EMOA</span>
 <span class="sd">        (Beume et al., 2007) computes HV contributions only on the *last*</span>
 <span class="sd">        (worst) front to determine the single removal candidate at each</span>
-<span class="sd">        generation.  This comparator applies HV-contribution ordering *within</span>
-<span class="sd">        every front* to produce a full ranking over the entire population.</span>
-<span class="sd">        This is a deliberate generalization that enables use in standard</span>
-<span class="sd">        survivor-selection and tournament-selection contexts.</span>
+<span class="sd">        generation.  By default this comparator applies HV-contribution</span>
+<span class="sd">        ordering *within every front* to produce a full ranking over the</span>
+<span class="sd">        entire population, a deliberate generalization that enables use in</span>
+<span class="sd">        standard survivor-selection and tournament-selection contexts.  Set</span>
+<span class="sd">        ``last_front_only=True`` for the paper&#39;s scope instead: contributions</span>
+<span class="sd">        are then computed on the last front alone and better fronts are</span>
+<span class="sd">        ordered by rank only.</span>
 
 <span class="sd">    .. warning::</span>
 <span class="sd">        Computing hypervolume is exponential in the number of objectives, and</span>
@@ -2004,6 +2007,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        break; kept as a stored, inert attribute (see :attr:`margin`).</span>
 <span class="sd">        Pass an explicit ``reference_point`` if a margin-scaled reference</span>
 <span class="sd">        point is needed.</span>
+<span class="sd">    last_front_only : bool</span>
+<span class="sd">        Restrict HV-contribution ordering to the last (worst) front, as in</span>
+<span class="sd">        Beume et al. (2007).  Individuals in better fronts then share one</span>
+<span class="sd">        contribution value and keep their relative order.  Defaults to</span>
+<span class="sd">        ``False``, which ranks within every front.  Setting it also removes</span>
+<span class="sd">        the per-front hypervolume cost for all but the last front.</span>
 <span class="sd">    sorter : NonDominatedSorter</span>
 <span class="sd">        Non-dominated sorting callable.</span>
 <span class="sd">    dominator : Dominator or None</span>
@@ -2033,6 +2042,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">eps_obj</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
         <span class="n">reference_point</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">margin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">last_front_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">sorter</span><span class="p">:</span> <span class="n">NonDominatedSorter</span> <span class="o">=</span> <span class="n">non_dominated_sort</span><span class="p">,</span>
         <span class="n">dominator</span><span class="p">:</span> <span class="n">Dominator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
@@ -2048,13 +2058,19 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="n">reference_point</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">reference_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_margin</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">margin</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_margin</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">margin</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_front_only</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">last_front_only</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">reference_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Reference point used for hypervolume computation, or None for auto.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference_point</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">last_front_only</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether HV contributions are restricted to the last front.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_front_only</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">margin</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -2090,6 +2106,10 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">dominator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dominator</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">rank_all</span><span class="p">[</span><span class="n">feasible</span><span class="p">]</span> <span class="o">=</span> <span class="n">ranks</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_front_only</span><span class="p">:</span>
+                <span class="n">contrib_all</span><span class="p">[</span><span class="n">feasible</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">fronts</span> <span class="o">=</span> <span class="n">fronts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
 
             <span class="k">for</span> <span class="n">front</span> <span class="ow">in</span> <span class="n">fronts</span><span class="p">:</span>  <span class="c1"># front = local indices into feasible subset</span>
                 <span class="n">local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">front</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>

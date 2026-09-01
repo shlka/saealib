@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.execution.runtime &#8212; saealib 0.1.0b5.dev90+gb98152d19 documentation</title>
+    <title>saealib.execution.runtime &#8212; saealib 0.1.0b5.dev99+g684939d98 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=eea61bab"></script>
+    <script src="../../../_static/documentation_options.js?v=5c07919f"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -962,6 +962,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Awaitable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
@@ -1026,6 +1027,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">record_evaluations</span><span class="p">,</span>
     <span class="n">record_generation</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;AsyncPipelineRuntime&quot;</span><span class="p">,</span>
@@ -1193,25 +1196,29 @@ window.runMermaid = runMermaid;</script>
     <span class="n">plan</span><span class="p">:</span> <span class="n">SequentialPlan</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ExecutionOutcome</span><span class="p">:</span>
-    <span class="n">execute_step</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="s2">&quot;execute_step&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">execute_step</span><span class="p">):</span>
-        <span class="n">outcome</span> <span class="o">=</span> <span class="n">execute_step</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">_ExecutionOutcome</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">outcome</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">RuntimeStep</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span>
-                <span class="n">state</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
-                <span class="n">node_results</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">node_results</span><span class="p">,</span>
-                <span class="n">executed_node_ids</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">executed_node_ids</span><span class="p">,</span>
-                <span class="n">refused_commands</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">refused_commands</span><span class="p">,</span>
-                <span class="n">terminated</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">finished</span><span class="p">,</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime synchronous execution start&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">execute_step</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="s2">&quot;execute_step&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">execute_step</span><span class="p">):</span>
+            <span class="n">outcome</span> <span class="o">=</span> <span class="n">execute_step</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">_ExecutionOutcome</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">outcome</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">RuntimeStep</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span>
+                    <span class="n">state</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                    <span class="n">node_results</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">node_results</span><span class="p">,</span>
+                    <span class="n">executed_node_ids</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">executed_node_ids</span><span class="p">,</span>
+                    <span class="n">refused_commands</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">refused_commands</span><span class="p">,</span>
+                    <span class="n">terminated</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">finished</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">OptimizationState</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">outcome</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;runtime environment execute_step returned an invalid value&quot;</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">OptimizationState</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">outcome</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-            <span class="s2">&quot;runtime environment execute_step returned an invalid value&quot;</span>
-        <span class="p">)</span>
-    <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">))</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime synchronous execution end&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_environment_execute_async</span><span class="p">(</span>
@@ -1219,25 +1226,29 @@ window.runMermaid = runMermaid;</script>
     <span class="n">plan</span><span class="p">:</span> <span class="n">SequentialPlan</span><span class="p">,</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">OptimizationState</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ExecutionOutcome</span><span class="p">:</span>
-    <span class="n">execute_step</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="s2">&quot;execute_async_step&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">execute_step</span><span class="p">):</span>
-        <span class="n">outcome</span> <span class="o">=</span> <span class="n">execute_step</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">_ExecutionOutcome</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">outcome</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">RuntimeStep</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span>
-                <span class="n">state</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
-                <span class="n">node_results</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">node_results</span><span class="p">,</span>
-                <span class="n">executed_node_ids</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">executed_node_ids</span><span class="p">,</span>
-                <span class="n">refused_commands</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">refused_commands</span><span class="p">,</span>
-                <span class="n">terminated</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">finished</span><span class="p">,</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime asynchronous execution start&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">execute_step</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="s2">&quot;execute_async_step&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">execute_step</span><span class="p">):</span>
+            <span class="n">outcome</span> <span class="o">=</span> <span class="n">execute_step</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">_ExecutionOutcome</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">outcome</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">RuntimeStep</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span>
+                    <span class="n">state</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                    <span class="n">node_results</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">node_results</span><span class="p">,</span>
+                    <span class="n">executed_node_ids</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">executed_node_ids</span><span class="p">,</span>
+                    <span class="n">refused_commands</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">refused_commands</span><span class="p">,</span>
+                    <span class="n">terminated</span><span class="o">=</span><span class="n">outcome</span><span class="o">.</span><span class="n">finished</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">OptimizationState</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">outcome</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;runtime environment execute_async_step returned an invalid value&quot;</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">OptimizationState</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">outcome</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-            <span class="s2">&quot;runtime environment execute_async_step returned an invalid value&quot;</span>
-        <span class="p">)</span>
-    <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">execute_async</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">state</span><span class="p">))</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime asynchronous execution end&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_environment_recompile</span><span class="p">(</span>
@@ -1248,11 +1259,13 @@ window.runMermaid = runMermaid;</script>
         <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
             <span class="s2">&quot;runtime cannot satisfy RequestRecompile: no recompile provider&quot;</span>
         <span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime recompile request accepted: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
     <span class="n">rebuilt</span> <span class="o">=</span> <span class="n">recompile</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rebuilt</span><span class="p">,</span> <span class="p">(</span><span class="n">SequentialPlan</span><span class="p">,</span> <span class="n">StructuredPlan</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;runtime recompile provider returned an invalid plan&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">StructuredPlan</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rebuilt</span><span class="p">,</span> <span class="n">StructuredPlan</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;runtime recompile provider changed plan structure&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime recompile result: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">rebuilt</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">rebuilt</span>
 
 
@@ -1580,6 +1593,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NodeResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">executed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">refused</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RuntimeCommand</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">debug_enabled</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">isEnabledFor</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">finish_child</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Advance an enclosing region after its body reaches its end.&quot;&quot;&quot;</span>
@@ -1684,11 +1698,17 @@ window.runMermaid = runMermaid;</script>
                     <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">operation_index</span><span class="o">=</span><span class="n">end_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
                     <span class="k">continue</span>
             <span class="n">executed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime node start: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">)</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">NodeResult</span><span class="p">(</span>
                 <span class="n">patch</span><span class="o">=</span><span class="n">StatePatch</span><span class="p">(</span><span class="n">writes</span><span class="o">=</span><span class="p">{}),</span>
                 <span class="n">status</span><span class="o">=</span><span class="n">NodeStatus</span><span class="o">.</span><span class="n">BLOCKED</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Runtime node end: </span><span class="si">%s</span><span class="s2"> status=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span>
+                <span class="p">)</span>
             <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span>
                 <span class="n">state</span><span class="o">=</span><span class="n">current</span><span class="p">,</span>
                 <span class="n">node_results</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">results</span><span class="p">),</span>
@@ -1697,6 +1717,8 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">frames</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">stack</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="n">executed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime node start: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">)</span>
         <span class="n">aliases</span> <span class="o">=</span> <span class="n">_node_state_aliases</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
         <span class="n">view</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
             <span class="nb">tuple</span><span class="p">({</span><span class="n">aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">reads</span><span class="p">}),</span>
@@ -1732,9 +1754,21 @@ window.runMermaid = runMermaid;</script>
             <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
                 <span class="n">dispatch</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-        <span class="n">recompile_requested</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">RequestRecompile</span><span class="p">)</span> <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">commands</span>
-        <span class="p">)</span>
+        <span class="n">recompile_commands</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RequestRecompile</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">RequestRecompile</span><span class="p">):</span>
+                <span class="n">recompile_commands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="s2">&quot;Runtime recompile request: node=</span><span class="si">%s</span><span class="s2"> reason=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">,</span>
+                        <span class="n">command</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+                    <span class="p">)</span>
+        <span class="n">recompile_requested</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">recompile_commands</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Runtime node end: </span><span class="si">%s</span><span class="s2"> status=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span>
+            <span class="p">)</span>
         <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="p">(</span><span class="n">RequestTermination</span><span class="p">,</span> <span class="n">RequestRecompile</span><span class="p">)):</span>
                 <span class="n">refused</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
@@ -1753,17 +1787,9 @@ window.runMermaid = runMermaid;</script>
                     <span class="n">frames</span><span class="o">=</span><span class="p">(),</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">recompile_requested</span><span class="p">:</span>
-                <span class="n">refused</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                    <span class="n">command</span>
-                    <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">commands</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">RequestRecompile</span><span class="p">)</span>
-                <span class="p">)</span>
+                <span class="n">refused</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">recompile_commands</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">recompile_requested</span><span class="p">:</span>
-            <span class="n">refused</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                <span class="n">command</span>
-                <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">commands</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">RequestRecompile</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="n">refused</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">recompile_commands</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">NodeStatus</span><span class="o">.</span><span class="n">COMPLETED</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
             <span class="nb">isinstance</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">RequestTermination</span><span class="p">)</span> <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">commands</span>
         <span class="p">):</span>
@@ -1806,10 +1832,13 @@ window.runMermaid = runMermaid;</script>
     <span class="n">executed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">refused</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">RuntimeCommand</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">current</span> <span class="o">=</span> <span class="n">state</span>
+    <span class="n">debug_enabled</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">isEnabledFor</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">execute</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">plan</span><span class="o">.</span><span class="n">execution_nodes</span><span class="p">,</span> <span class="n">plan</span><span class="o">.</span><span class="n">_execute_targets</span><span class="p">):</span>
         <span class="n">executed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">)</span>
         <span class="n">stage</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">component</span><span class="p">,</span> <span class="s2">&quot;stage&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">component</span><span class="p">,</span> <span class="n">StageNodeAdapter</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stage</span><span class="p">,</span> <span class="n">Stage</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime stage start: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">)</span>
             <span class="n">next_state</span> <span class="o">=</span> <span class="n">execute</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">next_state</span><span class="p">,</span> <span class="n">OptimizationState</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -1820,7 +1849,15 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="n">observe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">observe</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
             <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NodeResult</span><span class="p">(</span><span class="n">patch</span><span class="o">=</span><span class="n">StatePatch</span><span class="p">(</span><span class="n">writes</span><span class="o">=</span><span class="p">{})))</span>
+            <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Runtime stage end: </span><span class="si">%s</span><span class="s2"> status=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">,</span>
+                    <span class="n">NodeStatus</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime node start: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">)</span>
         <span class="n">aliases</span> <span class="o">=</span> <span class="n">_node_state_aliases</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
         <span class="n">view</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">_store</span><span class="o">.</span><span class="n">view</span><span class="p">(</span>
             <span class="nb">tuple</span><span class="p">({</span><span class="n">aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">contract</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">reads</span><span class="p">}),</span>
@@ -1850,6 +1887,17 @@ window.runMermaid = runMermaid;</script>
             <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
                 <span class="n">dispatch</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">RequestRecompile</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="s2">&quot;Runtime recompile request: node=</span><span class="si">%s</span><span class="s2"> reason=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">,</span>
+                        <span class="n">command</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+                    <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Runtime node end: </span><span class="si">%s</span><span class="s2"> status=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">component_id</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span>
+            <span class="p">)</span>
         <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="p">(</span><span class="n">RequestTermination</span><span class="p">,</span> <span class="n">RequestRecompile</span><span class="p">)):</span>
                 <span class="k">continue</span>
@@ -2089,13 +2137,26 @@ window.runMermaid = runMermaid;</script>
             <span class="s2">&quot;strategy&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="s2">&quot;strategy&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
         <span class="p">}</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">seam</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
+        <span class="n">component</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">async_index</span><span class="p">]</span><span class="o">.</span><span class="n">component</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;stage&quot;</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="s2">&quot;stage&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;node&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Runtime </span><span class="si">%s</span><span class="s2"> start: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">nodes</span><span class="p">[</span><span class="n">async_index</span><span class="p">]</span><span class="o">.</span><span class="n">component_id</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">seam</span><span class="p">(</span>
                 <span class="n">current</span><span class="p">,</span>
                 <span class="o">**</span><span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">},</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">_ExecutionHaltError</span> <span class="k">as</span> <span class="n">halt</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Runtime </span><span class="si">%s</span><span class="s2"> end: </span><span class="si">%s</span><span class="s2"> status=halted&quot;</span><span class="p">,</span>
+                <span class="n">kind</span><span class="p">,</span>
+                <span class="n">nodes</span><span class="p">[</span><span class="n">async_index</span><span class="p">]</span><span class="o">.</span><span class="n">component_id</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="n">halt</span><span class="o">.</span><span class="n">outcome</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Runtime </span><span class="si">%s</span><span class="s2"> end: </span><span class="si">%s</span><span class="s2"> status=completed&quot;</span><span class="p">,</span>
+            <span class="n">kind</span><span class="p">,</span>
+            <span class="n">nodes</span><span class="p">[</span><span class="n">async_index</span><span class="p">]</span><span class="o">.</span><span class="n">component_id</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">_record_history_observation</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">prefix_outcome</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">_ExecutionOutcome</span><span class="p">(</span>

@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.utils.indicators &#8212; saealib 0.1.0b5.dev90+gb98152d19 ドキュメント</title>
+    <title>saealib.utils.indicators &#8212; saealib 0.1.0b5.dev99+g684939d98 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=77bca005"></script>
+    <script src="../../../_static/documentation_options.js?v=c51d2a31"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -1131,24 +1131,30 @@ window.runMermaid = runMermaid;</script>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">_pairwise_plus_distances</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">spacing</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">spacing</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">squared</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the spacing indicator for an obtained front.</span>
 
-<span class="sd">    The indicator is the sample standard deviation of each point&#39;s nearest</span>
-<span class="sd">    other-point Manhattan distance. Empty and singleton sets return</span>
-<span class="sd">    ``np.nan`` because the sample standard deviation is undefined. Duplicate-</span>
-<span class="sd">    only sets with at least two points return ``0.0``; duplicates therefore</span>
-<span class="sd">    contribute zero nearest-neighbor distances.</span>
+<span class="sd">    The indicator summarizes how evenly a front is spread, through each</span>
+<span class="sd">    point&#39;s nearest other-point Manhattan distance. The default returns the</span>
+<span class="sd">    sample standard deviation of those distances, matching the form jMetal</span>
+<span class="sd">    and pymoo report. ``squared=True`` returns the sample variance instead,</span>
+<span class="sd">    which is the quantity Schott defines, and is the square of the default.</span>
+<span class="sd">    Empty and singleton sets return ``np.nan`` because both forms are</span>
+<span class="sd">    undefined there. Duplicate-only sets with at least two points return</span>
+<span class="sd">    ``0.0``; duplicates contribute zero nearest-neighbor distances.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    f : np.ndarray</span>
 <span class="sd">        Obtained objective matrix, shape (n, n_obj).</span>
+<span class="sd">    squared : bool, optional</span>
+<span class="sd">        Return Schott&#39;s variance rather than its square root.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    float</span>
-<span class="sd">        Sample standard deviation of nearest-neighbor Manhattan distances.</span>
+<span class="sd">        Sample variance of the nearest-neighbor Manhattan distances when</span>
+<span class="sd">        *squared* is set, otherwise their sample standard deviation.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
@@ -1163,7 +1169,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">distances</span> <span class="o">=</span> <span class="n">_pairwise_manhattan_distances</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
     <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
     <span class="n">nearest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">nearest</span> <span class="o">-</span> <span class="n">nearest</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+    <span class="n">variance</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">nearest</span> <span class="o">-</span> <span class="n">nearest</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">variance</span> <span class="k">if</span> <span class="n">squared</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">variance</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">spread</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">reference_front</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -1318,12 +1325,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    .. warning::</span>
 <span class="sd">        Computing hypervolume is exponential in the number of objectives, and</span>
 <span class="sd">        the leave-one-out loop adds a factor of N.  For many objectives or</span>
-<span class="sd">        large N this becomes prohibitively expensive.  A future improvement</span>
-<span class="sd">        may incorporate a faster batch hypervolume algorithm (e.g. the</span>
-<span class="sd">        slicing-based approach of While, Hingston, Barone &amp; Huband, 2006;</span>
-<span class="sd">        paper not yet obtained -- name only, not to be confused with the</span>
-<span class="sd">        WFG benchmark-problem paper by Huband et al., 2006, which is a</span>
-<span class="sd">        different work despite the overlapping author list).</span>
+<span class="sd">        large N this becomes prohibitively expensive.  The hypervolume kernel</span>
+<span class="sd">        this function calls already processes objectives rather than points,</span>
+<span class="sd">        the slicing structure of While, Hingston, Barone &amp; Huband (2006), so</span>
+<span class="sd">        the remaining cost is the repetition itself: a faster contribution</span>
+<span class="sd">        algorithm has to avoid recomputing the whole volume once per point.</span>
+<span class="sd">        That work is not to be confused with the WFG benchmark-problem paper</span>
+<span class="sd">        by Huband et al. (2006), a different paper despite the overlapping</span>
+<span class="sd">        author list.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>

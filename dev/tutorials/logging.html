@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Logging Progress &#8212; saealib 0.1.0b5.dev90+gb98152d19 documentation</title>
+    <title>Logging Progress &#8212; saealib 0.1.0b5.dev99+g684939d98 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=eea61bab"></script>
+    <script src="../_static/documentation_options.js?v=5c07919f"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -616,13 +616,13 @@ This page shows how to configure the destination and level for standard logging 
 </section>
 <section id="write-progress-to-a-file">
 <h2>Write progress to a file<a class="headerlink" href="#write-progress-to-a-file" title="Link to this heading">#</a></h2>
-<p>Adding a <code class="docutils literal notranslate"><span class="pre">FileHandler</span></code> to the <code class="docutils literal notranslate"><span class="pre">saealib.callback.handlers</span></code> logger writes progress out to a file.</p>
+<p>Adding a <code class="docutils literal notranslate"><span class="pre">FileHandler</span></code> to the <code class="docutils literal notranslate"><span class="pre">saealib</span></code> logger writes progress out to a file.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
 <span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="s2">&quot;optimization.log&quot;</span><span class="p">)</span>
 <span class="n">file_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">))</span>
 
-<span class="n">saealib_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;saealib.callback.handlers&quot;</span><span class="p">)</span>
+<span class="n">saealib_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;saealib&quot;</span><span class="p">)</span>
 <span class="n">saealib_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">file_handler</span><span class="p">)</span>
 <span class="n">saealib_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 
@@ -666,8 +666,21 @@ This page shows how to configure the destination and level for standard logging 
 <h2>Handle warning-level logs<a class="headerlink" href="#handle-warning-level-logs" title="Link to this heading">#</a></h2>
 <p>Some components record numerical issues via <code class="docutils literal notranslate"><span class="pre">logger.warning(...)</span></code>.</p>
 <p>For example, <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code> issues a warning when the kernel matrix becomes ill-conditioned.</p>
-<p>Even without calling <code class="docutils literal notranslate"><span class="pre">logging.basicConfig</span></code>, WARNING-level and above logs are shown on standard error via Python’s “handler of last resort”.</p>
-<p>Note that, unlike INFO-level progress logs, this kind of warning is visible even without any configuration.</p>
+<p>saealib does not configure an output handler of its own. It installs only a <code class="docutils literal notranslate"><span class="pre">NullHandler</span></code>, which
+produces no output.</p>
+<p>If you want to display warnings or other <code class="docutils literal notranslate"><span class="pre">saealib</span></code> logs, configure Python’s <code class="docutils literal notranslate"><span class="pre">logging</span></code> module
+yourself. For example, enabling WARNING-level logs makes an ill-conditioned kernel matrix warning
+from <code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code> visible.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianKernel</span><span class="p">,</span> <span class="n">RBFSurrogate</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+
+<span class="n">surrogate</span> <span class="o">=</span> <span class="n">RBFSurrogate</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">GaussianKernel</span><span class="p">(</span><span class="n">length_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span> <span class="n">solver</span><span class="o">=</span><span class="s2">&quot;solve&quot;</span><span class="p">)</span>
+<span class="n">surrogate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">]))</span>
+</pre></div>
+</div>
 </section>
 <section id="add-custom-logging">
 <h2>Add custom logging<a class="headerlink" href="#add-custom-logging" title="Link to this heading">#</a></h2>
@@ -680,6 +693,7 @@ This page shows how to configure the destination and level for standard logging 
 <li><p><a class="reference internal" href="../api/callbacks.html#saealib.logging_generation" title="saealib.logging_generation"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.logging_generation()</span></code></a> / <a class="reference internal" href="../api/callbacks.html#saealib.logging_generation_hv" title="saealib.logging_generation_hv"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.logging_generation_hv()</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CallbackManager.html#saealib.CallbackManager" title="saealib.CallbackManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CallbackManager</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.GenerationStartEvent.html#saealib.GenerationStartEvent" title="saealib.GenerationStartEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GenerationStartEvent</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/highlevel.html#saealib.minimize" title="saealib.minimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.minimize()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../concepts/observation_and_state/diagnostics.html"><span class="std std-doc">Diagnostics and observation</span></a></p></li>
 </ul>
 </section>
 </section>

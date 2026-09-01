@@ -72,7 +72,7 @@ result = minimize(
 
 ## Write progress to a file
 
-Adding a `FileHandler` to the `saealib.callback.handlers` logger writes progress out to a file.
+Adding a `FileHandler` to the `saealib` logger writes progress out to a file.
 
 ```python
 import logging
@@ -80,7 +80,7 @@ import logging
 file_handler = logging.FileHandler("optimization.log")
 file_handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
 
-saealib_logger = logging.getLogger("saealib.callback.handlers")
+saealib_logger = logging.getLogger("saealib")
 saealib_logger.addHandler(file_handler)
 saealib_logger.setLevel(logging.INFO)
 
@@ -127,9 +127,23 @@ Some components record numerical issues via `logger.warning(...)`.
 
 For example, `RBFSurrogate` issues a warning when the kernel matrix becomes ill-conditioned.
 
-Even without calling `logging.basicConfig`, WARNING-level and above logs are shown on standard error via Python's "handler of last resort".
+saealib does not configure an output handler of its own. It installs only a `NullHandler`, which
+produces no output.
 
-Note that, unlike INFO-level progress logs, this kind of warning is visible even without any configuration.
+If you want to display warnings or other `saealib` logs, configure Python's `logging` module
+yourself. For example, enabling WARNING-level logs makes an ill-conditioned kernel matrix warning
+from `RBFSurrogate` visible.
+
+```python
+import logging
+import numpy as np
+from saealib import GaussianKernel, RBFSurrogate
+
+logging.basicConfig(level=logging.WARNING)
+
+surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0), solver="solve")
+surrogate.fit(np.array([[0.0], [0.0], [0.0]]), np.array([1.0, 2.0, 3.0]))
+```
 
 ## Add custom logging
 
@@ -142,3 +156,4 @@ See [CallbackManager](../concepts/observation_and_state/callbacks.md) for the un
 - {py:func}`saealib.logging_generation` / {py:func}`saealib.logging_generation_hv`
 - {py:class}`saealib.CallbackManager` / {py:class}`saealib.GenerationStartEvent`
 - {py:func}`saealib.minimize`
+- [Diagnostics and observation](../concepts/observation_and_state/diagnostics.md)

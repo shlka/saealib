@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>高レベルAPIで最適化を実行する &#8212; saealib 0.1.0b5.dev90+gb98152d19 ドキュメント</title>
+    <title>高レベルAPIで最適化を実行する &#8212; saealib 0.1.0b5.dev99+g684939d98 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=77bca005"></script>
+    <script src="../_static/documentation_options.js?v=c51d2a31"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -627,6 +627,10 @@
 <h2>実行を制御する<a class="headerlink" href="#control-the-run" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">max_fe</span></code> は真の目的関数評価の上限です。 省略時は <code class="docutils literal notranslate"><span class="pre">200</span> <span class="pre">*</span> <span class="pre">dim</span></code> が使われます。 <code class="docutils literal notranslate"><span class="pre">pop_size</span></code> は集団サイズ、<code class="docutils literal notranslate"><span class="pre">seed</span></code> は初期化に使う乱数シード、<code class="docutils literal notranslate"><span class="pre">verbose=False</span></code> は世代ログの抑制に使います。</p>
 <p>アルゴリズム、Surrogate、Strategyをビルトインコンポーネントから選ぶ場合は、文字列またはインスタンスを <code class="docutils literal notranslate"><span class="pre">algorithm</span></code>、<code class="docutils literal notranslate"><span class="pre">surrogate</span></code>、<code class="docutils literal notranslate"><span class="pre">strategy</span></code> に渡せます。 選択と差替えの手順は <a class="reference internal" href="component_swap.html"><span class="std std-doc">ビルトインコンポーネントを差し替える</span></a> に分けています。</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">strategy</span></code> argument has two valid modes.
+When you explicitly provide a strategy, whether as the string shorthand <code class="docutils literal notranslate"><span class="pre">&quot;ib&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;gb&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;ps&quot;</span></code>, or as a strategy instance, the bundled preset's <code class="docutils literal notranslate"><span class="pre">evaluation_planner</span></code> and <code class="docutils literal notranslate"><span class="pre">feedback_builder</span></code> are not applied; the strategy's own default policies are used.
+When you omit <code class="docutils literal notranslate"><span class="pre">strategy</span></code>, the bundled preset supplies the standard configuration, including <code class="docutils literal notranslate"><span class="pre">RatioEvaluation</span></code> and <code class="docutils literal notranslate"><span class="pre">ComparatorWorstFallback(MixedFeedback)</span></code>.
+Both behaviors are correct, and the choice is yours based on the configuration you want to use.</p>
 </section>
 <section id="read-result">
 <h2>Resultを読む<a class="headerlink" href="#read-result" title="Link to this heading">#</a></h2>

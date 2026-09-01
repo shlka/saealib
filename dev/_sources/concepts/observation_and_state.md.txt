@@ -19,6 +19,12 @@ Stage is the compatibility boundary that passes existing generation processing a
 Record events and observe processing during execution.
 :::
 
+:::{grid-item-card} {fa}`circle-info;sd-mr-1` Diagnostics and observation
+:link: observation_and_state/diagnostics
+:link-type: doc
+Choose the right mechanism for errors, warnings, logs, history, callbacks, and compiler diagnostics.
+:::
+
 :::{grid-item-card} {fa}`comment-dots;sd-mr-1` Feedback
 :link: observation_and_state/feedback
 :link-type: doc
@@ -49,6 +55,7 @@ Manages individuals and evaluation results as a Population and Archive.
 :hidden:
 
 observation_and_state/callbacks
+observation_and_state/diagnostics
 observation_and_state/feedback
 observation_and_state/stage
 observation_and_state/optimization_state

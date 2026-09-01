@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.api &#8212; saealib 0.1.0b5.dev90+gb98152d19 ドキュメント</title>
+    <title>saealib.api &#8212; saealib 0.1.0b5.dev99+g684939d98 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=77bca005"></script>
+    <script src="../../_static/documentation_options.js?v=c51d2a31"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -967,17 +967,16 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.mean</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanPrediction</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.acquisition.winrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">WinRateAcquisition</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.callback</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerationStartEvent</span><span class="p">,</span> <span class="n">logging_generation</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.execution.initializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LHSInitializer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">_default_acquisition_spec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.result</span><span class="w"> </span><span class="kn">import</span> <span class="n">Result</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.gb</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerationBasedStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.ib</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndividualBasedStrategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.strategies.ps</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreSelectionStrategy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSurrogateManager</span><span class="p">,</span> <span class="n">SurrogateManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogateManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.termination</span><span class="w"> </span><span class="kn">import</span> <span class="n">max_fe</span> <span class="k">as</span> <span class="n">max_fe_cond</span>
 
@@ -1003,6 +1002,12 @@ window.runMermaid = runMermaid;</script>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># Internal helpers</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="n">_STRATEGY_TYPE_NAMES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;ib&quot;</span><span class="p">:</span> <span class="s2">&quot;IndividualBasedStrategy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gb&quot;</span><span class="p">:</span> <span class="s2">&quot;GenerationBasedStrategy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ps&quot;</span><span class="p">:</span> <span class="s2">&quot;PreSelectionStrategy&quot;</span><span class="p">,</span>
+<span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_direction</span><span class="p">(</span>
@@ -1030,37 +1035,50 @@ window.runMermaid = runMermaid;</script>
     <span class="n">lb</span><span class="p">,</span>
     <span class="n">ub</span><span class="p">,</span>
     <span class="n">n_obj</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">default_direction</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Problem</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Problem, building one from a callable if needed.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">Problem</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;direction cannot be passed when func is a Problem; configure the &quot;</span>
+                <span class="s2">&quot;Problem&#39;s own direction.&quot;</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">func</span>
     <span class="k">if</span> <span class="n">dim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">lb</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">ub</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;dim, lb, and ub are required when func is a callable.&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">Problem</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">n_obj</span><span class="o">=</span><span class="n">n_obj</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">)</span>
+    <span class="n">direction_arr</span> <span class="o">=</span> <span class="n">_resolve_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="n">n_obj</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">default_direction</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Problem</span><span class="p">(</span>
+        <span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">n_obj</span><span class="o">=</span><span class="n">n_obj</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction_arr</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub</span>
+    <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Algorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Algorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_algorithm</span><span class="p">(</span>
+    <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Algorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">preset</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Algorithm</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_defaults</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">build</span><span class="p">,</span> <span class="n">get</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">_inject_params</span><span class="p">,</span> <span class="n">build</span><span class="p">,</span> <span class="n">get</span>
 
         <span class="n">name</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;GA&quot;</span><span class="p">:</span>
-            <span class="n">spec</span> <span class="o">=</span> <span class="n">load_defaults</span><span class="p">()[</span><span class="s2">&quot;presets&quot;</span><span class="p">][</span><span class="s2">&quot;ga_rbf_ib&quot;</span><span class="p">][</span><span class="s2">&quot;algorithm&quot;</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">build</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;PSO&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="s2">&quot;PSO&quot;</span><span class="p">)()</span>
-        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Unknown algorithm: </span><span class="si">{</span><span class="n">algorithm</span><span class="si">!r}</span><span class="s2">. &quot;</span>
-            <span class="s2">&quot;Use &#39;GA&#39;, &#39;PSO&#39;, or an Algorithm instance.&quot;</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;GA&quot;</span><span class="p">,</span> <span class="s2">&quot;PSO&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown algorithm: </span><span class="si">{</span><span class="n">algorithm</span><span class="si">!r}</span><span class="s2">. &quot;</span>
+                <span class="s2">&quot;Use &#39;GA&#39;, &#39;PSO&#39;, or an Algorithm instance.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">preset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">build</span><span class="p">(</span>
+                <span class="n">_inject_params</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)()</span>
     <span class="k">return</span> <span class="n">algorithm</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_surrogate</span><span class="p">(</span>
     <span class="n">surrogate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Surrogate</span> <span class="o">|</span> <span class="n">SurrogateManager</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SurrogateManager</span><span class="p">,</span> <span class="n">AcquisitionFunction</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
     <span class="k">if</span> <span class="n">surrogate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -1068,55 +1086,56 @@ window.runMermaid = runMermaid;</script>
             <span class="s2">&quot;Use &#39;rbf&#39; or a Surrogate/SurrogateManager instance.&quot;</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">surrogate</span><span class="p">,</span> <span class="n">SurrogateManager</span><span class="p">):</span>
-        <span class="n">acquisition</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">WinRateAcquisition</span><span class="p">()</span>
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">surrogate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;PairwiseSurrogateManager&quot;</span>
-            <span class="k">else</span> <span class="kc">None</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">build</span>
+
+        <span class="n">acquisition</span> <span class="o">=</span> <span class="n">build</span><span class="p">(</span>
+            <span class="n">_default_acquisition_spec</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">surrogate</span><span class="p">),</span> <span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">surrogate</span><span class="p">,</span> <span class="n">acquisition</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">surrogate</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">surrogate</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;rbf&quot;</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_defaults</span>
-
-            <span class="n">spec</span> <span class="o">=</span> <span class="n">load_defaults</span><span class="p">()[</span><span class="s2">&quot;presets&quot;</span><span class="p">][</span><span class="s2">&quot;ga_rbf_ib&quot;</span><span class="p">][</span><span class="s2">&quot;surrogate_manager&quot;</span><span class="p">]</span>
-            <span class="n">manager</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="o">.</span><span class="n">_build_surrogate_manager_from_spec</span><span class="p">(</span>
-                <span class="n">spec</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">direction</span>
+            <span class="k">return</span> <span class="n">Optimizer</span><span class="o">.</span><span class="n">_build_components_from_spec_static</span><span class="p">(</span>
+                <span class="n">preset</span><span class="p">[</span><span class="s2">&quot;surrogate_manager&quot;</span><span class="p">],</span> <span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">direction</span>
             <span class="p">)</span>
-            <span class="k">return</span> <span class="n">manager</span><span class="p">,</span> <span class="n">MeanPrediction</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Unknown surrogate: </span><span class="si">{</span><span class="n">surrogate</span><span class="si">!r}</span><span class="s2">. &quot;</span>
             <span class="s2">&quot;Use &#39;rbf&#39; or a Surrogate/SurrogateManager instance.&quot;</span>
         <span class="p">)</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.surrogate.training_set</span><span class="w"> </span><span class="kn">import</span> <span class="n">KNNObjectiveSet</span>
-
-    <span class="k">return</span> <span class="n">LocalSurrogateManager</span><span class="p">(</span>
-        <span class="n">surrogate</span><span class="p">,</span>
-        <span class="n">training_set</span><span class="o">=</span><span class="n">KNNObjectiveSet</span><span class="p">(),</span>
-    <span class="p">),</span> <span class="n">MeanPrediction</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Optimizer</span><span class="o">.</span><span class="n">_build_components_from_spec_static</span><span class="p">(</span>
+        <span class="n">preset</span><span class="p">[</span><span class="s2">&quot;surrogate_manager&quot;</span><span class="p">],</span>
+        <span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+        <span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span>
+        <span class="n">surrogate</span><span class="o">=</span><span class="n">surrogate</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_strategy</span><span class="p">(</span>
     <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">OptimizationStrategy</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">pop_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationStrategy</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;ib&quot;</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_defaults</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">build</span>
-
-            <span class="n">spec</span> <span class="o">=</span> <span class="n">load_defaults</span><span class="p">()[</span><span class="s2">&quot;presets&quot;</span><span class="p">][</span><span class="s2">&quot;ga_rbf_ib&quot;</span><span class="p">][</span><span class="s2">&quot;strategy&quot;</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">build</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;gb&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">GenerationBasedStrategy</span><span class="p">(</span><span class="n">gen_ctrl</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;ps&quot;</span><span class="p">:</span>
-            <span class="n">n_select</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pop_size</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">PreSelectionStrategy</span><span class="p">(</span><span class="n">n_candidates</span><span class="o">=</span><span class="n">pop_size</span><span class="p">,</span> <span class="n">n_select</span><span class="o">=</span><span class="n">n_select</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">strategy</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">type_name</span> <span class="o">=</span> <span class="n">_STRATEGY_TYPE_NAMES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">type_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Unknown strategy: </span><span class="si">{</span><span class="n">strategy</span><span class="si">!r}</span><span class="s2">. &quot;</span>
             <span class="s2">&quot;Use &#39;ib&#39;, &#39;gb&#39;, &#39;ps&#39;, or an OptimizationStrategy instance.&quot;</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">strategy</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">preset</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;strategy&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">type_name</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">_inject_params</span><span class="p">,</span> <span class="n">build</span>
+
+        <span class="k">return</span> <span class="n">build</span><span class="p">(</span><span class="n">_inject_params</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">direction</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;ib&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">IndividualBasedStrategy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;gb&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">GenerationBasedStrategy</span><span class="p">(</span><span class="n">gen_ctrl</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;ps&quot;</span><span class="p">:</span>
+        <span class="n">n_select</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pop_size</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">PreSelectionStrategy</span><span class="p">(</span><span class="n">n_candidates</span><span class="o">=</span><span class="n">pop_size</span><span class="p">,</span> <span class="n">n_select</span><span class="o">=</span><span class="n">n_select</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">(</span>
@@ -1132,19 +1151,30 @@ window.runMermaid = runMermaid;</script>
     <span class="n">history_channels</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">:</span>
     <span class="n">dim</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">dim</span>
-    <span class="k">if</span> <span class="n">pop_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">pop_size</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">dim</span>
-    <span class="k">if</span> <span class="n">max_fe</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">max_fe</span> <span class="o">=</span> <span class="mi">200</span> <span class="o">*</span> <span class="n">dim</span>
 
-    <span class="n">initializer</span> <span class="o">=</span> <span class="n">LHSInitializer</span><span class="p">(</span>
-        <span class="n">n_init_archive</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="n">dim</span><span class="p">,</span> <span class="n">pop_size</span><span class="p">),</span>
-        <span class="n">n_init_population</span><span class="o">=</span><span class="n">pop_size</span><span class="p">,</span>
-        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">termination</span> <span class="o">=</span> <span class="n">Termination</span><span class="p">(</span><span class="n">max_fe_cond</span><span class="p">(</span><span class="n">max_fe</span><span class="p">))</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_defaults</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.defaults.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_preset_name</span>
 
-    <span class="n">opt</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span><span class="o">.</span><span class="n">set_initializer</span><span class="p">(</span><span class="n">initializer</span><span class="p">)</span><span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">termination</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="n">_UNSET</span> <span class="ow">or</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">algorithm_name</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">algorithm_name</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">algorithm_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="n">defaults</span> <span class="o">=</span> <span class="n">load_defaults</span><span class="p">()</span>
+    <span class="n">preset_name</span> <span class="o">=</span> <span class="n">select_preset_name</span><span class="p">(</span><span class="n">defaults</span><span class="p">,</span> <span class="n">problem</span><span class="p">,</span> <span class="n">algorithm_name</span><span class="p">)</span>
+    <span class="n">bundled_preset</span> <span class="o">=</span> <span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;presets&quot;</span><span class="p">][</span><span class="n">preset_name</span><span class="p">]</span>
+
+    <span class="n">opt</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pop_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">initializer</span> <span class="o">=</span> <span class="n">LHSInitializer</span><span class="p">(</span>
+            <span class="n">n_init_archive</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="n">dim</span><span class="p">,</span> <span class="n">pop_size</span><span class="p">),</span>
+            <span class="n">n_init_population</span><span class="o">=</span><span class="n">pop_size</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">set_initializer</span><span class="p">(</span><span class="n">initializer</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">max_fe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">set_termination</span><span class="p">(</span><span class="n">Termination</span><span class="p">(</span><span class="n">max_fe_cond</span><span class="p">(</span><span class="n">max_fe</span><span class="p">)))</span>
     <span class="k">if</span> <span class="n">history_channels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">opt</span><span class="o">.</span><span class="n">set_history</span><span class="p">(</span><span class="n">history_channels</span><span class="p">)</span>
 
@@ -1156,14 +1186,21 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_UNSET</span><span class="p">:</span>
         <span class="c1"># An explicit None resolves to None here, same as never calling</span>
         <span class="c1"># set_algorithm(); Optimizer._resolve_defaults() then fills it in.</span>
-        <span class="n">opt</span><span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">_resolve_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">set_algorithm</span><span class="p">(</span><span class="n">_resolve_algorithm</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="n">bundled_preset</span><span class="p">,</span> <span class="n">problem</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
     <span class="k">if</span> <span class="n">surrogate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_UNSET</span><span class="p">:</span>
-        <span class="n">manager</span><span class="p">,</span> <span class="n">acquisition</span> <span class="o">=</span> <span class="n">_resolve_surrogate</span><span class="p">(</span><span class="n">surrogate</span><span class="p">,</span> <span class="n">problem</span><span class="p">)</span>
+        <span class="n">manager</span><span class="p">,</span> <span class="n">acquisition</span> <span class="o">=</span> <span class="n">_resolve_surrogate</span><span class="p">(</span><span class="n">surrogate</span><span class="p">,</span> <span class="n">problem</span><span class="p">,</span> <span class="n">bundled_preset</span><span class="p">)</span>
         <span class="n">opt</span><span class="o">.</span><span class="n">set_surrogate_manager</span><span class="p">(</span><span class="n">manager</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">acquisition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">opt</span><span class="o">.</span><span class="n">acquisition</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">acquisition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">opt</span><span class="o">.</span><span class="n">set_acquisition</span><span class="p">(</span><span class="n">acquisition</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">strategy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_UNSET</span><span class="p">:</span>
-        <span class="n">opt</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span><span class="n">_resolve_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">pop_size</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">set_strategy</span><span class="p">(</span>
+            <span class="n">_resolve_strategy</span><span class="p">(</span>
+                <span class="n">strategy</span><span class="p">,</span>
+                <span class="n">pop_size</span> <span class="k">if</span> <span class="n">pop_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">dim</span><span class="p">,</span>
+                <span class="n">bundled_preset</span><span class="p">,</span>
+                <span class="n">problem</span><span class="p">,</span>
+            <span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="n">opt</span><span class="o">.</span><span class="n">cbmanager</span><span class="o">.</span><span class="n">unregister</span><span class="p">(</span><span class="n">GenerationStartEvent</span><span class="p">,</span> <span class="n">logging_generation</span><span class="p">)</span>
@@ -1203,7 +1240,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    func : callable or Problem</span>
 <span class="sd">        Objective function ``f(x) -&gt; float | array``, or a fully configured</span>
 <span class="sd">        :class:`Problem` instance (in which case ``dim``, ``lb``, ``ub``, and</span>
-<span class="sd">        ``n_obj`` are ignored).</span>
+<span class="sd">        ``n_obj`` are ignored; its own ``direction`` is respected, and passing</span>
+<span class="sd">        ``direction`` is invalid).</span>
 <span class="sd">    algorithm : str, Algorithm, or None</span>
 <span class="sd">        ``&#39;GA&#39;``, ``&#39;PSO&#39;``, or an :class:`Algorithm` instance. If omitted,</span>
 <span class="sd">        the library&#39;s bundled default preset resolves it (currently GA with</span>
@@ -1218,7 +1256,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Number of objectives. Ignored when *func* is a :class:`Problem`. Default: 1.</span>
 <span class="sd">    direction : np.ndarray, list[str], or None</span>
 <span class="sd">        Optimization direction per objective. Each element is ``-1``/``&quot;minimize&quot;``</span>
-<span class="sd">        (minimize) or ``+1``/``&quot;maximize&quot;`` (maximize). Default: all minimize.</span>
+<span class="sd">        (minimize) or ``+1``/``&quot;maximize&quot;`` (maximize). Default: all minimize for</span>
+<span class="sd">        callable objectives. A :class:`Problem` uses its own direction.</span>
 <span class="sd">    surrogate : str, Surrogate, SurrogateManager, or None</span>
 <span class="sd">        ``&#39;rbf&#39;``, a :class:`Surrogate`, or a :class:`SurrogateManager`. If</span>
 <span class="sd">        omitted, the library&#39;s bundled default preset resolves it (currently</span>
@@ -1233,9 +1272,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        configuration. See :meth:`Optimizer.set_preset`. Components explicitly</span>
 <span class="sd">        passed via *algorithm*/*surrogate*/*strategy* still take precedence.</span>
 <span class="sd">    max_fe : int or None</span>
-<span class="sd">        Maximum true function evaluations. Default: ``200 * dim``.</span>
+<span class="sd">        Maximum true function evaluations. If omitted, semantic defaults or the</span>
+<span class="sd">        ``200 * dim`` fallback are used.</span>
 <span class="sd">    pop_size : int or None</span>
-<span class="sd">        Population size. Default: ``4 * dim``.</span>
+<span class="sd">        Population size. Semantic defaults from the configured composition are</span>
+<span class="sd">        used when omitted, with ``4 * dim`` as the fallback.</span>
 <span class="sd">    seed : int or None</span>
 <span class="sd">        Random seed for :class:`LHSInitializer`.</span>
 <span class="sd">    history_channels : sequence of str or None</span>
@@ -1257,8 +1298,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ...                   max_fe=500, seed=0, verbose=False)</span>
 <span class="sd">    &gt;&gt;&gt; result.x, result.f</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">direction_arr</span> <span class="o">=</span> <span class="n">_resolve_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="n">n_obj</span><span class="p">,</span> <span class="n">default</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">)</span>
-    <span class="n">problem</span> <span class="o">=</span> <span class="n">_ensure_problem</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">n_obj</span><span class="p">,</span> <span class="n">direction_arr</span><span class="p">)</span>
+    <span class="n">problem</span> <span class="o">=</span> <span class="n">_ensure_problem</span><span class="p">(</span>
+        <span class="n">func</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">n_obj</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">default_direction</span><span class="o">=-</span><span class="mf">1.0</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">_run</span><span class="p">(</span>
         <span class="n">problem</span><span class="p">,</span>
         <span class="n">algorithm</span><span class="p">,</span>
@@ -1297,13 +1339,16 @@ window.runMermaid = runMermaid;</script>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run surrogate-assisted maximization.</span>
 
 <span class="sd">    Identical to :func:`minimize` except that all objectives are maximized</span>
-<span class="sd">    (``direction = +1``).</span>
+<span class="sd">    (``direction = +1``) for callable objectives. When a :class:`Problem` is</span>
+<span class="sd">    passed, its own direction is respected.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    func : callable or Problem</span>
 <span class="sd">        Objective function ``f(x) -&gt; float | array``, or a fully configured</span>
-<span class="sd">        :class:`Problem` instance.</span>
+<span class="sd">        :class:`Problem` instance (in which case ``dim``, ``lb``, ``ub``, and</span>
+<span class="sd">        ``n_obj`` are ignored; its own ``direction`` is respected, and passing</span>
+<span class="sd">        ``direction`` is invalid).</span>
 <span class="sd">    algorithm : str, Algorithm, or None</span>
 <span class="sd">        ``&#39;GA&#39;``, ``&#39;PSO&#39;``, or an :class:`Algorithm` instance. If omitted,</span>
 <span class="sd">        the library&#39;s bundled default preset resolves it (currently GA with</span>
@@ -1318,7 +1363,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Number of objectives. Ignored when *func* is a :class:`Problem`. Default: 1.</span>
 <span class="sd">    direction : np.ndarray, list[str], or None</span>
 <span class="sd">        Optimization direction per objective. Each element is ``-1``/``&quot;minimize&quot;``</span>
-<span class="sd">        (minimize) or ``+1``/``&quot;maximize&quot;`` (maximize). Default: all maximize.</span>
+<span class="sd">        (minimize) or ``+1``/``&quot;maximize&quot;`` (maximize). Default: all maximize for</span>
+<span class="sd">        callable objectives. A :class:`Problem` uses its own direction.</span>
 <span class="sd">    surrogate : str, Surrogate, SurrogateManager, or None</span>
 <span class="sd">        ``&#39;rbf&#39;``, a :class:`Surrogate`, or a :class:`SurrogateManager`. If</span>
 <span class="sd">        omitted, the library&#39;s bundled default preset resolves it (currently</span>
@@ -1333,9 +1379,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        configuration. See :meth:`Optimizer.set_preset`. Components explicitly</span>
 <span class="sd">        passed via *algorithm*/*surrogate*/*strategy* still take precedence.</span>
 <span class="sd">    max_fe : int or None</span>
-<span class="sd">        Maximum true function evaluations. Default: ``200 * dim``.</span>
+<span class="sd">        Maximum true function evaluations. If omitted, semantic defaults or the</span>
+<span class="sd">        ``200 * dim`` fallback are used.</span>
 <span class="sd">    pop_size : int or None</span>
-<span class="sd">        Population size. Default: ``4 * dim``.</span>
+<span class="sd">        Population size. Semantic defaults from the configured composition are</span>
+<span class="sd">        used when omitted, with ``4 * dim`` as the fallback.</span>
 <span class="sd">    seed : int or None</span>
 <span class="sd">        Random seed for :class:`LHSInitializer`.</span>
 <span class="sd">    history_channels : sequence of str or None</span>
@@ -1357,8 +1405,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ...                   max_fe=500, seed=0, verbose=False)</span>
 <span class="sd">    &gt;&gt;&gt; result.x, result.f</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">direction_arr</span> <span class="o">=</span> <span class="n">_resolve_direction</span><span class="p">(</span><span class="n">direction</span><span class="p">,</span> <span class="n">n_obj</span><span class="p">,</span> <span class="n">default</span><span class="o">=+</span><span class="mf">1.0</span><span class="p">)</span>
-    <span class="n">problem</span> <span class="o">=</span> <span class="n">_ensure_problem</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">n_obj</span><span class="p">,</span> <span class="n">direction_arr</span><span class="p">)</span>
+    <span class="n">problem</span> <span class="o">=</span> <span class="n">_ensure_problem</span><span class="p">(</span>
+        <span class="n">func</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">n_obj</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">default_direction</span><span class="o">=+</span><span class="mf">1.0</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">_run</span><span class="p">(</span>
         <span class="n">problem</span><span class="p">,</span>
         <span class="n">algorithm</span><span class="p">,</span>

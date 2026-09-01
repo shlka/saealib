@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.algorithms.pymoo_algorithm &#8212; saealib 0.1.0b5.dev90+gb98152d19 ドキュメント</title>
+    <title>saealib.algorithms.pymoo_algorithm &#8212; saealib 0.1.0b5.dev99+g684939d98 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=77bca005"></script>
+    <script src="../../../_static/documentation_options.js?v=c51d2a31"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -975,6 +975,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">PARTIAL_ALLOWED</span><span class="p">,</span>
     <span class="n">REPEATED_ALLOWED</span><span class="p">,</span>
+    <span class="n">AssumptionSet</span><span class="p">,</span>
     <span class="n">ComponentContract</span><span class="p">,</span>
     <span class="n">ExecutionContract</span><span class="p">,</span>
     <span class="n">FeedbackBatch</span><span class="p">,</span>
@@ -1134,6 +1135,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">family</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
         <span class="n">family</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span>
             <span class="n">family</span><span class="p">,</span>
+            <span class="n">assumptions</span><span class="o">=</span><span class="n">AssumptionSet</span><span class="p">({</span><span class="s2">&quot;state.checkpointable&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}),</span>
             <span class="n">state</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span>
                 <span class="n">family</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
                 <span class="n">reads</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">family</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">reads</span><span class="p">,</span> <span class="n">RUNTIME_CANDIDATE_ID_ALLOCATOR</span><span class="p">),</span>

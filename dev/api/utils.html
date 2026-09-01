@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Utilities &#8212; saealib 0.1.0b5.dev90+gb98152d19 documentation</title>
+    <title>Utilities &#8212; saealib 0.1.0b5.dev99+g684939d98 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=eea61bab"></script>
+    <script src="../_static/documentation_options.js?v=5c07919f"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -938,12 +938,14 @@ handle maximisation objectives.</p>
 <p class="admonition-title">Warning</p>
 <p>Computing hypervolume is exponential in the number of objectives, and
 the leave-one-out loop adds a factor of N.  For many objectives or
-large N this becomes prohibitively expensive.  A future improvement
-may incorporate a faster batch hypervolume algorithm (e.g. the
-slicing-based approach of While, Hingston, Barone &amp; Huband, 2006;
-paper not yet obtained – name only, not to be confused with the
-WFG benchmark-problem paper by Huband et al., 2006, which is a
-different work despite the overlapping author list).</p>
+large N this becomes prohibitively expensive.  The hypervolume kernel
+this function calls already processes objectives rather than points,
+the slicing structure of While, Hingston, Barone &amp; Huband (2006), so
+the remaining cost is the repetition itself: a faster contribution
+algorithm has to avoid recomputing the whole volume once per point.
+That work is not to be confused with the WFG benchmark-problem paper
+by Huband et al. (2006), a different paper despite the overlapping
+author list.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>saealib.HypervolumeComparator &#8212; saealib 0.1.0b5.dev90+gb98152d19 ドキュメント</title>
+    <title>saealib.HypervolumeComparator &#8212; saealib 0.1.0b5.dev99+g684939d98 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=77bca005"></script>
+    <script src="../../_static/documentation_options.js?v=c51d2a31"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -899,7 +899,7 @@
 <h1>saealib.HypervolumeComparator<a class="headerlink" href="#saealib-hypervolumecomparator" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="saealib.HypervolumeComparator">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">HypervolumeComparator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_obj=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_point=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin=0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sorter=&lt;function</span> <span class="pre">non_dominated_sort&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dominator=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/comparators/comparators.html#HypervolumeComparator"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.HypervolumeComparator" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saealib.</span></span><span class="sig-name descname"><span class="pre">HypervolumeComparator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_obj=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_point=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin=0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_front_only=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sorter=&lt;function</span> <span class="pre">non_dominated_sort&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dominator=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/comparators/comparators.html#HypervolumeComparator"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.HypervolumeComparator" title="Link to this definition">#</a></dt>
 <dd><p>ベースクラス: <a class="reference internal" href="saealib.ParetoComparator.html#saealib.ParetoComparator" title="saealib.comparators.comparators.ParetoComparator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParetoComparator</span></code></a></p>
 <p>Comparator using front rank and exclusive HV contribution (SMS-EMOA style).</p>
 <p>Ordering rules:</p>
@@ -916,10 +916,13 @@ violation.</p></li>
 <p><strong>Generalization from SMS-EMOA.</strong> The original SMS-EMOA
 (Beume et al., 2007) computes HV contributions only on the <em>last</em>
 (worst) front to determine the single removal candidate at each
-generation.  This comparator applies HV-contribution ordering <em>within
-every front</em> to produce a full ranking over the entire population.
-This is a deliberate generalization that enables use in standard
-survivor-selection and tournament-selection contexts.</p>
+generation.  By default this comparator applies HV-contribution
+ordering <em>within every front</em> to produce a full ranking over the
+entire population, a deliberate generalization that enables use in
+standard survivor-selection and tournament-selection contexts.  Set
+<code class="docutils literal notranslate"><span class="pre">last_front_only=True</span></code> for the paper's scope instead: contributions
+are then computed on the last front alone and better fronts are
+ordered by rank only.</p>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">警告</p>
@@ -966,6 +969,11 @@ fractional one.  Retained only so existing constructor calls do not
 break; kept as a stored, inert attribute (see <code class="xref py py-attr docutils literal notranslate"><span class="pre">margin</span></code>).
 Pass an explicit <code class="docutils literal notranslate"><span class="pre">reference_point</span></code> if a margin-scaled reference
 point is needed.</p></li>
+<li><p><strong>last_front_only</strong> (<em>bool</em>) -- Restrict HV-contribution ordering to the last (worst) front, as in
+Beume et al. (2007).  Individuals in better fronts then share one
+contribution value and keep their relative order.  Defaults to
+<code class="docutils literal notranslate"><span class="pre">False</span></code>, which ranks within every front.  Setting it also removes
+the per-front hypervolume cost for all but the last front.</p></li>
 <li><p><strong>sorter</strong> (<a class="reference internal" href="saealib.NonDominatedSorter.html#saealib.NonDominatedSorter" title="saealib.NonDominatedSorter"><em>NonDominatedSorter</em></a>) -- Non-dominated sorting callable.</p></li>
 <li><p><strong>dominator</strong> (<a class="reference internal" href="saealib.Dominator.html#saealib.Dominator" title="saealib.Dominator"><em>Dominator</em></a><em> or </em><em>None</em>) -- Dominance predicate.  <code class="docutils literal notranslate"><span class="pre">None</span></code> defaults to <a class="reference internal" href="saealib.ParetoDominator.html#saealib.ParetoDominator" title="saealib.ParetoDominator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParetoDominator</span></code></a>.</p></li>
 </ul>
@@ -1010,7 +1018,7 @@ Mechanics and Engineering</em>, 186(2-4), 311-338.</p>
 <p class="rubric">Method Details</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="saealib.HypervolumeComparator.__init__">
-<span class="sig-prename descclassname"><span class="pre">HypervolumeComparator.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_obj=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_point=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin=0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sorter=&lt;function</span> <span class="pre">non_dominated_sort&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dominator=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/comparators/comparators.html#HypervolumeComparator.__init__"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.HypervolumeComparator.__init__" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">HypervolumeComparator.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_cv=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps_obj=1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_point=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin=0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_front_only=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sorter=&lt;function</span> <span class="pre">non_dominated_sort&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dominator=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/saealib/comparators/comparators.html#HypervolumeComparator.__init__"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#saealib.HypervolumeComparator.__init__" title="Link to this definition">#</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1019,6 +1027,7 @@ Mechanics and Engineering</em>, 186(2-4), 311-338.</p>
 <li><p><strong>eps_obj</strong> (<em>float</em>)</p></li>
 <li><p><strong>reference_point</strong> (<em>ndarray</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>margin</strong> (<em>float</em>)</p></li>
+<li><p><strong>last_front_only</strong> (<em>bool</em>)</p></li>
 <li><p><strong>sorter</strong> (<a class="reference internal" href="saealib.NonDominatedSorter.html#saealib.NonDominatedSorter" title="saealib.comparators.nds.NonDominatedSorter"><em>NonDominatedSorter</em></a>)</p></li>
 <li><p><strong>dominator</strong> (<a class="reference internal" href="saealib.Dominator.html#saealib.Dominator" title="saealib.comparators.dominance.Dominator"><em>Dominator</em></a><em> | </em><em>None</em>)</p></li>
 </ul>

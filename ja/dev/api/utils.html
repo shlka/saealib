@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ユーティリティ &#8212; saealib 0.1.0b5.dev90+gb98152d19 ドキュメント</title>
+    <title>ユーティリティ &#8212; saealib 0.1.0b5.dev99+g684939d98 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=77bca005"></script>
+    <script src="../_static/documentation_options.js?v=c51d2a31"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -927,7 +927,16 @@
 <p>この関数は <a class="reference internal" href="#saealib.hypervolume" title="saealib.hypervolume"><code class="xref py py-func docutils literal notranslate"><span class="pre">hypervolume()</span></code></a> を再利用するため、内部では最小化規約を引き継ぎます。 最大化する目的には <code class="docutils literal notranslate"><span class="pre">direction</span></code> パラメータを使ってください。</p>
 <div class="admonition warning">
 <p class="admonition-title">警告</p>
-<p>超体積の計算量は目的数に対して指数的で、1個抜きのループによってNの係数も加わります。目的数やNが大きい場合、非常に高コストになります。将来は、より高速なバッチ超体積アルゴリズム（例：While、Hingston、Barone、Huband、2006年のスライス法）を取り入れられる可能性があります。論文は未入手のため名称だけを示します。著者名が重なる別研究であるHuband et al., 2006のWFGベンチマーク問題論文とは異なるため、混同しないでください。</p>
+<p>Computing hypervolume is exponential in the number of objectives, and
+the leave-one-out loop adds a factor of N.  For many objectives or
+large N this becomes prohibitively expensive.  The hypervolume kernel
+this function calls already processes objectives rather than points,
+the slicing structure of While, Hingston, Barone &amp; Huband (2006), so
+the remaining cost is the repetition itself: a faster contribution
+algorithm has to avoid recomputing the whole volume once per point.
+That work is not to be confused with the WFG benchmark-problem paper
+by Huband et al. (2006), a different paper despite the overlapping
+author list.</p>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">パラメータ<span class="colon">:</span></dt>

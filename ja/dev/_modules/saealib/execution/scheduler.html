@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>saealib.execution.scheduler &#8212; saealib 0.1.0b5.dev90+gb98152d19 ドキュメント</title>
+    <title>saealib.execution.scheduler &#8212; saealib 0.1.0b5.dev99+g684939d98 ドキュメント</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../../_static/documentation_options.js?v=77bca005"></script>
+    <script src="../../../_static/documentation_options.js?v=c51d2a31"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -961,6 +961,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">fsum</span>
@@ -1025,6 +1026,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">_feedback_batch_from_result</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.stages</span><span class="w"> </span><span class="kn">import</span> <span class="n">deliver_feedback</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationState</span>
@@ -1266,6 +1269,11 @@ window.runMermaid = runMermaid;</script>
                     <span class="p">)</span>
                 <span class="n">handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
                 <span class="n">started</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">request_id</span><span class="p">,</span> <span class="n">handle</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Evaluation submitted: request_id=</span><span class="si">%s</span><span class="s2"> candidates=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">request_id</span><span class="p">,</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">candidate_ids</span><span class="p">),</span>
+                <span class="p">)</span>
                 <span class="n">pending</span> <span class="o">=</span> <span class="n">PendingEvaluation</span><span class="p">(</span>
                     <span class="n">request</span><span class="p">,</span>
                     <span class="n">EvaluationStatus</span><span class="o">.</span><span class="n">PENDING</span><span class="p">,</span>
@@ -1333,7 +1341,9 @@ window.runMermaid = runMermaid;</script>
             <span class="n">sequence</span><span class="o">=</span><span class="n">pending</span><span class="o">.</span><span class="n">last_delivered_sequence</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">handle</span><span class="o">.</span><span class="n">_delivered_sequence</span> <span class="o">=</span> <span class="n">update</span><span class="o">.</span><span class="n">sequence</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commit_update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">pending</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">update</span><span class="p">)</span></div>
+        <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commit_update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">pending</span><span class="p">,</span> <span class="n">handle</span><span class="p">,</span> <span class="n">update</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Evaluation cancelled: request_id=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">request_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">current</span></div>
 
 
 <div class="viewcode-block" id="AsyncEvaluationScheduler.poll">
@@ -1380,6 +1390,14 @@ window.runMermaid = runMermaid;</script>
                 <span class="k">if</span> <span class="n">timed_out</span><span class="p">:</span>
                     <span class="n">cancelled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">cancel</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
                     <span class="n">detached</span> <span class="o">=</span> <span class="kc">False</span> <span class="k">if</span> <span class="n">cancelled</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">detach</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+                    <span class="n">recovery</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="s2">&quot;cancel&quot;</span> <span class="k">if</span> <span class="n">cancelled</span> <span class="k">else</span> <span class="s2">&quot;detach&quot;</span> <span class="k">if</span> <span class="n">detached</span> <span class="k">else</span> <span class="s2">&quot;none&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;Evaluation timed out: request_id=</span><span class="si">%s</span><span class="s2"> recovery=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">request_id</span><span class="p">,</span>
+                        <span class="n">recovery</span><span class="p">,</span>
+                    <span class="p">)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">cancelled</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">detached</span><span class="p">:</span>
                         <span class="n">error</span> <span class="o">=</span> <span class="n">EvaluationErrorInfo</span><span class="p">(</span>
                             <span class="s2">&quot;Timeout&quot;</span><span class="p">,</span>
@@ -1432,6 +1450,12 @@ window.runMermaid = runMermaid;</script>
                     <span class="k">continue</span>
                 <span class="n">updates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">update</span> <span class="ow">in</span> <span class="n">updates</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="s2">&quot;Evaluation collected: request_id=</span><span class="si">%s</span><span class="s2"> status=</span><span class="si">%s</span><span class="s2"> sequence=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">request_id</span><span class="p">,</span>
+                        <span class="n">update</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">update</span><span class="o">.</span><span class="n">sequence</span><span class="p">,</span>
+                    <span class="p">)</span>
                     <span class="n">ready</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                         <span class="p">(</span>
                             <span class="nb">getattr</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="s2">&quot;_completed_at&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">(),</span>
@@ -1611,6 +1635,16 @@ window.runMermaid = runMermaid;</script>
                 <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span><span class="s2">&quot;redelivered update payload differs&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_update</span><span class="p">(</span><span class="n">current_pending</span><span class="p">,</span> <span class="n">update</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">replay</span>
+            <span class="ow">and</span> <span class="n">current_pending</span><span class="o">.</span><span class="n">retry_count</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="n">update</span><span class="o">.</span><span class="n">status</span> <span class="ow">is</span> <span class="n">EvaluationStatus</span><span class="o">.</span><span class="n">COMPLETED</span>
+        <span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Evaluation retry completed: request_id=</span><span class="si">%s</span><span class="s2"> attempt=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">request_id</span><span class="p">,</span>
+                <span class="n">current_pending</span><span class="o">.</span><span class="n">retry_count</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="n">buffered</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">current_pending</span><span class="o">.</span><span class="n">buffered_updates</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
             <span class="n">item</span><span class="o">.</span><span class="n">request_id</span> <span class="o">==</span> <span class="n">update</span><span class="o">.</span><span class="n">request_id</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">sequence</span> <span class="o">==</span> <span class="n">update</span><span class="o">.</span><span class="n">sequence</span>
@@ -1898,13 +1932,20 @@ window.runMermaid = runMermaid;</script>
                 <span class="ow">and</span> <span class="n">fsum</span><span class="p">((</span><span class="n">other_reserved_cost</span><span class="p">,</span> <span class="n">retry_cost</span><span class="p">))</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_reserved_cost</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="n">EvaluationProtocolError</span><span class="p">(</span><span class="s2">&quot;retry would exceed reserved cost budget&quot;</span><span class="p">)</span>
+            <span class="n">retry_count</span> <span class="o">=</span> <span class="n">current_pending</span><span class="o">.</span><span class="n">retry_count</span> <span class="o">+</span> <span class="mi">1</span>
             <span class="n">new_handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Evaluation retry submitted: request_id=</span><span class="si">%s</span><span class="s2"> attempt=</span><span class="si">%s</span><span class="s2"> candidates=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">request_id</span><span class="p">,</span>
+                <span class="n">retry_count</span><span class="p">,</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">remaining</span><span class="p">),</span>
+            <span class="p">)</span>
             <span class="n">retry_pending</span> <span class="o">=</span> <span class="n">PendingEvaluation</span><span class="p">(</span>
                 <span class="n">request</span><span class="p">,</span>
                 <span class="n">EvaluationStatus</span><span class="o">.</span><span class="n">PENDING</span><span class="p">,</span>
                 <span class="n">applied</span><span class="p">,</span>
                 <span class="n">reserved_cost</span><span class="o">=</span><span class="n">retry_cost</span><span class="p">,</span>
-                <span class="n">retry_count</span><span class="o">=</span><span class="n">current_pending</span><span class="o">.</span><span class="n">retry_count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">retry_count</span><span class="o">=</span><span class="n">retry_count</span><span class="p">,</span>
                 <span class="n">checkpointable</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">can_reattach</span><span class="p">(</span>
                     <span class="n">PendingEvaluation</span><span class="p">(</span>
                         <span class="n">request</span><span class="p">,</span>
