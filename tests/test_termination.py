@@ -14,7 +14,7 @@ from typing import cast
 import numpy as np
 import pytest
 
-from saealib.context import OptimizationContext
+from saealib.context import OptimizationState
 from saealib.exceptions import ValidationError
 from saealib.registry import build, get, to_spec
 from saealib.termination import (
@@ -30,10 +30,10 @@ _DUMMY_ARCHIVE = SimpleNamespace(get=lambda key: np.zeros((0, 1)))
 _DUMMY_DIRECTION = np.array([-1.0], dtype=float)
 
 
-def _make_ctx(fe: int = 0, gen: int = 0) -> OptimizationContext:
+def _make_ctx(fe: int = 0, gen: int = 0) -> OptimizationState:
     """Create a minimal context stub with fe and gen for termination tests."""
     return cast(
-        OptimizationContext,
+        OptimizationState,
         SimpleNamespace(
             fe=fe,
             gen=gen,
@@ -45,7 +45,7 @@ def _make_ctx(fe: int = 0, gen: int = 0) -> OptimizationContext:
 
 def _make_obj_ctx(
     f_values, weight: float = -1.0, gen: int = 0, fe: int = 0
-) -> OptimizationContext:
+) -> OptimizationState:
     """
     Create a context stub with an archive of objective values.
 
@@ -55,7 +55,7 @@ def _make_obj_ctx(
     f_arr = np.asarray(f_values, dtype=float).reshape(-1, 1)
     archive = SimpleNamespace(get=lambda key: f_arr if key == "f" else None)
     return cast(
-        OptimizationContext,
+        OptimizationState,
         SimpleNamespace(
             archive=archive,
             direction=np.array([weight], dtype=float),

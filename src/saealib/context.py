@@ -345,7 +345,7 @@ class OptimizationState:
         state as a side effect.
     proposal_id_allocator : IDAllocator
         Allocates stable, unique int64 proposal IDs.  When omitted, it starts
-        at the current request allocator value for legacy compatibility.
+        at the current request allocator value.
     history : History or None
         Optional execution history accumulator. Summary-channel rows are
         persisted by checkpoints.
@@ -1053,14 +1053,7 @@ class OptimizationState:
         return cast(Any, self._store.get(_collection_key("archives", name)))
 
     def __setstate__(self, state: dict[str, Any]) -> None:
-        """Restore canonical collections from current or legacy pickle state."""
-        if "populations" not in state:
-            state["populations"] = {"main": state.pop("population")}
-        if "archives" not in state:
-            state["archives"] = {
-                "main": state.pop("archive"),
-                "pareto": state.pop("pareto_archive"),
-            }
+        """Rebuild through ``__init__`` so the state store is reconstructed."""
         self.__init__(**state)
 
     # ------------------------------------------------------------------
@@ -2437,10 +2430,3 @@ def _load_checkpoint(
     state = cls(**kwargs)
     state.data = {**state.data, "resumed": True}
     return state
-
-
-# ---------------------------------------------------------------------------
-# Backward-compatibility alias
-# ---------------------------------------------------------------------------
-
-OptimizationContext = OptimizationState
