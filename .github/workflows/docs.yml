@@ -23,8 +23,18 @@ jobs:
       - name: Install dependencies
         run: uv sync --group docs
 
-      - name: Build docs (strict)
+      - name: Check language parity
+        run: uv run python scripts/check_docs_languages.py
+
+      - name: Build docs (strict, en)
         run: uv run sphinx-build -W -b html -c docs docs/en docs/_build/html
+
+      # Not -W: Sphinx's own Japanese catalog renders autodoc's "alias of X"
+      # boilerplate as ":py:class:`X`の別名です。", and RST does not close an
+      # inline role followed directly by a Japanese particle. Upstream issue,
+      # unrelated to page content.
+      - name: Build docs (ja)
+        run: uv run sphinx-build -b html -c docs -D language=ja docs/ja docs/_build/html-ja
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -56,7 +66,7 @@ jobs:
         run: uv run sphinx-build -b html -c docs docs/en docs/_build/html/dev
 
       - name: Build rolling "dev" docs (ja)
-        run: uv run sphinx-build -b html -c docs -D language=ja docs/en docs/_build/html/ja/dev
+        run: uv run sphinx-build -b html -c docs -D language=ja docs/ja docs/_build/html/ja/dev
 
       - name: Generate versions.json for the version-switcher menu
         run: |
@@ -183,7 +193,7 @@ jobs:
       - name: Build final-release snapshots with sphinx-multiversion (ja)
         run: |
           if git tag -l 'v*' | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
-            uv run sphinx-multiversion -c docs -D language=ja docs/en docs/_build/html/ja
+            uv run sphinx-multiversion -c docs -D language=ja docs/ja docs/_build/html/ja
           else
             echo "No final release tags yet (pre-1.0) — skipping multiversion snapshot build."
             mkdir -p docs/_build/html/ja
@@ -193,7 +203,7 @@ jobs:
         run: uv run sphinx-build -b html -c docs docs/en docs/_build/html/dev
 
       - name: Build rolling "dev" docs for this tag (ja)
-        run: uv run sphinx-build -b html -c docs -D language=ja docs/en docs/_build/html/ja/dev
+        run: uv run sphinx-build -b html -c docs -D language=ja docs/ja docs/_build/html/ja/dev
 
       - name: Generate versions.json for the version-switcher menu
         run: |

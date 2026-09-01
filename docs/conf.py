@@ -70,9 +70,9 @@ bibtex_bibfiles = ["references.bib"]
 bibtex_default_style = "unsrt"
 
 # -- Internationalization -----------------------------------------------------
+# Each language is its own source tree (docs/en, docs/ja) built with -c docs;
+# `language` only drives theme strings and search tokenization.
 language = "en"
-locale_dirs = ["locale/"]
-gettext_compact = False
 
 # -- HTML output -------------------------------------------------------------
 SITE_ROOT = "https://saealib.github.io/saealib"
