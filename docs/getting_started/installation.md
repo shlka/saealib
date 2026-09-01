@@ -7,7 +7,7 @@ primary_layer: layer1
 ## Requirements
 - Python >= 3.10
 
-See [pyproject.toml](https://github.com/shlka/saealib/blob/main/pyproject.toml) for the exact versions of the dependencies.
+See [pyproject.toml](https://github.com/saealib/saealib/blob/main/pyproject.toml) for the exact versions of the dependencies.
 
 ## Installing
 
@@ -68,5 +68,5 @@ python -c "import saealib; print(saealib.__version__)"
 ```
 
 :::{seealso}
-See [CONTRIBUTING.md](https://github.com/shlka/saealib/blob/main/CONTRIBUTING.md) for a development install from source.
+See [CONTRIBUTING.md](https://github.com/saealib/saealib/blob/main/CONTRIBUTING.md) for a development install from source.
 :::

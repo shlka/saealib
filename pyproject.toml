@@ -44,10 +44,10 @@ hdf5 = ["h5py>=3.0"]
 all = ["saealib[parallel,sklearn,xgboost,lightgbm,torch,pymoo,deap,viz,tqdm,rich,hdf5]"]
 
 [project.urls]
-Homepage = "https://github.com/shlka/saealib"
-Repository = "https://github.com/shlka/saealib"
-Documentation = "https://shlka.github.io/saealib/"
-"Bug Tracker" = "https://github.com/shlka/saealib/issues"
+Homepage = "https://github.com/saealib/saealib"
+Repository = "https://github.com/saealib/saealib"
+Documentation = "https://saealib.github.io/saealib/"
+"Bug Tracker" = "https://github.com/saealib/saealib/issues"
 
 [project.scripts]
 saealib = "saealib.experiment._cli:main"

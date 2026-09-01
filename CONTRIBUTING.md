@@ -12,7 +12,7 @@ This project uses **[uv](https://github.com/astral-sh/uv)** for dependency manag
 
 2. **Clone the repository**:
     ```bash
-    git clone https://github.com/shlka/saealib.git
+    git clone https://github.com/saealib/saealib.git
     cd saealib
     ```
 
@@ -110,7 +110,7 @@ A tag cut from a `release/vX.Y.x` branch is, by definition, not an ancestor of `
 
 #### Documentation snapshots
 
-Only **final** releases (tags matching `vX.Y.Z` with no pre-release suffix) get a permanent, frozen documentation snapshot, published at `https://shlka.github.io/saealib/vX.Y.Z/`, built by the `deploy-release` job when the tag is pushed. Pre-release (beta) tags do not create a new permanent snapshot. Instead, a single rolling `dev/` build is deployed by the separate `deploy-dev` job on every push to `main` (`.github/workflows/docs.yml`), so it always reflects the latest commit on `main`, not just the latest tagged one. `dev/` is named to make clear it may be ahead of (or otherwise differ from) the latest stable release, rather than being confused for "the latest recommended version." This keeps the number of permanently published doc versions tied to actual releases instead of growing with every beta iteration or every commit. The site root redirects to the newest final release once one exists, or to `dev/` before the first `1.0`-track release ships — until the first tag is pushed, `versions.json` and the root redirect don't exist yet, so `dev/` must be reached directly.
+Only **final** releases (tags matching `vX.Y.Z` with no pre-release suffix) get a permanent, frozen documentation snapshot, published at `https://saealib.github.io/saealib/vX.Y.Z/`, built by the `deploy-release` job when the tag is pushed. Pre-release (beta) tags do not create a new permanent snapshot. Instead, a single rolling `dev/` build is deployed by the separate `deploy-dev` job on every push to `main` (`.github/workflows/docs.yml`), so it always reflects the latest commit on `main`, not just the latest tagged one. `dev/` is named to make clear it may be ahead of (or otherwise differ from) the latest stable release, rather than being confused for "the latest recommended version." This keeps the number of permanently published doc versions tied to actual releases instead of growing with every beta iteration or every commit. The site root redirects to the newest final release once one exists, or to `dev/` before the first `1.0`-track release ships — until the first tag is pushed, `versions.json` and the root redirect don't exist yet, so `dev/` must be reached directly.
 
 #### Documentation languages
 

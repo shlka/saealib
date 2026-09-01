@@ -6,8 +6,8 @@
 </picture>
 
 ![Status: Beta](https://img.shields.io/badge/Status-Beta-orange)
-![ci-tests](https://img.shields.io/github/actions/workflow/status/shlka/saealib/test.yml?branch=main&label=tests)
-[![codecov](https://codecov.io/gh/shlka/saealib/branch/main/graph/badge.svg)](https://codecov.io/gh/shlka/saealib)
+![ci-tests](https://img.shields.io/github/actions/workflow/status/saealib/saealib/test.yml?branch=main&label=tests)
+[![codecov](https://codecov.io/gh/saealib/saealib/branch/main/graph/badge.svg)](https://codecov.io/gh/saealib/saealib)
 ![pypi-saealib-v](https://img.shields.io/pypi/v/saealib)
 ![pypi-python-v](https://img.shields.io/pypi/pyversions/saealib)
 [![Apache-2.0](https://custom-icon-badges.herokuapp.com/badge/license-Apache%202.0-8BB80A.svg?logo=law&logoColor=white)](LICENSE)
@@ -57,11 +57,11 @@ for observing pipeline state and swapping components mid-run.
 
 To be upfront about the trade-off: `saealib` currently ships fewer named algorithms (GA, PSO) than
 general-purpose libraries like pymoo or PlatEMO, since its focus is the surrogate/strategy layer rather
-than algorithm breadth. See [the documentation](https://shlka.github.io/saealib/index.html) for the full
+than algorithm breadth. See [the documentation](https://saealib.github.io/saealib/index.html) for the full
 picture.
 
 ## Documents
-[shlka.github.io/saealib](https://shlka.github.io/saealib/index.html)
+[saealib.github.io/saealib](https://saealib.github.io/saealib/index.html)
 
 ## Key Features
 
@@ -150,7 +150,7 @@ your own component instances (`Algorithm`, `Surrogate`/`SurrogateManager`, `Opti
 
 For per-generation inspection, custom pipelines, or research-style control loops, build an `Optimizer`
 directly and drive it with `.iterate()` instead of `.run()`. See
-[the documentation](https://shlka.github.io/saealib/index.html) for the low-level API and full component
+[the documentation](https://saealib.github.io/saealib/index.html) for the low-level API and full component
 reference.
 
 ## Architecture Overview

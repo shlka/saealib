@@ -60,7 +60,7 @@ jobs:
 
       - name: Generate versions.json for the version-switcher menu
         run: |
-          BASE_URL="https://shlka.github.io/saealib"
+          BASE_URL="https://saealib.github.io/saealib"
           LATEST=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
           PREFERRED=${LATEST:-dev}
           {
@@ -200,7 +200,7 @@ jobs:
           # display label; "preferred" marks the version shown by default in
           # the version-warning banner and matches the target of the root
           # redirect below.
-          BASE_URL="https://shlka.github.io/saealib"
+          BASE_URL="https://saealib.github.io/saealib"
           LATEST=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
           PREFERRED=${LATEST:-dev}
           {

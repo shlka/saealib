@@ -74,7 +74,7 @@ locale_dirs = ["locale/"]
 gettext_compact = False
 
 # -- HTML output -------------------------------------------------------------
-html_baseurl = "https://shlka.github.io/saealib/"
+html_baseurl = "https://saealib.github.io/saealib/"
 sitemap_url_scheme = "{link}"
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
@@ -91,7 +91,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/shlka/saealib",
+            "url": "https://github.com/saealib/saealib",
             "icon": "fa-brands fa-square-github",
             "type": "fontawesome",
         },
