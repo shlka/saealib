@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import dataclasses
 import importlib.util
+import logging
 import pickle
 import warnings
 from collections.abc import Callable, Generator, Sequence
@@ -55,6 +56,8 @@ from saealib.surrogate.manager import (
 from saealib.surrogate.rbf_kernels import GaussianKernel
 from saealib.termination import Termination
 from saealib.termination import max_fe as max_fe_cond
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from saealib.algorithms.base import Algorithm
@@ -873,6 +876,7 @@ class Optimizer:
         algorithm = getattr(self, "algorithm", None)
         strategy = getattr(self, "strategy", None)
         surrogate_manager = getattr(self, "surrogate_manager", None)
+        bundled_preset_name = None
 
         user_preset = getattr(self, "_preset", None)
         if user_preset is not None:
@@ -925,7 +929,8 @@ class Optimizer:
             or self.feedback_builder is None
         ):
             defaults = load_defaults()
-            preset = defaults["presets"][self._select_preset_name(defaults, algorithm)]
+            bundled_preset_name = self._select_preset_name(defaults, algorithm)
+            preset = defaults["presets"][bundled_preset_name]
             if algorithm is None and "algorithm" in preset:
                 self.algorithm = build(
                     _inject_params(
@@ -1054,6 +1059,26 @@ class Optimizer:
             self.termination = Termination(max_fe_cond(max_evaluations))
         if self.async_evaluation_scheduler is not None:
             self.async_evaluation_scheduler.algorithm = self.algorithm
+
+        component_types = {
+            name: type(component).__name__
+            for name in (
+                "algorithm",
+                "strategy",
+                "surrogate_manager",
+                "acquisition",
+                "evaluation_planner",
+                "feedback_builder",
+                "termination",
+                "initializer",
+            )
+            if (component := getattr(self, name, None)) is not None
+        }
+        logger.debug(
+            "Resolved defaults: bundled_preset=%s components=%s",
+            bundled_preset_name,
+            component_types,
+        )
 
     def _resolve_defaults(self) -> None:
         """Compatibility wrapper for :meth:`resolve_defaults`."""
@@ -1235,6 +1260,11 @@ class Optimizer:
         OptimizationState
             The optimization context.
         """
+        logger.info(
+            "Optimization run started: dim=%s n_obj=%s",
+            self.problem.dim,
+            self.problem.n_obj,
+        )
         self.resolve_defaults()
         self._compile_plan()
         issues = self.validate()
@@ -1252,7 +1282,13 @@ class Optimizer:
                 checkpoint_format,
                 checkpoint_delete_on_success,
             )
-        return Runner(self).run()
+        state = Runner(self).run()
+        logger.info(
+            "Optimization run finished: fe=%s gen=%s",
+            getattr(state, "fe", None),
+            getattr(state, "gen", None),
+        )
+        return state
 
     def iterate_from(
         self,

@@ -26,6 +26,9 @@ def logging_generation(event: GenerationStartEvent) -> None:
     event : GenerationStartEvent
         The generation-start event.
     """
+    if not logger.isEnabledFor(logging.INFO):
+        return
+
     ctx: _EventContext = event.ctx
 
     if ctx.n_obj == 1:
@@ -36,7 +39,12 @@ def logging_generation(event: GenerationStartEvent) -> None:
             if len(sorted_idxs) > 0
             else "n/a"
         )
-        logger.info(f"Generation {ctx.gen} started. fe: {ctx.fe}. Best f: {best_f}")
+        logger.info(
+            "Generation %d started. fe: %d. Best f: %s",
+            ctx.gen,
+            ctx.fe,
+            best_f,
+        )
     else:
         f = ctx.archive.get_array("f")
         _, fronts = non_dominated_sort(f)
@@ -52,8 +60,11 @@ def logging_generation(event: GenerationStartEvent) -> None:
         else:
             ranges_str = "n/a"
         logger.info(
-            f"Generation {ctx.gen} started. fe: {ctx.fe}. "
-            f"Front1 size: {front1_size}. {ranges_str}"
+            "Generation %d started. fe: %d. Front1 size: %d. %s",
+            ctx.gen,
+            ctx.fe,
+            front1_size,
+            ranges_str,
         )
 
 
@@ -85,6 +96,9 @@ def logging_generation_hv(reference_point: np.ndarray):
     ref = np.asarray(reference_point, dtype=float)
 
     def _callback(event: GenerationStartEvent) -> None:
+        if not logger.isEnabledFor(logging.INFO):
+            return
+
         ctx: _EventContext = event.ctx
         f = ctx.archive.get_array("f")
         _, fronts = non_dominated_sort(f)
@@ -92,6 +106,6 @@ def logging_generation_hv(reference_point: np.ndarray):
             return
         f_front1 = f[fronts[0]]
         hv = hypervolume(f_front1, ref)
-        logger.info(f"Generation {ctx.gen}. fe: {ctx.fe}. HV: {hv:.6g}")
+        logger.info("Generation %d. fe: %d. HV: %.6g", ctx.gen, ctx.fe, hv)
 
     return _callback

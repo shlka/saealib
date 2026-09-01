@@ -409,6 +409,27 @@ class TestLoggingGenerationHandler:
             logging_generation(event)
         assert "Front1" in caplog.text
 
+    def test_logging_generation_skips_multiobjective_sort_when_info_disabled(
+        self, caplog, monkeypatch
+    ) -> None:
+        sort_spy = MagicMock()
+        monkeypatch.setattr("saealib.callback.handlers.non_dominated_sort", sort_spy)
+        event = GenerationStartEvent(ctx=self._make_2obj_ctx())
+        with caplog.at_level(logging.WARNING, logger="saealib.callback.handlers"):
+            logging_generation(event)
+        sort_spy.assert_not_called()
+
+    def test_logging_generation_hv_skips_hypervolume_when_info_disabled(
+        self, caplog, monkeypatch
+    ) -> None:
+        hypervolume_spy = MagicMock()
+        monkeypatch.setattr("saealib.callback.handlers.hypervolume", hypervolume_spy)
+        handler = logging_generation_hv(np.array([10.0, 10.0]))
+        event = GenerationStartEvent(ctx=self._make_2obj_ctx())
+        with caplog.at_level(logging.WARNING, logger="saealib.callback.handlers"):
+            handler(event)
+        hypervolume_spy.assert_not_called()
+
     def test_logging_generation_hv_returns_callable(self) -> None:
         ref = np.array([10.0, 10.0])
         handler = logging_generation_hv(ref)
@@ -421,6 +442,8 @@ class TestLoggingGenerationHandler:
         event = GenerationStartEvent(ctx=ctx)
         with caplog.at_level(logging.INFO, logger="saealib.callback"):
             handler(event)
+        assert "Generation" in caplog.text
+        assert "HV" in caplog.text
 
     def test_logging_generation_registered_and_dispatched(self) -> None:
         """logging_generation fires correctly via CallbackManager."""

@@ -7,6 +7,7 @@ on their own package and are not required to appear at the root.
 
 import importlib
 import importlib.util
+import logging
 from pathlib import Path
 from typing import Any, cast
 
@@ -70,6 +71,16 @@ REMOVED_CANONICAL_ALIASES = {
     "MigrationPolicy",
     "AsyncScheduler",
 }
+
+
+def test_root_logger_is_private_and_null_handler_is_attached():
+    root_logger = logging.getLogger("saealib")
+
+    assert not hasattr(saealib, "logger")
+    assert "logger" not in saealib.__all__
+    assert any(
+        isinstance(handler, logging.NullHandler) for handler in root_logger.handlers
+    )
 
 
 def test_eager_and_lazy_exports_do_not_overlap():

@@ -168,7 +168,8 @@ from saealib.variables import (
 
 _activate_vector_profile()
 
-logger = logging.getLogger(__name__).addHandler(logging.NullHandler())
+_logger = logging.getLogger(__name__)
+_logger.addHandler(logging.NullHandler())
 
 __all__ = [
     "GA",
