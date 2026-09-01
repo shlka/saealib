@@ -13,6 +13,7 @@ from saealib.acquisition.base import (
     AcquisitionResult,
 )
 from saealib.core.contracts import ComponentContract
+from saealib.registry import register
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from saealib.surrogate.prediction import SurrogatePrediction
 
 
+@register()
 class WinRateAcquisition(AcquisitionFunction):
     """
     Read the aggregated pairwise win rate from a ``"win_rate"`` channel.

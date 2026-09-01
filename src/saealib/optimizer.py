@@ -65,6 +65,23 @@ if TYPE_CHECKING:
     from saealib.surrogate.base import Surrogate
 
 
+def _default_acquisition_spec(manager_type: str | type | None, direction) -> dict:
+    from saealib.registry import get
+
+    if isinstance(manager_type, type):
+        manager_cls = manager_type
+    else:
+        try:
+            manager_cls = get(manager_type) if manager_type is not None else None
+        except ValidationError:
+            manager_cls = None
+    if isinstance(manager_cls, type) and issubclass(
+        manager_cls, PairwiseSurrogateManager
+    ):
+        return {"type": "WinRateAcquisition", "params": {}}
+    return {"type": "MeanPrediction", "params": {"direction": direction}}
+
+
 class Dispatchable(Protocol):
     """Minimal interface for objects that can dispatch callback events."""
 
@@ -910,7 +927,13 @@ class Optimizer:
             defaults = load_defaults()
             preset = defaults["presets"][self._select_preset_name(defaults, algorithm)]
             if algorithm is None and "algorithm" in preset:
-                self.algorithm = build(preset["algorithm"])
+                self.algorithm = build(
+                    _inject_params(
+                        preset["algorithm"],
+                        dim=self.problem.dim,
+                        direction=self.problem.direction,
+                    )
+                )
             if surrogate_manager is None and "surrogate_manager" in preset:
                 manager, acquisition = self._build_components_from_spec(
                     preset["surrogate_manager"]
@@ -919,7 +942,13 @@ class Optimizer:
                 if self.acquisition is None:
                     self.acquisition = acquisition
             if strategy is None and "strategy" in preset:
-                self.strategy = build(preset["strategy"])
+                self.strategy = build(
+                    _inject_params(
+                        preset["strategy"],
+                        dim=self.problem.dim,
+                        direction=self.problem.direction,
+                    )
+                )
             if (
                 use_bundled_policies
                 and self.evaluation_planner is None
@@ -1056,21 +1085,10 @@ class Optimizer:
             yield acquisition
 
     def _select_preset_name(self, defaults: dict, algorithm: Algorithm | None) -> str:
-        if algorithm is not None:
-            preset_name = defaults["by_algorithm"].get(type(algorithm).__name__)
-            if preset_name is not None:
-                return preset_name
-        for rule in defaults["by_problem_shape"]:
-            when = rule["when"]
-            if all(
-                getattr(self.problem, key, None) == value for key, value in when.items()
-            ):
-                return rule["preset"]
-        return defaults["fallback"]
+        from saealib.defaults.loader import select_preset_name
 
-    def _build_surrogate_manager(self, spec: dict) -> SurrogateManager:
-        manager, _ = self._build_components_from_spec(spec)
-        return manager
+        algorithm_name = None if algorithm is None else type(algorithm).__name__
+        return select_preset_name(defaults, self.problem, algorithm_name)
 
     def _build_components_from_spec(
         self, spec: dict
@@ -1081,55 +1099,32 @@ class Optimizer:
 
     @staticmethod
     def _build_components_from_spec_static(
-        spec: dict, dim: int, direction
+        spec: dict, dim: int, direction, *, surrogate: Surrogate | None = None
     ) -> tuple[SurrogateManager, AcquisitionFunction]:
         from saealib.registry import _inject_params, build
 
         manager_spec = copy.deepcopy(spec)
         params = manager_spec.setdefault("params", {})
-        params.setdefault(
-            "surrogate",
-            {
-                "type": "RBFSurrogate",
-                "params": {"kernel": GaussianKernel()},
-            },
-        )
+        if surrogate is None:
+            params.setdefault(
+                "surrogate",
+                {
+                    "type": "RBFSurrogate",
+                    "params": {"kernel": GaussianKernel()},
+                },
+            )
+        else:
+            params["surrogate"] = surrogate
         acquisition_spec = params.pop("acquisition", None)
         if acquisition_spec is None:
-            acquisition_spec = (
-                {"type": "WinRateAcquisition", "params": {}}
-                if manager_spec.get("type") == "PairwiseSurrogateManager"
-                else {"type": "MeanPrediction", "params": {"direction": direction}}
+            acquisition_spec = _default_acquisition_spec(
+                manager_spec.get("type"), direction
             )
         manager_spec = _inject_params(manager_spec, dim=dim, direction=direction)
         acquisition_spec = _inject_params(
-            copy.deepcopy(acquisition_spec), dim=dim, direction=direction
+            acquisition_spec, dim=dim, direction=direction
         )
         return build(manager_spec), build(acquisition_spec)
-
-    @staticmethod
-    def _build_surrogate_manager_from_spec(
-        spec: dict, dim: int, direction
-    ) -> SurrogateManager:
-        """Build a surrogate_manager preset spec, injecting dim/direction defaults.
-
-        Shared by ``Optimizer._resolve_defaults()`` and ``saealib.api``'s
-        ``'rbf'`` surrogate shorthand, so the injection logic is defined once.
-        """
-        from saealib.registry import _inject_params, build
-
-        spec = copy.deepcopy(spec)
-        params = spec.setdefault("params", {})
-        params.setdefault(
-            "surrogate",
-            {
-                "type": "RBFSurrogate",
-                "params": {"kernel": GaussianKernel()},
-            },
-        )
-        params.pop("acquisition", None)
-        spec = _inject_params(spec, dim=dim, direction=direction)
-        return build(spec)
 
     def _register_checkpoint(
         self,

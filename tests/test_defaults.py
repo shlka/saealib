@@ -6,6 +6,7 @@ parameter is caught here instead of silently breaking Optimizer defaults.
 """
 
 from saealib.defaults import load_defaults
+from saealib.defaults.loader import select_preset_name
 from saealib.registry import build
 
 
@@ -37,6 +38,47 @@ class TestLoadDefaults:
 
     def test_cached_across_calls(self):
         assert load_defaults() is load_defaults()
+
+
+class TestSelectPresetName:
+    def test_by_algorithm_match(self):
+        defaults = {
+            "by_algorithm": {"TestAlgorithm": "algorithm_preset"},
+            "by_problem_shape": [],
+            "fallback": "fallback_preset",
+        }
+
+        assert (
+            select_preset_name(defaults, object(), "TestAlgorithm")
+            == "algorithm_preset"
+        )
+
+    def test_by_problem_shape_match(self):
+        defaults = {
+            "by_algorithm": {},
+            "by_problem_shape": [
+                {"when": {"n_obj": 2, "n_var": 3}, "preset": "shape_preset"}
+            ],
+            "fallback": "fallback_preset",
+        }
+
+        class Problem:
+            n_obj = 2
+            n_var = 3
+
+        assert select_preset_name(defaults, Problem(), None) == "shape_preset"
+
+    def test_fallback(self):
+        defaults = {
+            "by_algorithm": {},
+            "by_problem_shape": [{"when": {"n_obj": 2}, "preset": "shape_preset"}],
+            "fallback": "fallback_preset",
+        }
+
+        class Problem:
+            n_obj = 1
+
+        assert select_preset_name(defaults, Problem(), None) == "fallback_preset"
 
 
 class TestPresetsAreBuildable:
