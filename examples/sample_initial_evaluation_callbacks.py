@@ -68,9 +68,7 @@ def on_initial_evaluation_end(event: InitialEvaluationEndEvent) -> None:
     threshold = f_vals.mean() + 2.0 * f_vals.std()
     keep_idx = [i for i, v in enumerate(f_vals) if v <= threshold]
     if len(keep_idx) < len(archive):
-        kept = archive.extract(keep_idx)
-        archive.clear()
-        archive.extend(kept)
+        archive.delete([i for i, v in enumerate(f_vals) if v > threshold])
         logger.info(
             "Trimmed %d outlier(s); archive size: %d -> %d",
             len(f_vals) - len(keep_idx),
@@ -106,8 +104,8 @@ def main():
         )
         .set_algorithm(
             GA(
-                crossover=CrossoverBLXAlpha(crossover_rate=0.7, alpha=0.4),
-                mutation=MutationUniform(mutation_rate=0.3),
+                crossover=CrossoverBLXAlpha(prob=0.7, alpha=0.4),
+                mutation=MutationUniform(prob=0.3),
                 parent_selection=SequentialSelection(),
                 survivor_selection=TruncationSelection(),
             )
