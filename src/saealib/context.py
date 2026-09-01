@@ -1728,7 +1728,7 @@ def _json_safe(value: Any) -> Any:
 
 def _json_array(value: Any) -> np.ndarray:
     try:
-        encoded = json.dumps(_json_safe(value), allow_nan=False).encode()
+        encoded = json.dumps(_json_safe(value), allow_nan=True).encode()
     except (TypeError, ValueError) as exc:
         raise CheckpointError(f"value is not JSON serializable: {exc}") from exc
     return np.frombuffer(encoded, dtype=np.uint8)

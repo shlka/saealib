@@ -15,6 +15,7 @@ from saealib import (
     Optimizer,
     SerialEvaluator,
     Termination,
+    max_fe,
     max_gen,
 )
 from saealib.algorithms import Algorithm, DeapGenerateUpdateAlgorithm
@@ -115,6 +116,42 @@ def test_checkpointing_remains_available_for_unaware_components(tmp_path: Path) 
     files = sorted((tmp_path / "checkpoint").glob("checkpoint_*.npz"))
     assert result.gen == 2
     assert len(files) == result.gen
+
+
+def test_npz_checkpoint_roundtrip_preserves_nonfinite_state_values(
+    tmp_path: Path,
+) -> None:
+    state = _optimizer(_problem(), n_gen=1).run()
+    state = state.replace(data={"nonfinite": [np.nan, np.inf, -np.inf]})
+    checkpoint = tmp_path / "nonfinite.npz"
+
+    state.save(checkpoint)
+    restored = OptimizationState.load(checkpoint, state.problem)
+
+    values = restored.data["nonfinite"]
+    assert np.isnan(values[0])
+    assert values[1] == np.inf
+    assert values[2] == -np.inf
+
+
+def test_npz_checkpoint_reproduction_dim3_seed0(
+    tmp_path: Path,
+) -> None:
+    problem = Problem(
+        func=lambda x: float(np.sum(np.asarray(x) ** 2)),
+        dim=3,
+        n_obj=1,
+        direction=np.array([-1.0]),
+        lb=[-5.0] * 3,
+        ub=[5.0] * 3,
+    )
+    optimizer = Optimizer(problem, seed=0).set_termination(Termination(max_fe(60)))
+
+    result = optimizer.run(
+        checkpoint_path=tmp_path / "checkpoint", checkpoint_interval=1
+    )
+
+    assert result.gen > 0
 
 
 def test_deap_algorithm_rejects_portable_checkpointing(tmp_path: Path) -> None:
