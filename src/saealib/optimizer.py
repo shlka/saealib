@@ -1149,6 +1149,7 @@ class Optimizer:
         )
         cb.register(self.cbmanager)
 
+
     def iterate(
         self,
         checkpoint_path: str | Path | None = None,
@@ -1238,7 +1239,12 @@ class Optimizer:
         return Runner(self).run()
 
     def iterate_from(
-        self, ctx: OptimizationState
+        self,
+        ctx: OptimizationState,
+        checkpoint_path: str | Path | None = None,
+        checkpoint_interval: int = 1,
+        checkpoint_format: str = "npz",
+        checkpoint_delete_on_success: bool = False,
     ) -> Generator[OptimizationState, None, None]:
         """
         Resume iteration from an existing context (e.g. loaded from checkpoint).
@@ -1249,6 +1255,15 @@ class Optimizer:
         ----------
         ctx : OptimizationState
             Context to resume from.
+        checkpoint_path : str, Path, or None, optional
+            If provided, checkpoints are saved to this directory every
+            *checkpoint_interval* generations.
+        checkpoint_interval : int, optional
+            Generations between checkpoints.  Default: 1.
+        checkpoint_format : {'npz', 'pickle', 'both'}, optional
+            Checkpoint format.  Default: ``'npz'``.
+        checkpoint_delete_on_success : bool, optional
+            Delete checkpoints on normal termination.  Default: False.
 
         Returns
         -------
@@ -1261,9 +1276,23 @@ class Optimizer:
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
             )
         self._inject_acquisition_directions()
+        if checkpoint_path is not None:
+            self._register_checkpoint(
+                checkpoint_path,
+                checkpoint_interval,
+                checkpoint_format,
+                checkpoint_delete_on_success,
+            )
         return Runner(self).iterate_from(ctx)
 
-    def run_from(self, ctx: OptimizationState) -> OptimizationState:
+    def run_from(
+        self,
+        ctx: OptimizationState,
+        checkpoint_path: str | Path | None = None,
+        checkpoint_interval: int = 1,
+        checkpoint_format: str = "npz",
+        checkpoint_delete_on_success: bool = False,
+    ) -> OptimizationState:
         """
         Resume and run to completion from an existing context.
 
@@ -1271,6 +1300,15 @@ class Optimizer:
         ----------
         ctx : OptimizationState
             Context to resume from.
+        checkpoint_path : str, Path, or None, optional
+            If provided, checkpoints are saved to this directory every
+            *checkpoint_interval* generations.
+        checkpoint_interval : int, optional
+            Generations between checkpoints.  Default: 1.
+        checkpoint_format : {'npz', 'pickle', 'both'}, optional
+            Checkpoint format.  Default: ``'npz'``.
+        checkpoint_delete_on_success : bool, optional
+            Delete checkpoints on normal termination.  Default: False.
 
         Returns
         -------
@@ -1284,6 +1322,13 @@ class Optimizer:
                 "Optimizer misconfigured:\n" + "\n".join(f"  - {m}" for m in issues)
             )
         self._inject_acquisition_directions()
+        if checkpoint_path is not None:
+            self._register_checkpoint(
+                checkpoint_path,
+                checkpoint_interval,
+                checkpoint_format,
+                checkpoint_delete_on_success,
+            )
         return Runner(self).run_from(ctx)
 
     # ------------------------------------------------------------------
