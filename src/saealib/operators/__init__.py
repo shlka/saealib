@@ -8,6 +8,8 @@ from saealib.operators.crossover import (
     CrossoverTwoPoint,
     CrossoverUniform,
 )
+from saealib.operators.deap_crossover import DeapCrossover
+from saealib.operators.deap_mutation import DeapMutation
 from saealib.operators.dedup import DuplicateElimination
 from saealib.operators.mutation import (
     Mutation,
@@ -43,6 +45,8 @@ __all__ = [
     "CrossoverSBX",
     "CrossoverTwoPoint",
     "CrossoverUniform",
+    "DeapCrossover",
+    "DeapMutation",
     "DuplicateElimination",
     "LinearRankSelection",
     "Mutation",
