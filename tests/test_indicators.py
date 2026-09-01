@@ -44,6 +44,14 @@ def test_spacing_has_analytic_values() -> None:
     )
 
 
+def test_spacing_squared_returns_schott_variance() -> None:
+    f = np.array([[0.0], [1.0], [3.0]])
+
+    np.testing.assert_allclose(spacing(f, squared=True), 1.0 / 3.0)
+    np.testing.assert_allclose(spacing(f, squared=True), spacing(f) ** 2)
+    assert np.isnan(spacing(np.array([[1.0]]), squared=True))
+
+
 def test_spread_perfect_reference_sample_is_zero() -> None:
     reference = np.array([[0.0, 1.0], [0.5, 0.5], [1.0, 0.0]])
 
