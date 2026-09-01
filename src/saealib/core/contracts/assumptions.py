@@ -83,6 +83,14 @@ register_assumption(
     description="The main population size remains fixed across generations.",
     unaware_default=True,
 )
+register_assumption(
+    "state.checkpointable",
+    description=(
+        "The component holds no internal state that cannot be written to a "
+        "portable checkpoint."
+    ),
+    unaware_default=True,
+)
 
 
 class AssumptionSet(Mapping[str, bool]):

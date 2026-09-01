@@ -16,12 +16,14 @@ def test_assumptions_use_restrictive_unaware_defaults() -> None:
         "observation_schema.fixed",
         "evaluation.deterministic",
         "population.fixed_size",
+        "state.checkpointable",
     )
     assumptions = AssumptionSet()
 
     assert assumptions["observation_schema.fixed"] is True
     assert assumptions["evaluation.deterministic"] is True
     assert assumptions["population.fixed_size"] is True
+    assert assumptions["state.checkpointable"] is True
     assert "feedback.complete_batch" not in ASSUMPTION_KEYS
 
 

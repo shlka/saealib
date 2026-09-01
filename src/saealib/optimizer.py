@@ -1149,6 +1149,23 @@ class Optimizer:
         )
         cb.register(self.cbmanager)
 
+    def _validate_checkpointable(self) -> None:
+        """Reject portable checkpoints for components with non-exportable state."""
+        plan = self._executable_plan
+        if plan is None:
+            return
+        snapshots = dict(plan.contract_snapshots)
+        rejected = []
+        for component_id, contract in snapshots.items():
+            if not contract.assumptions["state.checkpointable"]:
+                component = plan.graph.node_by_id(component_id).component
+                component_name = getattr(component, "component", component)
+                rejected.append(f"{component_id} ({type(component_name).__name__})")
+        if rejected:
+            raise ConfigurationError(
+                "Portable checkpointing requires state.checkpointable=True; "
+                "non-checkpointable component(s): " + ", ".join(rejected)
+            )
 
     def iterate(
         self,
@@ -1186,6 +1203,8 @@ class Optimizer:
             )
         self._inject_acquisition_directions()
         if checkpoint_path is not None:
+            if checkpoint_format in ("npz", "both"):
+                self._validate_checkpointable()
             self._register_checkpoint(
                 checkpoint_path,
                 checkpoint_interval,
@@ -1230,6 +1249,8 @@ class Optimizer:
             )
         self._inject_acquisition_directions()
         if checkpoint_path is not None:
+            if checkpoint_format in ("npz", "both"):
+                self._validate_checkpointable()
             self._register_checkpoint(
                 checkpoint_path,
                 checkpoint_interval,
@@ -1277,6 +1298,8 @@ class Optimizer:
             )
         self._inject_acquisition_directions()
         if checkpoint_path is not None:
+            if checkpoint_format in ("npz", "both"):
+                self._validate_checkpointable()
             self._register_checkpoint(
                 checkpoint_path,
                 checkpoint_interval,
@@ -1323,6 +1346,8 @@ class Optimizer:
             )
         self._inject_acquisition_directions()
         if checkpoint_path is not None:
+            if checkpoint_format in ("npz", "both"):
+                self._validate_checkpointable()
             self._register_checkpoint(
                 checkpoint_path,
                 checkpoint_interval,
