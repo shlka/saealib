@@ -16,6 +16,7 @@ from saealib.callback import PostAskEvent
 from saealib.core.contracts import (
     PARTIAL_ALLOWED,
     REPEATED_ALLOWED,
+    AssumptionSet,
     ComponentContract,
     ExecutionContract,
     FeedbackBatch,
@@ -168,6 +169,7 @@ class PymooAlgorithm(AskTellAlgorithm):
         family = super().contract()
         family = replace(
             family,
+            assumptions=AssumptionSet({"state.checkpointable": False}),
             state=replace(
                 family.state,
                 reads=(*family.state.reads, RUNTIME_CANDIDATE_ID_ALLOCATOR),

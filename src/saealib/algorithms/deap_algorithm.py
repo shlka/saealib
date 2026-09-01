@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import replace
 from typing import Any, Protocol
 
 import numpy as np
@@ -10,6 +11,8 @@ import numpy as np
 from saealib.algorithms.base import Algorithm, ProposalRequest, algorithm_context
 from saealib.callback import PostAskEvent
 from saealib.core.contracts import (
+    AssumptionSet,
+    ComponentContract,
     FeedbackBatch,
     FeedbackRequirement,
     ProposalBatch,
@@ -64,6 +67,17 @@ class DeapGenerateUpdateAlgorithm(Algorithm):
         self.allow_partial_tell = allow_partial_tell
         self._fitness_class: type | None = None
         self._last_individuals: list[_DeapIndividual] | None = None
+
+    def contract(self) -> ComponentContract:
+        """Return the contract, rejecting portable checkpoints.
+
+        The DEAP strategy owns evolving centroid, sigma, and related state
+        that this adapter cannot export to a portable checkpoint.
+        """
+        return replace(
+            super().contract(),
+            assumptions=AssumptionSet({"state.checkpointable": False}),
+        )
 
     def _ensure_setup(self, problem: Problem) -> None:
         if problem.n_constraints:
