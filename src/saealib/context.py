@@ -31,14 +31,12 @@ from saealib.core.state import (
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
     RUNTIME_RNG,
-    STATE_MIGRATORS,
     SURROGATES_PREDICTIONS,
     USER_DATA,
     StateKey,
     StatePatch,
     StateStore,
 )
-from saealib.core.state.migration import _population_entry_v1_to_v2
 from saealib.exceptions import CheckpointError, ValidationError
 from saealib.identity import IDAllocator
 from saealib.space import BoundsService
@@ -102,37 +100,7 @@ def _dataclass_field_names(state_type: type[Any]) -> frozenset[str]:
 
 @functools.lru_cache(maxsize=1024)
 def _collection_key(kind: str, name: str) -> StateKey[object]:
-    if kind == "populations":
-        return StateKey(namespace=kind, name=name, schema_version=2)
     return StateKey(namespace=kind, name=name, schema_version=1)
-
-
-def _resolve_checkpoint_population_migrator(
-    key: StateKey[Any], target_version: int
-) -> None:
-    """Resolve a legacy named population migration from the checkpoint.
-
-    ``StateMigrationRegistry`` intentionally has exact name semantics.  The
-    package can register the built-in ``main`` path at import time, but an
-    arbitrary population name is only known when it appears in a checkpoint.
-    Resolve that one path at load time so reading a file does not depend on
-    which named keys were constructed earlier in the process.
-    """
-    if (
-        key.namespace != "populations"
-        or key.name == "main"
-        or key.schema_version > 1
-        or target_version <= 1
-    ):
-        return
-    migration_id = (key.namespace, key.name, 1)
-    if migration_id not in STATE_MIGRATORS.registered():
-        STATE_MIGRATORS.register(
-            key.namespace,
-            key.name,
-            1,
-            _population_entry_v1_to_v2,
-        )
 
 
 class _NamedCollection(dict[str, Any]):
@@ -1707,11 +1675,7 @@ def _request_from_json(value: Any) -> Any:
     if not isinstance(value, dict):
         raise CheckpointError("evaluation request is malformed")
     try:
-        payload = (
-            _payload_from_json(value["payload"])
-            if "payload" in value
-            else np.asarray(value["x"], dtype=np.float64)
-        )
+        payload = _payload_from_json(value["payload"])
         return EvaluationRequest(
             np.int64(value["request_id"]),
             np.asarray(value["candidate_ids"], dtype=np.int64),
@@ -2318,33 +2282,21 @@ def _load_checkpoint(
                 expected_target = max(expected_target, expected_key.schema_version)
                 break
         target = max(target, expected_target)
-        if key.schema_version > target:
+        if key.schema_version != target:
             raise CheckpointError(
-                f"State key {key.namespace}/{key.name} has future schema version "
-                f"v{key.schema_version}; target is v{target}."
+                f"State key {key.namespace}/{key.name} is at schema version "
+                f"v{key.schema_version} but the checkpoint targets v{target}; "
+                "this version provides no state migration."
             )
-        if key.schema_version < target:
-            value = _decode_state_value(
-                key,
-                item.get("value"),
-                data,
-                f"_entry_{index}",
-                genome_codec=genome_codec,
-                dense_numeric_view=dense_numeric_view,
-                space=problem.space,
-            )
-            _resolve_checkpoint_population_migrator(key, target)
-            key, value = STATE_MIGRATORS.migrate(key, value, target_version=target)
-        else:
-            value = _decode_state_value(
-                key,
-                item.get("value"),
-                data,
-                f"_entry_{index}",
-                genome_codec=genome_codec,
-                dense_numeric_view=dense_numeric_view,
-                space=problem.space,
-            )
+        value = _decode_state_value(
+            key,
+            item.get("value"),
+            data,
+            f"_entry_{index}",
+            genome_codec=genome_codec,
+            dense_numeric_view=dense_numeric_view,
+            space=problem.space,
+        )
         if key in restored:
             raise CheckpointError(f"duplicate state entry {key.namespace}/{key.name}")
         restored[key] = value

@@ -1,7 +1,6 @@
 import json
 import subprocess
 from types import SimpleNamespace
-from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -19,7 +18,6 @@ from saealib.core.state import (
     ARCHIVES_PARETO,
     EVALUATIONS_COUNT,
     POPULATIONS_MAIN,
-    STATE_MIGRATORS,
     StateKey,
     StateStore,
 )
@@ -189,35 +187,9 @@ def test_current_schema_and_allocator_continuity(tmp_path):
         (item["key"]["namespace"], item["key"]["name"]): item["key"]["schema_version"]
         for item in entries
     }
-    assert versions[("populations", "main")] == 2
-    assert versions[("populations", "backup")] == 2
+    assert versions[("populations", "main")] == 1
+    assert versions[("populations", "backup")] == 1
     assert versions[("archives", "main")] == 1
-
-
-def test_population_key_construction_does_not_register_migrators():
-    """Named key construction must not mutate the migration registry."""
-    before = STATE_MIGRATORS.registered()
-    _state()
-    assert STATE_MIGRATORS.registered() == before
-
-
-def _rewrite_population_entry_as_v1(path, population_name="main"):
-    """Rewrite one population entry to the pre-codec v1 shape."""
-    raw = dict(np.load(path, allow_pickle=False).items())
-    entries = json.loads(bytes(raw["_state_entries"]).decode())
-    for index, item in enumerate(entries):
-        key = item["key"]
-        if key["namespace"] != "populations" or key["name"] != population_name:
-            continue
-        genomes = item["value"].pop("genomes")
-        raw[f"_entry_{index}__x"] = raw.pop(genomes["array"])
-        key["schema_version"] = 1
-        item["target_schema_version"] = 2
-        break
-    else:
-        raise AssertionError(f"populations/{population_name} entry was not found")
-    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
-    np.savez(path, **raw)
 
 
 def test_population_genome_roundtrip_uses_codec(tmp_path):
@@ -244,7 +216,7 @@ def test_population_genome_roundtrip_uses_codec(tmp_path):
         (index, item)
         for index, item in enumerate(entries)
         if item["key"]
-        == {"namespace": "populations", "name": "main", "schema_version": 2}
+        == {"namespace": "populations", "name": "main", "schema_version": 1}
     )
     assert "genomes" in main["value"]
     assert f"_entry_{main_index}__x" not in raw.files
@@ -255,65 +227,6 @@ def test_population_genome_roundtrip_uses_codec(tmp_path):
     assert isinstance(ctx.population.genomes, DenseVectorBatch)
     np.testing.assert_array_equal(
         loaded.population.genomes.array, ctx.population.genomes.array
-    )
-
-
-def test_v3_population_v1_entry_uses_registered_real_key_migrator(tmp_path):
-    ctx = _state()
-    path = tmp_path / "population-v1-entry.npz"
-    ctx.save(path)
-    _rewrite_population_entry_as_v1(path)
-
-    loaded = OptimizationState.load(path, ctx.problem)
-    migrated_key = StateKey(namespace="populations", name="main", schema_version=2)
-    assert loaded.get_state(migrated_key) is loaded.population
-    np.testing.assert_array_equal(loaded.population.x, ctx.population.x)
-
-
-def test_v3_population_v1_entry_without_migrator_names_key_and_versions(tmp_path):
-    ctx = _state()
-    path = tmp_path / "population-missing-migrator.npz"
-    ctx.save(path)
-    _rewrite_population_entry_as_v1(path)
-
-    migration_id = ("populations", "main", 1)
-    original_migrators = STATE_MIGRATORS._migrators
-    STATE_MIGRATORS._migrators = {
-        key: value for key, value in original_migrators.items() if key != migration_id
-    }
-    try:
-        with pytest.raises(CheckpointError) as error:
-            OptimizationState.load(path, ctx.problem)
-    finally:
-        STATE_MIGRATORS._migrators = original_migrators
-
-    message = str(error.value)
-    assert "populations/main" in message
-    assert "v1" in message and "v2" in message
-    assert "v1 -> v2" in message
-
-
-def test_v3_population_v1_arbitrary_name_resolves_at_load(tmp_path):
-    """A legacy named population loads without prior StateKey construction."""
-    ctx = _state()
-    path = tmp_path / "population-arbitrary-v1-entry.npz"
-    ctx.save(path)
-    _rewrite_population_entry_as_v1(path, "backup")
-
-    migration_id = ("populations", "backup", 1)
-    original_migrators = STATE_MIGRATORS._migrators
-    STATE_MIGRATORS._migrators = {
-        key: value for key, value in original_migrators.items() if key != migration_id
-    }
-    try:
-        loaded = OptimizationState.load(path, ctx.problem)
-    finally:
-        STATE_MIGRATORS._migrators = original_migrators
-
-    migrated_key = StateKey(namespace="populations", name="backup", schema_version=2)
-    assert loaded.get_state(migrated_key) is loaded.populations["backup"]
-    np.testing.assert_array_equal(
-        loaded.populations["backup"].x, ctx.populations["backup"].x
     )
 
 
@@ -464,7 +377,7 @@ def test_named_collection_compatibility_reads_use_state_store(monkeypatch):
         POPULATIONS_MAIN,
         ARCHIVES_MAIN,
         ARCHIVES_PARETO,
-        StateKey(namespace="populations", name="backup", schema_version=2),
+        StateKey(namespace="populations", name="backup", schema_version=1),
         StateKey(namespace="archives", name="history", schema_version=1),
     } <= set(reads)
 
@@ -489,7 +402,7 @@ def test_named_collection_mapping_reads_are_not_stale_after_store_patch():
 def test_set_state_rejects_collection_key_with_wrong_schema_version():
     ctx = _state()
     original = ctx.population
-    wrong_key = StateKey(namespace="populations", name="main", schema_version=1)
+    wrong_key = StateKey(namespace="populations", name="main", schema_version=2)
 
     with pytest.raises(ValidationError, match="collection key"):
         ctx.set_state(
@@ -539,52 +452,6 @@ def test_getstate_excludes_derived_evaluation_ids():
     serialized = ctx.__getstate__()
     assert "evaluation_new_ids" not in serialized
     assert "evaluation_update_new_ids" not in serialized
-
-
-def test_v3_registered_entry_migrator_is_used_at_load_time(tmp_path):
-    key = StateKey(namespace="user", name="g5b_migrated", schema_version=1)
-    STATE_MIGRATORS.register(
-        key.namespace,
-        key.name,
-        1,
-        lambda value: {**cast(dict[str, Any], value), "migrated": True},
-    )
-    ctx = _state()
-    ctx.set_state(key, {"answer": 42})
-    path = tmp_path / "migrated.npz"
-    ctx.save(path)
-    raw = dict(np.load(path, allow_pickle=False).items())
-    entries = json.loads(bytes(raw["_state_entries"]).decode())
-    for item in entries:
-        if item["key"]["name"] == key.name:
-            item["key"]["schema_version"] = 1
-            item["target_schema_version"] = 2
-    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
-    np.savez(path, **raw)
-    loaded = OptimizationState.load(path, ctx.problem)
-    migrated_key = StateKey(namespace=key.namespace, name=key.name, schema_version=2)
-    assert loaded.get_state(migrated_key) == {"answer": 42, "migrated": True}
-
-
-def test_v3_missing_migrator_is_a_load_time_checkpoint_error(tmp_path):
-    key = StateKey(namespace="user", name="g5b_no_migrator", schema_version=1)
-    ctx = _state()
-    ctx.set_state(key, "payload")
-    path = tmp_path / "missing-migrator.npz"
-    ctx.save(path)
-    raw = dict(np.load(path, allow_pickle=False).items())
-    entries = json.loads(bytes(raw["_state_entries"]).decode())
-    for item in entries:
-        if item["key"]["name"] == key.name:
-            item["target_schema_version"] = 2
-    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
-    np.savez(path, **raw)
-    with pytest.raises(CheckpointError) as error:
-        OptimizationState.load(path, ctx.problem)
-    message = str(error.value)
-    assert "user/g5b_no_migrator" in message
-    assert "v1" in message and "v2" in message
-    assert "Registered migrators" in message
 
 
 def test_future_entry_schema_version_is_rejected(tmp_path):

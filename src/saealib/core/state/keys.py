@@ -90,7 +90,7 @@ class StateKey(Generic[ValueT]):
 
 
 POPULATIONS_MAIN = StateKey[object](
-    namespace="populations", name="main", schema_version=2
+    namespace="populations", name="main", schema_version=1
 )
 ARCHIVES_MAIN = StateKey[object](namespace="archives", name="main", schema_version=1)
 ARCHIVES_PARETO = StateKey[object](
@@ -125,7 +125,7 @@ EVALUATIONS_OWNERS = StateKey[object](
     namespace="evaluations", name="owners", schema_version=1
 )
 EVALUATIONS_PLAN = StateKey[object](
-    namespace="evaluations", name="plan", schema_version=2
+    namespace="evaluations", name="plan", schema_version=1
 )
 EVALUATIONS_PLAN_STATE = StateKey[object](
     namespace="evaluations", name="plan_state", schema_version=1
@@ -134,7 +134,7 @@ EVALUATIONS_PLAN_UPDATES = StateKey[object](
     namespace="evaluations", name="plan_updates", schema_version=1
 )
 PENDING_EVALUATIONS = StateKey[object](
-    namespace="evaluations", name="pending", schema_version=2
+    namespace="evaluations", name="pending", schema_version=1
 )
 EVALUATIONS_PENDING = PENDING_EVALUATIONS
 RUNTIME_RNG = StateKey[object](namespace="runtime", name="rng", schema_version=1)
