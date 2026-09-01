@@ -96,6 +96,11 @@ jobs:
             echo '</body></html>'
           } > docs/_build/html/index.html
 
+      # html_extra_path only drops this inside each version directory; the
+      # Search Console property is the site root.
+      - name: Copy the Search Console verification file to the site root
+        run: cp docs/googleb2b2a6492b1c5bc1.html docs/_build/html/
+
       - name: Deploy all dev docs and root files to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -235,6 +240,11 @@ jobs:
             echo "  <p>Redirecting to <a href=\"${TARGET}/\">${TARGET}</a> (or <a href=\"ja/${TARGET}/\">日本語</a>)</p>"
             echo '</body></html>'
           } > docs/_build/html/index.html
+
+      # html_extra_path only drops this inside each version directory; the
+      # Search Console property is the site root.
+      - name: Copy the Search Console verification file to the site root
+        run: cp docs/googleb2b2a6492b1c5bc1.html docs/_build/html/
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
