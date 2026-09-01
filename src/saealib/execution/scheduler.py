@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import Iterable
 from math import fsum
@@ -66,6 +67,8 @@ from saealib.policies.feedback import (
     _feedback_batch_from_result,
 )
 from saealib.stages import deliver_feedback
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from saealib.context import OptimizationState
@@ -285,6 +288,11 @@ class AsyncEvaluationScheduler:
                     )
                 handle = self.evaluator.submit(request, state.problem)
                 started.append((request_id, handle))
+                logger.debug(
+                    "Evaluation submitted: request_id=%s candidates=%s",
+                    request_id,
+                    len(request.candidate_ids),
+                )
                 pending = PendingEvaluation(
                     request,
                     EvaluationStatus.PENDING,
@@ -349,7 +357,9 @@ class AsyncEvaluationScheduler:
             sequence=pending.last_delivered_sequence + 1,
         )
         handle._delivered_sequence = update.sequence
-        return self._commit_update(state, pending, handle, update)
+        current = self._commit_update(state, pending, handle, update)
+        logger.warning("Evaluation cancelled: request_id=%s", request_id)
+        return current
 
     def poll(
         self, state: OptimizationState, *, wait: bool = False
@@ -390,6 +400,14 @@ class AsyncEvaluationScheduler:
                 if timed_out:
                     cancelled = self.evaluator.cancel(handle)
                     detached = False if cancelled else self.evaluator.detach(handle)
+                    recovery = (
+                        "cancel" if cancelled else "detach" if detached else "none"
+                    )
+                    logger.warning(
+                        "Evaluation timed out: request_id=%s recovery=%s",
+                        request_id,
+                        recovery,
+                    )
                     if not cancelled and not detached:
                         error = EvaluationErrorInfo(
                             "Timeout",
@@ -442,6 +460,12 @@ class AsyncEvaluationScheduler:
                     continue
                 updates = self.evaluator.collect(handle, wait=False)
                 for update in updates:
+                    logger.debug(
+                        "Evaluation collected: request_id=%s status=%s sequence=%s",
+                        request_id,
+                        update.status.value,
+                        update.sequence,
+                    )
                     ready.append(
                         (
                             getattr(handle, "_completed_at", None) or time.monotonic(),
@@ -614,6 +638,16 @@ class AsyncEvaluationScheduler:
                 raise EvaluationProtocolError("redelivered update payload differs")
         else:
             self._validate_update(current_pending, update)
+        if (
+            not replay
+            and current_pending.retry_count > 0
+            and update.status is EvaluationStatus.COMPLETED
+        ):
+            logger.warning(
+                "Evaluation retry completed: request_id=%s attempt=%s",
+                request_id,
+                current_pending.retry_count,
+            )
         buffered = list(current_pending.buffered_updates)
         if not any(
             item.request_id == update.request_id and item.sequence == update.sequence
@@ -901,13 +935,20 @@ class AsyncEvaluationScheduler:
                 and fsum((other_reserved_cost, retry_cost)) > self.max_reserved_cost
             ):
                 raise EvaluationProtocolError("retry would exceed reserved cost budget")
+            retry_count = current_pending.retry_count + 1
             new_handle = self.evaluator.submit(request, state.problem)
+            logger.warning(
+                "Evaluation retry submitted: request_id=%s attempt=%s candidates=%s",
+                request_id,
+                retry_count,
+                len(remaining),
+            )
             retry_pending = PendingEvaluation(
                 request,
                 EvaluationStatus.PENDING,
                 applied,
                 reserved_cost=retry_cost,
-                retry_count=current_pending.retry_count + 1,
+                retry_count=retry_count,
                 checkpointable=self.evaluator.can_reattach(
                     PendingEvaluation(
                         request,

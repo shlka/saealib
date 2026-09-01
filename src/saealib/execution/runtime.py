@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import logging
 import time
 from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass, replace
@@ -68,6 +69,8 @@ from saealib.execution.history import (
     record_evaluations,
     record_generation,
 )
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "AsyncPipelineRuntime",
@@ -235,25 +238,29 @@ def _environment_execute(
     plan: SequentialPlan,
     state: OptimizationState,
 ) -> _ExecutionOutcome:
-    execute_step = getattr(environment, "execute_step", None)
-    if callable(execute_step):
-        outcome = execute_step(plan, state)
-        if isinstance(outcome, _ExecutionOutcome):
-            return outcome
-        if isinstance(outcome, RuntimeStep):
-            return _ExecutionOutcome(
-                state=outcome.state,
-                node_results=outcome.node_results,
-                executed_node_ids=outcome.executed_node_ids,
-                refused_commands=outcome.refused_commands,
-                terminated=outcome.finished,
+    logger.debug("Runtime synchronous execution start")
+    try:
+        execute_step = getattr(environment, "execute_step", None)
+        if callable(execute_step):
+            outcome = execute_step(plan, state)
+            if isinstance(outcome, _ExecutionOutcome):
+                return outcome
+            if isinstance(outcome, RuntimeStep):
+                return _ExecutionOutcome(
+                    state=outcome.state,
+                    node_results=outcome.node_results,
+                    executed_node_ids=outcome.executed_node_ids,
+                    refused_commands=outcome.refused_commands,
+                    terminated=outcome.finished,
+                )
+            if isinstance(outcome, OptimizationState):
+                return _ExecutionOutcome(state=outcome)
+            raise ValidationError(
+                "runtime environment execute_step returned an invalid value"
             )
-        if isinstance(outcome, OptimizationState):
-            return _ExecutionOutcome(state=outcome)
-        raise ValidationError(
-            "runtime environment execute_step returned an invalid value"
-        )
-    return _ExecutionOutcome(state=environment.execute(plan, state))
+        return _ExecutionOutcome(state=environment.execute(plan, state))
+    finally:
+        logger.debug("Runtime synchronous execution end")
 
 
 def _environment_execute_async(
@@ -261,25 +268,29 @@ def _environment_execute_async(
     plan: SequentialPlan,
     state: OptimizationState,
 ) -> _ExecutionOutcome:
-    execute_step = getattr(environment, "execute_async_step", None)
-    if callable(execute_step):
-        outcome = execute_step(plan, state)
-        if isinstance(outcome, _ExecutionOutcome):
-            return outcome
-        if isinstance(outcome, RuntimeStep):
-            return _ExecutionOutcome(
-                state=outcome.state,
-                node_results=outcome.node_results,
-                executed_node_ids=outcome.executed_node_ids,
-                refused_commands=outcome.refused_commands,
-                terminated=outcome.finished,
+    logger.debug("Runtime asynchronous execution start")
+    try:
+        execute_step = getattr(environment, "execute_async_step", None)
+        if callable(execute_step):
+            outcome = execute_step(plan, state)
+            if isinstance(outcome, _ExecutionOutcome):
+                return outcome
+            if isinstance(outcome, RuntimeStep):
+                return _ExecutionOutcome(
+                    state=outcome.state,
+                    node_results=outcome.node_results,
+                    executed_node_ids=outcome.executed_node_ids,
+                    refused_commands=outcome.refused_commands,
+                    terminated=outcome.finished,
+                )
+            if isinstance(outcome, OptimizationState):
+                return _ExecutionOutcome(state=outcome)
+            raise ValidationError(
+                "runtime environment execute_async_step returned an invalid value"
             )
-        if isinstance(outcome, OptimizationState):
-            return _ExecutionOutcome(state=outcome)
-        raise ValidationError(
-            "runtime environment execute_async_step returned an invalid value"
-        )
-    return _ExecutionOutcome(state=environment.execute_async(plan, state))
+        return _ExecutionOutcome(state=environment.execute_async(plan, state))
+    finally:
+        logger.debug("Runtime asynchronous execution end")
 
 
 def _environment_recompile(
@@ -290,11 +301,13 @@ def _environment_recompile(
         raise ValidationError(
             "runtime cannot satisfy RequestRecompile: no recompile provider"
         )
+    logger.debug("Runtime recompile request accepted: %s", type(plan).__name__)
     rebuilt = recompile(plan)
     if not isinstance(rebuilt, (SequentialPlan, StructuredPlan)):
         raise ValidationError("runtime recompile provider returned an invalid plan")
     if isinstance(plan, StructuredPlan) is not isinstance(rebuilt, StructuredPlan):
         raise ValidationError("runtime recompile provider changed plan structure")
+    logger.debug("Runtime recompile result: %s", type(rebuilt).__name__)
     return rebuilt
 
 
@@ -622,6 +635,7 @@ def _execute_structured(
     results: list[NodeResult] = []
     executed: list[str] = []
     refused: list[RuntimeCommand] = []
+    debug_enabled = logger.isEnabledFor(logging.DEBUG)
 
     def finish_child() -> bool:
         """Advance an enclosing region after its body reaches its end."""
@@ -726,11 +740,17 @@ def _execute_structured(
                     stack[-1] = replace(frame, operation_index=end_index + 1)
                     continue
             executed.append(node.component_id)
+            if debug_enabled:
+                logger.debug("Runtime node start: %s", node.component_id)
             result = NodeResult(
                 patch=StatePatch(writes={}),
                 status=NodeStatus.BLOCKED,
             )
             results.append(result)
+            if debug_enabled:
+                logger.debug(
+                    "Runtime node end: %s status=%s", node.component_id, result.status
+                )
             return _ExecutionOutcome(
                 state=current,
                 node_results=tuple(results),
@@ -739,6 +759,8 @@ def _execute_structured(
                 frames=tuple(stack),
             )
         executed.append(node.component_id)
+        if debug_enabled:
+            logger.debug("Runtime node start: %s", node.component_id)
         aliases = _node_state_aliases(plan, node)
         view = current._store.view(
             tuple({aliases.get(key, key) for key in node.contract.state.reads}),
@@ -774,9 +796,21 @@ def _execute_structured(
             for event in result.events:
                 dispatch(event)
         results.append(result)
-        recompile_requested = any(
-            isinstance(command, RequestRecompile) for command in result.commands
-        )
+        recompile_commands: list[RequestRecompile] = []
+        for command in result.commands:
+            if isinstance(command, RequestRecompile):
+                recompile_commands.append(command)
+                if debug_enabled:
+                    logger.debug(
+                        "Runtime recompile request: node=%s reason=%s",
+                        node.component_id,
+                        command.reason,
+                    )
+        recompile_requested = bool(recompile_commands)
+        if debug_enabled:
+            logger.debug(
+                "Runtime node end: %s status=%s", node.component_id, result.status
+            )
         for command in result.commands:
             if not isinstance(command, (RequestTermination, RequestRecompile)):
                 refused.append(command)
@@ -795,17 +829,9 @@ def _execute_structured(
                     frames=(),
                 )
             if recompile_requested:
-                refused.extend(
-                    command
-                    for command in result.commands
-                    if isinstance(command, RequestRecompile)
-                )
+                refused.extend(recompile_commands)
         elif recompile_requested:
-            refused.extend(
-                command
-                for command in result.commands
-                if isinstance(command, RequestRecompile)
-            )
+            refused.extend(recompile_commands)
         if result.status is not NodeStatus.COMPLETED or any(
             isinstance(command, RequestTermination) for command in result.commands
         ):
@@ -848,10 +874,13 @@ def _execute_with_metadata(
     executed: list[str] = []
     refused: list[RuntimeCommand] = []
     current = state
+    debug_enabled = logger.isEnabledFor(logging.DEBUG)
     for node, execute in zip(plan.execution_nodes, plan._execute_targets):
         executed.append(node.component_id)
         stage = getattr(node.component, "stage", None)
         if isinstance(node.component, StageNodeAdapter) or isinstance(stage, Stage):
+            if debug_enabled:
+                logger.debug("Runtime stage start: %s", node.component_id)
             next_state = execute(current)
             if not isinstance(next_state, OptimizationState):
                 raise ValidationError(
@@ -862,7 +891,15 @@ def _execute_with_metadata(
             if observe is not None:
                 observe(current)
             results.append(NodeResult(patch=StatePatch(writes={})))
+            if debug_enabled:
+                logger.debug(
+                    "Runtime stage end: %s status=%s",
+                    node.component_id,
+                    NodeStatus.COMPLETED,
+                )
             continue
+        if debug_enabled:
+            logger.debug("Runtime node start: %s", node.component_id)
         aliases = _node_state_aliases(plan, node)
         view = current._store.view(
             tuple({aliases.get(key, key) for key in node.contract.state.reads}),
@@ -892,6 +929,17 @@ def _execute_with_metadata(
             for event in result.events:
                 dispatch(event)
         results.append(result)
+        if debug_enabled:
+            for command in result.commands:
+                if isinstance(command, RequestRecompile):
+                    logger.debug(
+                        "Runtime recompile request: node=%s reason=%s",
+                        node.component_id,
+                        command.reason,
+                    )
+            logger.debug(
+                "Runtime node end: %s status=%s", node.component_id, result.status
+            )
         for command in result.commands:
             if isinstance(command, (RequestTermination, RequestRecompile)):
                 continue
@@ -1131,13 +1179,26 @@ class _OptimizerEnvironment:
             "strategy": getattr(self.optimizer, "strategy", None),
         }
         parameters = inspect.signature(seam).parameters
+        component = nodes[async_index].component
+        kind = "stage" if getattr(component, "stage", None) is not None else "node"
+        logger.debug("Runtime %s start: %s", kind, nodes[async_index].component_id)
         try:
             result = seam(
                 current,
                 **{key: value for key, value in kwargs.items() if key in parameters},
             )
         except _ExecutionHaltError as halt:
+            logger.debug(
+                "Runtime %s end: %s status=halted",
+                kind,
+                nodes[async_index].component_id,
+            )
             return halt.outcome
+        logger.debug(
+            "Runtime %s end: %s status=completed",
+            kind,
+            nodes[async_index].component_id,
+        )
         _record_history_observation(result)
         if prefix_outcome is not None:
             return _ExecutionOutcome(

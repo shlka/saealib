@@ -68,6 +68,11 @@ When omitted, the default is `200 * dim`.
 To choose built-in Algorithm, Surrogate, and Strategy components, pass strings or instances to `algorithm`, `surrogate`, and `strategy`.
 The [Swap built-in components](component_swap.md) page covers the selection and swapping procedure.
 
+The `strategy` argument has two valid modes.
+When you explicitly provide a strategy, whether as the string shorthand `"ib"`, `"gb"`, or `"ps"`, or as a strategy instance, the bundled preset's `evaluation_planner` and `feedback_builder` are not applied; the strategy's own default policies are used.
+When you omit `strategy`, the bundled preset supplies the standard configuration, including `RatioEvaluation` and `ComparatorWorstFallback(MixedFeedback)`.
+Both behaviors are correct, and the choice is yours based on the configuration you want to use.
+
 ## Read Result
 
 `minimize()` and `maximize()` return a `Result`.
