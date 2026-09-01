@@ -8,17 +8,16 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from saealib.acquisition.base import AcquisitionFunction
-from saealib.acquisition.mean import MeanPrediction
-from saealib.acquisition.winrate import WinRateAcquisition
 from saealib.callback import GenerationStartEvent, logging_generation
 from saealib.exceptions import ValidationError
 from saealib.execution.initializer import LHSInitializer
-from saealib.optimizer import Optimizer
+from saealib.optimizer import Optimizer, _default_acquisition_spec
 from saealib.problem import Problem
 from saealib.result import Result
 from saealib.strategies.gb import GenerationBasedStrategy
+from saealib.strategies.ib import IndividualBasedStrategy
 from saealib.strategies.ps import PreSelectionStrategy
-from saealib.surrogate.manager import LocalSurrogateManager, SurrogateManager
+from saealib.surrogate.manager import SurrogateManager
 from saealib.termination import Termination
 from saealib.termination import max_fe as max_fe_cond
 
@@ -44,6 +43,12 @@ _UNSET = _UnsetType()
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+_STRATEGY_TYPE_NAMES = {
+    "ib": "IndividualBasedStrategy",
+    "gb": "GenerationBasedStrategy",
+    "ps": "PreSelectionStrategy",
+}
 
 
 def _resolve_direction(
@@ -71,37 +76,50 @@ def _ensure_problem(
     lb,
     ub,
     n_obj: int,
-    direction: np.ndarray,
+    direction: np.ndarray | list[str] | None,
+    default_direction: float,
 ) -> Problem:
     """Return a Problem, building one from a callable if needed."""
     if isinstance(func, Problem):
+        if direction is not None:
+            raise ValidationError(
+                "direction cannot be passed when func is a Problem; configure the "
+                "Problem's own direction."
+            )
         return func
     if dim is None or lb is None or ub is None:
         raise ValidationError("dim, lb, and ub are required when func is a callable.")
-    return Problem(func=func, dim=dim, n_obj=n_obj, direction=direction, lb=lb, ub=ub)
+    direction_arr = _resolve_direction(direction, n_obj, default=default_direction)
+    return Problem(
+        func=func, dim=dim, n_obj=n_obj, direction=direction_arr, lb=lb, ub=ub
+    )
 
 
-def _resolve_algorithm(algorithm: str | Algorithm | None) -> Algorithm | None:
+def _resolve_algorithm(
+    algorithm: str | Algorithm | None, preset: dict, problem: Problem
+) -> Algorithm | None:
     if isinstance(algorithm, str):
-        from saealib.defaults import load_defaults
-        from saealib.registry import build, get
+        from saealib.registry import _inject_params, build, get
 
         name = algorithm.upper()
-        if name == "GA":
-            spec = load_defaults()["presets"]["ga_rbf_ib"]["algorithm"]
-            return build(spec)
-        if name == "PSO":
-            return get("PSO")()
-        raise ValidationError(
-            f"Unknown algorithm: {algorithm!r}. "
-            "Use 'GA', 'PSO', or an Algorithm instance."
-        )
+        if name not in ("GA", "PSO"):
+            raise ValidationError(
+                f"Unknown algorithm: {algorithm!r}. "
+                "Use 'GA', 'PSO', or an Algorithm instance."
+            )
+        spec = preset.get("algorithm")
+        if isinstance(spec, dict) and spec.get("type") == name:
+            return build(
+                _inject_params(spec, dim=problem.dim, direction=problem.direction)
+            )
+        return get(name)()
     return algorithm
 
 
 def _resolve_surrogate(
     surrogate: str | Surrogate | SurrogateManager | None,
     problem: Problem,
+    preset: dict,
 ) -> tuple[SurrogateManager, AcquisitionFunction | None]:
     if surrogate is None:
         raise ValidationError(
@@ -109,55 +127,56 @@ def _resolve_surrogate(
             "Use 'rbf' or a Surrogate/SurrogateManager instance."
         )
     if isinstance(surrogate, SurrogateManager):
-        acquisition = (
-            WinRateAcquisition()
-            if type(surrogate).__name__ == "PairwiseSurrogateManager"
-            else None
+        from saealib.registry import build
+
+        acquisition = build(
+            _default_acquisition_spec(type(surrogate), problem.direction)
         )
         return surrogate, acquisition
     if isinstance(surrogate, str):
         if surrogate.lower() == "rbf":
-            from saealib.defaults import load_defaults
-
-            spec = load_defaults()["presets"]["ga_rbf_ib"]["surrogate_manager"]
-            manager = Optimizer._build_surrogate_manager_from_spec(
-                spec, problem.dim, problem.direction
+            return Optimizer._build_components_from_spec_static(
+                preset["surrogate_manager"], problem.dim, problem.direction
             )
-            return manager, MeanPrediction(direction=problem.direction)
         raise ValidationError(
             f"Unknown surrogate: {surrogate!r}. "
             "Use 'rbf' or a Surrogate/SurrogateManager instance."
         )
-    from saealib.surrogate.training_set import KNNObjectiveSet
-
-    return LocalSurrogateManager(
-        surrogate,
-        training_set=KNNObjectiveSet(),
-    ), MeanPrediction(direction=problem.direction)
+    return Optimizer._build_components_from_spec_static(
+        preset["surrogate_manager"],
+        problem.dim,
+        problem.direction,
+        surrogate=surrogate,
+    )
 
 
 def _resolve_strategy(
     strategy: str | OptimizationStrategy | None,
     pop_size: int,
+    preset: dict,
+    problem: Problem,
 ) -> OptimizationStrategy | None:
-    if isinstance(strategy, str):
-        name = strategy.lower()
-        if name == "ib":
-            from saealib.defaults import load_defaults
-            from saealib.registry import build
-
-            spec = load_defaults()["presets"]["ga_rbf_ib"]["strategy"]
-            return build(spec)
-        if name == "gb":
-            return GenerationBasedStrategy(gen_ctrl=5)
-        if name == "ps":
-            n_select = max(1, pop_size // 10)
-            return PreSelectionStrategy(n_candidates=pop_size, n_select=n_select)
+    if not isinstance(strategy, str):
+        return strategy
+    name = strategy.lower()
+    type_name = _STRATEGY_TYPE_NAMES.get(name)
+    if type_name is None:
         raise ValidationError(
             f"Unknown strategy: {strategy!r}. "
             "Use 'ib', 'gb', 'ps', or an OptimizationStrategy instance."
         )
-    return strategy
+    spec = preset.get("strategy")
+    if isinstance(spec, dict) and spec.get("type") == type_name:
+        from saealib.registry import _inject_params, build
+
+        return build(_inject_params(spec, dim=problem.dim, direction=problem.direction))
+    if name == "ib":
+        return IndividualBasedStrategy()
+    if name == "gb":
+        return GenerationBasedStrategy(gen_ctrl=5)
+    if name == "ps":
+        n_select = max(1, pop_size // 10)
+        return PreSelectionStrategy(n_candidates=pop_size, n_select=n_select)
 
 
 def _run(
@@ -173,19 +192,30 @@ def _run(
     history_channels: Sequence[str] | None,
 ) -> Result:
     dim = problem.dim
-    if pop_size is None:
-        pop_size = 4 * dim
-    if max_fe is None:
-        max_fe = 200 * dim
 
-    initializer = LHSInitializer(
-        n_init_archive=max(5 * dim, pop_size),
-        n_init_population=pop_size,
-        seed=seed,
-    )
-    termination = Termination(max_fe_cond(max_fe))
+    from saealib.defaults import load_defaults
+    from saealib.defaults.loader import select_preset_name
 
-    opt = Optimizer(problem).set_initializer(initializer).set_termination(termination)
+    if algorithm is _UNSET or algorithm is None:
+        algorithm_name = None
+    elif isinstance(algorithm, str):
+        algorithm_name = algorithm.upper()
+    else:
+        algorithm_name = type(algorithm).__name__
+    defaults = load_defaults()
+    preset_name = select_preset_name(defaults, problem, algorithm_name)
+    bundled_preset = defaults["presets"][preset_name]
+
+    opt = Optimizer(problem, seed=seed)
+    if pop_size is not None:
+        initializer = LHSInitializer(
+            n_init_archive=max(5 * dim, pop_size),
+            n_init_population=pop_size,
+            seed=seed,
+        )
+        opt.set_initializer(initializer)
+    if max_fe is not None:
+        opt.set_termination(Termination(max_fe_cond(max_fe)))
     if history_channels is not None:
         opt.set_history(history_channels)
 
@@ -197,14 +227,21 @@ def _run(
     if algorithm is not _UNSET:
         # An explicit None resolves to None here, same as never calling
         # set_algorithm(); Optimizer._resolve_defaults() then fills it in.
-        opt.set_algorithm(_resolve_algorithm(algorithm))  # type: ignore
+        opt.set_algorithm(_resolve_algorithm(algorithm, bundled_preset, problem))  # type: ignore
     if surrogate is not _UNSET:
-        manager, acquisition = _resolve_surrogate(surrogate, problem)
+        manager, acquisition = _resolve_surrogate(surrogate, problem, bundled_preset)
         opt.set_surrogate_manager(manager)
-        if acquisition is not None:
+        if opt.acquisition is None and acquisition is not None:
             opt.set_acquisition(acquisition)
     if strategy is not _UNSET:
-        opt.set_strategy(_resolve_strategy(strategy, pop_size))  # type: ignore
+        opt.set_strategy(
+            _resolve_strategy(
+                strategy,
+                pop_size if pop_size is not None else 4 * dim,
+                bundled_preset,
+                problem,
+            )  # type: ignore
+        )
 
     if not verbose:
         opt.cbmanager.unregister(GenerationStartEvent, logging_generation)
@@ -242,7 +279,8 @@ def minimize(
     func : callable or Problem
         Objective function ``f(x) -> float | array``, or a fully configured
         :class:`Problem` instance (in which case ``dim``, ``lb``, ``ub``, and
-        ``n_obj`` are ignored).
+        ``n_obj`` are ignored; its own ``direction`` is respected, and passing
+        ``direction`` is invalid).
     algorithm : str, Algorithm, or None
         ``'GA'``, ``'PSO'``, or an :class:`Algorithm` instance. If omitted,
         the library's bundled default preset resolves it (currently GA with
@@ -257,7 +295,8 @@ def minimize(
         Number of objectives. Ignored when *func* is a :class:`Problem`. Default: 1.
     direction : np.ndarray, list[str], or None
         Optimization direction per objective. Each element is ``-1``/``"minimize"``
-        (minimize) or ``+1``/``"maximize"`` (maximize). Default: all minimize.
+        (minimize) or ``+1``/``"maximize"`` (maximize). Default: all minimize for
+        callable objectives. A :class:`Problem` uses its own direction.
     surrogate : str, Surrogate, SurrogateManager, or None
         ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`. If
         omitted, the library's bundled default preset resolves it (currently
@@ -272,9 +311,11 @@ def minimize(
         configuration. See :meth:`Optimizer.set_preset`. Components explicitly
         passed via *algorithm*/*surrogate*/*strategy* still take precedence.
     max_fe : int or None
-        Maximum true function evaluations. Default: ``200 * dim``.
+        Maximum true function evaluations. If omitted, semantic defaults or the
+        ``200 * dim`` fallback are used.
     pop_size : int or None
-        Population size. Default: ``4 * dim``.
+        Population size. Semantic defaults from the configured composition are
+        used when omitted, with ``4 * dim`` as the fallback.
     seed : int or None
         Random seed for :class:`LHSInitializer`.
     history_channels : sequence of str or None
@@ -296,8 +337,9 @@ def minimize(
     ...                   max_fe=500, seed=0, verbose=False)
     >>> result.x, result.f
     """
-    direction_arr = _resolve_direction(direction, n_obj, default=-1.0)
-    problem = _ensure_problem(func, dim, lb, ub, n_obj, direction_arr)
+    problem = _ensure_problem(
+        func, dim, lb, ub, n_obj, direction, default_direction=-1.0
+    )
     return _run(
         problem,
         algorithm,
@@ -333,13 +375,16 @@ def maximize(
     """Run surrogate-assisted maximization.
 
     Identical to :func:`minimize` except that all objectives are maximized
-    (``direction = +1``).
+    (``direction = +1``) for callable objectives. When a :class:`Problem` is
+    passed, its own direction is respected.
 
     Parameters
     ----------
     func : callable or Problem
         Objective function ``f(x) -> float | array``, or a fully configured
-        :class:`Problem` instance.
+        :class:`Problem` instance (in which case ``dim``, ``lb``, ``ub``, and
+        ``n_obj`` are ignored; its own ``direction`` is respected, and passing
+        ``direction`` is invalid).
     algorithm : str, Algorithm, or None
         ``'GA'``, ``'PSO'``, or an :class:`Algorithm` instance. If omitted,
         the library's bundled default preset resolves it (currently GA with
@@ -354,7 +399,8 @@ def maximize(
         Number of objectives. Ignored when *func* is a :class:`Problem`. Default: 1.
     direction : np.ndarray, list[str], or None
         Optimization direction per objective. Each element is ``-1``/``"minimize"``
-        (minimize) or ``+1``/``"maximize"`` (maximize). Default: all maximize.
+        (minimize) or ``+1``/``"maximize"`` (maximize). Default: all maximize for
+        callable objectives. A :class:`Problem` uses its own direction.
     surrogate : str, Surrogate, SurrogateManager, or None
         ``'rbf'``, a :class:`Surrogate`, or a :class:`SurrogateManager`. If
         omitted, the library's bundled default preset resolves it (currently
@@ -369,9 +415,11 @@ def maximize(
         configuration. See :meth:`Optimizer.set_preset`. Components explicitly
         passed via *algorithm*/*surrogate*/*strategy* still take precedence.
     max_fe : int or None
-        Maximum true function evaluations. Default: ``200 * dim``.
+        Maximum true function evaluations. If omitted, semantic defaults or the
+        ``200 * dim`` fallback are used.
     pop_size : int or None
-        Population size. Default: ``4 * dim``.
+        Population size. Semantic defaults from the configured composition are
+        used when omitted, with ``4 * dim`` as the fallback.
     seed : int or None
         Random seed for :class:`LHSInitializer`.
     history_channels : sequence of str or None
@@ -393,8 +441,9 @@ def maximize(
     ...                   max_fe=500, seed=0, verbose=False)
     >>> result.x, result.f
     """
-    direction_arr = _resolve_direction(direction, n_obj, default=+1.0)
-    problem = _ensure_problem(func, dim, lb, ub, n_obj, direction_arr)
+    problem = _ensure_problem(
+        func, dim, lb, ub, n_obj, direction, default_direction=+1.0
+    )
     return _run(
         problem,
         algorithm,

@@ -31,6 +31,19 @@ def load_defaults() -> dict[str, Any]:
     return yaml.safe_load(text)
 
 
+def select_preset_name(defaults: dict, problem, algorithm_name: str | None) -> str:
+    """Select a preset name using algorithm and problem-shape precedence."""
+    if algorithm_name is not None:
+        preset_name = defaults["by_algorithm"].get(algorithm_name)
+        if preset_name is not None:
+            return preset_name
+    for rule in defaults["by_problem_shape"]:
+        when = rule["when"]
+        if all(getattr(problem, key, None) == value for key, value in when.items()):
+            return rule["preset"]
+    return defaults["fallback"]
+
+
 def load_preset(source: str | Path | dict[str, Any]) -> dict[str, Any]:
     """Load and validate a user-defined preset.
 
