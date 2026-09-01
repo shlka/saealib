@@ -124,27 +124,25 @@ Only **final** releases (tags matching `vX.Y.Z` with no pre-release suffix) get 
 
 #### Documentation languages
 
-English is the source language for `docs/` (lowers the barrier for outside contributors); Japanese is maintained as a translation via Sphinx's `gettext`/`sphinx-intl` mechanism, not as separate Japanese `.md` files. Every version snapshot above (`vX.Y.Z/`, `dev/`) is built twice — once as-is (English) and once with `-D language=ja` — producing a parallel `ja/` tree (`ja/vX.Y.Z/`, `ja/dev/`). A script injected on every page (`docs/_static/js/lang-switch.js`) links to the equivalent page in the other language, and the site root auto-redirects based on the browser's `navigator.language`, falling back to English for crawlers/no-JS clients.
+`docs/` holds one Markdown tree per language — `docs/en/` and `docs/ja/` — with the same set of pages at the same relative paths. Sphinx builds each tree separately against the shared configuration in `docs/` (`sphinx-build -c docs docs/en ...`), so `conf.py`, `references.bib`, `_static/`, `_templates/` and `_ext/` are written once and used by both. Every version snapshot above (`vX.Y.Z/`, `dev/`) is built once per language, producing a parallel `ja/` tree (`ja/vX.Y.Z/`, `ja/dev/`). A script injected on every page (`docs/_static/js/lang-switch.js`) links to the equivalent page in the other language, and the site root auto-redirects based on the browser's `navigator.language`, falling back to English for crawlers/no-JS clients.
 
-Only the narrative sections (`getting_started/`, `tutorials/`, `components/`, `algorithms/`, and the root `index.md`/`references.md`) are translated. `api/` is autodoc/autosummary-generated from docstrings and is intentionally left English-only — translating ~150 generated stub pages isn't worth the upkeep, and this matches common practice elsewhere (e.g. NumPy/SciPy translate their guides, not their full API reference).
+English is canonical: where the two trees disagree about behaviour, the English page is correct. That is a rule for resolving conflicts, not an authoring order — a change may start in either language, and translating a Japanese draft into English is as normal as the reverse.
 
-Missing or not-yet-translated strings fall back to the English source automatically (standard `gettext` behavior) — an incomplete `.po` file never breaks the build or leaves a page blank.
+Both trees carry the same pages, `api/` included. The generated API stubs contain little prose, but they still need a Japanese counterpart: the language switcher rewrites the URL path rather than looking a page up, so a page present in only one tree turns the other tree's switcher into a 404. `scripts/check_docs_languages.py` enforces this and admits no exclusions. A page that is not translated yet gets a stub at the matching path pointing at the original, rather than an exclusion entry.
 
-To update translations after editing English content in the sections above:
+The Japanese build is not run with `-W`. Sphinx's own Japanese message catalog renders autodoc's "alias of X" boilerplate as ``:py:class:`X`の別名です。``, and RST does not close an inline role that is followed directly by a Japanese particle, so any documented alias emits a warning that no page content can avoid.
+
+Conventions for keeping the trees consistent — what to translate, what to copy verbatim, and the agreed terminology — are in `docs/translation-guide.md`.
+
+To check and build the documentation locally:
 
 ```bash
-# 1. Extract translatable strings from the narrative sections into .pot catalogs
-uv run --group docs sphinx-build -M gettext docs docs/_build/gettext
-rm -rf docs/_build/gettext/gettext/api   # keep api/ untranslated
+# Page-set parity between the language trees
+uv run --group docs python scripts/check_docs_languages.py
 
-# 2. Merge changes into the ja catalogs (new strings added, changed ones marked "fuzzy",
-#    removed strings dropped; existing translations are preserved)
-uv run --group docs sphinx-intl update -p docs/_build/gettext/gettext -l ja -d docs/locale
-
-# 3. Fill in the empty/fuzzy msgstr entries in docs/locale/ja/LC_MESSAGES/**/*.po
-
-# 4. Verify by building the ja variant locally
-uv run --group docs sphinx-build -b html -D language=ja docs docs/_build/html-ja
+# Build each language (English is strict; see below for why Japanese is not)
+uv run --group docs sphinx-build -W -b html -c docs docs/en docs/_build/html-en
+uv run --group docs sphinx-build -b html -c docs -D language=ja docs/ja docs/_build/html-ja
 ```
 
 ### 7. Public API Governance
