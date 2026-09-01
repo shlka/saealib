@@ -890,10 +890,13 @@ class HypervolumeComparator(ParetoComparator):
         **Generalization from SMS-EMOA.** The original SMS-EMOA
         (Beume et al., 2007) computes HV contributions only on the *last*
         (worst) front to determine the single removal candidate at each
-        generation.  This comparator applies HV-contribution ordering *within
-        every front* to produce a full ranking over the entire population.
-        This is a deliberate generalization that enables use in standard
-        survivor-selection and tournament-selection contexts.
+        generation.  By default this comparator applies HV-contribution
+        ordering *within every front* to produce a full ranking over the
+        entire population, a deliberate generalization that enables use in
+        standard survivor-selection and tournament-selection contexts.  Set
+        ``last_front_only=True`` for the paper's scope instead: contributions
+        are then computed on the last front alone and better fronts are
+        ordered by rank only.
 
     .. warning::
         Computing hypervolume is exponential in the number of objectives, and
@@ -941,6 +944,12 @@ class HypervolumeComparator(ParetoComparator):
         break; kept as a stored, inert attribute (see :attr:`margin`).
         Pass an explicit ``reference_point`` if a margin-scaled reference
         point is needed.
+    last_front_only : bool
+        Restrict HV-contribution ordering to the last (worst) front, as in
+        Beume et al. (2007).  Individuals in better fronts then share one
+        contribution value and keep their relative order.  Defaults to
+        ``False``, which ranks within every front.  Setting it also removes
+        the per-front hypervolume cost for all but the last front.
     sorter : NonDominatedSorter
         Non-dominated sorting callable.
     dominator : Dominator or None
@@ -968,6 +977,7 @@ class HypervolumeComparator(ParetoComparator):
         eps_obj: float = 1e-6,
         reference_point: np.ndarray | None = None,
         margin: float = 0.1,
+        last_front_only: bool = False,
         sorter: NonDominatedSorter = non_dominated_sort,
         dominator: Dominator | None = None,
     ):
@@ -984,11 +994,17 @@ class HypervolumeComparator(ParetoComparator):
             else np.asarray(reference_point, dtype=float)
         )
         self._margin = float(margin)
+        self._last_front_only = bool(last_front_only)
 
     @property
     def reference_point(self) -> np.ndarray | None:
         """Reference point used for hypervolume computation, or None for auto."""
         return self._reference_point
+
+    @property
+    def last_front_only(self) -> bool:
+        """Whether HV contributions are restricted to the last front."""
+        return self._last_front_only
 
     @property
     def margin(self) -> float:
@@ -1024,6 +1040,10 @@ class HypervolumeComparator(ParetoComparator):
                 dominator=self._dominator,
             )
             rank_all[feasible] = ranks
+
+            if self._last_front_only:
+                contrib_all[feasible] = 0.0
+                fronts = fronts[-1:]
 
             for front in fronts:  # front = local indices into feasible subset
                 local = np.asarray(front, dtype=int)

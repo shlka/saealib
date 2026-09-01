@@ -2637,6 +2637,28 @@ class TestHypervolumeComparator:
         # idx 1 and 2 (front 1) occupy the last two positions
         assert set(order[1:]) == {1, 2}
 
+    def test_last_front_only_leaves_better_fronts_in_input_order(self) -> None:
+        f = np.array([[0.0, 3.0], [1.0, 1.0], [3.0, 0.0], [2.0, 4.0], [4.0, 2.0]])
+
+        generic = HypervolumeComparator().sort_population(_make_pop(f))
+        paper = HypervolumeComparator(last_front_only=True).sort_population(
+            _make_pop(f)
+        )
+
+        assert generic[:3].tolist() == [1, 0, 2]
+        assert paper[:3].tolist() == [0, 1, 2]
+        assert set(generic[3:].tolist()) == set(paper[3:].tolist()) == {3, 4}
+
+    def test_last_front_only_still_ranks_within_the_last_front(self) -> None:
+        f = np.array([[0.0, 0.0], [5.0, 1.0], [1.0, 5.0], [3.0, 3.0]])
+
+        order = HypervolumeComparator(last_front_only=True).sort_population(
+            _make_pop(f)
+        )
+
+        assert order[0] == 0
+        assert order[1:].tolist() == [3, 1, 2]
+
     def test_sort_population_hv_contribution_within_front(self) -> None:
         """Within front 0, the point with smallest HV contribution sorts last."""
         from saealib.comparators import HypervolumeComparator

@@ -172,24 +172,30 @@ def igd_plus(f: np.ndarray, reference_front: np.ndarray) -> float:
     return float(np.min(_pairwise_plus_distances(f, reference_front), axis=0).mean())
 
 
-def spacing(f: np.ndarray) -> float:
+def spacing(f: np.ndarray, *, squared: bool = False) -> float:
     """Compute the spacing indicator for an obtained front.
 
-    The indicator is the sample standard deviation of each point's nearest
-    other-point Manhattan distance. Empty and singleton sets return
-    ``np.nan`` because the sample standard deviation is undefined. Duplicate-
-    only sets with at least two points return ``0.0``; duplicates therefore
-    contribute zero nearest-neighbor distances.
+    The indicator summarizes how evenly a front is spread, through each
+    point's nearest other-point Manhattan distance. The default returns the
+    sample standard deviation of those distances, matching the form jMetal
+    and pymoo report. ``squared=True`` returns the sample variance instead,
+    which is the quantity Schott defines, and is the square of the default.
+    Empty and singleton sets return ``np.nan`` because both forms are
+    undefined there. Duplicate-only sets with at least two points return
+    ``0.0``; duplicates contribute zero nearest-neighbor distances.
 
     Parameters
     ----------
     f : np.ndarray
         Obtained objective matrix, shape (n, n_obj).
+    squared : bool, optional
+        Return Schott's variance rather than its square root.
 
     Returns
     -------
     float
-        Sample standard deviation of nearest-neighbor Manhattan distances.
+        Sample variance of the nearest-neighbor Manhattan distances when
+        *squared* is set, otherwise their sample standard deviation.
 
     References
     ----------
@@ -204,7 +210,8 @@ def spacing(f: np.ndarray) -> float:
     distances = _pairwise_manhattan_distances(f, f)
     np.fill_diagonal(distances, np.inf)
     nearest = np.min(distances, axis=1)
-    return float(np.sqrt(np.sum((nearest - nearest.mean()) ** 2) / (len(f) - 1)))
+    variance = float(np.sum((nearest - nearest.mean()) ** 2) / (len(f) - 1))
+    return variance if squared else float(np.sqrt(variance))
 
 
 def spread(f: np.ndarray, reference_front: np.ndarray) -> float:
@@ -354,12 +361,14 @@ def hypervolume_contributions(
     .. warning::
         Computing hypervolume is exponential in the number of objectives, and
         the leave-one-out loop adds a factor of N.  For many objectives or
-        large N this becomes prohibitively expensive.  A future improvement
-        may incorporate a faster batch hypervolume algorithm (e.g. the
-        slicing-based approach of While, Hingston, Barone & Huband, 2006;
-        paper not yet obtained -- name only, not to be confused with the
-        WFG benchmark-problem paper by Huband et al., 2006, which is a
-        different work despite the overlapping author list).
+        large N this becomes prohibitively expensive.  The hypervolume kernel
+        this function calls already processes objectives rather than points,
+        the slicing structure of While, Hingston, Barone & Huband (2006), so
+        the remaining cost is the repetition itself: a faster contribution
+        algorithm has to avoid recomputing the whole volume once per point.
+        That work is not to be confused with the WFG benchmark-problem paper
+        by Huband et al. (2006), a different paper despite the overlapping
+        author list.
 
     Parameters
     ----------
