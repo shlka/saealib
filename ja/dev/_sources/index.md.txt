@@ -29,7 +29,7 @@ page_type: entry
 :::{grid-item-card} {fa}`flag;sd-mr-1` はじめに
 :link: getting_started/index
 :link-type: doc
-共通の使い始め方を確認します。
+始め方を確認します。
 :::
 :::{grid-item-card} {fa}`book-open;sd-mr-1` チュートリアル
 :link: tutorials/index
