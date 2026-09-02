@@ -1,6 +1,7 @@
 import os
 import sys
 from importlib.metadata import version as _get_version
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath("../src"))
 sys.path.insert(0, os.path.abspath("."))
@@ -45,9 +46,9 @@ mermaid.initialize({
 """
 
 
-templates_path = ["_templates"]
+# autosummary resolves templates_path against srcdir, not confdir
+templates_path = [str(Path(__file__).parent / "_templates")]
 exclude_patterns = [
-    "_build",
     "Thumbs.db",
     ".DS_Store",
     "**/_page_template.md",
@@ -69,9 +70,9 @@ bibtex_bibfiles = ["references.bib"]
 bibtex_default_style = "unsrt"
 
 # -- Internationalization -----------------------------------------------------
+# Each language is its own source tree (docs/en, docs/ja) built with -c docs;
+# `language` only drives theme strings and search tokenization.
 language = "en"
-locale_dirs = ["locale/"]
-gettext_compact = False
 
 # -- HTML output -------------------------------------------------------------
 SITE_ROOT = "https://saealib.github.io/saealib"

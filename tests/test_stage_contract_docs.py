@@ -8,6 +8,7 @@ import saealib.stages as stages_module
 from saealib._stage_docs import (
     BEGIN_MARKER,
     END_MARKER,
+    HEADERS,
     render_stage_contracts,
     update_stage_docs,
 )
@@ -15,8 +16,9 @@ from saealib.pipeline import Stage
 from saealib.stages import discover_builtin_stages
 
 DOCS_ROOT = Path(__file__).parents[1] / "docs"
-DOCS_PATH = DOCS_ROOT / "concepts/observation_and_state/stage.md"
-EXTENSION_DOCS_PATH = DOCS_ROOT / "concepts/extension_guidelines.md"
+STAGE_PAGE = "concepts/observation_and_state/stage.md"
+DOCS_PATH = DOCS_ROOT / "en" / STAGE_PAGE
+EXTENSION_DOCS_PATH = DOCS_ROOT / "en/concepts/extension_guidelines.md"
 
 
 def test_production_discovery_lists_all_operational_stages() -> None:
@@ -60,11 +62,15 @@ def test_generated_table_contains_every_discovered_class_and_name() -> None:
     assert "built-in 11" not in extension_docs
 
 
-def test_docs_generation_is_reproducible_and_contract_driven() -> None:
-    original = DOCS_PATH.read_text(encoding="utf-8")
-    assert update_stage_docs(DOCS_PATH) is False
-    assert DOCS_PATH.read_text(encoding="utf-8") == original
+def test_docs_generation_is_reproducible_in_every_language_tree() -> None:
+    for language, headers in HEADERS.items():
+        path = DOCS_ROOT / language / STAGE_PAGE
+        original = path.read_text(encoding="utf-8")
+        assert update_stage_docs(path, headers) is False, language
+        assert path.read_text(encoding="utf-8") == original
 
+
+def test_generated_table_is_contract_driven() -> None:
     table = render_stage_contracts()
     assert "| TellStage | tell |" in table
     assert "`proposals.offspring`" in table
