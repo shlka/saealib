@@ -7,8 +7,6 @@ page_type: entry
 # Algorithms
 
 Pages summarizing how named algorithms from the literature are reproduced as combinations of saealib components.
-Each page has two parts: a theoretical overview of the algorithm (a general explanation independent of saealib), and how to configure it in saealib (the component combination and Python code).
-Full bibliographic details for the sources are collected in [References](../references.md), and each page in this section links there.
 
 When a configuration does not exactly match the theoretical definition, each page states the implementation differences, such as acquisition-function constraints, selection or archive handling, and evaluation order.
 
