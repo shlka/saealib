@@ -10,7 +10,7 @@ from saealib.defaults.model import DefaultHint, DefaultStrength
 class BuiltinDefaultProvider:
     """Generic fallback default provider.
 
-    Provides backward-compatible defaults:
+    Provides dimension-scaled defaults:
     - population.size = 4 * dim
     - archive.initial_size = 5 * dim
     - termination.max_evaluations = 200 * dim

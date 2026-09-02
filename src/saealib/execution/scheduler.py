@@ -547,7 +547,7 @@ class AsyncEvaluationScheduler:
                         "FeedbackAccumulator buffer"
                     )
             else:
-                # Older checkpoints lack the keyed accumulator snapshot.
+                # Nothing was buffered, so rebuild from the pending requests.
                 if has_partial_feedback:
                     raise CheckpointError(
                         "checkpoint is missing FeedbackAccumulator state for "

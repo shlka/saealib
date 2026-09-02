@@ -6,12 +6,11 @@ import copy
 import dataclasses
 import functools
 import json
-import pickle
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
-from urllib.parse import quote, unquote
+from urllib.parse import quote
 
 import numpy as np
 
@@ -32,14 +31,12 @@ from saealib.core.state import (
     RUNTIME_GENERATION,
     RUNTIME_REQUEST_ID_ALLOCATOR,
     RUNTIME_RNG,
-    STATE_MIGRATORS,
     SURROGATES_PREDICTIONS,
     USER_DATA,
     StateKey,
     StatePatch,
     StateStore,
 )
-from saealib.core.state.migration import _population_entry_v1_to_v2
 from saealib.exceptions import CheckpointError, ValidationError
 from saealib.identity import IDAllocator
 from saealib.space import BoundsService
@@ -61,12 +58,8 @@ if TYPE_CHECKING:
     from saealib.surrogate.prediction import SurrogatePrediction
 
 
-CURRENT_CHECKPOINT_SCHEMA_VERSION = 6
-SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS = frozenset({1, 2, 3, 4, 5, 6})
-_SAFE_EMPTY_PENDING = frozenset(
-    pickle.dumps({}, protocol=protocol)
-    for protocol in range(pickle.HIGHEST_PROTOCOL + 1)
-)
+CURRENT_CHECKPOINT_SCHEMA_VERSION = 1
+SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS = frozenset({1})
 _NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 _MISSING = object()
 
@@ -107,37 +100,7 @@ def _dataclass_field_names(state_type: type[Any]) -> frozenset[str]:
 
 @functools.lru_cache(maxsize=1024)
 def _collection_key(kind: str, name: str) -> StateKey[object]:
-    if kind == "populations":
-        return StateKey(namespace=kind, name=name, schema_version=2)
     return StateKey(namespace=kind, name=name, schema_version=1)
-
-
-def _resolve_checkpoint_population_migrator(
-    key: StateKey[Any], target_version: int
-) -> None:
-    """Resolve a legacy named population migration from the checkpoint.
-
-    ``StateMigrationRegistry`` intentionally has exact name semantics.  The
-    package can register the built-in ``main`` path at import time, but an
-    arbitrary population name is only known when it appears in a checkpoint.
-    Resolve that one path at load time so reading a file does not depend on
-    which named keys were constructed earlier in the process.
-    """
-    if (
-        key.namespace != "populations"
-        or key.name == "main"
-        or key.schema_version > 1
-        or target_version <= 1
-    ):
-        return
-    migration_id = (key.namespace, key.name, 1)
-    if migration_id not in STATE_MIGRATORS.registered():
-        STATE_MIGRATORS.register(
-            key.namespace,
-            key.name,
-            1,
-            _population_entry_v1_to_v2,
-        )
 
 
 class _NamedCollection(dict[str, Any]):
@@ -294,12 +257,6 @@ def _encoded_name(name: str) -> str:
     return quote(name, safe="")
 
 
-def _decoded_name(value: str) -> str:
-    name = unquote(value)
-    _validate_collection_name(name)
-    return name
-
-
 @dataclass(frozen=True)
 class EvaluationPlanState:
     """Checkpointable lifecycle state for a multi-request evaluation plan."""
@@ -388,10 +345,10 @@ class OptimizationState:
         state as a side effect.
     proposal_id_allocator : IDAllocator
         Allocates stable, unique int64 proposal IDs.  When omitted, it starts
-        at the current request allocator value for legacy compatibility.
+        at the current request allocator value.
     history : History or None
         Optional execution history accumulator. Summary-channel rows are
-        persisted by schema-v6 checkpoints.
+        persisted by checkpoints.
     fe : int
         Number of function evaluations.
     gen : int
@@ -1096,14 +1053,7 @@ class OptimizationState:
         return cast(Any, self._store.get(_collection_key("archives", name)))
 
     def __setstate__(self, state: dict[str, Any]) -> None:
-        """Restore canonical collections from current or legacy pickle state."""
-        if "populations" not in state:
-            state["populations"] = {"main": state.pop("population")}
-        if "archives" not in state:
-            state["archives"] = {
-                "main": state.pop("archive"),
-                "pareto": state.pop("pareto_archive"),
-            }
+        """Rebuild through ``__init__`` so the state store is reconstructed."""
         self.__init__(**state)
 
     # ------------------------------------------------------------------
@@ -1193,7 +1143,7 @@ class OptimizationState:
                                         if owner is population
                                     ),
                                     {
-                                        "entry": _encode_v3_value(
+                                        "entry": _encode_state_value(
                                             StateKey(
                                                 namespace="evaluations",
                                                 name="owner",
@@ -1212,7 +1162,7 @@ class OptimizationState:
                     ],
                 }
             else:
-                encoded = _encode_v3_value(
+                encoded = _encode_state_value(
                     key, value, arrays, f"_entry_{index}", genome_codec=genome_codec
                 )
             entries.append(
@@ -1256,161 +1206,6 @@ class OptimizationState:
         """
         self._save_current(path)
 
-    def _save_v2(self, path: str | Path) -> None:
-        """
-        Save optimization state to an npz file.
-
-        Saves archive, population, Pareto archive arrays and the RNG state.
-        Reproducibility is best-effort: bit-exact resume is expected within
-        the same NumPy version and environment, but not guaranteed across
-        versions.
-
-        Only ``self.rng`` is saved. Components that own a private RNG spawned
-        from ``self.rng`` (e.g. :class:`~saealib.comparators.NSGA3Comparator`'s
-        niche tie-breaking generator) are not serialized; on resume, such a
-        component gets a fresh spawn from the restored ``rng`` rather than a
-        continuation of its own pre-checkpoint draw sequence.
-
-        Parameters
-        ----------
-        path : str or Path
-            Destination file path.  The ``.npz`` extension is added if absent.
-        """
-        if any(
-            not pending.checkpointable and pending.fatal_error is None
-            for pending in self.pending_evaluations.values()
-        ):
-            raise ValidationError(
-                "cannot checkpoint while synchronous evaluations are pending"
-            )
-        p = Path(path)
-        if not p.suffix:
-            p = p.with_suffix(".npz")
-
-        save_dict: dict[str, np.ndarray] = {}
-        manifest: dict[str, Any] = {
-            "schema_version": 2,
-            "populations": [],
-            "archives": [],
-            "offspring": None,
-            "evaluation_owners": [],
-        }
-        for kind, collections in (
-            ("population", self.populations),
-            ("archive", self.archives),
-        ):
-            for name, collection in collections.items():
-                descriptor = _collection_descriptor(kind, name, collection)
-                manifest["populations" if kind == "population" else "archives"].append(
-                    descriptor
-                )
-                encoded = _encoded_name(name)
-                for attr_name, array in collection._data.items():
-                    if array.dtype == object:
-                        raise CheckpointError(
-                            f"object dtype is not checkpointable: {kind} {name!r}"
-                        )
-                    save_dict[f"{kind}__{encoded}__{_encoded_name(attr_name)}"] = (
-                        np.array(array[: len(collection)], copy=True)
-                    )
-        if self.offspring is not None:
-            if any(
-                self.offspring is population for population in self.populations.values()
-            ):
-                alias = next(
-                    name
-                    for name, population in self.populations.items()
-                    if population is self.offspring
-                )
-                manifest["offspring"] = {"alias": alias}
-            else:
-                descriptor = _collection_descriptor(
-                    "population", "offspring", self.offspring
-                )
-                manifest["offspring"] = descriptor
-                for attr_name, array in self.offspring._data.items():
-                    if array.dtype == object:
-                        raise CheckpointError("object dtype is not checkpointable")
-                    save_dict[f"offspring__{_encoded_name(attr_name)}"] = np.array(
-                        array[: len(self.offspring)], copy=True
-                    )
-
-        for request_id, owner in self.evaluation_owners.items():
-            alias = next(
-                (
-                    name
-                    for name, population in self.populations.items()
-                    if population is owner
-                ),
-                None,
-            )
-            if alias is not None:
-                manifest["evaluation_owners"].append(
-                    {"request_id": int(request_id), "alias": alias}
-                )
-                continue
-            if owner is self.offspring:
-                manifest["evaluation_owners"].append(
-                    {"request_id": int(request_id), "offspring": True}
-                )
-                continue
-            name = f"owner-{int(request_id)}"
-            descriptor = _collection_descriptor("population", name, owner)
-            manifest["evaluation_owners"].append(
-                {"request_id": int(request_id), "descriptor": descriptor}
-            )
-            for attr_name, array in owner._data.items():
-                if array.dtype == object:
-                    raise CheckpointError("object dtype is not checkpointable")
-                save_dict[
-                    f"evaluation_owner__{int(request_id)}__{_encoded_name(attr_name)}"
-                ] = np.array(array[: len(owner)], copy=True)
-
-        save_dict["_manifest"] = _json_array(manifest)
-        save_dict["_rng_state"] = _json_array(self.rng.bit_generator.state)
-        save_dict["_fe"] = np.array(self.fe, dtype=np.int64)
-        save_dict["_gen"] = np.array(self.gen, dtype=np.int64)
-        save_dict["_checkpoint_schema_version"] = np.array(2, dtype=np.int64)
-        save_dict["_next_candidate_id"] = np.array(
-            self.candidate_id_allocator.next_value, dtype=np.int64
-        )
-        save_dict["_next_proposal_id"] = np.array(
-            self.proposal_id_allocator.next_value, dtype=np.int64
-        )
-        save_dict["_next_request_id"] = np.array(
-            self.request_id_allocator.next_value, dtype=np.int64
-        )
-        save_dict["_pending_evaluations"] = _json_array(
-            [_pending_to_json(pending) for pending in self.pending_evaluations.values()]
-        )
-        save_dict["_feedback_result"] = _json_array(
-            None
-            if self.feedback_result is None
-            else _feedback_to_json(self.feedback_result)
-        )
-        save_dict["_predictions"] = _json_array(
-            None if self.predictions is None else _prediction_to_json(self.predictions)
-        )
-        save_dict["_evaluation_plan"] = _json_array(
-            None
-            if self.evaluation_plan is None
-            else _plan_to_json(self.evaluation_plan)
-        )
-        save_dict["_evaluation_plan_state"] = _json_array(
-            None
-            if self.evaluation_plan_state is None
-            else _plan_state_to_json(self.evaluation_plan_state)
-        )
-        save_dict["_evaluation_plan_updates"] = _json_array(
-            {
-                str(request_id): [_update_to_json(update) for update in updates]
-                for request_id, updates in self.evaluation_plan_updates.items()
-            }
-        )
-        save_dict["_async_fatal"] = _json_array(_json_safe(self.async_fatal))
-        save_dict["_data"] = _json_array(_json_safe(self.data))
-        np.savez(p, **cast(Any, save_dict))
-
     @classmethod
     def load(cls, path: str | Path, problem: Problem) -> OptimizationState:
         """
@@ -1446,11 +1241,7 @@ class OptimizationState:
                     "supported versions are "
                     f"{sorted(SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS)}"
                 )
-            if schema_version == 1:
-                return _load_v1(cls, data, problem)
-            if schema_version in (3, 4, 5, 6):
-                return _load_v3_or_later(cls, data, problem)
-            return _load_v2(cls, data, problem)
+            return _load_checkpoint(cls, data, problem)
         except CheckpointError:
             raise
         except (KeyError, TypeError, ValueError, json.JSONDecodeError, OSError) as exc:
@@ -1486,7 +1277,7 @@ def _state_key_from_json(value: Any) -> StateKey[Any]:
         raise CheckpointError("state entry key is malformed") from exc
 
 
-def _encode_v3_value(
+def _encode_state_value(
     key: StateKey[Any],
     value: Any,
     arrays: dict[str, np.ndarray],
@@ -1604,7 +1395,7 @@ def _encode_v3_value(
             "value": [
                 {
                     "request_id": int(k),
-                    "entry": _encode_v3_value(
+                    "entry": _encode_state_value(
                         StateKey(
                             namespace="evaluations", name="owner", schema_version=1
                         ),
@@ -1620,7 +1411,7 @@ def _encode_v3_value(
     return {"codec": "json", "value": _json_safe(value)}
 
 
-def _decode_v3_value(
+def _decode_state_value(
     key: StateKey[Any],
     encoded: Any,
     data: Any,
@@ -1695,7 +1486,7 @@ def _decode_v3_value(
             if "alias" in item:
                 result[request_id] = {"__state_alias__": item["alias"]}
             else:
-                result[request_id] = _decode_v3_value(
+                result[request_id] = _decode_state_value(
                     StateKey(namespace="evaluations", name="owner", schema_version=1),
                     item["entry"],
                     data,
@@ -1877,11 +1668,7 @@ def _request_from_json(value: Any) -> Any:
     if not isinstance(value, dict):
         raise CheckpointError("evaluation request is malformed")
     try:
-        payload = (
-            _payload_from_json(value["payload"])
-            if "payload" in value
-            else np.asarray(value["x"], dtype=np.float64)
-        )
+        payload = _payload_from_json(value["payload"])
         return EvaluationRequest(
             np.int64(value["request_id"]),
             np.asarray(value["candidate_ids"], dtype=np.int64),
@@ -2460,212 +2247,10 @@ def _restore_collection(
     return collection
 
 
-def _load_v2(
+def _load_checkpoint(
     cls: type[OptimizationState], data: Any, problem: Problem
 ) -> OptimizationState:
-    manifest = _read_json(data, "_manifest")
-    if not isinstance(manifest, dict) or manifest.get("schema_version") != 2:
-        raise CheckpointError("manifest schema version does not match checkpoint")
-    populations = manifest.get("populations")
-    archives = manifest.get("archives")
-    if not isinstance(populations, list) or not isinstance(archives, list):
-        raise CheckpointError("checkpoint manifest collections are malformed")
-    if any(not isinstance(item, dict) for item in populations + archives):
-        raise CheckpointError("checkpoint collection descriptor is malformed")
-    if any(not isinstance(item.get("name"), str) for item in populations + archives):
-        raise CheckpointError("checkpoint collection name is malformed")
-    if len({item.get("name") for item in populations}) != len(populations):
-        raise CheckpointError("checkpoint contains duplicate population names")
-    if len({item.get("name") for item in archives}) != len(archives):
-        raise CheckpointError("checkpoint contains duplicate archive names")
-    restored_populations = {
-        item["name"]: _restore_collection("population", item, data)
-        for item in populations
-    }
-    restored_archives = {
-        item["name"]: _restore_collection("archive", item, data) for item in archives
-    }
-    if "main" not in restored_populations or not {"main", "pareto"} <= set(
-        restored_archives
-    ):
-        raise CheckpointError("checkpoint is missing required main/pareto collections")
-    offspring_payload = manifest.get("offspring")
-    if offspring_payload is None:
-        offspring = None
-    elif (
-        isinstance(offspring_payload, dict)
-        and set(offspring_payload) == {"alias"}
-        and offspring_payload["alias"] in restored_populations
-    ):
-        offspring = restored_populations[offspring_payload["alias"]]
-    elif isinstance(offspring_payload, dict):
-        offspring = _restore_collection(
-            "population", offspring_payload, data, storage_prefix="offspring"
-        )
-    else:
-        raise CheckpointError("checkpoint offspring descriptor is malformed")
-    owner_payload = manifest.get("evaluation_owners", [])
-    if not isinstance(owner_payload, list):
-        raise CheckpointError("checkpoint evaluation owners are malformed")
-    owners = {}
-    for item in owner_payload:
-        if not isinstance(item, dict) or not isinstance(item.get("request_id"), int):
-            raise CheckpointError("checkpoint evaluation owner is malformed")
-        request_id = item["request_id"]
-        if "alias" in item and item["alias"] in restored_populations:
-            owner = restored_populations[item["alias"]]
-        elif item.get("offspring") is True and offspring is not None:
-            owner = offspring
-        elif isinstance(item.get("descriptor"), dict):
-            owner = _restore_collection(
-                "population",
-                item["descriptor"],
-                data,
-                storage_prefix=f"evaluation_owner__{request_id}",
-            )
-        else:
-            raise CheckpointError("checkpoint evaluation owner is missing")
-        if request_id in owners:
-            raise CheckpointError("duplicate evaluation owner")
-        owners[request_id] = owner
-    pending_payload = _read_json(data, "_pending_evaluations")
-    if not isinstance(pending_payload, list):
-        raise CheckpointError("checkpoint pending evaluations are malformed")
-    pending = {}
-    for item in pending_payload:
-        restored = _pending_from_json(item)
-        if not restored.checkpointable and restored.fatal_error is None:
-            raise CheckpointError("non-checkpointable pending evaluation")
-        request_id = int(restored.request.request_id)
-        if request_id in pending:
-            raise CheckpointError("duplicate pending request id")
-        pending[request_id] = restored
-    state_data = _read_json(data, "_data") if "_data" in data.files else {}
-    if not isinstance(state_data, dict):
-        raise CheckpointError("checkpoint data metadata must be a mapping")
-    if "_async_fatal" in data.files:
-        async_fatal = _read_json(data, "_async_fatal")
-        if async_fatal is not None and not isinstance(async_fatal, dict):
-            raise CheckpointError("checkpoint async fatal state is malformed")
-    else:
-        for key in ("pending_candidate_ids", "reserved_fe", "reserved_cost"):
-            state_data.pop(key, None)
-        async_fatal = state_data.pop("async_fatal", None)
-        if async_fatal is not None and not isinstance(async_fatal, dict):
-            raise CheckpointError("checkpoint legacy async fatal state is malformed")
-    state_data.pop("evaluation_plan", None)
-    state_data.pop("evaluation_updates", None)
-    feedback_result = (
-        None
-        if "_feedback_result" not in data.files
-        else (
-            None
-            if (value := _read_json(data, "_feedback_result")) is None
-            else _feedback_from_json(value)
-        )
-    )
-    predictions = (
-        None
-        if "_predictions" not in data.files
-        else (
-            None
-            if (value := _read_json(data, "_predictions")) is None
-            else _prediction_from_json(value)
-        )
-    )
-    evaluation_plan = (
-        None
-        if "_evaluation_plan" not in data.files
-        else (
-            None
-            if (value := _read_json(data, "_evaluation_plan")) is None
-            else _plan_from_json(value)
-        )
-    )
-    evaluation_plan_state = (
-        None
-        if "_evaluation_plan_state" not in data.files
-        else (
-            None
-            if (value := _read_json(data, "_evaluation_plan_state")) is None
-            else _plan_state_from_json(value)
-        )
-    )
-    plan_updates_payload = (
-        {}
-        if "_evaluation_plan_updates" not in data.files
-        else _read_json(data, "_evaluation_plan_updates")
-    )
-    if not isinstance(plan_updates_payload, dict):
-        raise CheckpointError("checkpoint evaluation plan updates are malformed")
-    evaluation_plan_updates = {}
-    try:
-        for request_id, updates in plan_updates_payload.items():
-            if not isinstance(updates, list):
-                raise CheckpointError(
-                    "checkpoint evaluation plan updates are malformed"
-                )
-            evaluation_plan_updates[int(request_id)] = [
-                _update_from_json(update) for update in updates
-            ]
-    except (TypeError, ValueError) as exc:
-        raise CheckpointError(
-            "checkpoint evaluation plan updates are malformed"
-        ) from exc
-    if evaluation_plan is not None and evaluation_plan_state is not None:
-        plan_ids = {int(request.request_id) for request in evaluation_plan.requests}
-        state_ids = (
-            set(evaluation_plan_state.submitted)
-            | set(evaluation_plan_state.completed)
-            | set(evaluation_plan_state.acknowledged)
-            | set(evaluation_plan_state.deferred)
-        )
-        if not state_ids <= plan_ids:
-            raise CheckpointError("evaluation plan state references an unknown request")
-        if not set(evaluation_plan_updates) <= plan_ids:
-            raise CheckpointError(
-                "evaluation plan updates reference an unknown request"
-            )
-    rng = np.random.default_rng()
-    rng.bit_generator.state = _read_json(data, "_rng_state")
-    request_allocator = IDAllocator(
-        _allocator_scalar(data["_next_request_id"], "_next_request_id")
-    )
-    proposal_allocator = IDAllocator(
-        _allocator_scalar(data["_next_proposal_id"], "_next_proposal_id")
-        if "_next_proposal_id" in data.files
-        else request_allocator.next_value
-    )
-    return cls(
-        problem=problem,
-        populations=restored_populations,
-        archives=restored_archives,
-        rng=rng,
-        candidate_id_allocator=IDAllocator(
-            _allocator_scalar(data["_next_candidate_id"], "_next_candidate_id")
-        ),
-        proposal_id_allocator=proposal_allocator,
-        request_id_allocator=request_allocator,
-        fe=_scalar_int(data["_fe"]),
-        gen=_scalar_int(data["_gen"]),
-        offspring=offspring,
-        pending_evaluations=pending,
-        evaluation_owners=owners,
-        feedback_result=feedback_result,
-        predictions=predictions,
-        evaluation_plan=evaluation_plan,
-        evaluation_plan_state=evaluation_plan_state,
-        evaluation_plan_updates=evaluation_plan_updates,
-        async_fatal=async_fatal,
-        data={**state_data, "resumed": True},
-    )
-
-
-def _load_v3_or_later(
-    cls: type[OptimizationState], data: Any, problem: Problem
-) -> OptimizationState:
-    """Load a schema-v3, schema-v4, schema-v5, or schema-v6 checkpoint."""
-    schema_version = _scalar_int(data["_checkpoint_schema_version"])
+    """Load a checkpoint in the current serialized state format."""
     genome_codec = problem.space.services.get("GenomeCodec")
     dense_numeric_view = problem.space.services.get("DenseNumericView")
     entries = _read_json(data, "_state_entries")
@@ -2690,33 +2275,21 @@ def _load_v3_or_later(
                 expected_target = max(expected_target, expected_key.schema_version)
                 break
         target = max(target, expected_target)
-        if key.schema_version > target:
+        if key.schema_version != target:
             raise CheckpointError(
-                f"State key {key.namespace}/{key.name} has future schema version "
-                f"v{key.schema_version}; target is v{target}."
+                f"State key {key.namespace}/{key.name} is at schema version "
+                f"v{key.schema_version} but the checkpoint targets v{target}; "
+                "this version provides no state migration."
             )
-        if key.schema_version < target:
-            value = _decode_v3_value(
-                key,
-                item.get("value"),
-                data,
-                f"_entry_{index}",
-                genome_codec=genome_codec,
-                dense_numeric_view=dense_numeric_view,
-                space=problem.space,
-            )
-            _resolve_checkpoint_population_migrator(key, target)
-            key, value = STATE_MIGRATORS.migrate(key, value, target_version=target)
-        else:
-            value = _decode_v3_value(
-                key,
-                item.get("value"),
-                data,
-                f"_entry_{index}",
-                genome_codec=genome_codec,
-                dense_numeric_view=dense_numeric_view,
-                space=problem.space,
-            )
+        value = _decode_state_value(
+            key,
+            item.get("value"),
+            data,
+            f"_entry_{index}",
+            genome_codec=genome_codec,
+            dense_numeric_view=dense_numeric_view,
+            space=problem.space,
+        )
         if key in restored:
             raise CheckpointError(f"duplicate state entry {key.namespace}/{key.name}")
         restored[key] = value
@@ -2826,14 +2399,6 @@ def _load_v3_or_later(
                 if array_key not in data.files:
                     raise CheckpointError(f"Checkpoint is missing array {array_key!r}")
                 columns[column] = np.asarray(data[array_key])
-            if (
-                schema_version < 6
-                and channel == "summary"
-                and "best_f" not in columns
-                and columns
-            ):
-                row_count = len(next(iter(columns.values())))
-                columns["best_f"] = np.full(row_count, np.nan)
             history._restore_channel(channel, columns)
             block_names = blocks_by_channel[channel]
             if (
@@ -2865,81 +2430,3 @@ def _load_v3_or_later(
     state = cls(**kwargs)
     state.data = {**state.data, "resumed": True}
     return state
-
-
-def _load_v1(
-    cls: type[OptimizationState], data: Any, problem: Problem
-) -> OptimizationState:
-    from saealib.population import (
-        Archive,
-        ParetoArchive,
-        Population,
-    )
-
-    schema_list = _read_json(data, "_schema")
-    descriptor = {
-        "schema": schema_list,
-        "size": _scalar_int(data["_archive_size"]),
-        "capacity": max(_scalar_int(data["_archive_size"]), 1),
-    }
-    attrs = _attrs_from_descriptor(descriptor)
-
-    def old_collection(prefix: str, size: int, factory: Any) -> Any:
-        collection = factory(attrs, max(size, 1))
-        values = {}
-        for attr in attrs:
-            key = f"{prefix}__{attr.name}"
-            if key not in data.files:
-                raise CheckpointError(f"legacy checkpoint is missing {key!r}")
-            array = np.asarray(data[key])
-            expected = (size, *attr.shape)
-            if array.dtype != np.dtype(attr.dtype) or array.shape != expected:
-                raise CheckpointError(f"legacy array {key!r} has an invalid shape")
-            values[attr.name] = array
-        if size:
-            collection._extend_internal(values, preserve_ids=True)
-        return collection
-
-    archive = old_collection("archive", descriptor["size"], Archive)
-    population = old_collection("pop", _scalar_int(data["_pop_size"]), Population)
-    pareto = old_collection(
-        "pareto",
-        _scalar_int(data["_pareto_size"]),
-        lambda a, c: ParetoArchive(a, c, direction=problem.direction),
-    )
-    if "_pending_evaluations" in data.files:
-        pending_bytes = bytes(data["_pending_evaluations"])
-        if pending_bytes not in _SAFE_EMPTY_PENDING and pending_bytes not in (
-            b"",
-            b"[]",
-            b"{}",
-            b"null",
-        ):
-            raise CheckpointError("legacy pending state is not a safe empty value")
-    rng = np.random.default_rng()
-    rng.bit_generator.state = _read_json(data, "_rng_state")
-    request_allocator = IDAllocator(
-        _allocator_scalar(data["_next_request_id"], "_next_request_id")
-    )
-    return cls(
-        problem=problem,
-        population=population,
-        archive=archive,
-        pareto_archive=pareto,
-        rng=rng,
-        candidate_id_allocator=IDAllocator(
-            _allocator_scalar(data["_next_candidate_id"], "_next_candidate_id")
-        ),
-        proposal_id_allocator=IDAllocator(request_allocator.next_value),
-        request_id_allocator=request_allocator,
-        fe=_scalar_int(data["_fe"]),
-        gen=_scalar_int(data["_gen"]),
-        data={"resumed": True},
-    )
-
-
-# ---------------------------------------------------------------------------
-# Backward-compatibility alias
-# ---------------------------------------------------------------------------
-
-OptimizationContext = OptimizationState

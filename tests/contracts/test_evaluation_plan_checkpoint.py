@@ -169,18 +169,28 @@ def test_plan_state_replace_uses_lightweight_clone_and_retains_validation():
         state.replace(evaluation_plan_updates={99: []})
 
 
-def _rewrite_payload(path, destination, key, value):
+def _rewrite_state_entry(path, destination, name, value):
     payload = dict(np.load(path, allow_pickle=False).items())
-    payload[key] = np.frombuffer(json.dumps(value).encode(), dtype=np.uint8)
+    entries = json.loads(bytes(payload["_state_entries"]).decode())
+    for item in entries:
+        key = item["key"]
+        if key["namespace"] == "evaluations" and key["name"] == name:
+            item["value"]["value"] = value
+            break
+    else:
+        raise AssertionError(f"evaluations/{name} entry was not found")
+    payload["_state_entries"] = np.frombuffer(
+        json.dumps(entries).encode(), dtype=np.uint8
+    )
     np.savez(destination, **payload)
 
 
 def test_checkpoint_rejects_malformed_evaluation_plan_payload(tmp_path):
     state = _planned_state()
     source = tmp_path / "valid.npz"
-    state._save_v2(source)
+    state.save(source)
     bad = tmp_path / "bad-plan.npz"
-    _rewrite_payload(source, bad, "_evaluation_plan", {"requests": [{}]})
+    _rewrite_state_entry(source, bad, "plan", {"requests": [{}]})
 
     with pytest.raises(CheckpointError, match="evaluation plan is malformed"):
         type(state).load(bad, _problem())
@@ -189,14 +199,9 @@ def test_checkpoint_rejects_malformed_evaluation_plan_payload(tmp_path):
 def test_checkpoint_rejects_plan_state_referencing_unknown_request(tmp_path):
     state = _planned_state()
     source = tmp_path / "valid.npz"
-    state._save_v2(source)
+    state.save(source)
     bad = tmp_path / "bad-state.npz"
-    _rewrite_payload(
-        source,
-        bad,
-        "_evaluation_plan_state",
-        {"deferred": [99]},
-    )
+    _rewrite_state_entry(source, bad, "plan_state", {"deferred": [99]})
 
     with pytest.raises(CheckpointError, match="unknown request"):
         type(state).load(bad, _problem())
@@ -205,9 +210,9 @@ def test_checkpoint_rejects_plan_state_referencing_unknown_request(tmp_path):
 def test_checkpoint_rejects_updates_for_unknown_request(tmp_path):
     state = _planned_state()
     source = tmp_path / "valid.npz"
-    state._save_v2(source)
+    state.save(source)
     bad = tmp_path / "bad-updates.npz"
-    _rewrite_payload(source, bad, "_evaluation_plan_updates", {"99": []})
+    _rewrite_state_entry(source, bad, "plan_updates", {"99": []})
 
     with pytest.raises(CheckpointError, match="updates reference an unknown request"):
         type(state).load(bad, _problem())

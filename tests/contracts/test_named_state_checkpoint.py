@@ -1,8 +1,6 @@
 import json
-import pickle
 import subprocess
 from types import SimpleNamespace
-from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -20,7 +18,6 @@ from saealib.core.state import (
     ARCHIVES_PARETO,
     EVALUATIONS_COUNT,
     POPULATIONS_MAIN,
-    STATE_MIGRATORS,
     StateKey,
     StateStore,
 )
@@ -174,7 +171,7 @@ def test_named_collections_checkpoint_roundtrip(tmp_path):
 
 
 def test_current_schema_and_allocator_continuity(tmp_path):
-    assert CURRENT_CHECKPOINT_SCHEMA_VERSION == 6
+    assert CURRENT_CHECKPOINT_SCHEMA_VERSION == 1
     ctx = _state()
     path = tmp_path / "current.npz"
     ctx.save(path)
@@ -190,38 +187,12 @@ def test_current_schema_and_allocator_continuity(tmp_path):
         (item["key"]["namespace"], item["key"]["name"]): item["key"]["schema_version"]
         for item in entries
     }
-    assert versions[("populations", "main")] == 2
-    assert versions[("populations", "backup")] == 2
+    assert versions[("populations", "main")] == 1
+    assert versions[("populations", "backup")] == 1
     assert versions[("archives", "main")] == 1
 
 
-def test_population_key_construction_does_not_register_migrators():
-    """Named key construction must not mutate the migration registry."""
-    before = STATE_MIGRATORS.registered()
-    _state()
-    assert STATE_MIGRATORS.registered() == before
-
-
-def _rewrite_population_entry_as_v1(path, population_name="main"):
-    """Rewrite one population entry to the pre-codec v1 shape."""
-    raw = dict(np.load(path, allow_pickle=False).items())
-    entries = json.loads(bytes(raw["_state_entries"]).decode())
-    for index, item in enumerate(entries):
-        key = item["key"]
-        if key["namespace"] != "populations" or key["name"] != population_name:
-            continue
-        genomes = item["value"].pop("genomes")
-        raw[f"_entry_{index}__x"] = raw.pop(genomes["array"])
-        key["schema_version"] = 1
-        item["target_schema_version"] = 2
-        break
-    else:
-        raise AssertionError(f"populations/{population_name} entry was not found")
-    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
-    np.savez(path, **raw)
-
-
-def test_v3_population_genome_roundtrip_uses_codec(tmp_path):
+def test_population_genome_roundtrip_uses_codec(tmp_path):
     ctx = _state()
     space = ctx.problem.space
     original = space.services.require("GenomeCodec")
@@ -245,7 +216,7 @@ def test_v3_population_genome_roundtrip_uses_codec(tmp_path):
         (index, item)
         for index, item in enumerate(entries)
         if item["key"]
-        == {"namespace": "populations", "name": "main", "schema_version": 2}
+        == {"namespace": "populations", "name": "main", "schema_version": 1}
     )
     assert "genomes" in main["value"]
     assert f"_entry_{main_index}__x" not in raw.files
@@ -256,65 +227,6 @@ def test_v3_population_genome_roundtrip_uses_codec(tmp_path):
     assert isinstance(ctx.population.genomes, DenseVectorBatch)
     np.testing.assert_array_equal(
         loaded.population.genomes.array, ctx.population.genomes.array
-    )
-
-
-def test_v3_population_v1_entry_uses_registered_real_key_migrator(tmp_path):
-    ctx = _state()
-    path = tmp_path / "population-v1-entry.npz"
-    ctx.save(path)
-    _rewrite_population_entry_as_v1(path)
-
-    loaded = OptimizationState.load(path, ctx.problem)
-    migrated_key = StateKey(namespace="populations", name="main", schema_version=2)
-    assert loaded.get_state(migrated_key) is loaded.population
-    np.testing.assert_array_equal(loaded.population.x, ctx.population.x)
-
-
-def test_v3_population_v1_entry_without_migrator_names_key_and_versions(tmp_path):
-    ctx = _state()
-    path = tmp_path / "population-missing-migrator.npz"
-    ctx.save(path)
-    _rewrite_population_entry_as_v1(path)
-
-    migration_id = ("populations", "main", 1)
-    original_migrators = STATE_MIGRATORS._migrators
-    STATE_MIGRATORS._migrators = {
-        key: value for key, value in original_migrators.items() if key != migration_id
-    }
-    try:
-        with pytest.raises(CheckpointError) as error:
-            OptimizationState.load(path, ctx.problem)
-    finally:
-        STATE_MIGRATORS._migrators = original_migrators
-
-    message = str(error.value)
-    assert "populations/main" in message
-    assert "v1" in message and "v2" in message
-    assert "v1 -> v2" in message
-
-
-def test_v3_population_v1_arbitrary_name_resolves_at_load(tmp_path):
-    """A legacy named population loads without prior StateKey construction."""
-    ctx = _state()
-    path = tmp_path / "population-arbitrary-v1-entry.npz"
-    ctx.save(path)
-    _rewrite_population_entry_as_v1(path, "backup")
-
-    migration_id = ("populations", "backup", 1)
-    original_migrators = STATE_MIGRATORS._migrators
-    STATE_MIGRATORS._migrators = {
-        key: value for key, value in original_migrators.items() if key != migration_id
-    }
-    try:
-        loaded = OptimizationState.load(path, ctx.problem)
-    finally:
-        STATE_MIGRATORS._migrators = original_migrators
-
-    migrated_key = StateKey(namespace="populations", name="backup", schema_version=2)
-    assert loaded.get_state(migrated_key) is loaded.populations["backup"]
-    np.testing.assert_array_equal(
-        loaded.populations["backup"].x, ctx.populations["backup"].x
     )
 
 
@@ -357,45 +269,32 @@ def test_object_space_population_load_requires_genome_codec(tmp_path):
         OptimizationState.load(path, ctx.problem)
 
 
-def test_v2_helper_writes_a_self_consistent_v2_checkpoint(tmp_path):
+def test_invalid_archive_subtype_fails_atomically(tmp_path):
     ctx = _state()
-    path = tmp_path / "helper-v2.npz"
-    ctx._save_v2(path)
-    raw = np.load(path, allow_pickle=False)
-    assert int(raw["_checkpoint_schema_version"]) == 2
-    assert json.loads(bytes(raw["_manifest"]).decode())["schema_version"] == 2
-    loaded = OptimizationState.load(path, ctx.problem)
-    assert loaded.fe == ctx.fe
-    assert loaded.gen == ctx.gen
-    assert loaded.candidate_id_allocator.next_value == 20
-    assert loaded.proposal_id_allocator.next_value == 40
-    np.testing.assert_array_equal(loaded.population.x, ctx.population.x)
-    assert loaded.data == {"resumed": True}
-
-
-def test_v2_without_proposal_allocator_falls_back_without_advancing_request(
-    tmp_path,
-):
-    ctx = _state()
-    source = tmp_path / "source-v2.npz"
-    ctx._save_v2(source)
+    source = tmp_path / "valid.npz"
+    ctx.save(source)
     raw = dict(np.load(source, allow_pickle=False).items())
-    raw.pop("_next_proposal_id")
-    legacy = tmp_path / "legacy-v2-no-proposal.npz"
-    np.savez(legacy, **raw)
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    for item in entries:
+        key = item["key"]
+        if key["namespace"] == "archives" and key["name"] == "main":
+            item["value"]["descriptor"]["subtype"] = "UnknownArchive"
+            break
+    else:
+        raise AssertionError("archives/main entry was not found")
+    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
+    bad = tmp_path / "bad-archive-subtype.npz"
+    np.savez(bad, **raw)
 
-    loaded = OptimizationState.load(legacy, ctx.problem)
-    assert loaded.proposal_id_allocator.next_value == 30
-    assert loaded.request_id_allocator.next_value == 30
-    assert loaded.proposal_id_allocator.allocate(1).tolist() == [30]
-    assert loaded.request_id_allocator.next_value == 30
+    with pytest.raises(CheckpointError, match="unknown archive subtype"):
+        OptimizationState.load(bad, ctx.problem)
 
 
-def test_old_v3_without_proposal_allocator_falls_back_without_advancing_request(
+def test_checkpoint_without_proposal_allocator_falls_back_without_advancing_request(
     tmp_path,
 ):
     ctx = _state()
-    source = tmp_path / "source-v3.npz"
+    source = tmp_path / "source.npz"
     ctx.save(source)
     raw = dict(np.load(source, allow_pickle=False).items())
     entries = json.loads(bytes(raw["_state_entries"]).decode())
@@ -407,7 +306,7 @@ def test_old_v3_without_proposal_allocator_falls_back_without_advancing_request(
                 "schema_version": 1,
             }
     raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
-    legacy = tmp_path / "legacy-v3-no-proposal.npz"
+    legacy = tmp_path / "checkpoint-no-proposal.npz"
     np.savez(legacy, **raw)
 
     loaded = OptimizationState.load(legacy, ctx.problem)
@@ -417,12 +316,12 @@ def test_old_v3_without_proposal_allocator_falls_back_without_advancing_request(
     assert loaded.request_id_allocator.next_value == 30
 
 
-def test_v3_round_trips_every_store_entry_and_custom_state(tmp_path):
+def test_checkpoint_round_trips_every_store_entry_and_custom_state(tmp_path):
     ctx = _state()
     ctx.offspring = ctx.population
     custom_key = StateKey(namespace="user", name="g5b_custom", schema_version=1)
     ctx.set_state(custom_key, {"answer": 42})
-    path = tmp_path / "v3-store.npz"
+    path = tmp_path / "store.npz"
     ctx.save(path)
 
     raw = np.load(path, allow_pickle=False)
@@ -478,7 +377,7 @@ def test_named_collection_compatibility_reads_use_state_store(monkeypatch):
         POPULATIONS_MAIN,
         ARCHIVES_MAIN,
         ARCHIVES_PARETO,
-        StateKey(namespace="populations", name="backup", schema_version=2),
+        StateKey(namespace="populations", name="backup", schema_version=1),
         StateKey(namespace="archives", name="history", schema_version=1),
     } <= set(reads)
 
@@ -503,7 +402,7 @@ def test_named_collection_mapping_reads_are_not_stale_after_store_patch():
 def test_set_state_rejects_collection_key_with_wrong_schema_version():
     ctx = _state()
     original = ctx.population
-    wrong_key = StateKey(namespace="populations", name="main", schema_version=1)
+    wrong_key = StateKey(namespace="populations", name="main", schema_version=2)
 
     with pytest.raises(ValidationError, match="collection key"):
         ctx.set_state(
@@ -555,53 +454,7 @@ def test_getstate_excludes_derived_evaluation_ids():
     assert "evaluation_update_new_ids" not in serialized
 
 
-def test_v3_registered_entry_migrator_is_used_at_load_time(tmp_path):
-    key = StateKey(namespace="user", name="g5b_migrated", schema_version=1)
-    STATE_MIGRATORS.register(
-        key.namespace,
-        key.name,
-        1,
-        lambda value: {**cast(dict[str, Any], value), "migrated": True},
-    )
-    ctx = _state()
-    ctx.set_state(key, {"answer": 42})
-    path = tmp_path / "migrated.npz"
-    ctx.save(path)
-    raw = dict(np.load(path, allow_pickle=False).items())
-    entries = json.loads(bytes(raw["_state_entries"]).decode())
-    for item in entries:
-        if item["key"]["name"] == key.name:
-            item["key"]["schema_version"] = 1
-            item["target_schema_version"] = 2
-    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
-    np.savez(path, **raw)
-    loaded = OptimizationState.load(path, ctx.problem)
-    migrated_key = StateKey(namespace=key.namespace, name=key.name, schema_version=2)
-    assert loaded.get_state(migrated_key) == {"answer": 42, "migrated": True}
-
-
-def test_v3_missing_migrator_is_a_load_time_checkpoint_error(tmp_path):
-    key = StateKey(namespace="user", name="g5b_no_migrator", schema_version=1)
-    ctx = _state()
-    ctx.set_state(key, "payload")
-    path = tmp_path / "missing-migrator.npz"
-    ctx.save(path)
-    raw = dict(np.load(path, allow_pickle=False).items())
-    entries = json.loads(bytes(raw["_state_entries"]).decode())
-    for item in entries:
-        if item["key"]["name"] == key.name:
-            item["target_schema_version"] = 2
-    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
-    np.savez(path, **raw)
-    with pytest.raises(CheckpointError) as error:
-        OptimizationState.load(path, ctx.problem)
-    message = str(error.value)
-    assert "user/g5b_no_migrator" in message
-    assert "v1" in message and "v2" in message
-    assert "Registered migrators" in message
-
-
-def test_v3_future_entry_schema_version_is_rejected(tmp_path):
+def test_future_entry_schema_version_is_rejected(tmp_path):
     key = StateKey(namespace="user", name="g5b_future", schema_version=1)
     ctx = _state()
     ctx.set_state(key, "payload")
@@ -656,60 +509,6 @@ def test_pending_context_stage_does_not_checkpoint_derived_reservations(tmp_path
     )
 
 
-def test_v2_legacy_builtin_reservations_are_not_restored(tmp_path):
-    ctx = _state()
-    source = tmp_path / "source.npz"
-    ctx._save_v2(source)
-    raw = dict(np.load(source, allow_pickle=False).items())
-    raw.pop("_async_fatal")
-    raw["_data"] = np.frombuffer(
-        json.dumps(
-            {
-                "pending_candidate_ids": [1],
-                "reserved_fe": 1,
-                "reserved_cost": 1.0,
-                "custom": "kept",
-            }
-        ).encode(),
-        dtype=np.uint8,
-    )
-    legacy = tmp_path / "legacy-v2-reservations.npz"
-    np.savez(legacy, **raw)
-    loaded = OptimizationState.load(legacy, ctx.problem)
-    assert loaded.data["custom"] == "kept"
-    assert (
-        not {
-            "pending_candidate_ids",
-            "reserved_fe",
-            "reserved_cost",
-        }
-        & loaded.data.keys()
-    )
-
-
-def test_v2_legacy_async_fatal_is_migrated_and_derived_keys_ignored(tmp_path):
-    ctx = _state()
-    source = tmp_path / "source.npz"
-    ctx._save_v2(source)
-    raw = dict(np.load(source, allow_pickle=False).items())
-    raw.pop("_async_fatal")
-    raw["_data"] = np.frombuffer(
-        json.dumps(
-            {
-                "async_fatal": {"request_id": 7, "reason": "legacy"},
-                "custom": "kept",
-            }
-        ).encode(),
-        dtype=np.uint8,
-    )
-    legacy = tmp_path / "legacy-v2.npz"
-    np.savez(legacy, **raw)
-    loaded = OptimizationState.load(legacy, ctx.problem)
-    assert loaded.async_fatal == {"request_id": 7, "reason": "legacy"}
-    assert loaded.data["custom"] == "kept"
-    assert "async_fatal" not in loaded.data
-
-
 def test_pareto_none_direction_roundtrips(tmp_path):
     ctx = _state()
     ctx.pareto_archive.direction = None
@@ -717,91 +516,6 @@ def test_pareto_none_direction_roundtrips(tmp_path):
     ctx.save(path)
     loaded = OptimizationState.load(path, ctx.problem)
     assert loaded.pareto_archive.direction is None
-
-
-def test_v1_checkpoint_is_migrated_without_mutating_payload(tmp_path):
-    ctx = _state()
-    schema = [
-        {
-            "name": attr.name,
-            "dtype": np.dtype(attr.dtype).str,
-            "shape": list(attr.shape),
-            "default": "__nan__"
-            if isinstance(attr.default, float) and np.isnan(attr.default)
-            else attr.default,
-        }
-        for attr in ctx.archive.schema.values()
-    ]
-    payload: dict[str, Any] = {
-        "_checkpoint_schema_version": np.array(1),
-        "_schema": np.frombuffer(json.dumps(schema).encode(), dtype=np.uint8),
-        "_rng_state": np.frombuffer(
-            json.dumps(
-                ctx.rng.bit_generator.state, default=lambda x: x.tolist()
-            ).encode(),
-            dtype=np.uint8,
-        ),
-        "_fe": np.array(ctx.fe),
-        "_gen": np.array(ctx.gen),
-        "_next_candidate_id": np.array(20),
-        "_next_request_id": np.array(30),
-        "_pending_evaluations": np.frombuffer(
-            pickle.dumps({}, protocol=4), dtype=np.uint8
-        ),
-        "_data": np.frombuffer(
-            json.dumps(
-                {
-                    "pending_candidate_ids": [7],
-                    "reserved_fe": 1,
-                    "reserved_cost": 0.5,
-                }
-            ).encode(),
-            dtype=np.uint8,
-        ),
-        "_archive_size": np.array(len(ctx.archive)),
-        "_pop_size": np.array(len(ctx.population)),
-        "_pareto_size": np.array(len(ctx.pareto_archive)),
-    }
-    for prefix, collection in (
-        ("archive", ctx.archive),
-        ("pop", ctx.population),
-        ("pareto", ctx.pareto_archive),
-    ):
-        for name, array in collection._data.items():
-            payload[f"{prefix}__{name}"] = array[: len(collection)]
-    path = tmp_path / "legacy.npz"
-    np.savez(path, **payload)
-    before = {key: np.array(value, copy=True) for key, value in payload.items()}
-    loaded = OptimizationState.load(path, ctx.problem)
-    assert loaded.archive is loaded.archives["main"]
-    assert loaded.data == {"resumed": True}
-    assert loaded.proposal_id_allocator.next_value == 30
-    assert loaded.request_id_allocator.next_value == 30
-    assert loaded.proposal_id_allocator.allocate(1).tolist() == [30]
-    assert loaded.request_id_allocator.next_value == 30
-    bad_payload = dict(payload)
-    bad_payload["_next_candidate_id"] = np.array(-1)
-    bad_path = tmp_path / "legacy-bad-allocator.npz"
-    np.savez(bad_path, **bad_payload)
-    with pytest.raises(CheckpointError, match="allocator"):
-        OptimizationState.load(bad_path, ctx.problem)
-    for key, value in before.items():
-        np.testing.assert_array_equal(np.asarray(payload[key]), value)
-
-
-def test_invalid_manifest_fails_atomically(tmp_path):
-    ctx = _state()
-    path = tmp_path / "valid.npz"
-    ctx._save_v2(path)
-    raw = np.load(path, allow_pickle=False)
-    payload = dict(raw.items())
-    manifest = json.loads(bytes(payload["_manifest"]).decode())
-    manifest["archives"][0]["subtype"] = "UnknownArchive"
-    payload["_manifest"] = np.frombuffer(json.dumps(manifest).encode(), dtype=np.uint8)
-    bad = tmp_path / "bad.npz"
-    np.savez(bad, **payload)
-    with pytest.raises(CheckpointError, match="unknown archive subtype"):
-        OptimizationState.load(bad, ctx.problem)
 
 
 def test_append_history_preserves_repeated_candidate_observations(tmp_path):
@@ -908,9 +622,16 @@ def test_special_replace_paths_keep_collection_validation_and_alias_behavior():
 def test_checkpoint_rejects_corrupt_allocator_values(tmp_path, value):
     ctx = _state()
     path = tmp_path / "valid.npz"
-    ctx._save_v2(path)
+    ctx.save(path)
     raw = dict(np.load(path, allow_pickle=False).items())
-    raw["_next_candidate_id"] = value
+    entries = json.loads(bytes(raw["_state_entries"]).decode())
+    for item in entries:
+        if item["key"]["name"] == "candidate_id_allocator":
+            item["value"]["value"] = value.item()
+            break
+    else:
+        raise AssertionError("candidate_id_allocator entry was not found")
+    raw["_state_entries"] = np.frombuffer(json.dumps(entries).encode(), dtype=np.uint8)
     bad = tmp_path / "bad.npz"
     np.savez(bad, **raw)
     with pytest.raises(CheckpointError, match=r"allocator|scalar|int64"):
@@ -935,48 +656,15 @@ def test_data_keys_and_resumed_marker_are_safe(tmp_path):
         )
 
 
-def test_v1_pending_pickle_is_not_deserialized(tmp_path):
+def test_object_dtype_checkpoint_payload_is_not_deserialized(tmp_path):
     ctx = _state()
-    schema = [
-        {
-            "name": attr.name,
-            "dtype": np.dtype(attr.dtype).str,
-            "shape": list(attr.shape),
-            "default": "__nan__"
-            if isinstance(attr.default, float) and np.isnan(attr.default)
-            else attr.default,
-        }
-        for attr in ctx.archive.schema.values()
-    ]
-    payload: dict[str, Any] = {
-        "_checkpoint_schema_version": np.array(1),
-        "_schema": np.frombuffer(json.dumps(schema).encode(), dtype=np.uint8),
-        "_rng_state": np.frombuffer(
-            json.dumps(
-                ctx.rng.bit_generator.state, default=lambda x: x.tolist()
-            ).encode(),
-            dtype=np.uint8,
-        ),
-        "_fe": np.array(ctx.fe),
-        "_gen": np.array(ctx.gen),
-        "_next_candidate_id": np.array(20),
-        "_next_request_id": np.array(30),
-        "_archive_size": np.array(len(ctx.archive)),
-        "_pop_size": np.array(len(ctx.population)),
-        "_pareto_size": np.array(len(ctx.pareto_archive)),
-        "_pending_evaluations": np.frombuffer(
-            pickle.dumps(_PendingGadget(tmp_path / "executed")), dtype=np.uint8
-        ),
-    }
-    for prefix, collection in (
-        ("archive", ctx.archive),
-        ("pop", ctx.population),
-        ("pareto", ctx.pareto_archive),
-    ):
-        for name, array in collection._data.items():
-            payload[f"{prefix}__{name}"] = array[: len(collection)]
-    path = tmp_path / "unsafe.npz"
-    np.savez(path, **payload)
-    with pytest.raises(CheckpointError, match="safe empty"):
-        OptimizationState.load(path, ctx.problem)
+    path = tmp_path / "valid.npz"
+    ctx.save(path)
+    payload = dict(np.load(path, allow_pickle=False).items())
+    entry_key = next(key for key in payload if key.startswith("_entry_"))
+    payload[entry_key] = np.array([_PendingGadget(tmp_path / "executed")], dtype=object)
+    unsafe = tmp_path / "unsafe.npz"
+    np.savez(unsafe, **payload)
+    with pytest.raises(CheckpointError, match="allow_pickle=False"):
+        OptimizationState.load(unsafe, ctx.problem)
     assert not (tmp_path / "executed").exists()
