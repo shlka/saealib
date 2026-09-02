@@ -233,7 +233,7 @@ class RBFSurrogate(RegressionSurrogate):
         self,
         kernel: RBFKernel,
         polynomial_degree: Literal["auto", 0, 1] | None = "auto",
-        solver: str = "solve",
+        solver: str = "lstsq",
         alpha: float = 1e-8,
     ) -> None:
         _validate_kernel(kernel)

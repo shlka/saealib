@@ -33,6 +33,9 @@ def test_n_features_in_tracks_most_recent_fit():
 
 def test_default_degree_and_solver_interpolate_training_points():
     surrogate = RBFSurrogate(kernel=GaussianKernel())
+
+    assert surrogate.solver == "lstsq"
+
     surrogate.fit(TRAIN_X, TRAIN_Y)
 
     np.testing.assert_allclose(
