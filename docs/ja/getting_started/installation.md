@@ -57,7 +57,12 @@ pip install "saealib[all]"
 | `torch` | PyTorchベースのコンポーネント |
 | `pymoo` | `PymooCrossover`/`PymooMutation`/`PymooAlgorithm`/`PymooProblem`アダプタ |
 | `parallel` | joblibによる並列評価 |
-| `all` | 上記すべて |
+| `deap` | DEAPのアルゴリズム・オペレータアダプタ |
+| `viz` | Matplotlibによる結果・履歴のプロット |
+| `tqdm` | 実験スイープ向けのtqdmプログレスバー |
+| `rich` | 実験スイープ向けのRichプログレスバー |
+| `hdf5` | h5pyによるHDF5形式の試行結果の保存と読み込み |
+| `all` | 上記すべてのオプション依存 |
 
 ## インストールの確認
 インストールが完了したら、次のコマンドでバージョンを確認できます。

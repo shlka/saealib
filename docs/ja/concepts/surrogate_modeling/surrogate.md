@@ -43,14 +43,14 @@ page_type: concept
 
 ## 組み込みSurrogate
 
-**`RBFSurrogate(kernel, polynomial_degree="auto", solver="solve", alpha=1e-8)`**：RBF補間によるサロゲートです`{cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml`（RBF補間自体の起源はHardy, 1971）。
+**`RBFSurrogate(kernel, polynomial_degree="auto", solver="lstsq", alpha=1e-8)`**：RBF補間によるサロゲートです{cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml`（RBF補間自体の起源はHardy, 1971）。
 `kernel`は既定値を持たない必須の`RBFKernel`オブジェクトです（組み込みカーネルは以下に示します）。カスタムカーネルは`evaluate(r)`を実装するサブクラスとして作ります。
 `predict()`は`std=None`を明示的に返します（RBF補間は不確実性を提供しません）。
 
 | パラメータ | 値 | 役割 |
 |---|---|---|
 | `polynomial_degree` | `"auto"`（既定） / `None` / `0` / `1` | 補間系を多項式項で拡張します（`kernel.auto_polynomial_degree`から決定 / なし / 定数 / 線形）。`ThinPlateSplineKernel`のような条件付き正定値カーネルには多項式項が必要です。`GaussianKernel`のような狭義正定値カーネルには不要ですが、`"auto"`は定数項に解決されます。目的関数値すべてに同じ定数を足しても予測が変わらないようにするためです。 |
-| `solver` | `"solve"`（既定） / `"lstsq"` / `"tikhonov"` | 線形系（多項式項で拡張されている場合を含む）の解法：直接法 / 最小二乗法（ランク落ちした系にも対応） / `alpha`によるリッジ正則化。 |
+| `solver` | `"lstsq"`（既定） / `"solve"` / `"tikhonov"` | 線形系（多項式項で拡張されている場合を含む）の解法：最小二乗法（ランク落ちした系にも対応） / 直接法 / `alpha`によるリッジ正則化。 |
 | `alpha` | `1e-8`（既定） | リッジ正則化の強さ。`solver="tikhonov"`の場合だけ使われます。 |
 
 `kernel`と`polynomial_degree`は設定した値そのものです。`resolved_kernel`と`resolved_polynomial_degree`は、`fit()`が実際に解決して使う値を公開し、設定した`RBFKernel`インスタンス自体は不変に保ちます。
@@ -81,7 +81,7 @@ scikit-learn互換API経由の回帰サロゲートには`Sklearn`という接�
 
 | クラス | モデル |
 |---|---|
-| `SklearnGPRSurrogate` | ガウス過程`{cite}`sacks1989dace,rasmussen2006gpml`。`provides_uncertainty=True`の唯一の実装 |
+| `SklearnGPRSurrogate` | ガウス過程{cite}`sacks1989dace,rasmussen2006gpml`。`provides_uncertainty=True`の唯一の実装 |
 | `SklearnRFRSurrogate` | ランダムフォレスト回帰 |
 | `SklearnSVMSurrogate` | SVM |
 | `SklearnNNSurrogate` | MLP |
