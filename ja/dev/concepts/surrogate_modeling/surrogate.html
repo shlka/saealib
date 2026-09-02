@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Surrogate &#8212; saealib 0.1.0b5.dev106+g08f8aa5c3 ドキュメント</title>
+    <title>Surrogate &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=13a80f20"></script>
+    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -634,7 +634,9 @@
 </section>
 <section id="built-in-surrogates">
 <h2>組み込みSurrogate<a class="headerlink" href="#built-in-surrogates" title="Link to this heading">#</a></h2>
-<p><strong><code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel,</span> <span class="pre">polynomial_degree=&quot;auto&quot;,</span> <span class="pre">solver=&quot;solve&quot;,</span> <span class="pre">alpha=1e-8)</span></code></strong>：RBF補間によるサロゲートです<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id37" title="Hans-Martin Gutmann. A radial basis function method for global optimization. Journal of Global Optimization, 19(3):201–227, 2001. doi:10.1023/A:1011255519438.">16</a>, <a class="reference internal" href="../../references.html#id38" title="Rommel G. Regis and Christine A. Shoemaker. Constrained global optimization of expensive black box functions using radial basis functions. Journal of Global Optimization, 31(1):153–171, 2005. doi:10.1007/s10898-004-0570-0.">17</a>, <a class="reference internal" href="../../references.html#id40" title="Carl Edward Rasmussen and Christopher K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006.">18</a>]</span>（RBF補間自体の起源はHardy, 1971）。<code class="docutils literal notranslate"><span class="pre">kernel</span></code>は既定値を持たない必須の<code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>オブジェクトです（組み込みカーネルは以下に示します）。カスタムカーネルは<code class="docutils literal notranslate"><span class="pre">evaluate(r)</span></code>を実装するサブクラスとして作ります。<code class="docutils literal notranslate"><span class="pre">predict()</span></code>は<code class="docutils literal notranslate"><span class="pre">std=None</span></code>を明示的に返します（RBF補間は不確実性を提供しません）。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel,</span> <span class="pre">polynomial_degree=&quot;auto&quot;,</span> <span class="pre">solver=&quot;lstsq&quot;,</span> <span class="pre">alpha=1e-8)</span></code></strong>: A surrogate using RBF interpolation <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id37" title="Hans-Martin Gutmann. A radial basis function method for global optimization. Journal of Global Optimization, 19(3):201–227, 2001. doi:10.1023/A:1011255519438.">16</a>, <a class="reference internal" href="../../references.html#id38" title="Rommel G. Regis and Christine A. Shoemaker. Constrained global optimization of expensive black box functions using radial basis functions. Journal of Global Optimization, 31(1):153–171, 2005. doi:10.1007/s10898-004-0570-0.">17</a>, <a class="reference internal" href="../../references.html#id40" title="Carl Edward Rasmussen and Christopher K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006.">18</a>]</span> (the origin of RBF interpolation itself is Hardy, 1971).
+<code class="docutils literal notranslate"><span class="pre">kernel</span></code> is a required <code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code> object with no default (built-in kernels are listed below); a custom kernel is a subclass implementing <code class="docutils literal notranslate"><span class="pre">evaluate(r)</span></code>.
+<code class="docutils literal notranslate"><span class="pre">predict()</span></code> explicitly returns <code class="docutils literal notranslate"><span class="pre">std=None</span></code> (RBF interpolation provides no uncertainty).</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>パラメータ</p></th>
@@ -648,8 +650,8 @@
 <td><p>補間系を多項式項で拡張します（<code class="docutils literal notranslate"><span class="pre">kernel.auto_polynomial_degree</span></code>から決定 / なし / 定数 / 線形）。<code class="docutils literal notranslate"><span class="pre">ThinPlateSplineKernel</span></code>のような条件付き正定値カーネルには多項式項が必要です。<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>のような狭義正定値カーネルには不要ですが、<code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>は定数項に解決されます。目的関数値すべてに同じ定数を足しても予測が変わらないようにするためです。</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">solver</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">&quot;solve&quot;</span></code>（既定） / <code class="docutils literal notranslate"><span class="pre">&quot;lstsq&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">&quot;tikhonov&quot;</span></code></p></td>
-<td><p>線形系（多項式項で拡張されている場合を含む）の解法：直接法 / 最小二乗法（ランク落ちした系にも対応） / <code class="docutils literal notranslate"><span class="pre">alpha</span></code>によるリッジ正則化。</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;lstsq&quot;</span></code> (default) / <code class="docutils literal notranslate"><span class="pre">&quot;solve&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">&quot;tikhonov&quot;</span></code></p></td>
+<td><p>How the (possibly augmented) linear system is solved: least squares (tolerant of rank-deficient systems) / direct / ridge-regularized via <code class="docutils literal notranslate"><span class="pre">alpha</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">1e-8</span></code>（既定）</p></td>

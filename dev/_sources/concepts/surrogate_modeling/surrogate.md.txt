@@ -43,14 +43,14 @@ Archive-based criteria such as `NoveltyAcquisition` instead receive candidate an
 
 ## Built-in Surrogates
 
-**`RBFSurrogate(kernel, polynomial_degree="auto", solver="solve", alpha=1e-8)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml` (the origin of RBF interpolation itself is Hardy, 1971).
+**`RBFSurrogate(kernel, polynomial_degree="auto", solver="lstsq", alpha=1e-8)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml` (the origin of RBF interpolation itself is Hardy, 1971).
 `kernel` is a required `RBFKernel` object with no default (built-in kernels are listed below); a custom kernel is a subclass implementing `evaluate(r)`.
 `predict()` explicitly returns `std=None` (RBF interpolation provides no uncertainty).
 
 | Parameter | Values | Role |
 |---|---|---|
 | `polynomial_degree` | `"auto"` (default) / `None` / `0` / `1` | Augments the system with a polynomial term (from `kernel.auto_polynomial_degree` / none / constant / linear). A conditionally positive definite kernel such as `ThinPlateSplineKernel` requires one; a strictly positive definite kernel such as `GaussianKernel` does not, but resolves `"auto"` to a constant term so that predictions stay unchanged when a constant is added to every objective value. |
-| `solver` | `"solve"` (default) / `"lstsq"` / `"tikhonov"` | How the (possibly augmented) linear system is solved: direct / least squares (tolerant of rank-deficient systems) / ridge-regularized via `alpha`. |
+| `solver` | `"lstsq"` (default) / `"solve"` / `"tikhonov"` | How the (possibly augmented) linear system is solved: least squares (tolerant of rank-deficient systems) / direct / ridge-regularized via `alpha`. |
 | `alpha` | `1e-8` (default) | Ridge regularization strength, used only when `solver="tikhonov"`. |
 
 `kernel` and `polynomial_degree` are the values as configured; `resolved_kernel` and `resolved_polynomial_degree` expose what a `fit()` call actually resolves and uses, keeping the configured `RBFKernel` instance itself immutable.
