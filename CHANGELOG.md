@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-03
+
 Framework redesign, experiment execution, and result analysis.
 
 ### Added
@@ -127,6 +129,9 @@ Initial beta release of saealib.
 - **Termination criteria**: configurable stopping conditions
 - **Type hints**: fully typed public API, PEP 561 compliant (`py.typed` marker included)
 
+[Unreleased]: https://github.com/saealib/saealib/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/saealib/saealib/compare/v0.1.0b4...v0.1.0
+[0.1.0b4]: https://github.com/saealib/saealib/compare/v0.1.0b3...v0.1.0b4
 [0.1.0b3]: https://github.com/saealib/saealib/compare/v0.1.0b2...v0.1.0b3
 [0.1.0b2]: https://github.com/saealib/saealib/compare/v0.1.0b1...v0.1.0b2
 [0.1.0b1]: https://github.com/saealib/saealib/releases/tag/v0.1.0b1

@@ -80,8 +80,8 @@ pip install saealib
 uv add saealib
 ```
 
-saealib is still pre-1.0 (only pre-releases published so far); once a stable release ships,
-pre-releases will require `pip install --pre saealib`.
+saealib is still pre-1.0, so the public API may change between minor versions. The command
+above installs the latest stable release; pre-releases need `pip install --pre saealib`.
 
 ### Optional extras
 
