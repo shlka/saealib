@@ -50,9 +50,19 @@ test that describes the retained contract. Remove short-lived implementation
 aliases and migration scaffolding once the canonical API is in place.
 
 Checkpoint and other serialized-state compatibility are evaluated separately
-from Python API compatibility. Preserve readers and migrations when they
-protect resumability of existing experiments, even when the corresponding
-runtime name is no longer part of the public API.
+from Python API compatibility. Version `0.1.0` is the baseline: its checkpoint
+format is version 1, every state key starts at schema version 1, and no reader
+for anything written before `0.1.0` is kept. From `0.1.0` onward, preserve
+readers when they protect resumability of existing experiments, even when the
+corresponding runtime name is no longer part of the public API.
+
+Do not raise the checkpoint format version for a change a current reader can
+absorb, such as a new optional field with an unambiguous default, an added
+state key, or an added history column. Raise it when the stored form itself
+changes incompatibly — a different container, a restructured manifest, or a
+field whose meaning changes. When only one state value's representation
+changes, prefer raising that state key's schema version over the whole
+checkpoint's.
 
 After 1.0, renaming or removing a stable public API normally requires a
 documented deprecation cycle. This policy does not make deep implementation
