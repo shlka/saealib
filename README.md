@@ -33,56 +33,41 @@ Designed for expensive optimization problems where function evaluations are cost
 - [Key Features](#key-features)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Architecture Overview](#architecture-overview)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Why saealib
 
-Python's evolutionary-optimization landscape has [pymoo](https://github.com/anyoptimization/pymoo) for
-population-based multi-objective search, and expensive/surrogate-assisted optimization split off into its
-now-dormant sister project [pysamoo](https://github.com/anyoptimization/pysamoo). Neither treats *which
-candidates get an expensive true evaluation* as something you can swap: it's implemented once per
-algorithm, not as a reusable component.
+`saealib` is designed around composable components for surrogate-assisted evolutionary optimization.
+Surrogates, acquisition functions, model-management strategies, and optimization pipelines can be replaced
+independently, making it suitable for researchers and practitioners who want to experiment with SAEA
+structure rather than treat an algorithm as monolithic.
 
-`saealib` makes that decision — `OptimizationStrategy` — a first-class, swappable component, alongside
-a decoupled `Surrogate` / `AcquisitionFunction` / `SurrogateManager` split and a typed callback system
-for observing pipeline state and swapping components mid-run.
-
-| Comparison | saealib | pymoo | pysamoo |
-|---|---|---|---|
-| Model-management strategy as a swappable component | Yes | No (always evaluates all candidates) | Hardcoded per algorithm class |
-| Mid-run component swap via typed pipeline events | Yes | "not to customize an algorithm" ([docs](https://pymoo.org/interface/callback.html)) | No |
-| Surrogate / acquisition-function decoupling | Yes | No (delegated to pysamoo) | Partial |
-
-To be upfront about the trade-off: `saealib` currently ships fewer named algorithms (GA, PSO) than
-general-purpose libraries like pymoo or PlatEMO, since its focus is the surrogate/strategy layer rather
-than algorithm breadth. See [the documentation](https://saealib.github.io/saealib/index.html) for the full
-picture.
+General-purpose libraries such as [pymoo](https://github.com/anyoptimization/pymoo) provide broad evolutionary
+optimization coverage. `saealib` complements them by focusing on modular surrogate-assisted optimization and
+the surrogate/strategy layer.
 
 ## Documents
-[saealib.github.io/saealib](https://saealib.github.io/saealib/index.html)
+See the [official documentation](https://saealib.github.io/saealib/index.html) for the architecture,
+component reference, tutorials, and API.
 
 ## Key Features
 
-- **Modular Architecture**: every concept (Algorithm, Surrogate, Strategy, Acquisition function) has an abstract
-  base and can be swapped at construction time via `Optimizer.set_*()`, chained fluently.
-- **Algorithms**: GA and PSO, with a full operator library (SBX/BLX-Alpha/uniform/one/two-point crossover,
-  polynomial/Gaussian/uniform mutation, tournament/roulette-wheel/sequential/truncation selection, plus
-  categorical/integer variants for mixed-variable problems).
-- **Multi-objective ready**: NSGA-II/III and R-NSGA-II comparators, Pareto/epsilon-dominance ranking,
-  hypervolume indicators, and decomposition-based comparators (Tchebycheff/PBI/weighted-sum) for
-  MOEA/D-style setups.
-- **Surrogate models**: built-in RBF, plus optional adapters for scikit-learn (Gaussian Process, Random
-  Forest, SVM, MLP), XGBoost, LightGBM, and PyTorch — including classification surrogates for feasibility
-  prediction and pairwise-comparison surrogates.
-- **Strategies**: generation-based, individual-based, pre-selection, and direct (no-surrogate) management,
-  each deciding independently which candidates receive true (expensive) evaluation.
-- **Constraint handling**: equality/inequality constraints, epsilon-constraint tolerance scheduling, and
-  gradient-based repair.
-- **Fine-grained injection**: `CallbackManager` exposes pipeline events (pre/post crossover, mutation, ask,
-  surrogate fit, evaluation, generation/run boundaries) for observing pipeline state and swapping
-  components mid-run without subclassing.
+- **Composable SAEA architecture**: major optimization components — Algorithm, Surrogate, SurrogateManager, AcquisitionFunction, OptimizationStrategy, EvaluationPlanner, Evaluator, and more — are independently replaceable and can be assembled fluently with `Optimizer.set_*()`.
+
+- **First-class evaluation decisions**: separate candidate generation, surrogate scoring, and true-evaluation planning. New surrogate-assisted strategies or batch-selection ideas can often be implemented by replacing a single component without rewriting the optimization loop.
+
+- **Validated composition**: component contracts and the graph compiler check structural compatibility — including data flow, required services, lifecycle, state access, and runtime capabilities — before optimization begins, with structured diagnostics for invalid configurations.
+
+- **Surrogate and model-management toolkit**: built-in RBF plus adapters for scikit-learn, XGBoost, LightGBM, and PyTorch, with regression, feasibility-classification, and pairwise-comparison workflows.
+
+- **Evolutionary and multi-objective optimization**: GA and PSO with configurable operators, mixed-variable support, Pareto/epsilon-dominance ranking, NSGA-II/III and R-NSGA-II comparators, hypervolume indicators, and decomposition methods for MOEA/D-style setups.
+
+- **Constraint handling**: equality and inequality constraints, epsilon-constraint tolerance scheduling, feasibility surrogates, and gradient-based repair.
+
+- **Interoperability**: reuse implementations from other optimization ecosystems through adapters for pymoo and DEAP, from individual crossover/mutation operators to complete algorithms and problems.
+
+- **Experimentation and observability**: typed pipeline callbacks, execution history, result visualization, asynchronous evaluation, and experiment tooling for multi-trial sweeps, parallel execution, checkpointing, and resume.
 
 ## Installation
 
@@ -107,7 +92,13 @@ pre-releases will require `pip install --pre saealib`.
 | `lightgbm` | LightGBM surrogate |
 | `torch` | PyTorch-based components |
 | `parallel` | joblib-based parallel evaluation |
-| `all` | everything above |
+| `pymoo` | pymoo adapters for crossover, mutation, algorithm, and problem |
+| `deap` | DEAP adapters for crossover, mutation, and generate/update algorithms |
+| `viz` | Matplotlib-based result and history plots |
+| `tqdm` | tqdm progress bars for experiment sweeps |
+| `rich` | Rich progress bars for experiment sweeps |
+| `hdf5` | HDF5 trial-result storage and loading via h5py |
+| `all` | All optional dependencies listed above |
 
 ```bash
 pip install "saealib[sklearn,parallel]"
@@ -152,59 +143,6 @@ For per-generation inspection, custom pipelines, or research-style control loops
 directly and drive it with `.iterate()` instead of `.run()`. See
 [the documentation](https://saealib.github.io/saealib/index.html) for the low-level API and full component
 reference.
-
-## Architecture Overview
-
-An `Optimizer` assembles the components below and drives a generation loop until `Termination`.
-Each generation is orchestrated by the `OptimizationStrategy`: the `Algorithm` proposes candidates
-(ask), the `SurrogateManager` scores them cheaply, the strategy decides which of them receive a
-true (expensive) evaluation, and the results flow back into the population (tell) and the
-`Archive` — which in turn is the surrogate's training data:
-
-```mermaid
-flowchart LR
-    INIT["Initializer<br/>(initial design)"] --> STEP
-    subgraph STEP["OptimizationStrategy.step() — one generation"]
-        direction LR
-        ASK["Algorithm.ask()<br/>generate candidates"] --> PREDICT["SurrogatePredictStage<br/>SurrogateManager.predict()"]
-        PREDICT --> SCORE["AcquisitionStage<br/>AcquisitionFunction"]
-        SCORE --> SEL["select candidates<br/>for true evaluation"]
-        SEL --> EVAL["Evaluator →<br/>Problem (expensive)"]
-        EVAL --> TELL["Algorithm.tell()<br/>update population"]
-    end
-    STEP --> TERM{"Termination?"}
-    TERM -- "no" --> STEP
-    TERM -- "yes" --> RESULT([result])
-    subgraph SM["SurrogateManager"]
-        direction LR
-        SUR["Surrogate<br/>fit / predict"] --> ACQ["AcquisitionFunction<br/>prediction → scalar score"]
-    end
-    SCORE -.-> SM
-    EVAL -- "evaluated points" --> ARC[("Archive")]
-    ARC -. "training data" .-> SUR
-```
-
-Every stage dispatches typed events through the `CallbackManager`, so pipeline data can be
-observed or altered at any point without subclassing (see [Key Features](#key-features)).
-
-<details>
-<summary>Component descriptions</summary>
-
-- **Problem**: Defines the objective function, constraints, bounds, and optimization direction.
-- **Initializer**: Samples the initial archive and population before the loop starts.
-- **Algorithm**: The evolutionary search engine (GA, PSO); `ask()` generates candidates,
-  `tell()` updates the population.
-- **OptimizationStrategy**: Owns the generation pipeline and decides which candidates get a true
-  evaluation (individual-based, generation-based, pre-selection, or direct).
-- **SurrogateManager**: Coordinates surrogate fitting and exposes `predict()`.
-  - **Surrogate**: Fits a model on archive data and predicts — knows nothing about scoring.
-  - **AcquisitionFunction**: Converts predictions into scalar scores (higher = better) — knows
-    nothing about the model.
-- **Evaluator**: Executes true evaluations (serially, or in parallel via the `parallel` extra).
-- **Archive**: Stores every truly evaluated point; doubles as the surrogate's training set.
-- **Termination**: Stops the loop (max function evaluations by default).
-
-</details>
 
 ## Contributing
 
