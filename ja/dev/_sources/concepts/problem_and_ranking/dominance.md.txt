@@ -4,46 +4,39 @@ related_layers: [layer3]
 page_type: concept
 ---
 
-# Dominator
+# 支配判定器
 
-Comparators in the [ParetoComparator](comparators.md) family (`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`) delegate the definition of the dominance relation itself to `Dominator`, a swappable component.
-When you want to use a preference relation other than Pareto dominance, you only need to swap out the `dominator` argument, not the Comparator itself.
+[ParetoComparator](comparators.md)系のComparator（`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`）は、支配関係の定義そのものを`Dominator`という差し替え可能なコンポーネントに委ねています。Pareto支配以外の選好関係を使いたいときは、これらのComparator本体ではなく`dominator`引数だけを差し替えればよいです。
 
-## Dominator's role
+## Dominatorの役割
 
-`Dominator` requires only one method, `dominance_matrix(f, direction=None)`, to be implemented.
-`f` is a matrix of objective values with shape `(n, n_obj)`; it returns a boolean matrix of shape `(n, n)` where `D[i, j]` indicates "does row `i` dominate row `j`."
-`f` is assumed to contain no NaN; the caller is responsible for guaranteeing this.
+`Dominator`が実装を要求するメソッドは`dominance_matrix(f, direction=None)`の1つだけです。`f`はshape `(n, n_obj)`の目的関数値の行列で、`D[i, j]`が「行`i`が行`j`を支配するか」を示すshape `(n, n)`のブール行列を返します。`f`はNaNを含まない前提であり、呼び出し側がその保証を担います。
 
-There's also `dominates(fa, fb, direction=None) -> bool`, which compares just two points, but this is a default implementation derived from `dominance_matrix` — when implementing a custom `Dominator`, implementing `dominance_matrix` alone automatically guarantees consistency with `dominates`.
-Internally, it stacks `fa`/`fb` into two rows and calls `dominance_matrix`.
-If `fa` contains NaN, it always returns `False` (does not dominate), while NaN on the `fb` side is replaced with `+inf` and treated as an individual that "is always dominated" — an asymmetric treatment.
+2点だけを比較する`dominates(fa, fb, direction=None) -> bool`も持ちますが、これは`dominance_matrix`から導出される既定実装であり、独自に`Dominator`を実装する際は`dominance_matrix`さえ実装すれば`dominates`との整合性が自動的に保証されます。内部では`fa`/`fb`を2行のスタックにして`dominance_matrix`を呼びます。`fa`にNaNが含まれる場合は常に`False`（支配しない）を返す一方、`fb`側のNaNは`+inf`に置き換えられ「常に支配される」個体として扱われる、という非対称な扱いになっています。
 
-## Built-in Dominators
+## 組み込みDominator
 
-| Class | Parameters | Characteristics |
+| クラス | パラメータ | 特徴 |
 |---|---|---|
-| `ParetoDominator` | None | Standard Pareto dominance. Considered dominance when at or below on every objective, and strictly less on at least one objective (default) |
-| `EpsilonDominator` | `eps, mode="additive"` | Quantizes into ε-boxes and then delegates internally to `ParetoDominator` |
+| `ParetoDominator` | なし | 標準Pareto支配。全目的で以下、かつ少なくとも1目的で真に小さい場合に支配とみなす（既定） |
+| `EpsilonDominator` | `eps, mode="additive"` | ε-boxに量子化してから内部で`ParetoDominator`に委譲する |
 
-`EpsilonDominator` implements the ε-dominance of {cite}`laumanns2002epsilon`.
-There are two quantization modes.
+`EpsilonDominator`は、{cite}`laumanns2002epsilon`のε-支配を実装したものです。量子化モードは2種類あります。
 
-- **additive** (default): Computes each objective's box index as `floor(f_i / eps_i)`
-- **multiplicative**: Computes it as `floor(log(f_i) / log(1 + eps_i))`. Assumes all objective values are positive; raises `ValueError` otherwise
+- **additive**（既定）：各目的の箱番号を`floor(f_i / eps_i)`で計算する
+- **multiplicative**：`floor(log(f_i) / log(1 + eps_i))`で計算する。目的関数値が全て正であることが前提で、そうでない場合は`ValueError`になる
 
-`eps` is specified as a scalar or an array of shape `(n_obj,)`, and every element must be positive (otherwise `ValueError` at construction time).
+`eps`はスカラーまたはshape `(n_obj,)`の配列で指定し、全要素が正でなければなりません（そうでない場合は構築時に`ValueError`）。
 
-[EpsilonDominanceComparator](comparators.md) is a thin wrapper that simply passes `EpsilonDominator(eps, mode)` to `ParetoComparator`'s `dominator` argument.
+[EpsilonDominanceComparator](comparators.md)は、`ParetoComparator`の`dominator`引数に`EpsilonDominator(eps, mode)`を渡すだけの薄いラッパーです。
 
 ```{note}
-For new code, use `ParetoDominator().dominates(...)`/`ParetoDominator().dominance_matrix(...)` directly.
+新しいコードでは、`ParetoDominator().dominates(...)`または`ParetoDominator().dominance_matrix(...)`を直接使ってください。
 ```
 
-## Implementing a custom Dominator
+## 独自Dominatorの実装方法
 
-If you need a custom dominance relation, subclass `Dominator` and implement only `dominance_matrix()`.
-The following example applies a scaling factor to each objective before applying Pareto dominance.
+独自の支配関係が必要な場合は、`Dominator`を継承して`dominance_matrix()`だけを実装すればよいです。次の例は、各目的にスケーリング係数をかけてからPareto支配を適用します。
 
 ```python
 import numpy as np
@@ -61,15 +54,15 @@ class WeightedDominator(Dominator):
         return self._pareto.dominance_matrix(f * self.scale, direction)
 ```
 
-As with `EpsilonDominator`, delegating to the existing `ParetoDominator` on the converted values means you don't have to write the objective-value comparison logic yourself.
+`EpsilonDominator`と同様に、既存の`ParetoDominator`へ変換後の値を委譲する実装にすると、直接目的関数値を比較するロジックを自分で書かずに済みます。
 
-## Related components
+## 関連コンポーネント
 
-- [Comparator](comparators.md): Injects a `Dominator` via the `ParetoComparator` family's `dominator` argument
-- [NonDominatedSorter](nondominated_sorting.md): The paired swap point that controls how individuals are sorted into fronts, alongside `Dominator`
-- [Population](../observation_and_state/population.md): `ParetoArchive` uses `Dominator` to determine non-dominated solutions
+- [Comparator](comparators.md)：`ParetoComparator`系の`dominator`引数から`Dominator`を注入する
+- [NonDominatedSorter](nondominated_sorting.md)：`Dominator`と対になる、フロントへの振り分け方の差し替え点
+- [Population](../observation_and_state/population.md)：`ParetoArchive`は`Dominator`を使って非劣解を判定します
 
-## References
+## 参照
 
 - {py:class}`saealib.Dominator`
 - {py:class}`saealib.ParetoDominator`

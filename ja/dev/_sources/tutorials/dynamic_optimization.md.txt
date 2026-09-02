@@ -3,26 +3,25 @@ primary_layer: layer2
 page_type: guide
 ---
 
-# Dynamic Switching Based on Surrogate Accuracy
+# サロゲート精度に応じた動的な切り替え
 
-The prediction accuracy of a surrogate model changes as generations progress.
+サロゲートモデルの予測精度は、世代が進むにつれて変化します。
 
-Early on, when training data is scarce, accuracy is low; as the archive fills in, accuracy rises; and once the search converges and the gap between objective values narrows, accuracy can drop again.
+学習データが少ない序盤は精度が低く、アーカイブが充実してくると精度が上がり、探索が収束して目的値の差が縮まると再び精度が落ちることもあります。
 
-This page covers how to switch the evaluation strategy or the `SurrogateManager` at runtime in response to these changes.
+この変化に応じて、評価戦略や`SurrogateManager`を実行中に切り替える方法を扱います。
 
-:::{admonition} What you'll be able to do
+:::{admonition} このページでできるようになること
 :class: tip
 
-By the end of this page, you'll be able to track Surrogate accuracy by generation and switch Strategy or SurrogateManager during a run based on that value.
+このページを終えると、Surrogateの精度を世代ごとに追跡し、その値に応じてStrategyやSurrogateManagerを実行中に切り替えられます。
 :::
 
-For a fixed evaluation strategy, use the [low-level API](lowlevel_api.md); to implement custom switching conditions, see [Custom components](custom_components.md).
-This page shows how to switch the run configuration during `iterate()` while reading Surrogate accuracy.
+評価戦略を固定する場合は[低レベルAPI](lowlevel_api.md)を使い、独自の切り替え条件を実装する場合は[独自コンポーネント](custom_components.md)を参照してください。このページでは、サロゲートの精度を読み取りながら`iterate()`中に実行構成を切り替える方法を示します。
 
-## Set up the problem
+## Problemを準備する
 
-The example uses the simple Sphere function.
+ここでは単純なSphere関数を使います。
 
 ```python
 import numpy as np
@@ -36,14 +35,13 @@ DIM = 10
 SEED = 0
 ```
 
-## Track surrogate accuracy
+## サロゲートの精度を追跡する
 
-Passing an `accuracy_evaluator` to `SurrogateManager` computes accuracy on every fit and records it in `surrogate_manager.last_accuracy`.
+`SurrogateManager`に`accuracy_evaluator`を渡すと、フィットのたびに精度が計算され、`surrogate_manager.last_accuracy`に記録されます。
 
-`LOOAccuracyEvaluator` computes accuracy via leave-one-out cross-validation on the current training data, without preparing any additional held-out data.
+`LOOAccuracyEvaluator`は、追加の検証用データを用意せず、現在の学習データに対する一個抜き交差検証で精度を求めます。
 
-Pass the Surrogate and accuracy evaluator to the `LocalSurrogateManager` constructor.
-Configure AcquisitionFunction separately with `Optimizer.set_acquisition()`.
+`LocalSurrogateManager`のコンストラクタにはSurrogateと精度評価器を渡します。 AcquisitionFunctionは `Optimizer.set_acquisition()` で別に設定します。
 
 ```python
 from saealib import (
@@ -90,16 +88,15 @@ initializer = LHSInitializer(
 )
 ```
 
-`last_accuracy` is a `SurrogateAccuracy` instance, from which you can retrieve a value by specifying a metric name, e.g. `.get("spearman")`.
+`last_accuracy`は`SurrogateAccuracy`インスタンスで、`.get("spearman")`のように指標名を指定して値を取り出せます。
 
-Note that `last_accuracy` is `None` in the first generation.
+最初の世代では`last_accuracy`が`None`である点に注意してください。
 
-## Switch the evaluation strategy with StrategySwitcher
+## StrategySwitcherで評価戦略を切り替える
 
-`StrategySwitcher(primary, fallback, metric="spearman", threshold=0.56)` returns `primary` if accuracy is at or above the threshold, and `fallback` otherwise.
+`StrategySwitcher(primary, fallback, metric="spearman", threshold=0.56)`は、精度が閾値以上なら`primary`を、そうでなければ`fallback`を返します。
 
-The following example changes the configuration by calling `set_strategy()` at each `iterate()` step. The runtime detects the change and recompiles the plan, so the Strategy returned by `switch()` takes effect from the next generation.
-This procedure works on both the Stage compatibility path and the graph-native path.
+次のコード例は、`iterate()` の各ステップで `set_strategy()` を呼び出して構成を変更する手順です。実行環境が変化を検出してplanを再コンパイルし、`switch()` が返すStrategyは次世代から反映されます。 この手順はStage互換経路とgraph-native経路のどちらでも利用できます。
 
 ```python
 from saealib import PreSelectionStrategy, IndividualBasedStrategy, StrategySwitcher
@@ -125,24 +122,23 @@ for ctx in optimizer.iterate():
 print(ctx.fe)
 ```
 
-Running this, the search stays on `IndividualBasedStrategy` early on while accuracy is low, and switches to `PreSelectionStrategy` once accuracy exceeds the threshold.
+実行すると、序盤は精度が低く`IndividualBasedStrategy`のまま進み、精度が閾値を超えた世代から`PreSelectionStrategy`へ切り替わります。
 
-If the search progresses, the gap between objective values narrows, and accuracy drops again, it switches back to `IndividualBasedStrategy`.
+探索が進んで目的値の差が縮まり精度が再び落ちれば、`IndividualBasedStrategy`へ戻ります。
 
-For the path where a Component requests recompilation, see [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md), "Behavior of runtime swapping."
+Component側から再コンパイルを要求する経路については [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md) の「ランタイム差し替えの挙動」を参照してください。
 
-## Choose another switcher
+## 別のSwitcherを選ぶ
 
-Switchers with the same `switch()` interface are available besides `StrategySwitcher`.
+同じ`switch()`インターフェースを持つ切り替え器が、`StrategySwitcher`以外にも用意されています。
 
-| Class | What it switches |
+| クラス | 切り替える対象 |
 |--------|--------|
-| `StrategySwitcher` | Between two `OptimizationStrategy` instances (whether accuracy is at or above the threshold) |
-| `ManagerSwitcher` | Between two `SurrogateManager` instances (whether accuracy is at or above the threshold) |
-| `GenCtrlSwitcher` | `GenerationBasedStrategy`'s `gen_ctrl` (smooths accuracy with an exponential moving average and maps it to a continuous value) |
+| `StrategySwitcher` | 2つの`OptimizationStrategy`（精度が閾値以上か否か） |
+| `ManagerSwitcher` | 2つの`SurrogateManager`（精度が閾値以上か否か） |
+| `GenCtrlSwitcher` | `GenerationBasedStrategy`の`gen_ctrl`（精度を指数移動平均で平滑化して連続値へ写像） |
 
-`GenCtrlSwitcher` returns a number, so assign it directly to the `gen_ctrl` attribute of a `GenerationBasedStrategy` instance.
-The next example also updates the configuration during `iterate()`.
+`GenCtrlSwitcher`は数値を返すため、`GenerationBasedStrategy`インスタンスの`gen_ctrl`属性に直接割り当てます。次の例でも`iterate()`中に構成を更新します。
 
 ```python
 from saealib import GenerationBasedStrategy, GenCtrlSwitcher
@@ -156,9 +152,10 @@ for ctx in optimizer.iterate():
     strategy.gen_ctrl = gen_ctrl_switcher.switch(accuracy)
 ```
 
-## Related concepts and reference
+## 関連するConceptとReference
 
 - {py:class}`saealib.StrategySwitcher` / {py:class}`saealib.ManagerSwitcher` / {py:class}`saealib.GenCtrlSwitcher`
 - {py:class}`saealib.LOOAccuracyEvaluator` / {py:class}`saealib.HeldOutAccuracyEvaluator` / {py:class}`saealib.KFoldAccuracyEvaluator`
 - {py:class}`saealib.SurrogateAccuracy`
 - {py:class}`saealib.Optimizer`
+

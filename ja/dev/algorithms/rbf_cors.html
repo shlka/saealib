@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>CORS-RBF（Constrained Optimization using Response Surfaces） &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>CORS-RBF（Constrained Optimization using Response Surfaces） &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -618,7 +618,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -800,7 +800,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -923,12 +923,12 @@ window.runMermaid = runMermaid;</script>
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="ego.html">EGO（Efficient Global Optimization）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（ガウス過程上側信頼限界）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB (Gaussian Process Upper Confidence Bound)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maxunc.html">MaxUnc（不確実性サンプリング）</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">CORS-RBF（Constrained Optimization using Response Surfaces）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nsga2.html">NSGA-II（Nondominated Sorting Genetic Algorithm II）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2（Strength Pareto Evolutionary Algorithm 2）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="nsga3.html">式: NSGA-III</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2 (Strength Pareto Evolutionary Algorithm 2)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsga3.html">NSGA-III</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sms_emoa.html">SMS-EMOA（S metric selection EMOA）</a></li>
 </ul>
 </div>
@@ -993,46 +993,45 @@ window.runMermaid = runMermaid;</script>
   <section class="tex2jax_ignore mathjax_ignore" id="cors-rbf-constrained-optimization-using-response-surfaces">
 <h1>CORS-RBF（Constrained Optimization using Response Surfaces）<a class="headerlink" href="#cors-rbf-constrained-optimization-using-response-surfaces" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>CORS-RBFは、評価コストの高い目的関数を対象に、RBF(Radial Basis Function)補間によるサロゲートモデルを使って次の評価点を1点ずつ選ぶ逐次最適化の手法です。 Regis &amp; Shoemaker (2005)が提案した枠組みCORS(Constrained Optimization using Response Surfaces)を、RBFサロゲートモデルで具体化した実装がCORS-RBFです。</p>
-<section id="overview">
-<h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>概要<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>RBF補間は、学習点を通る滑らかな曲面を再構成するだけで、GP回帰のような予測分散を持ちません。 そのため、サロゲートモデルの予測値をそのまま最小化して次の評価点を選ぶ素朴な方法は、既に良い値が観測された点の周辺だけを繰り返し探索してしまい、真の関数の局所最小値ですらない点に収束しかねません。</p>
 <p>CORSは、候補点の選択そのものに<strong>距離制約</strong>を組み込むことでこの問題を回避します。各反復で解く補助問題は制約付き最適化であり、サロゲートモデル<span class="math notranslate nohighlight">\(\hat f_i(x)\)</span>を最小化するだけでなく、次の候補点が既存の評価済み点すべてから少なくとも<span class="math notranslate nohighlight">\(\beta_i \Delta_i\)</span>離れていることを要求します（<span class="math notranslate nohighlight">\(\Delta_i\)</span>は既存点集合からの最小距離の最大値です）。<span class="math notranslate nohighlight">\(\beta_i\)</span>は反復ごとに数列（<strong>探索パターン</strong>）として与えられ、1に近い値（大域探索寄り）から0（局所探索寄り、つまりサロゲートモデルの単純な最小化）まで循環します。この距離制約が、GPの予測分散が担うはずの探索の役割を引き受けます。</p>
 <p>この距離制約は副産物ではなく、CORSの核心です。 search patternに0でない値が1つでも含まれていれば、サロゲートモデルの種類や初期評価点の選び方によらず、任意の連続関数の大域最小値に収束することが証明されています。</p>
-<p>出典は<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id38" title="Rommel G. Regis and Christine A. Shoemaker. Constrained global optimization of expensive black box functions using radial basis functions. Journal of Global Optimization, 31(1):153–171, 2005. doi:10.1007/s10898-004-0570-0.">17</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
+<p>出典は<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id39" title="Rommel G. Regis and Christine A. Shoemaker. Constrained global optimization of expensive black box functions using radial basis functions. Journal of Global Optimization, 31(1):153–171, 2005. doi:10.1007/s10898-004-0570-0.">17</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
 </section>
-<section id="pseudocode">
-<h2>擬似コード<a class="headerlink" href="#pseudocode" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>擬似コード<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <div class="proof algorithm admonition" id="alg-rbf-cors">
-<p class="admonition-title"><span class="caption-number">アルゴリズム 4 </span>式: (CORS-RBF)</p>
+<p class="admonition-title"><span class="caption-number">アルゴリズム 4 </span> (CORS-RBF)</p>
 <section class="algorithm-content" id="proof-content">
-<p><strong>Inputs</strong> 目的関数 <span class="math notranslate nohighlight">\(f\)</span>、探索領域 <span class="math notranslate nohighlight">\(\mathcal{D}\)</span>、初期評価点集合 <span class="math notranslate nohighlight">\(S_1 = \{x_1, \ldots, x_k\}\)</span>、距離パラメータの周期列(search pattern) <span class="math notranslate nohighlight">\(\langle \beta_1, \ldots, \beta_{N+1}=0 \rangle\)</span> <strong>Output</strong> 最良解 <span class="math notranslate nohighlight">\(x^*\)</span></p>
-<ol class="arabic simple">
-<li><p><span class="math notranslate nohighlight">\(S_1\)</span> を真の関数 <span class="math notranslate nohighlight">\(f\)</span> で評価し、<span class="math notranslate nohighlight">\(i := 1\)</span> とする</p></li>
-<li><p>これまでの評価済みデータ <span class="math notranslate nohighlight">\(D_i = \{(x, f(x)) \mid x \in S_i\}\)</span> にRBFサロゲートモデル <span class="math notranslate nohighlight">\(\hat f_i\)</span> をフィットする</p></li>
-<li><p>制約付き最小化問題 <span class="math notranslate nohighlight">\(\min_{x \in \mathcal{D}} \hat f_i(x) \ \mathrm{s.t.} \ \|x - x_j\| \geqslant \beta_i \Delta_i \ (j=1,\ldots,|S_i|)\)</span> を解いて候補点 <span class="math notranslate nohighlight">\(x_{k+i}\)</span> を求める（<span class="math notranslate nohighlight">\(\Delta_i\)</span>は既存評価点集合からの最大最小距離）</p></li>
-<li><p><span class="math notranslate nohighlight">\(x_{k+i}\)</span> を真の関数で評価し、<span class="math notranslate nohighlight">\(S_{i+1} := S_i \cup \{x_{k+i}\}\)</span> に追加する</p></li>
-<li><p>終了条件に達するまで、周期列に従い <span class="math notranslate nohighlight">\(\beta_i\)</span> を更新して <span class="math notranslate nohighlight">\(i := i+1\)</span> とし2へ戻る</p></li>
-</ol>
+<p><strong>Inputs</strong> 目的関数 <span class="math notranslate nohighlight">\(f\)</span>、探索領域 <span class="math notranslate nohighlight">\(\mathcal{D}\)</span>、初期評価点集合 <span class="math notranslate nohighlight">\(S_1 = \{x_1, \ldots, x_k\}\)</span>、距離パラメータの周期列(search pattern) <span class="math notranslate nohighlight">\(\langle \beta_1, \ldots, \beta_{N+1}=0 \rangle\)</span>
+<strong>Output</strong> 最良解 <span class="math notranslate nohighlight">\(x^*\)</span></p>
+<p><span class="math notranslate nohighlight">\(S_1\)</span> を真の関数 <span class="math notranslate nohighlight">\(f\)</span> で評価し、<span class="math notranslate nohighlight">\(i := 1\)</span> とする
+これまでの評価済みデータ <span class="math notranslate nohighlight">\(D_i = \{(x, f(x)) \mid x \in S_i\}\)</span> にRBFサロゲートモデル <span class="math notranslate nohighlight">\(\hat f_i\)</span> をフィットする
+制約付き最小化問題 <span class="math notranslate nohighlight">\(\min_{x \in \mathcal{D}} \hat f_i(x) \ \mathrm{s.t.} \ \|x - x_j\| \geqslant \beta_i \Delta_i \ (j=1,\ldots,|S_i|)\)</span> を解いて候補点 <span class="math notranslate nohighlight">\(x_{k+i}\)</span> を求める（<span class="math notranslate nohighlight">\(\Delta_i\)</span>は既存評価点集合からの最大最小距離）
+<span class="math notranslate nohighlight">\(x_{k+i}\)</span> を真の関数で評価し、<span class="math notranslate nohighlight">\(S_{i+1} := S_i \cup \{x_{k+i}\}\)</span> に追加する
+終了条件に達するまで、周期列に従い <span class="math notranslate nohighlight">\(\beta_i\)</span> を更新して <span class="math notranslate nohighlight">\(i := i+1\)</span> とし2へ戻る</p>
 </section>
 </div></section>
-<section id="flowchart">
-<h2>フローチャート<a class="headerlink" href="#flowchart" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>フローチャート<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <pre  class="mermaid">
         flowchart TD
-    INIT[&quot;Initializer&lt;br/&gt;Sample initial population&lt;br/&gt;→ true evaluation&lt;br/&gt;(L1)&quot;] --&gt; ASK
-    subgraph GEN[&quot;One generation (PreSelectionStrategy.step)&quot;]
+    INIT[&quot;初期化器&lt;br/&gt;初期個体群をサンプリング&lt;br/&gt;→ 真の評価&lt;br/&gt;(L1)&quot;] --&gt; ASK
+    subgraph GEN[&quot;1世代 (PreSelectionStrategy.step)&quot;]
         direction TB
-        ASK[&quot;GA.ask()&lt;br/&gt;Generate candidate points&quot;] --&gt; SCORE[&quot;SurrogateManager&lt;br/&gt;Fit RBF (L2)&lt;br/&gt;→ Score with CORSDistance&lt;br/&gt;Apply βᵢΔᵢ distance constraint&lt;br/&gt;(L3)&quot;]
-        SCORE --&gt; SORT[&quot;Select top-1 candidate&lt;br/&gt;by CORSDistance score&quot;]
-        SORT --&gt; EVAL[&quot;True evaluation →&lt;br/&gt;add to archive&lt;br/&gt;(L4)&quot;]
-        EVAL --&gt; TELL[&quot;GA.tell()&lt;br/&gt;Update population&quot;]
+        ASK[&quot;GA.ask()&lt;br/&gt;候補点を生成&quot;] --&gt; SCORE[&quot;SurrogateManager&lt;br/&gt;RBFをフィット (L2)&lt;br/&gt;→ CORSDistanceでスコア化&lt;br/&gt;βᵢΔᵢ距離制約を適用&lt;br/&gt;(L3)&quot;]
+        SCORE --&gt; SORT[&quot;上位1候補を選択&lt;br/&gt;CORSDistanceスコア順&quot;]
+        SORT --&gt; EVAL[&quot;真の評価 →&lt;br/&gt;アーカイブに追加&lt;br/&gt;(L4)&quot;]
+        EVAL --&gt; TELL[&quot;GA.tell()&lt;br/&gt;個体群を更新&quot;]
     end
-    GEN --&gt; TERM{&quot;Evaluation budget N&lt;br/&gt;reached?&quot;}
-    TERM -- &quot;Not yet (L5)&quot; --&gt; ASK
-    TERM -- &quot;Reached&quot; --&gt; RESULT([&quot;Best solution x*&quot;])
+    GEN --&gt; TERM{&quot;評価予算N&lt;br/&gt;に達したか？&quot;}
+    TERM -- &quot;未達 (L5)&quot; --&gt; ASK
+    TERM -- &quot;到達&quot; --&gt; RESULT([&quot;最良解x*&quot;])
     </pre></section>
-<section id="configuration-in-saealib">
-<h2>saealibでの構成<a class="headerlink" href="#configuration-in-saealib" title="Link to this heading">#</a></h2>
+<section id="saealib">
+<h2>saealibでの構成<a class="headerlink" href="#saealib" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>役割</p></th>
@@ -1113,21 +1112,21 @@ window.runMermaid = runMermaid;</script>
 </pre></div>
 </div>
 </section>
-<section id="differences-from-the-source">
-<h2>原法との差分<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>原法との差分<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>CORSの原法は、制約付き予測を最小化して候補点を逐次選びます。一方saealibは、<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成した候補プールから<code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code>が最大の候補を選び、この最小化を近似します。上記の例では<code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy(n_select=1)</span></code>を使い、判断1回につき候補1点という原法どおりのペースを保っています。例における交叉、突然変異、親選択、環境選択の組み合わせはsaealibの構成上の選択であり、CORSの定義には含まれません。論文の数値実験では、一次多項式項<span class="math notranslate nohighlight">\(p(x)\)</span>を持つ薄板スプラインカーネル（<span class="math notranslate nohighlight">\(\phi(r) = r^2 \log r\)</span>）を使います。上記で使った<code class="docutils literal notranslate"><span class="pre">kernel=GaussianKernel()</span></code>に対しては、<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>の既定値<code class="docutils literal notranslate"><span class="pre">polynomial_degree=&quot;auto&quot;</span></code>が定数項に解決されます（<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>の<code class="docutils literal notranslate"><span class="pre">auto_polynomial_degree</span></code>が<code class="docutils literal notranslate"><span class="pre">0</span></code>のため）。そのため、カーネルだけを差し替えても論文の一次項は再現できません。<code class="docutils literal notranslate"><span class="pre">kernel=ThinPlateSplineKernel()</span></code>と<code class="docutils literal notranslate"><span class="pre">polynomial_degree=1</span></code>を同時に渡すと再現できます。薄板スプラインのような条件付き正定値カーネルでは、線形多項式項が補間系を適切に定めるためです。</p>
 </section>
-<section id="parameters-and-variants">
-<h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>パラメータと変種<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p><strong>kernel（RBFカーネルの選択）</strong>：<code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel=...)</span></code>は<code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>インスタンスを要求する必須引数であり、既定値はありません。上記の例では<code class="docutils literal notranslate"><span class="pre">GaussianKernel()</span></code>を渡しています。</p>
 <p><strong>delta</strong>: 既定の<code class="docutils literal notranslate"><span class="pre">delta=None</span></code>では、<code class="docutils literal notranslate"><span class="pre">CORSDistance</span></code>は論文の反復ごとの<span class="math notranslate nohighlight">\(\Delta_i\)</span>を、候補プールにおけるmaximin距離<code class="docutils literal notranslate"><span class="pre">max_candidate</span> <span class="pre">min_evaluated</span> <span class="pre">distance</span></code>で近似します。有限の正の数値を<code class="docutils literal notranslate"><span class="pre">delta</span></code>に渡すと、代わりに固定の距離スケールを使います。</p>
 </section>
-<section id="beta-cadence">
-<h2>betaの進み方<a class="headerlink" href="#beta-cadence" title="Link to this heading">#</a></h2>
+<section id="beta">
+<h2>betaの進み方<a class="headerlink" href="#beta" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">CORSDistance.prepare(archive,</span> <span class="pre">ctx)</span></code>は<code class="docutils literal notranslate"><span class="pre">search_pattern[ctx.decision_count</span> <span class="pre">%</span> <span class="pre">len(search_pattern)]</span></code>を選びます。<code class="docutils literal notranslate"><span class="pre">decision_count</span></code>はランタイムが確定した評価計画の数なので、最初の判断では<code class="docutils literal notranslate"><span class="pre">search_pattern[0]</span></code>が使われ、以降は判断1回につき1要素ずつパターンを巡回します。同じ判断に対して再びprepareが呼ばれたとき（アーカイブの変更でキャッシュされた参照が無効になった場合など）は、その判断の要素を使い直し、先へ進めることはありません。<code class="docutils literal notranslate"><span class="pre">score()</span></code>を繰り返し呼んでも、用意済みのbetaを使うだけでパターンは進みません。</p>
 </section>
-<section id="related">
-<h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>関連<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>：出典の完全な書誌情報</p></li>
 <li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>：<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>/<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>を含むサロゲートモデル一覧</p></li>
@@ -1185,14 +1184,14 @@ window.runMermaid = runMermaid;</script>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">概要</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">擬似コード</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">フローチャート</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">saealibでの構成</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">原法との差分</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#beta-cadence">betaの進み方</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">関連</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">概要</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">擬似コード</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">フローチャート</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib">saealibでの構成</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">原法との差分</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">パラメータと変種</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#beta">betaの進み方</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">関連</a></li>
 </ul>
   </nav></div>
 

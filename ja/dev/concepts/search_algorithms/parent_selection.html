@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ParentSelection &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>ParentSelection &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -593,12 +593,12 @@
   <section class="tex2jax_ignore mathjax_ignore" id="parentselection">
 <h1>ParentSelection<a class="headerlink" href="#parentselection" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 3: Extend Components</span></div><p><code class="docutils literal notranslate"><span class="pre">GA</span></code>(<code class="docutils literal notranslate"><span class="pre">saealib.GA</span></code>)は、交叉に使う親個体を個体群から選ぶ処理を、<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>という差し替え可能な演算子に委ねています。 選択圧（優れた個体をどれだけ優遇するか）を変えたいときは、<code class="docutils literal notranslate"><span class="pre">GA</span></code>本体ではなくこの<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>だけを差し替えればよいです。</p>
-<section id="parentselection-s-role">
-<h2>ParentSelectionの役割<a class="headerlink" href="#parentselection-s-role" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>ParentSelectionの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>が実装する必要があるメソッドは<code class="docutils literal notranslate"><span class="pre">select(ctx,</span> <span class="pre">population,</span> <span class="pre">n_pair,</span> <span class="pre">n_parents,</span> <span class="pre">rng)</span></code>の1つだけです。<code class="docutils literal notranslate"><span class="pre">n_parents</span></code>個体からなる親のグループを<code class="docutils literal notranslate"><span class="pre">n_pair</span></code>組選び、そのインデックスを形状<code class="docutils literal notranslate"><span class="pre">(n_pair,</span> <span class="pre">n_parents)</span></code>の配列として返します。</p>
 </section>
-<section id="built-in-parentselections">
-<h2>組み込みParentSelection<a class="headerlink" href="#built-in-parentselections" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>組み込みParentSelection<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>クラス</p></th>
@@ -609,7 +609,7 @@
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">tournament_size</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">tournament_size</span></code>個体をランダムに抽出し、最良個体を選ぶ操作を<code class="docutils literal notranslate"><span class="pre">n_pair</span> <span class="pre">*</span> <span class="pre">n_parents</span></code>回繰り返す<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id19" title="Brad L. Miller and David E. Goldberg. Genetic algorithms, tournament selection, and the effects of noise. Complex Systems, 9(3):193–212, 1995.">14</a>]</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tournament_size</span></code>個体をランダムに抽出し、最良個体を選ぶ操作を<code class="docutils literal notranslate"><span class="pre">n_pair</span> <span class="pre">*</span> <span class="pre">n_parents</span></code>回繰り返す<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../references.html#id20" title="Brad L. Miller and David E. Goldberg. Genetic algorithms, tournament selection, and the effects of noise. Complex Systems, 9(3):193–212, 1995.">14</a>]</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SequentialSelection</span></code></p></td>
 <td><p>なし</p></td>
@@ -622,7 +622,7 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>は、<code class="docutils literal notranslate"><span class="pre">ctx.comparator.compare_population</span></code>による1対1比較を繰り返してトーナメント内の最良個体を選びます<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id20" title="Tobias Blickle and Lothar Thiele. A comparison of selection schemes used in evolutionary algorithms. Evolutionary Computation, 4(4):361–394, 1996. doi:10.1162/evco.1996.4.4.361.">15</a>]</span>。 <code class="docutils literal notranslate"><span class="pre">compare_population</span></code>は<a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">SPEA2Comparator</span></a>や<a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">HypervolumeComparator</span></a>のように2点だけの直接比較（<code class="docutils literal notranslate"><span class="pre">compare()</span></code>）が使えないComparatorでも定義されているため、どの<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>と組み合わせても問題なく動作します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>は、<code class="docutils literal notranslate"><span class="pre">ctx.comparator.compare_population</span></code>による1対1比較を繰り返してトーナメント内の最良個体を選びます<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../../references.html#id21" title="Tobias Blickle and Lothar Thiele. A comparison of selection schemes used in evolutionary algorithms. Evolutionary Computation, 4(4):361–394, 1996. doi:10.1162/evco.1996.4.4.361.">15</a>]</span>。 <code class="docutils literal notranslate"><span class="pre">compare_population</span></code>は<a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">SPEA2Comparator</span></a>や<a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">HypervolumeComparator</span></a>のように2点だけの直接比較（<code class="docutils literal notranslate"><span class="pre">compare()</span></code>）が使えないComparatorでも定義されているため、どの<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>と組み合わせても問題なく動作します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">SequentialSelection</span></code>は比較を一切行わないため、選択圧という概念自体を持たない最も単純な選択方式です。 どの<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>とも組み合わせられます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code>は、生の適応度ではなく<code class="docutils literal notranslate"><span class="pre">ctx.comparator.sort_population</span></code>が返す順位を確率に変換します。 これにより、目的関数値が負の値を取ったりスケールが大きく異なったりする問題でも、数値的な問題を起こさずに選択確率を計算できます。</p>
 <div class="admonition note">
@@ -630,8 +630,8 @@
 <p><code class="docutils literal notranslate"><span class="pre">SequentialSelection</span></code>のみ<code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>済みで、<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code>は現状Registry未登録です。 Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。</p>
 </div>
 </section>
-<section id="implementing-a-custom-parentselection">
-<h2>独自ParentSelectionの実装方法<a class="headerlink" href="#implementing-a-custom-parentselection" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>独自ParentSelectionの実装方法<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>独自の選択方式が必要な場合は、<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">select()</span></code>だけを実装すればよいです。 次の例は、比較を行わず親を完全にランダムに選ぶ選択方式です。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParentSelection</span>
@@ -654,16 +654,16 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">ctx.comparator</span></code>を参照する実装にすれば、<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>のように選択圧を持つ独自方式にもできます。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>関連コンポーネント<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="algorithm.html"><span class="std std-doc">Algorithm</span></a>：<code class="docutils literal notranslate"><span class="pre">GA</span></code>が<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>をどう組み合わせるか</p></li>
 <li><p><a class="reference internal" href="crossover.html"><span class="std std-doc">Crossover</span></a>：<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>が選んだ親個体を受け取る演算子</p></li>
 <li><p><a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">TournamentSelection</span></code>/<code class="docutils literal notranslate"><span class="pre">LinearRankSelection</span></code>が個体を比較する際に使う</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>参照<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.ParentSelection.html#saealib.ParentSelection" title="saealib.ParentSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ParentSelection</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.TournamentSelection.html#saealib.TournamentSelection" title="saealib.TournamentSelection"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.TournamentSelection</span></code></a></p></li>
@@ -720,11 +720,11 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parentselection-s-role">ParentSelectionの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-parentselections">組み込みParentSelection</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-parentselection">独自ParentSelectionの実装方法</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">ParentSelectionの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">組み込みParentSelection</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">独自ParentSelectionの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">参照</a></li>
 </ul>
   </nav></div>
 

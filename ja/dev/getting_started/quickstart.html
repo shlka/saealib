@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>クイックスタート &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>クイックスタート &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -547,11 +547,11 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="quickstart">
-<h1>クイックスタート<a class="headerlink" href="#quickstart" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>クイックスタート<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 1: Use</span></div><p>インストールは完了していますか？ インストール方法は<a class="reference internal" href="installation.html"><span class="std std-doc">こちら</span></a>を参照してください。</p>
-<section id="your-first-run">
-<h2>初めての実行<a class="headerlink" href="#your-first-run" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>初めての実行<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p>まずは最小の記述で最適化問題を解いてみましょう。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.benchmarks</span><span class="w"> </span><span class="kn">import</span> <span class="n">rastrigin</span>
@@ -566,8 +566,8 @@
 </div>
 <p>ここでは<code class="docutils literal notranslate"><span class="pre">saealib</span></code>が提供するベンチマークパッケージから、設計変数空間が10次元のRastrigin関数(<code class="docutils literal notranslate"><span class="pre">saealib.benchmarks.rastrigin</span></code>)の最小化問題を解いています。 <code class="docutils literal notranslate"><span class="pre">minimize()</span></code> / <code class="docutils literal notranslate"><span class="pre">maximize()</span></code>は、パラメータを指定するだけで最適化を実行できる高レベルAPIです。</p>
 </section>
-<section id="optimizing-an-arbitrary-function">
-<h2>任意の関数を最適化<a class="headerlink" href="#optimizing-an-arbitrary-function" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>任意の関数を最適化<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p>前節ではベンチマーク問題を使用しましたが、ここでは任意の関数を最適化する例を見てみましょう。 <code class="docutils literal notranslate"><span class="pre">saealib</span></code>のベンチマークパッケージを利用する場合は必要なパラメータが自動的にAPIへ渡されますが、任意の関数(<code class="docutils literal notranslate"><span class="pre">callable</span></code>)を渡す場合はいくつかのパラメータを自分で指定する必要があります。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
@@ -584,8 +584,8 @@
 </div>
 <p>ここでは10次元のRastrigin関数を定義して最小化問題を解いています。 <code class="docutils literal notranslate"><span class="pre">func</span></code>パラメータはnumpy配列を受け取り評価値を返すような任意の<code class="docutils literal notranslate"><span class="pre">callable</span></code>オブジェクトを指定できます。 シミュレーション(CAE)や機械学習モデルの学習など、評価コストの高い目的関数をここに指定することで、効率的なパラメータ探索に応用できます。</p>
 </section>
-<section id="next-steps">
-<h2>次のステップ<a class="headerlink" href="#next-steps" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>次のステップ<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p>ここで紹介した機能は<code class="docutils literal notranslate"><span class="pre">saealib</span></code>の一部分です。 詳細なガイドは次のページを参照してください。</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="index.html#choose-your-layer"><span class="std std-ref">Layerの案内</span></a>：目的に合うLayerと関連ページを選びます</p></li>
@@ -643,9 +643,9 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#your-first-run">初めての実行</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optimizing-an-arbitrary-function">任意の関数を最適化</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">次のステップ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">初めての実行</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">任意の関数を最適化</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">次のステップ</a></li>
 </ul>
   </nav></div>
 

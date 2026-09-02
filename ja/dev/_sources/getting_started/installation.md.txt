@@ -2,76 +2,74 @@
 primary_layer: layer1
 ---
 
-# Installation
+# インストール
 
-## Requirements
-- Python >= 3.10
+## 動作要件
+- Python >= 3.10 対応
 
-See [pyproject.toml](https://github.com/saealib/saealib/blob/main/pyproject.toml) for the exact versions of the dependencies.
+依存パッケージの正確なバージョンは[pyproject.toml](https://github.com/saealib/saealib/blob/main/pyproject.toml)を参照してください。
 
-## Installing
+## インストール方法
 
-Install with pip as follows.
-This installs only the minimal dependencies.
+pipによるインストールは次のように行います。このインストールでは最小の依存関係のみインストールします。
 ```bash
 pip install saealib
 ```
-To install with all dependencies:
+すべての依存関係をフルインストールする場合は次のように行います。
 ```bash
 pip install "saealib[all]"
 ```
-See [here](#install-options) for the available options.
+オプションの指定については[こちら](#install-options)を参照してください。
 
-## Specifying a version
-Specify a version as follows.
+## バージョンの指定
+バージョンの指定は次のように行います。
 ```bash
 pip install "saealib==X.Y.Z"
 # example:
 pip install "saealib==0.1.0"
 ```
-Specify the latest pre-release version as follows.
+最新のプレリリースバージョンは次のように指定します。
 ```bash
 pip install --pre saealib
 ```
 :::{warning}
-The API of pre-release versions may change or be removed without notice.
+プレリリースバージョンのAPIは予告なく変更または削除される可能性があります。
 :::
 
 (install-options)=
-## Specifying options
-Some packages are enabled by adding extra dependencies.
-Install these dependencies at the same time by specifying options as follows.
+## オプションの指定
+一部のパッケージは依存関係を追加することで有効になります。依存関係のインストールは次のようにオプションを指定することで同時にインストールできます。
 ```bash
 pip install "saealib[opt1,opt2,...]"
 # example:
 pip install "saealib[sklearn,parallel]"
 ```
-To install all dependencies:
+すべての依存関係をインストールする場合は次のように指定します。
 ```bash
 pip install "saealib[all]"
 ```
-All options are shown in the following table.
-| Option | Adds |
+すべてのオプションは次の表に示す通りです。
+| オプション | 追加される機能 |
 |---|---|
-| `sklearn` | scikit-learn-based surrogate models |
-| `xgboost` | XGBoost surrogate model |
-| `lightgbm` | LightGBM surrogate model |
-| `torch` | PyTorch-based components |
-| `pymoo` | `PymooCrossover`/`PymooMutation`/`PymooAlgorithm`/`PymooProblem` adapters |
-| `parallel` | Parallel evaluation via joblib |
-| `deap` | DEAP algorithm and operator adapters |
-| `viz` | Matplotlib-based result and history plots |
-| `tqdm` | tqdm progress bars for experiment sweeps |
-| `rich` | Rich progress bars for experiment sweeps |
-| `hdf5` | HDF5 trial-result storage and loading via h5py |
-| `all` | All optional dependencies listed above |
+| `sklearn` | scikit-learnベースのサロゲートモデル |
+| `xgboost` | XGBoostサロゲートモデル |
+| `lightgbm` | LightGBMサロゲートモデル |
+| `torch` | PyTorchベースのコンポーネント |
+| `pymoo` | `PymooCrossover`/`PymooMutation`/`PymooAlgorithm`/`PymooProblem`アダプタ |
+| `parallel` | joblibによる並列評価 |
+| `deap` | DEAPのアルゴリズム・オペレータアダプタ |
+| `viz` | Matplotlibによる結果・履歴のプロット |
+| `tqdm` | 実験スイープ向けのtqdmプログレスバー |
+| `rich` | 実験スイープ向けのRichプログレスバー |
+| `hdf5` | h5pyによるHDF5形式の試行結果の保存と読み込み |
+| `all` | 上記すべてのオプション依存 |
 
-## Verifying the installation
-Once installation is complete, check the version with the following command.
+## インストールの確認
+インストールが完了したら、次のコマンドでバージョンを確認できます。
 ```bash
 python -c "import saealib; print(saealib.__version__)"
 ```
 
 :::{seealso}
-See [CONTRIBUTING.md](https://github.com/saealib/saealib/blob/main/CONTRIBUTING.md) for a development install from source.
+ソースからの開発用インストールについては[CONTRIBUTING.md](https://github.com/saealib/saealib/blob/main/CONTRIBUTING.md)を参照してください。
 :::

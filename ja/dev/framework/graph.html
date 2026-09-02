@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Graph &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Graph &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -532,7 +532,7 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="index.html" class="nav-link">フレームワーク</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Framework</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Graph</span></li>
   </ul>
@@ -554,33 +554,33 @@
   <section class="tex2jax_ignore mathjax_ignore" id="graph">
 <h1>Graph<a class="headerlink" href="#graph" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 4: Extend Framework</span></div><p>Componentの契約を実行順序とデータ関係へ配置すると、<code class="docutils literal notranslate"><span class="pre">ComponentGraph</span></code>になります。 <code class="docutils literal notranslate"><span class="pre">ComponentGraph</span></code>は、その配置を保持する不変のグラフです。 契約の木構造を保持するComponentContractと、ノード間の実行関係を保持するComponentGraphは別の構造です。</p>
-<section id="componentgraph-s-role">
-<h2>ComponentGraphの役割<a class="headerlink" href="#componentgraph-s-role" title="Link to this heading">#</a></h2>
+<section id="componentgraph">
+<h2>ComponentGraphの役割<a class="headerlink" href="#componentgraph" title="Link to this heading">#</a></h2>
 <p>ComponentGraphは、Componentの契約を実行順序とデータ関係へ配置する境界を所有します。 契約の木構造を保持するComponentContractと、ノード間の実行関係を保持するGraphを分離し、Compilerへ自己完結した構造を渡します。</p>
 </section>
-<section id="nodes-and-references">
-<h2>ノードと参照<a class="headerlink" href="#nodes-and-references" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>ノードと参照<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">ComponentNode</span></code>はComponentインスタンス、コンポーネントID、ロール、解決済みサービス、コンパイル用の契約スナップショットを保持します。<code class="docutils literal notranslate"><span class="pre">NodeRef</span></code>はコンポーネントIDと任意のロールでノードを参照し、エッジとStateBindingの端点を正規化します。同じComponentを異なるロールで配置した場合も、<code class="docutils literal notranslate"><span class="pre">NodeRef</span></code>によって接続先を区別できます。</p>
 </section>
-<section id="edges-and-state">
-<h2>エッジと状態<a class="headerlink" href="#edges-and-state" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>エッジと状態<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">DataEdge</span></code>はsource portからtarget portへのデータ接続です。 <code class="docutils literal notranslate"><span class="pre">ControlEdge</span></code>はデータを渡さず、sourceの完了がtargetの実行に先行する制御依存です。 <code class="docutils literal notranslate"><span class="pre">StateBinding</span></code>はノードを実際の型付きStateKeyへ結び付け、契約のstate宣言を実行時の状態へ対応付けます。</p>
 <p>Graphのノード、エッジ、状態バインディング、エントリーポイントはそれぞれ値として保持されます。</p>
 </section>
-<section id="structured-regions">
-<h2>構造化領域<a class="headerlink" href="#structured-regions" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>構造化領域<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">StructuredRegion</span></code>は、Sequence、Repeat、Loop、Branchの入れ子構造と、その領域が読む状態効果を保持します。Loopは通常のグラフサイクルとして表さず、条件と領域効果をCompilerが検証できる形で保持します。構造化領域を下位変換した後も、ExecutablePlanへ渡す実行木と状態効果の対応を保ちます。</p>
 </section>
-<section id="construction-time-and-use-time">
-<h2>生成時点と利用時点<a class="headerlink" href="#construction-time-and-use-time" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>生成時点と利用時点<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p>グラフはパイプラインやグラフビルダーがComponentを配置するときに生成されます。Compilerは契約スナップショットを読み、エントリーポイント、エッジ端点、ポート互換性、状態バインディング、構造化領域を検証します。コンパイラ規則がグラフを解決段階で変更する場合は、変更箇所を主張として宣言し、未申告の変更や競合を診断対象にします。</p>
 </section>
-<section id="invariants-and-diagnostics">
-<h2>不変条件と診断<a class="headerlink" href="#invariants-and-diagnostics" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>不変条件と診断<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>Graphのノード、エッジ、状態バインディング、エントリーポイントはそれぞれ値として保持され、未知のノードを参照する端点などは<code class="docutils literal notranslate"><span class="pre">invalid_graph_edge</span></code>や<code class="docutils literal notranslate"><span class="pre">invalid_entry_point</span></code>診断になります。 解決規則の未申告の変更や競合は<code class="docutils literal notranslate"><span class="pre">unclaimed_rewrite</span></code>または<code class="docutils literal notranslate"><span class="pre">conflicting_rewrite</span></code>診断になります。</p>
 </section>
-<section id="extension-points">
-<h2>拡張点<a class="headerlink" href="#extension-points" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>拡張点<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentContract</span><span class="p">,</span> <span class="n">ComponentGraph</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentNode</span>
 
@@ -596,12 +596,12 @@
 </div>
 <p>この例は一つのノードを入口にしたGraphを作ります。 実際のポートとエッジの構築は、公開APIの構成に合わせて<a class="reference internal" href="../api/index.html"><span class="std std-doc">APIリファレンス</span></a>で確認してください。 Graph接続のルールを追加する場合は<a class="reference internal" href="extensions.html"><span class="std std-doc">フレームワーク拡張</span></a>を参照してください。 端点とentry pointの不変条件を保ち、Compilerの検証を迂回しないようにします。</p>
 </section>
-<section id="related-pages">
-<h2>関連ページ<a class="headerlink" href="#related-pages" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>関連ページ<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <p><a class="reference internal" href="contract.html"><span class="std std-doc">Contract</span></a>は契約の包含を、<a class="reference internal" href="compiler.html"><span class="std std-doc">Compiler</span></a>はGraphの解決と検証を説明します。</p>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>参照<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.core.ComponentGraph.html#saealib.core.ComponentGraph" title="saealib.core.ComponentGraph"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.core.ComponentGraph</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.core.Component.html#saealib.core.Component" title="saealib.core.Component"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.core.Component</span></code></a></p></li>
@@ -656,15 +656,15 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#componentgraph-s-role">ComponentGraphの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nodes-and-references">ノードと参照</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#edges-and-state">エッジと状態</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structured-regions">構造化領域</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#construction-time-and-use-time">生成時点と利用時点</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#invariants-and-diagnostics">不変条件と診断</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-points">拡張点</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-pages">関連ページ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#componentgraph">ComponentGraphの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">ノードと参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">エッジと状態</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">構造化領域</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">生成時点と利用時点</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">不変条件と診断</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">拡張点</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">関連ページ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">参照</a></li>
 </ul>
   </nav></div>
 

@@ -6,50 +6,49 @@ page_type: concept
 
 # Decomposition
 
-`DecompositionComparator` delegates aggregating multiple objectives into a single scalar value to `Decomposition`, a swappable component.
-Approaches like MOEA/D {cite}`zhang2007moead`, which guide the search using a per-subproblem weight vector, are realized by combining `Decomposition` with `DecompositionComparator`.
+`DecompositionComparator`は、複数目的を1つのスカラー値へ集約する処理を、`Decomposition`という差し替え可能なコンポーネントに委ねています。
+MOEA/D{cite}`zhang2007moead`のようにサブ問題ごとの重みベクトルで探索を誘導する方式は、`Decomposition`と`DecompositionComparator`を組み合わせて実現します。
 
-## Decomposition's role
+## Decompositionの役割
 
-`Decomposition` requires only one method, `aggregate(f, weights, ideal_point) -> np.ndarray`, to be implemented.
-`f` is a matrix of objective values with shape `(N, n_obj)`, `weights` is a non-negative weight vector with shape `(n_obj,)`, and `ideal_point` is the ideal point with shape `(n_obj,)`; it returns a scalar score with shape `(N,)`.
-Scores are unified under the convention that lower is better.
+`Decomposition`が実装する必要があるメソッドは`aggregate(f, weights, ideal_point) -> np.ndarray`の1つだけです。`f`は形状`(N, n_obj)`の目的値行列、`weights`は形状`(n_obj,)`の非負の重みベクトル、`ideal_point`は形状`(n_obj,)`の理想点であり、形状`(N,)`のスカラー値を返します。スコアは低いほど良いという規約に統一されています。
 
-`f` is passed already in a minimization frame, with the caller's `DecompositionComparator` having already applied the `direction` conversion.
-When implementing a custom `Decomposition`, you don't need to apply the `direction` conversion again inside `aggregate`.
+`f`は、呼び出し側の`DecompositionComparator`が`direction`変換を適用済みの、最小化フレームである前提で渡されます。
+独自の`Decomposition`を実装する際、`aggregate`の内部で改めて`direction`変換をする必要はありません。
 
-## Built-in Decompositions
+## 組み込みDecomposition
 
-All of these are based on the MOEA/D paper {cite}`zhang2007moead`.
+いずれも{cite}`zhang2007moead`のMOEA/D論文がベースになっています。
 
-| Class | Parameters | Characteristics |
+| クラス | パラメータ | 特徴 |
 |---|---|---|
-| `WeightedSumDecomposition` | None | Linear weighted sum, `score = f @ weights`. Simplest, but cannot reach parts of a non-convex front |
-| `TchebycheffDecomposition` | None | Chebyshev distance, `score = max_j(w_j * \|f_ij - z_j*\|)`. Can also reach non-convex fronts |
-| `PBIDecomposition` | `theta=5.0` | `d1 + theta * d2` (projection distance along the weight-vector direction + penalty for orthogonal distance) |
+| `WeightedSumDecomposition` | なし | `score = f @ weights`という線形重み付き和。最も単純だが非凸フロントの一部に到達できない |
+| `TchebycheffDecomposition` | なし | `score = max_j(w_j * \|f_ij - z_j*\|)`というChebyshev距離。非凸フロントにも到達できる |
+| `PBIDecomposition` | `theta=5.0` | `d1 + theta * d2`（重みベクトル方向への射影距離＋直交距離のペナルティ） |
 
-`TchebycheffDecomposition` internally substitutes `1e-6` for weights that are exactly zero, since using zero directly would degenerate ({cite}`zhang2007moead` Appendix A's convention).
+`TchebycheffDecomposition`は、ゼロの重みをそのまま使うと退化してしまうため、内部で`1e-6`へ置換します（{cite}`zhang2007moead` Appendix Aの慣習）。
 
-`PBIDecomposition`'s `theta` controls the trade-off between convergence (the projection distance `d1` along the weight-vector direction) and diversity (the penalty on the orthogonal distance `d2`).
-A larger value applies a stronger penalty to solutions that deviate from the weight vector's direction.
-`theta=5.0` is the default in {cite}`zhang2007moead`.
+`PBIDecomposition`の`theta`は、収束（重みベクトル方向への射影距離`d1`）と多様性（直交距離`d2`へのペナルティ）のトレードオフを制御するパラメータです。
+値が大きいほど、重みベクトルの方向から外れた解に強いペナルティがかかります。
+`theta=5.0`は{cite}`zhang2007moead`の既定値です。
 
 ## DecompositionComparator
 
-`DecompositionComparator(decomposition, weights, ideal_point=None, direction=None, *, eps_cv=1e-6, eps_obj=1e-6)` implements MOEA/D-style ranking as a subclass of [Comparator](comparators.md).
+`DecompositionComparator(decomposition, weights, ideal_point=None, direction=None, *, eps_cv=1e-6, eps_obj=1e-6)`は、[Comparator](comparators.md)のサブクラスとしてMOEA/D風の順位付けを実装します。
 
-The ordering rule prioritizes feasibility (feasibility-first {cite}`deb2000feasibility`), then sorts by ascending aggregated score.
+順序付けの規則は、実行可能性を優先（実行可能性優先{cite}`deb2000feasibility`）した上で、集約スコアの昇順で並べます。
 
-If `ideal_point` is omitted (`None`), `sort_population` dynamically computes the ideal point from the population's feasible individuals.
-`compare`, which compares only two points, on the other hand, uses the minimum of those two points' objective values as a local approximation of the ideal point.
-These two computation methods may not fully agree.
+`ideal_point`を省略（`None`）すると、`sort_population`は個体群の実行可能個体から理想点を動的に計算します。
+一方、2点だけを比較する`compare`では、その2点の目的関数値の最小値をローカルな理想点近似として使います。
+この2つの計算方法は完全には一致しない場合があります。
 
-`weights` carries only non-negative magnitude, with the sign (minimize/maximize) expressed by `direction` — a role split corresponding to the `direction`/`weight` role split described in [Problem](problem.md).
+`weights`は非負の大きさのみを持ち、符号（最小化/最大化）は`direction`が表現するという役割分担になっています。
+[Problem](problem.md)の`direction`/`weight`の役割分担と対応します。
 
-## Implementing a custom Decomposition
+## 独自Decompositionの実装方法
 
-If you need a custom scalarization function, subclass `Decomposition` and implement only `aggregate()`.
-The following example is a simple implementation that aggregates via a weighted product (assuming all objectives are positive).
+独自のスカラー化関数が必要な場合は、`Decomposition`を継承して`aggregate()`だけを実装すればよいです。
+次の例は、重み付き積で集約する（全目的が正であることを前提とする）単純な実装です。
 
 ```python
 import numpy as np
@@ -65,14 +64,14 @@ class WeightedProductDecomposition(Decomposition):
         return np.prod(np.abs(f - ideal_point + 1e-6) ** w, axis=1)
 ```
 
-Since `f` is passed already converted to a minimization frame, this implementation doesn't need to be aware of `direction`.
+`f`は既に最小化フレームに変換済みの値として渡されるため、この実装内で`direction`を意識する必要はありません。
 
-## Related components
+## 関連コンポーネント
 
-- [Comparator](comparators.md): The base class `DecompositionComparator` inherits from
-- [Problem](problem.md): The `direction`/`weights` role split
+- [Comparator](comparators.md)：`DecompositionComparator`が継承する基底クラス
+- [Problem](problem.md)：`direction`/`weights`の役割分担
 
-## References
+## 参照
 
 - {py:class}`saealib.Decomposition`
 - {py:class}`saealib.WeightedSumDecomposition`

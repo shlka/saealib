@@ -6,69 +6,54 @@ page_type: concept
 
 # SearchSpace
 
-`SearchSpace` defines candidate representation and the services that operate on that representation.
-Algorithms and surrogates use the `GenomeBatch` and services provided by the space instead of changing its internal representation directly.
+`SearchSpace` は候補の表現と、その表現を扱うためのサービスを定義します。 アルゴリズムや代理モデルは空間の内部表現を直接変更せず、空間が提供する `GenomeBatch` とサービスを利用します。
 
-## SearchSpace's role
+## SearchSpaceの役割
 
-`SearchSpace` provides `representation`, `services`, `sample()`, and `validate()`.
-`GenomeBatch` stores candidates row-wise; it does not directly own candidate IDs or objective values.
-`validate()` returns per-row validity and batch-wide errors in a `ValidationResult`.
+`SearchSpace` は `representation`、`services`、`sample()`、`validate()` を提供します。 `GenomeBatch` は候補を行方向にまとめた値であり、候補IDや目的値を直接所有するデータ構造ではありません。 `validate()` は各行の妥当性とバッチ全体のエラーを `ValidationResult` で返します。
 
-`ServiceRegistry` registers the services provided by a space by name.
-The space that needs them exposes sampling, validation, cloning, equivalence, distance, genome serialization, and other capabilities as SearchSpace services.
-`EvaluationAdapter` is the Adapter boundary that converts a `GenomeBatch` into an evaluation Payload.
-`FeatureEncoder` is an Adapter subtype responsible for the semantic conversion `GenomeBatch → FeatureEncoder → FeatureBatch → Surrogate`. Unlike a space capability such as `SamplingService`, it determines the features the surrogate can learn.
-The public import is `from saealib.space import FeatureEncoder`.
+`ServiceRegistry` は空間が提供するサービスを名前で登録します。 サンプリング、検証、複製、同値性、距離、ゲノムのシリアライズなどはSearchSpace servicesとして、必要な空間が公開します。 `EvaluationAdapter` は`GenomeBatch`を評価Payloadへ変換する評価境界のAdapterです。 `FeatureEncoder` は `GenomeBatch → FeatureEncoder → FeatureBatch → Surrogate` の意味変換を担うAdapter subtypeです。`SamplingService`などの空間の能力とは性格が異なり、代理モデルが学習できる特徴を決めます。 公開importは `from saealib.space import FeatureEncoder` です。
 
-## What SearchSpace holds
+## SearchSpaceが保持するもの
 
-Built-in spaces are divided by the constraints on their representations:
+組み込み空間は表現の制約に応じて次のように分かれます。
 
-- **`VectorSpace`**: Handles fixed-width dense numeric vectors.
-- **`ObjectSpace`**: The minimal space for holding arbitrary object representations.
-- **`SequenceSpace`**: Handles sequences whose length can vary.
-- **`PermutationSpace`**: Handles representations that satisfy permutation constraints.
+- **`VectorSpace`**：固定幅の密な数値ベクトルを扱います。
+- **`ObjectSpace`**：任意のオブジェクト表現を保持する最小の空間です。
+- **`SequenceSpace`**：長さが変化する系列を扱います。
+- **`PermutationSpace`**：順列制約を満たす表現を扱います。
 
-Each space satisfies the common `SearchSpace` contract, but its service set and `RepresentationSpec` differ.
-For example, `ObjectSpace` does not register default services, so the configuration must provide the services required by the algorithm separately.
+各空間は共通の `SearchSpace` 契約を満たしますが、サービスの集合と `RepresentationSpec` の内容は異なります。 たとえば `ObjectSpace` は既定のサービスを登録しないため、アルゴリズムが要求するサービスを別途提供できる構成にする必要があります。
 
-## Invariants
+## 不変条件
 
-`RepresentationSpec` describes parameter types, shapes, and representation kinds.
-This description says how candidates are stored; it is not itself an implementation of sampling or feature encoding.
+`RepresentationSpec` はパラメータの種類、形状、表現種別を記述します。 表現の記述は、候補をどのように保存するかを示すものであり、サンプリングや特徴量化の実装そのものではありません。
 
-Services are the executable boundaries that fill this gap.
-In the current implementation, the SurrogateManager contract declares `ServiceRequirement("FeatureEncoder")`, and `VectorSpace` registers a default encoder as a service, so numeric vector spaces resolve without extra configuration. `ObjectSpace`, `PermutationSpace`, and `SequenceSpace` raise an error unless the user provides a `FeatureEncoder`. The user decides what to pass to the surrogate.
+サービスはこの差を埋める実行可能な境界です。 現在の実装ではSurrogateManagerの契約が`ServiceRequirement("FeatureEncoder")`を宣言し、`VectorSpace`は既定のエンコーダをサービスとして登録するため、数値ベクトル空間では追加設定なしに解決されます。`ObjectSpace`、`PermutationSpace`、`SequenceSpace`などでは、利用者が`FeatureEncoder`を用意しない限り解決されずエラーになります。代理モデルへ何を入力するかは利用者が決めます。
 
-## Extending SearchSpace
+## SearchSpaceの拡張
 
-`SearchSpace` owns candidate representation, candidate-generation services, and representation validity.
-It does not own candidate objective values, observation provenance, component state, or Graph execution order.
-The space owns the representation rules and services for `GenomeBatch` values, while `Population` owns the live genome storage.
-`Population.genomes` exposes that storage as a read-only view, not an immutable snapshot; subsequent Population updates may change its contents.
-It does not implicitly add candidate IDs or Feedback results.
+`SearchSpace`は候補の表現、候補生成サービス、表現の妥当性を管理します。
+候補の目的関数値、観測の由来、コンポーネント状態、Graphの実行順序は管理しません。
+空間は`GenomeBatch`値の表現規則とサービスを管理し、`Population`は実行中のゲノム格納領域を管理します。
+`Population.genomes`はその格納領域を読み取り専用ビューとして公開しますが、不変スナップショットではありません。後続のPopulation更新で内容が変わることがあります。
+候補IDやFeedback結果を暗黙に追加することもありません。
 
-When adding a new candidate representation, define its `RepresentationSpec`, sampling, validation, and required services within one `SearchSpace` boundary.
-Do not move `RepresentationSpec` into `ComponentContract`; declare connections to the port's `DataSpec` and required services in the Compiler.
+新しい候補表現を追加するときは、その`RepresentationSpec`、サンプリング、検証、必要なサービスを1つの`SearchSpace`境界内で定義します。`RepresentationSpec`を`ComponentContract`へ移さず、ポートの`DataSpec`との接続と必要なサービスをCompilerで宣言します。
 
-## Common failures
+## よくある失敗
 
-The `RepresentationSpec` and service set are fixed when the space is constructed, and the Compiler checks them against the component's `ServiceRequirement`.
-The `GenomeBatch` returned by `sample()` conforms to the space's `RepresentationSpec`, and `validate()` reports mismatches in a `ValidationResult` instead of silently repairing them.
-`SearchSpace` owns service implementation state, while components request and use registered services.
-Mismatched kinds or shapes, missing required services, and invalid `GenomeBatch` values become Diagnostics from the Compiler or `ValidationResult`.
+`RepresentationSpec`とサービス集合は空間の構築時に固定され、Compilerはコンポーネントの`ServiceRequirement`と照合します。`sample()`が返す`GenomeBatch`は空間の`RepresentationSpec`に適合し、`validate()`は不一致を黙って修復せず`ValidationResult`で報告します。`SearchSpace`はサービス実装の状態を所有し、コンポーネントは登録済みサービスを要求して使用します。種別や形状の不一致、必要なサービスの欠落、無効な`GenomeBatch`値は、Compilerまたは`ValidationResult`のDiagnosticsになります。
 
-See [Framework extensions](../../framework/extensions.md) for extending candidate representations, [Declarative elements (Specs)](../../framework/specs.md) for port and `DataSpec` boundaries, and [Feedback](../observation_and_state/feedback.md) for observations associated with candidates.
-See the [API reference](../../api/index.md) for public type import paths.
+候補表現の拡張は[フレームワーク拡張](../../framework/extensions.md)を、ポートと`DataSpec`の境界は[宣言要素（Specs）](../../framework/specs.md)を、候補に対する観測の対応は[Feedback](../observation_and_state/feedback.md)を参照してください。 公開型のimport経路は[APIリファレンス](../../api/index.md)で確認してください。
 
-## Related components
+## 関連コンポーネント
 
-- [Problem](problem.md): Combines the objective, constraints, optimization directions, and SearchSpace.
-- [Population](../observation_and_state/population.md): Handles `GenomeBatch` values and individual evaluation results.
-- [SurrogateManager](../surrogate_modeling/surrogate_manager.md): Requires the `FeatureEncoder` service.
+- [Problem](problem.md)：目的関数、制約、最適化方向とSearchSpaceを組み合わせます。
+- [Population](../observation_and_state/population.md)：`GenomeBatch`と個体の評価結果を扱います。
+- [SurrogateManager](../surrogate_modeling/surrogate_manager.md)：`FeatureEncoder`サービスを要求します。
 
-## References
+## 参照
 
 - {py:class}`saealib.space.SearchSpace`
 - {py:class}`saealib.space.VectorSpace`

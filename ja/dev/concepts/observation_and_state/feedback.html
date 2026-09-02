@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>フィードバック &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>フィードバック &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -66,7 +66,7 @@
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="検索" href="../../search.html" />
     <link rel="next" title="Stage" href="stage.html" />
-    <link rel="prev" title="Diagnostics and observation" href="diagnostics.html" />
+    <link rel="prev" title="診断と観測" href="diagnostics.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
   <meta name="docsearch:version" content="" />
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="optimization_state.html">OptimizationState</a></li>
@@ -590,27 +590,27 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="feedback">
-<h1>フィードバック<a class="headerlink" href="#feedback" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>フィードバック<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 4: Extend Framework</span></div><p>フィードバックは、候補に対応する観測をアルゴリズムが利用できる形で渡す契約です。行位置ではなく、対象、候補ID、提案関係、順序、状態、出所、完了の意味論でレコードを対応付けます。同じ候補に対する部分的な観測、順不同の観測、繰り返しの観測も有効な入力です。</p>
-<section id="feedback-s-role">
-<h2>Feedbackの役割<a class="headerlink" href="#feedback-s-role" title="Link to this heading">#</a></h2>
+<section id="feedback">
+<h2>Feedbackの役割<a class="headerlink" href="#feedback" title="Link to this heading">#</a></h2>
 <p>候補に対応する観測値を、アルゴリズムが利用できるフィードバックへ渡します。候補の表現を生成したり、観測値の正しさを再計算したりする責務は持ちません。</p>
 </section>
-<section id="proposals-and-observations">
-<h2>提案と観測<a class="headerlink" href="#proposals-and-observations" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>提案と観測<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">ProposalBatch</span></code> は候補と候補間の関係、必要なフィードバック量をまとめます。 <code class="docutils literal notranslate"><span class="pre">ObservationBatch</span></code> は観測スキーマと観測レコードを持ち、目的、制約、特徴、コストなどの量を観測の出所と状態とともに表します。 提案が要求する量と、観測バッチが提供する量が揃ったとき、提案は後続のフィードバック処理へ進めます。</p>
 </section>
-<section id="feedback-on-the-graph-native-path">
-<h2>graph-native経路のFeedback<a class="headerlink" href="#feedback-on-the-graph-native-path" title="Link to this heading">#</a></h2>
+<section id="graph-nativefeedback">
+<h2>graph-native経路のFeedback<a class="headerlink" href="#graph-nativefeedback" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">FeedbackBatch</span></code>は一つの提案に対して届けられた観測バッチです。<code class="docutils literal notranslate"><span class="pre">ObservationBatch</span></code>は観測レコードの対象、量、状態、出所を保持し、<code class="docutils literal notranslate"><span class="pre">FeedbackBatch</span></code>は提案ID、チャネル、順序、最終フラグを加えます。利用側は<code class="docutils literal notranslate"><span class="pre">FeedbackContract</span></code>で順序、完了、多重度、グループ化を宣言します。<code class="docutils literal notranslate"><span class="pre">FeedbackBuilder</span></code>は観測を<code class="docutils literal notranslate"><span class="pre">FeedbackResult</span></code>の密な形へ投影する境界です。</p>
 </section>
-<section id="feedbackresult-on-the-stage-compatibility-path">
-<h2>Stage互換経路のFeedbackResult<a class="headerlink" href="#feedbackresult-on-the-stage-compatibility-path" title="Link to this heading">#</a></h2>
+<section id="stagefeedbackresult">
+<h2>Stage互換経路のFeedbackResult<a class="headerlink" href="#stagefeedbackresult" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">FeedbackResult</span></code>はAlgorithmの<code class="docutils literal notranslate"><span class="pre">tell</span></code>へ渡す密な互換データ型です。この型では<code class="docutils literal notranslate"><span class="pre">candidate_ids</span></code>が一意で、<code class="docutils literal notranslate"><span class="pre">f</span></code>、<code class="docutils literal notranslate"><span class="pre">g</span></code>、<code class="docutils literal notranslate"><span class="pre">cv</span></code>、<code class="docutils literal notranslate"><span class="pre">evaluated_mask</span></code>、<code class="docutils literal notranslate"><span class="pre">source</span></code>、artifactsの各配列が同じ行数・形状規則に従います。これは<code class="docutils literal notranslate"><span class="pre">FeedbackResult</span></code>内の行の整合性を制約しますが、外部の<code class="docutils literal notranslate"><span class="pre">ObservationBatch</span></code>と行順を一致させる必要はありません。</p>
 </section>
-<section id="what-feedback-holds">
-<h2>Feedbackが保持するもの<a class="headerlink" href="#what-feedback-holds" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>Feedbackが保持するもの<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>型</p></th>
@@ -640,31 +640,31 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">FeedbackResult</span></code>の各行は候補IDで識別し、<code class="docutils literal notranslate"><span class="pre">evaluated_mask</span></code>と<code class="docutils literal notranslate"><span class="pre">source</span></code>を同じ行に保持します。これにより、予測値で補われた行と直接評価された行を、後続のAlgorithmや学習データが区別できます。</p>
 </section>
-<section id="true-predicted-and-mixed-feedback">
-<h2>真値、予測値、混合フィードバック<a class="headerlink" href="#true-predicted-and-mixed-feedback" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>真値、予測値、混合フィードバック<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">TrueOnlyFeedback</span></code> は真の評価で完了した行だけを返します。 <code class="docutils literal notranslate"><span class="pre">PredictedFeedback</span></code> は目的の予測チャンネルを候補全体に返し、真の評価がない場合の近似的な更新に使います。 <code class="docutils literal notranslate"><span class="pre">MixedFeedback</span></code> は真の評価を優先し、残りの行を目的予測で補います。</p>
 <p>この三つは「どの値が正しいか」を判定する機能ではなく、利用可能な観測を選択して一つのフィードバック結果に配置する方針です。 <code class="docutils literal notranslate"><span class="pre">true</span></code>、<code class="docutils literal notranslate"><span class="pre">surrogate</span></code>、<code class="docutils literal notranslate"><span class="pre">human</span></code>、<code class="docutils literal notranslate"><span class="pre">simulator</span></code> などの出所は観測側に残るため、後続の契約や学習データが利用条件を検証できます。</p>
 </section>
-<section id="invariants">
-<h2>不変条件<a class="headerlink" href="#invariants" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>不変条件<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>Feedbackの責務は、対象、候補ID、提案関係、順序、状態、出所、完了の意味論を対応付けることです。候補の表現を生成したり、観測値の正しさを再計算したりする責務は持ちません。同じ候補IDの繰り返し観測を一般Feedbackの不変条件で禁止せず、提案が要求する量と観測が提供する量を区別し、値の出所を失わないことが重要です。</p>
 <p><code class="docutils literal notranslate"><span class="pre">ProposalBatch</span></code>と候補は提案時に生成され、<code class="docutils literal notranslate"><span class="pre">ObservationBatch</span></code>は評価、予測、外部観測の完了時に生成されます。 <code class="docutils literal notranslate"><span class="pre">FeedbackBuilder</span></code>は後続アルゴリズムが利用する直前に両者を照合し、Runtimeは非同期評価の回収後にその結果を次の状態境界へ渡します。</p>
 </section>
-<section id="extending-feedback">
-<h2>Feedbackの拡張<a class="headerlink" href="#extending-feedback" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>Feedbackの拡張<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p>コンパイラはフィードバックに関係する<code class="docutils literal notranslate"><span class="pre">PortContract</span></code>、スキーマバインディング、必須サービス、ライフサイクルのフィードバックを検証します。ランタイムは候補IDの一致を確認し、未完了の観測を待ち、同じ結果が二度適用されるのを防ぎます。対象または提案との関係を解決できない観測、宣言した順序や完了の契約に違反する配信、要求量の不足、真の評価を予測で上書きする選択は、診断またはフィードバック構築エラーになります。</p>
 <p>Feedback方針を追加する場合は、観測の出所と評価済みマスクを保持したままBuilder境界を拡張します。提案または観測の契約を変更する場合は<a class="reference internal" href="../../framework/specs.html"><span class="std std-doc">Specs</span></a>と<a class="reference internal" href="../../framework/compiler.html"><span class="std std-doc">Compiler</span></a>を、非同期の適用境界については<a class="reference internal" href="../../framework/runtime.html"><span class="std std-doc">Runtime</span></a>を参照してください。公開インポートパスは<a class="reference internal" href="../../api/index.html"><span class="std std-doc">APIリファレンス</span></a>を参照してください。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>関連コンポーネント<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../search_algorithms/algorithm.html"><span class="std std-doc">Algorithm</span></a>：フィードバックを <code class="docutils literal notranslate"><span class="pre">tell()</span></code> で消費します。</p></li>
 <li><p><a class="reference internal" href="../execution_and_evaluation/evaluation.html"><span class="std std-doc">Evaluator</span></a>：評価結果を生成します。</p></li>
 <li><p><a class="reference internal" href="optimization_state.html"><span class="std std-doc">OptimizationState</span></a>：実行状態を保持します。</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>参照<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.FeedbackResult.html#saealib.FeedbackResult" title="saealib.FeedbackResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.FeedbackResult</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.FeedbackBuilder.html#saealib.FeedbackBuilder" title="saealib.FeedbackBuilder"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.FeedbackBuilder</span></code></a></p></li>
@@ -689,7 +689,7 @@
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">前へ</p>
-        <p class="prev-next-title">Diagnostics and observation</p>
+        <p class="prev-next-title">診断と観測</p>
       </div>
     </a>
     <a class="right-next"
@@ -720,16 +720,16 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feedback-s-role">Feedbackの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#proposals-and-observations">提案と観測</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feedback-on-the-graph-native-path">graph-native経路のFeedback</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feedbackresult-on-the-stage-compatibility-path">Stage互換経路のFeedbackResult</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-feedback-holds">Feedbackが保持するもの</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#true-predicted-and-mixed-feedback">真値、予測値、混合フィードバック</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#invariants">不変条件</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-feedback">Feedbackの拡張</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feedback">Feedbackの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">提案と観測</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#graph-nativefeedback">graph-native経路のFeedback</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stagefeedbackresult">Stage互換経路のFeedbackResult</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Feedbackが保持するもの</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">真値、予測値、混合フィードバック</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">不変条件</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">Feedbackの拡張</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">参照</a></li>
 </ul>
   </nav></div>
 

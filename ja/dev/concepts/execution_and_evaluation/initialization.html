@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Initializer &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Initializer &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -592,14 +592,18 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="initializer">
 <h1>Initializer<a class="headerlink" href="#initializer" title="Link to this heading">#</a></h1>
-<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>実行の開始時に、<code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>は初期<code class="docutils literal notranslate"><span class="pre">Population</span></code>、<code class="docutils literal notranslate"><span class="pre">Archive</span></code>、<code class="docutils literal notranslate"><span class="pre">ParetoArchive</span></code>、<code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code>の構築を<code class="docutils literal notranslate"><span class="pre">Initializer</span></code>へ委譲します。サンプリング方法を変える場合は、Optimizer全体ではなくInitializerを差し替えます。</p>
-<p>現行の標準経路では、<code class="docutils literal notranslate"><span class="pre">GenomeInitializer</span></code> が <code class="docutils literal notranslate"><span class="pre">Problem.space</span></code> からGenomeをサンプリングします。 <code class="docutils literal notranslate"><span class="pre">LHSInitializer</span></code>、<code class="docutils literal notranslate"><span class="pre">RandomInitializer</span></code>、<code class="docutils literal notranslate"><span class="pre">SobolInitializer</span></code> は、ベクトルの <code class="docutils literal notranslate"><span class="pre">x</span></code> 配列を使う互換性用Initializerとして残っています。</p>
-<section id="initializer-s-role">
-<h2>Initializerの役割<a class="headerlink" href="#initializer-s-role" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Initializer</span></code> の実装境界は <code class="docutils literal notranslate"><span class="pre">initialize(provider,</span> <span class="pre">problem)</span> <span class="pre">-&gt;</span> <span class="pre">OptimizationState</span></code> です。 <code class="docutils literal notranslate"><span class="pre">provider</span></code> は、AlgorithmやEvaluatorなど、すでに構築されたComponentへアクセスするためのProviderです。 <code class="docutils literal notranslate"><span class="pre">problem</span></code> は対象となる <a class="reference internal" href="../problem_and_ranking/problem.html"><span class="std std-doc">Problem</span></a> です。</p>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>実行の開始時に、<code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>は初期<code class="docutils literal notranslate"><span class="pre">Population</span></code>、<code class="docutils literal notranslate"><span class="pre">Archive</span></code>、<code class="docutils literal notranslate"><span class="pre">ParetoArchive</span></code>、<code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code>の構築を<code class="docutils literal notranslate"><span class="pre">Initializer</span></code>へ委譲します。
+サンプリング方法を変える場合は、Optimizer全体ではなくInitializerを差し替えます。</p>
+<p>現行の標準経路では、<code class="docutils literal notranslate"><span class="pre">GenomeInitializer</span></code> が <code class="docutils literal notranslate"><span class="pre">Problem.space</span></code> からGenomeをサンプリングします。
+<code class="docutils literal notranslate"><span class="pre">LHSInitializer</span></code>、<code class="docutils literal notranslate"><span class="pre">RandomInitializer</span></code>、<code class="docutils literal notranslate"><span class="pre">SobolInitializer</span></code> は、ベクトルの <code class="docutils literal notranslate"><span class="pre">x</span></code> 配列を使う互換性用Initializerとして残っています。</p>
+<section id="id1">
+<h2>Initializerの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Initializer</span></code> の実装境界は <code class="docutils literal notranslate"><span class="pre">initialize(provider,</span> <span class="pre">problem)</span> <span class="pre">-&gt;</span> <span class="pre">OptimizationState</span></code> です。
+<code class="docutils literal notranslate"><span class="pre">provider</span></code> は、AlgorithmやEvaluatorなど、すでに構築されたComponentへアクセスするためのProviderです。
+<code class="docutils literal notranslate"><span class="pre">problem</span></code> は対象となる <a class="reference internal" href="../problem_and_ranking/problem.html"><span class="std std-doc">Problem</span></a> です。</p>
 </section>
-<section id="built-in-initializers">
-<h2>組み込みInitializer<a class="headerlink" href="#built-in-initializers" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>組み込みInitializer<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>クラス</p></th>
@@ -622,7 +626,9 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">GenomeInitializer</span></code>は、SearchSpaceが提供するGenomeを直接Archiveへ登録します。 他の3クラスはコンストラクタ<code class="docutils literal notranslate"><span class="pre">(n_init_archive,</span> <span class="pre">n_init_population,</span> <span class="pre">seed=None)</span></code>を共有し、ベクトル形式で初期点を生成します。 4クラスとも、初期Archiveを評価し、Comparatorでランク付けしたうえで、上位の候補を初期Populationへ渡します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">GenomeInitializer</span></code>は、SearchSpaceが提供するGenomeを直接Archiveへ登録します。
+他の3クラスはコンストラクタ<code class="docutils literal notranslate"><span class="pre">(n_init_archive,</span> <span class="pre">n_init_population,</span> <span class="pre">seed=None)</span></code>を共有し、ベクトル形式で初期点を生成します。
+4クラスとも、初期Archiveを評価し、Comparatorでランク付けしたうえで、上位の候補を初期Populationへ渡します。</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Sample</span> <span class="p">(</span><span class="n">n_init_archive</span> <span class="n">points</span><span class="p">)</span>
   <span class="o">-&gt;</span> <span class="n">Evaluate</span> <span class="n">via</span> <span class="n">provider</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_batch</span>
   <span class="o">-&gt;</span> <span class="n">add</span> <span class="n">to</span> <span class="n">archive</span> <span class="o">/</span> <span class="n">pareto_archive</span>
@@ -630,18 +636,23 @@
   <span class="o">-&gt;</span> <span class="n">Feed</span> <span class="n">the</span> <span class="n">top</span> <span class="n">n_init_population</span> <span class="n">into</span> <span class="n">population</span>
 </pre></div>
 </div>
-<p>これは、前回の選択の状態を再利用するのではなく新しく組み立てたArchiveをランク付けするため、<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>を直接ではなく<code class="docutils literal notranslate"><span class="pre">rank_population</span></code>を呼び出します——両者の違いは<a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>を参照してください。<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>のようなComparatorにとっては、これが初期Populationにその永続化されたランキング状態（<code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code>）を最初に書き込む場所でもあります。</p>
+<p>これは、前回の選択の状態を再利用するのではなく新しく組み立てたArchiveをランク付けするため、<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>を直接ではなく<code class="docutils literal notranslate"><span class="pre">rank_population</span></code>を呼び出します——両者の違いは<a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>を参照してください。
+<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>のようなComparatorにとっては、これが初期Populationにその永続化されたランキング状態（<code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code>）を最初に書き込む場所でもあります。</p>
 <p>3クラスの実装はサンプリング方法の1行以外ほぼ重複していますが、これは意図的な単純さの選択であり、共通処理を過度に抽象化しない設計になっています。</p>
 </section>
-<section id="base-class-helper-methods">
-<h2>基底クラスのヘルパーメソッド<a class="headerlink" href="#base-class-helper-methods" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>基底クラスのヘルパーメソッド<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Initializer</span></code>基底には、独自実装で再利用できる2つのヘルパーメソッドが用意されています。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">_create_attrs(problem,</span> <span class="pre">provider)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">Population</span></code>と<code class="docutils literal notranslate"><span class="pre">Archive</span></code>用の<code class="docutils literal notranslate"><span class="pre">PopulationAttribute</span></code>値を構築します。レガシーなベクトル経路では<code class="docutils literal notranslate"><span class="pre">x</span></code>/<code class="docutils literal notranslate"><span class="pre">f</span></code>/<code class="docutils literal notranslate"><span class="pre">g</span></code>/<code class="docutils literal notranslate"><span class="pre">cv</span></code>/<code class="docutils literal notranslate"><span class="pre">id</span></code>を使い、続けてAlgorithm（<code class="docutils literal notranslate"><span class="pre">Algorithm.get_required_attrs</span></code>）とComparator（<code class="docutils literal notranslate"><span class="pre">Comparator.get_required_attrs</span></code>）の両方が要求する補助属性を統合します——例えば<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>の<code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code>属性がスキーマに加わるのはこの仕組みによるものです。 <code class="docutils literal notranslate"><span class="pre">GenomeInitializer</span></code>はGenomeを専用カラムで管理するため、標準属性に<code class="docutils literal notranslate"><span class="pre">x</span></code>は含まれません。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">_create_context(problem,</span> <span class="pre">archive,</span> <span class="pre">pareto_archive,</span> <span class="pre">population,</span> <span class="pre">rng)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code> を構築します。 Comparatorが <code class="docutils literal notranslate"><span class="pre">NSGA3Comparator</span></code> で内部乱数生成器をまだ持たない場合は、ここで <code class="docutils literal notranslate"><span class="pre">rng.spawn(1)[0]</span></code> を設定します。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">_create_attrs(problem,</span> <span class="pre">provider)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">Population</span></code>と<code class="docutils literal notranslate"><span class="pre">Archive</span></code>用の<code class="docutils literal notranslate"><span class="pre">PopulationAttribute</span></code>値を構築します。
+レガシーなベクトル経路では<code class="docutils literal notranslate"><span class="pre">x</span></code>/<code class="docutils literal notranslate"><span class="pre">f</span></code>/<code class="docutils literal notranslate"><span class="pre">g</span></code>/<code class="docutils literal notranslate"><span class="pre">cv</span></code>/<code class="docutils literal notranslate"><span class="pre">id</span></code>を使い、続けてAlgorithm（<code class="docutils literal notranslate"><span class="pre">Algorithm.get_required_attrs</span></code>）とComparator（<code class="docutils literal notranslate"><span class="pre">Comparator.get_required_attrs</span></code>）の両方が要求する補助属性を統合します——例えば<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>の<code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code>属性がスキーマに加わるのはこの仕組みによるものです。
+<code class="docutils literal notranslate"><span class="pre">GenomeInitializer</span></code>はGenomeを専用カラムで管理するため、標準属性に<code class="docutils literal notranslate"><span class="pre">x</span></code>は含まれません。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">_create_context(problem,</span> <span class="pre">archive,</span> <span class="pre">pareto_archive,</span> <span class="pre">population,</span> <span class="pre">rng)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code> を構築します。
+Comparatorが <code class="docutils literal notranslate"><span class="pre">NSGA3Comparator</span></code> で内部乱数生成器をまだ持たない場合は、ここで <code class="docutils literal notranslate"><span class="pre">rng.spawn(1)[0]</span></code> を設定します。</p>
 </section>
-<section id="implementing-a-custom-initializer">
-<h2>独自Initializerの実装方法<a class="headerlink" href="#implementing-a-custom-initializer" title="Link to this heading">#</a></h2>
-<p>独自のベクトルサンプリングを追加する場合は <code class="docutils literal notranslate"><span class="pre">Initializer</span></code> を継承して <code class="docutils literal notranslate"><span class="pre">initialize()</span></code> を実装します。 新しいGenome表現を使う場合は、<code class="docutils literal notranslate"><span class="pre">Problem.space.sample()</span></code> と <code class="docutils literal notranslate"><span class="pre">Problem.space.validate()</span></code> を使うInitializerを実装します。</p>
+<section id="id4">
+<h2>独自Initializerの実装方法<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<p>独自のベクトルサンプリングを追加する場合は <code class="docutils literal notranslate"><span class="pre">Initializer</span></code> を継承して <code class="docutils literal notranslate"><span class="pre">initialize()</span></code> を実装します。
+新しいGenome表現を使う場合は、<code class="docutils literal notranslate"><span class="pre">Problem.space.sample()</span></code> と <code class="docutils literal notranslate"><span class="pre">Problem.space.validate()</span></code> を使うInitializerを実装します。</p>
 <p>Genome-nativeな初期化では、次の順序を保ちます。</p>
 <ol class="arabic simple">
 <li><p>Algorithmの <code class="docutils literal notranslate"><span class="pre">population_class</span></code>、<code class="docutils literal notranslate"><span class="pre">archive_class</span></code>、<code class="docutils literal notranslate"><span class="pre">create_pareto_archive()</span></code> で入れ物を作る。</p></li>
@@ -662,11 +673,12 @@
         <span class="o">...</span>
 </pre></div>
 </div>
-<p>初期評価の開始と終了は <code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code> から観測できます。 評価Requestの候補IDとGenomeを維持する必要があるため、Genomeを <code class="docutils literal notranslate"><span class="pre">x</span></code> 配列へ暗黙に変換して管理しません。</p>
+<p>初期評価の開始と終了は <code class="docutils literal notranslate"><span class="pre">CallbackManager</span></code> から観測できます。
+評価Requestの候補IDとGenomeを維持する必要があるため、Genomeを <code class="docutils literal notranslate"><span class="pre">x</span></code> 配列へ暗黙に変換して管理しません。</p>
 <p><code class="docutils literal notranslate"><span class="pre">Optimizer.set_initializer(initializer)</span></code> でInitializerを差し替えます。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>関連コンポーネント<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../observation_and_state/optimization_state.html"><span class="std std-doc">OptimizationState</span></a>：<code class="docutils literal notranslate"><span class="pre">initialize()</span></code>が最終的に返す状態オブジェクト</p></li>
 <li><p><a class="reference internal" href="../observation_and_state/population.html"><span class="std std-doc">Population</span></a>：構築対象の<code class="docutils literal notranslate"><span class="pre">Population</span></code>/<code class="docutils literal notranslate"><span class="pre">Archive</span></code>/<code class="docutils literal notranslate"><span class="pre">ParetoArchive</span></code></p></li>
@@ -675,8 +687,8 @@
 <li><p><a class="reference internal" href="../problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>：初期Archiveのランク付けに使う<code class="docutils literal notranslate"><span class="pre">rank_population</span></code></p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>参照<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.Initializer.html#saealib.Initializer" title="saealib.Initializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Initializer</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.LHSInitializer.html#saealib.LHSInitializer" title="saealib.LHSInitializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.LHSInitializer</span></code></a></p></li>
@@ -733,12 +745,12 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#initializer-s-role">Initializerの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-initializers">組み込みInitializer</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#base-class-helper-methods">基底クラスのヘルパーメソッド</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-initializer">独自Initializerの実装方法</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Initializerの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">組み込みInitializer</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">基底クラスのヘルパーメソッド</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">独自Initializerの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">参照</a></li>
 </ul>
   </nav></div>
 

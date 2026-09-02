@@ -6,100 +6,91 @@ page_type: concept
 
 # Comparator
 
-`Problem` delegates deciding the relative superiority of solutions to `Comparator`, a swappable top-level component.
-Pass it via `Problem`'s `comparator` argument.
+`Problem`は、解の相対的な優劣を判断する処理を、差し替え可能なトップレベルコンポーネントである`Comparator`に委ねています。
+`Problem`の`comparator`引数で渡します。
 
-## Comparator's role
+## Comparatorの役割
 
-`Comparator` has four abstract methods, including `__init__` itself.
+`Comparator`には`__init__`自身を含め、4つの抽象メソッドがあります。
 
-- **`__init__(weights, eps_cv, eps_obj, direction=None)`**: Holds `weights`/`eps_cv`/`eps_obj`/`direction`
-- **`sort_population(population) -> np.ndarray`**: Returns an index array ordering the entire population from best to worst
-- **`compare_population(population, idx_a, idx_b) -> int`**: Compares two individuals within a population (`-1`: a is better, `1`: b is better, `0`: equal)
-- **`compare(fa, cv_a, fb, cv_b) -> int`**: A lightweight version that compares two points directly from their objective values and constraint violation, without going through `Population`
+- **`__init__(weights, eps_cv, eps_obj, direction=None)`**: `weights`/`eps_cv`/`eps_obj`/`direction`を保持します
+- **`sort_population(population) -> np.ndarray`**: 個体群全体を最良から最悪へ並べるインデックス配列を返します
+- **`compare_population(population, idx_a, idx_b) -> int`**: 個体群内の2個体を比較します（`-1`: aがより良い、`1`: bがより良い、`0`: 同等）
+- **`compare(fa, cv_a, fb, cv_b) -> int`**: `Population`を経由せず、目的値と制約違反から2点を直接比較する軽量版です
 
-Having `__init__` be an abstract method is different from other components.
-Subclasses implementing a custom `Comparator` must always call `super().__init__(weights, eps_cv, eps_obj, direction=...)`.
+`__init__`が抽象メソッドである点は、他のコンポーネントと異なります。
+独自の`Comparator`を実装するサブクラスは、必ず`super().__init__(weights, eps_cv, eps_obj, direction=...)`を呼び出さなければなりません。
 
-It also provides three concrete methods for population-relative ranking state that must persist across selections rather than being derived fresh from `f`/`cv` each time.
-`get_required_attrs` and `prepare_population` have an empty/no-op default; `rank_population` composes the other two and is not itself a no-op:
+また、`f`/`cv`から毎回新しく導出するのではなく、選択をまたいで永続化すべきpopulation相対的なランキング状態のために、3つの具象メソッドを提供します。
+`get_required_attrs`と`prepare_population`は既定で空/no-opですが、`rank_population`はこの2つを組み合わせるものであり、それ自体はno-opではありません。
 
-- **`get_required_attrs(problem) -> list[PopulationAttribute]`**: Declares the `PopulationAttribute`s the comparator needs `Population`/`Archive` to carry. Empty by default
-- **`prepare_population(population) -> None`**: Freshly recomputes and writes those attributes for the given population. No-op by default
-- **`rank_population(population) -> np.ndarray`**: `prepare_population` followed by `sort_population`. Environmental selection on a freshly merged pool should call this instead of `sort_population` directly, so persisted state is recomputed for the new set before ranking
+- **`get_required_attrs(problem) -> list[PopulationAttribute]`**: Comparatorが`Population`/`Archive`に保持させる必要がある`PopulationAttribute`を宣言します。既定では空です
+- **`prepare_population(population) -> None`**: 指定された個体群についてそれらの属性を新たに再計算し、書き込みます。既定ではno-opです
+- **`rank_population(population) -> np.ndarray`**: `prepare_population`に続けて`sort_population`を実行します。新しくマージしたプールでの環境選択では、ランク付け前に永続化状態を新しい集合に対して再計算するため、`sort_population`を直接呼ばずにこれを呼び出します
 
-A `Comparator` that can derive its full ranking from the population currently being ranked, without needing to carry state across population extraction, needs none of the three — `rank_population` then behaves identically to `sort_population`.
-This covers every built-in comparator except `SPEA2Comparator`: even `NSGA2Comparator`'s crowding distance, which depends on the whole population, is recomputed fresh from whatever `f`/`cv` values the given `Population` currently holds.
-`SPEA2Comparator` is the built-in example where ranking state must survive environmental selection, because mating selection on the next generation's (smaller) population must reuse fitness computed on the earlier merged pool, not recompute it from scratch.
+現在ランク付け対象になっている個体群だけから完全なランキングを導出でき、population extractionをまたいで状態を持ち越す必要がない`Comparator`は、この3つのいずれも必要としません。
+これは`SPEA2Comparator`を除く組み込みComparatorすべてに当てはまります。個体群全体に依存する`NSGA2Comparator`の混雑度距離でさえ、与えられた`Population`が現在保持する`f`/`cv`の値から毎回新しく再計算されます。
+`SPEA2Comparator`は、ランキング状態が環境選択を生き延びる必要がある組み込みの例です。次世代の（より小さい）個体群における交配選択が、以前の統合プールで計算された適応度をゼロから再計算するのではなく再利用しなければならないためです。
 
-## Built-in Comparators
+## 組み込みComparator
 
 | Class | When to use |
 |---|---|
-| `SingleObjectiveComparator` | Single-objective problems |
-| `WeightedSumComparator` | Scalarization via weighted linear combination. Works for both single- and multi-objective |
-| `ParetoComparator` | Ranks by dominance relation only (no secondary metric such as crowding) |
-| `NSGA2Comparator` | Pareto rank + crowding distance {cite}`deb2002nsga2` |
-| `SPEA2Comparator` | SPEA2 fitness, which depends on the entire population {cite}`zitzler2001spea2` |
-| `HypervolumeComparator` | Front rank + exclusive HV contribution (SMS-EMOA style) {cite}`beume2007smsemoa` |
-| `EpsilonDominanceComparator` | Ranking via ε-dominance {cite}`laumanns2002epsilon` |
-| `NSGA3Comparator` | Niche preservation via reference points {cite}`deb2014nsga3` |
-| `RNSGA2Comparator` | Preference guidance via user-specified reference points {cite}`deb2006rnsga2` |
+| `SingleObjectiveComparator` | 単一目的問題 |
+| `WeightedSumComparator` | 重み付き線形結合によるスカラー化。単一目的と多目的の両方に対応 |
+| `ParetoComparator` | 支配関係だけでランク付け（混雑度などの副次的指標なし） |
+| `NSGA2Comparator` | Paretoランク + 混雑度距離 {cite}`deb2002nsga2` |
+| `SPEA2Comparator` | 個体群全体に依存するSPEA2適応度 {cite}`zitzler2001spea2` |
+| `HypervolumeComparator` | フロントランク + 排他的HV寄与度（SMS-EMOA方式） {cite}`beume2007smsemoa` |
+| `EpsilonDominanceComparator` | ε-dominanceによるランキング {cite}`laumanns2002epsilon` |
+| `NSGA3Comparator` | 参照点によるニッチの維持 {cite}`deb2014nsga3` |
+| `RNSGA2Comparator` | ユーザー指定の参照点による選好誘導 {cite}`deb2006rnsga2` |
 
-`SingleObjectiveComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6)` allows `direction` to be omitted, in which case it's treated as minimization.
+`SingleObjectiveComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6)`は`direction`を省略でき、その場合は最小化として扱います。
+`WeightedSumComparator(direction, *, eps_cv=1e-6, eps_obj=1e-6)`は`direction`が必須で、省略すると`TypeError`になります。
+このクラスに限り、渡した`direction`がそのままスカラー化の重みとして使われます（`score = f @ direction`）。
+符号だけでなく大きさも重みとして機能するため、[Problem](problem.md)で述べた「`direction`は符号のみ、重みの大きさは別の概念」という一般的な役割分担とは異なる、このクラス固有の扱いです。
+`ParetoComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6, sorter=non_dominated_sort, dominator=None)`は、支配関係のみで個体群をランク付けします。
+`NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`の共通基底であり、具象クラスとして単独でも使えます。
+`dominator`引数は[Dominator](dominance.md)、`sorter`引数は[NonDominatedSorter](nondominated_sorting.md)を注入する差し替え点で、互いに独立した軸です。
+`NSGA2Comparator`は、`ParetoComparator`に混雑度距離による副次的な順位付けを加えます。
+ソート結果は`Population`のキャッシュ（`get_cache`/`set_cache`）に保存され、個体群が変更されるまで世代内で使い回されます。
 
-`WeightedSumComparator(direction, *, eps_cv=1e-6, eps_obj=1e-6)` requires `direction`; omitting it raises `TypeError`.
-This class is the sole exception where the passed `direction` is used directly as the scalarization weights (`score = f @ direction`).
-Not just the sign but also the magnitude functions as a weight, which is a treatment specific to this class, different from the general role split described in [Problem](problem.md) where "`direction` is sign only, and weight magnitude is a separate concept."
+### 個体群相対的なComparator
 
-`ParetoComparator(direction=None, *, eps_cv=1e-6, eps_obj=1e-6, sorter=non_dominated_sort, dominator=None)` ranks the population by dominance relation alone.
-It's the common base of `NSGA2Comparator`/`HypervolumeComparator`/`NSGA3Comparator`/`RNSGA2Comparator`/`EpsilonDominanceComparator`, and can also be used standalone as a concrete class.
-The `dominator` argument injects a [Dominator](dominance.md) and the `sorter` argument injects a [NonDominatedSorter](nondominated_sorting.md) — independent swap points from each other.
-
-`NSGA2Comparator` adds secondary ranking by crowding distance on top of `ParetoComparator`.
-The sort result is stored in `Population`'s cache (`get_cache`/`set_cache`) and reused within the generation until the population changes.
-
-### Population-relative Comparators
-
-`SPEA2Comparator` and `HypervolumeComparator` both raise `NotImplementedError` when `compare()` is called.
-This is because both SPEA2's fitness and exclusive HV contribution are metrics that depend on the entire population, and cannot be computed from just two points.
-This is not a bug but an intentional design, marked by the class attribute `is_population_relative=True`.
-
-These Comparators can't be used in situations that need a two-point comparison (`compare()`) alone, such as PSO's pbest update or `PairwiseComparisonSet`.
-Use `ParetoComparator` instead in such situations.
-`compare_population()` (comparison via population indices) is defined on both classes, so things like tournament selection work as-is.
-
-`SPEA2Comparator` additionally uses the `get_required_attrs`/`prepare_population` pair described above: `get_required_attrs` declares a persistent `spea2_fitness` attribute, and `prepare_population` recomputes $S(i)$/$R(i)$/$D(i)$/$F(i)$ over the population it's given and writes them there.
-Environmental selection (`TruncationSelection` calling `rank_population`) recomputes fitness fresh over the merged population-and-offspring pool; the individuals that survive truncation carry their fitness values with them, so `compare_population()` calls during the next generation's mating selection reuse the persisted values instead of recomputing over a different-sized set.
-
-`HypervolumeComparator`'s HV computation performs O(N) leave-one-out evaluations per front.
-For problems with many objectives, this computational cost grows large.
+`SPEA2Comparator`と`HypervolumeComparator`は、いずれも`compare()`を呼ぶと`NotImplementedError`を送出します。
+SPEA2のfitnessも排他的HV寄与度も、個体群全体に依存する指標であり、2点だけからは計算できないためです。
+これはバグではなく意図した設計であり、`is_population_relative=True`というクラス属性がその旨を示すマーカーになっています。
+PSOのpbest更新や`PairwiseComparisonSet`のように、2点だけの比較（`compare()`）が必要な場面でこれらのComparatorは使えません。
+そのような場面では代わりに`ParetoComparator`を使います。
+`compare_population()`（個体群のインデックスを介した比較）はどちらのクラスでも定義されているため、トーナメント選択などはそのまま使えます。
+`SPEA2Comparator`はさらに、前述の`get_required_attrs`/`prepare_population`の組を使います。`get_required_attrs`が永続的な`spea2_fitness`属性を宣言し、`prepare_population`が与えられた個体群に対して$S(i)$/$R(i)$/$D(i)$/$F(i)$を再計算してそこに書き込みます。
+環境選択（`rank_population`を呼ぶ`TruncationSelection`）は、個体群と子個体を統合したプール全体に対して適応度を新しく再計算します。打ち切りを生き残った個体はその適応度の値を保持したまま次世代に持ち越されるため、次世代の交配選択における`compare_population()`呼び出しは、サイズの異なる集合に対して再計算するのではなく、永続化された値をそのまま再利用します。
+`HypervolumeComparator`のHV計算は、フロントごとにO(N)回のleave-one-out評価を行います。
+目的数が多い問題では、この計算コストが大きくなります。
 
 ```{note}
-Separate from `HypervolumeComparator`'s internal implementation, there is a public function `saealib.hypervolume(f, reference_point)`.
-This can be used standalone as a performance metric for evaluating results after optimization, and is unrelated to `HypervolumeComparator`.
-See [Utils](../../api/utils.md) for details.
+`HypervolumeComparator`の内部実装とは別に、公開関数`saealib.hypervolume(f, reference_point)`があります。
+これは最適化後の結果を評価する性能指標として単独で使え、`HypervolumeComparator`とは関係ありません。
+詳細は[Utils](../../api/utils.md)を参照してください。
 ```
 
-### Comparators using reference points
+### 参照点を使うComparator
 
-`NSGA3Comparator(reference_points, direction=None, *, ...)` requires `reference_points` (`shape (n_ref, n_obj)`, points on the unit simplex).
-Normally, you pass points generated uniformly via `saealib.utils.weight_vectors.uniform_weight_vectors(n_obj, n_divisions)`.
-The `rng` property is lazily generated; during an `Optimizer` run, `Runner` injects a random number generator spawned from `ctx.rng`.
-This internal rng is not included when a checkpoint is saved, and is re-spawned on resume.
+`NSGA3Comparator(reference_points, direction=None, *, ...)`は、`reference_points`（`shape (n_ref, n_obj)`、単体シンプレックス上の点）が必須引数です。
+通常は`saealib.utils.weight_vectors.uniform_weight_vectors(n_obj, n_divisions)`で一様に生成したものを渡します。
+`rng`プロパティは遅延生成され、`Optimizer`実行時は`Runner`が`ctx.rng`からspawnした乱数生成器を注入します。
+この内部rngはチェックポイントの保存対象に含まれず、再開時は新しくspawnし直されます。
+`NSGA3Comparator`とは異なり、`RNSGA2Comparator(reference_points, epsilon=0.001, direction=None, *, ...)`は参照点が単体シンプレックス上にある必要はなく、ユーザーが望む目的関数値（aspiration point）をそのまま指定できます。
+`epsilon`は、同じ参照点に近い解同士を間引くε-clearingの半径です。
+`EpsilonDominanceComparator(eps, mode="additive", direction=None, *, ...)`は、`ParetoComparator`の`dominator`を[EpsilonDominator](dominance.md)に差し替えるだけの薄いラッパーです。
+[DecompositionComparator](decomposition.md)は、MOEA/D風のスカラー化によるランク付けを行うComparatorです。
+詳細はそちらのページで扱います。
 
-Unlike `NSGA3Comparator`, `RNSGA2Comparator(reference_points, epsilon=0.001, direction=None, *, ...)` doesn't require the reference points to lie on the unit simplex — you can specify the objective values you actually want (an aspiration point) directly.
-`epsilon` is the radius of the ε-clearing that thins out solutions close to the same reference point.
+## 独自Comparatorの実装方法
 
-`EpsilonDominanceComparator(eps, mode="additive", direction=None, *, ...)` is a thin wrapper that simply swaps `ParetoComparator`'s `dominator` for an [EpsilonDominator](dominance.md).
-
-[DecompositionComparator](decomposition.md) is a Comparator that ranks using MOEA/D-style scalarization.
-See that page for details.
-
-## Implementing a custom Comparator
-
-If you need a custom ranking scheme, subclass `Comparator` and implement all four abstract methods.
-`__init__` must always call `super().__init__(weights, eps_cv, eps_obj, direction=...)`.
+独自のランキング方式が必要な場合は、`Comparator`をサブクラス化し、4つの抽象メソッドすべてを実装します。
+`__init__`は必ず`super().__init__(weights, eps_cv, eps_obj, direction=...)`を呼び出さなければなりません。
 
 ```python
 import numpy as np
@@ -128,19 +119,19 @@ class RandomComparator(Comparator):
         return 0
 ```
 
-Set the class attribute `is_population_relative = True` and have `compare()` raise a `NotImplementedError` explaining why when the metric's pairwise ordering genuinely cannot be defined from two isolated objective/CV tuples — as with SPEA2 fitness or exclusive hypervolume contribution — not merely because the metric happens to depend on the whole population (`NSGA2Comparator`'s crowding distance also does, yet its `compare()` is well-defined via plain Pareto dominance).
-Separately, if that metric also needs to survive being carried into a smaller population — as SPEA2 fitness must survive truncation to remain valid for the next generation's mating selection — override `get_required_attrs` to declare where it's stored and `prepare_population` to recompute it fresh; without that, a later read sees a value computed for a different-sized population.
+クラス属性`is_population_relative = True`を設定し、指標のペア単位の順序を孤立した2つの目的値/CVタプルから本当に定義できない場合には、その理由を説明する`NotImplementedError`を`compare()`から送出させます。SPEA2のfitnessや排他的HV寄与度がこれに該当します。単に指標が個体群全体に依存するという理由だけでは該当しません（`NSGA2Comparator`の混雑度距離も個体群全体に依存しますが、`compare()`は通常のPareto支配によって定義できます）。
+別途、その指標をより小さい個体群へ引き継ぐ必要もある場合（SPEA2のfitnessは、次世代の交配選択で有効であり続けるために打ち切り後も保持する必要があります）は、`get_required_attrs`をオーバーライドして保存先を宣言し、`prepare_population`をオーバーライドして新しく再計算します。そうしないと、後の読み取りでサイズの異なる個体群に対して計算された値を参照することになります。
 
-## Related components
+## 関連コンポーネント
 
-- [Dominator](dominance.md): The `dominator` argument of the `ParetoComparator` family
-- [NonDominatedSorter](nondominated_sorting.md): The `sorter` argument of the `ParetoComparator` family
-- [Decomposition](decomposition.md): The scalarization functions used by `DecompositionComparator`
-- [Problem](problem.md): How to pass the `comparator` argument, and the default-selection rules
-- [ParentSelection](../search_algorithms/parent_selection.md) / [SurvivorSelection](../search_algorithms/survivor_selection.md): Operators that use `Comparator` to select individuals
-- [Population](../observation_and_state/population.md): The `PopulationAttribute` schema that `get_required_attrs` extends
+- [Dominator](dominance.md): `ParetoComparator`系の`dominator`引数
+- [NonDominatedSorter](nondominated_sorting.md): `ParetoComparator`系の`sorter`引数
+- [Decomposition](decomposition.md): `DecompositionComparator`が使うスカラー化関数
+- [Problem](problem.md): `comparator`引数の渡し方と既定の選択ルール
+- [ParentSelection](../search_algorithms/parent_selection.md) / [SurvivorSelection](../search_algorithms/survivor_selection.md): `Comparator`を使って個体を選択するオペレーター
+- [Population](../observation_and_state/population.md): `get_required_attrs`が拡張する`PopulationAttribute`スキーマ
 
-## References
+## 参照
 
 - {py:class}`saealib.Comparator`
 - {py:class}`saealib.SingleObjectiveComparator`

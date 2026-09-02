@@ -4,11 +4,11 @@ related_layers: [layer3]
 page_type: reference
 ---
 
-# Stages
+# ステージ
 
-These public Stages compose the default generation loop.
-`Stage` is a compatibility execution surface that receives `OptimizationState`, distinct from a graph-native Component's contract.
-Use `stage_component(stage)` to connect a Stage to a structured Pipeline.
+これらの公開Stageは既定の世代ループを構成します。
+`Stage`は`OptimizationState`を受け取る互換実行面であり、グラフネイティブなComponentの契約とは異なります。
+Stageを構造化Pipelineに接続するには`stage_component(stage)`を使います。
 
 ```{eval-rst}
 .. autosummary::

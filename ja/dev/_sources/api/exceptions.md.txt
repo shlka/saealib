@@ -2,7 +2,7 @@
 primary_layer: cross
 ---
 
-# Exceptions
+# 例外
 
 ```{eval-rst}
 .. autosummary::
@@ -13,3 +13,4 @@ primary_layer: cross
    saealib.ValidationError
    saealib.ConfigurationError
 ```
+

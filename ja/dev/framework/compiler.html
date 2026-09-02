@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Compiler &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Compiler &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -616,7 +616,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -798,7 +798,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -968,7 +968,7 @@ window.runMermaid = runMermaid;</script>
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="index.html" class="nav-link">フレームワーク</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Framework</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Compiler</span></li>
   </ul>
@@ -989,21 +989,29 @@ window.runMermaid = runMermaid;</script>
                   
   <section class="tex2jax_ignore mathjax_ignore" id="compiler">
 <h1>Compiler<a class="headerlink" href="#compiler" title="Link to this heading">#</a></h1>
-<div class="layer-badges"><span class="layer-badge">Layer 4: Extend Framework</span></div><p><code class="docutils literal notranslate"><span class="pre">ComponentGraph</span></code>を解決して検証すると、Compilerは実行から分離された<code class="docutils literal notranslate"><span class="pre">ExecutablePlan</span></code>を返します。CompilerはRuntimeを実行せず、Runtimeが必要とする能力と診断情報を計画に記録します。</p>
-<section id="compiler-s-role">
-<h2>Compilerの役割<a class="headerlink" href="#compiler-s-role" title="Link to this heading">#</a></h2>
-<p>CompilerはComponentGraphを解決・検証し、実行から分離されたExecutablePlanを返す境界を担います。Runtimeは実行せず、Runtimeが計画で必要とする能力と診断情報を記録します。</p>
+<div class="layer-badges"><span class="layer-badge">Layer 4: Extend Framework</span></div><p><code class="docutils literal notranslate"><span class="pre">ComponentGraph</span></code>を解決して検証すると、Compilerは実行から分離された<code class="docutils literal notranslate"><span class="pre">ExecutablePlan</span></code>を返します。
+CompilerはRuntimeを実行せず、Runtimeが必要とする能力と診断情報を計画に記録します。</p>
+<section id="id1">
+<h2>Compilerの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>CompilerはComponentGraphを解決・検証し、実行から分離されたExecutablePlanを返す境界を担います。
+Runtimeは実行せず、Runtimeが計画で必要とする能力と診断情報を記録します。</p>
 </section>
-<section id="compilation-verification-and-resolution">
-<h2>コンパイル、検証、解決<a class="headerlink" href="#compilation-verification-and-resolution" title="Link to this heading">#</a></h2>
-<p>コンパイルは、契約のスナップショット取得、Resolution、Verificationの順に進みます。<code class="docutils literal notranslate"><span class="pre">ResolutionRule</span></code>はサービス、アダプター、スキーマバインディングを解決する候補を、担当するGraph位置への提案として返します。<code class="docutils literal notranslate"><span class="pre">VerificationRule</span></code>は解決済みGraphを観測し、Graphを変更せずに診断情報を返します。共通の<code class="docutils literal notranslate"><span class="pre">CompilationRule</span></code>境界にはnamespace、name、phase、<code class="docutils literal notranslate"><span class="pre">apply(RuleContext)</span></code>が含まれます。</p>
-<p>Resolutionは提案が収束するまで反復されます。同じGraph位置への競合や未申告の変更はエラー診断になります。VerificationはGraphの整形式性、ポート互換性、サービス、データフロー、状態効果、ライフサイクル、Runtime能力を検査します。</p>
+<section id="id2">
+<h2>コンパイル、検証、解決<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<p>コンパイルは、契約のスナップショット取得、Resolution、Verificationの順に進みます。
+<code class="docutils literal notranslate"><span class="pre">ResolutionRule</span></code>はサービス、アダプター、スキーマバインディングを解決する候補を、担当するGraph位置への提案として返します。
+<code class="docutils literal notranslate"><span class="pre">VerificationRule</span></code>は解決済みGraphを観測し、Graphを変更せずに診断情報を返します。
+共通の<code class="docutils literal notranslate"><span class="pre">CompilationRule</span></code>境界にはnamespace、name、phase、<code class="docutils literal notranslate"><span class="pre">apply(RuleContext)</span></code>が含まれます。</p>
+<p>Resolutionは提案が収束するまで反復されます。
+同じGraph位置への競合や未申告の変更はエラー診断になります。VerificationはGraphの整形式性、ポート互換性、サービス、データフロー、状態効果、ライフサイクル、Runtime能力を検査します。</p>
 </section>
-<section id="executable-plan">
-<h2>実行可能な計画<a class="headerlink" href="#executable-plan" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">ExecutablePlan</span></code>は、解決済みGraph、Diagnostics、必要なRuntime能力、有効なルール、挿入されたアダプター、契約スナップショットを保持する不変値です。計画は実行位置も現在の状態も所有しないため、同じ計画をRuntimeSessionに渡して実行と再開を分離できます。Diagnosticsにエラーが含まれる場合に計画を実行可能な入力として受け入れるかは、呼び出し側のチェックとRuntime契約に従います。</p>
-<section id="from-verification-to-execution">
-<h3>検証から実行まで<a class="headerlink" href="#from-verification-to-execution" title="Link to this heading">#</a></h3>
+<section id="id3">
+<h2>実行可能な計画<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ExecutablePlan</span></code>は、解決済みGraph、Diagnostics、必要なRuntime能力、有効なルール、挿入されたアダプター、契約スナップショットを保持する不変値です。
+計画は実行位置も現在の状態も所有しないため、同じ計画をRuntimeSessionに渡して実行と再開を分離できます。
+Diagnosticsにエラーが含まれる場合に計画を実行可能な入力として受け入れるかは、呼び出し側のチェックとRuntime契約に従います。</p>
+<section id="id4">
+<h3>検証から実行まで<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
 <pre  class="mermaid">
         flowchart LR
     C[Component] --&gt; N[ComponentNode]
@@ -1011,27 +1019,37 @@ window.runMermaid = runMermaid;</script>
     G --&gt; K[Compiler]
     K --&gt; P[ExecutablePlan]
     P --&gt; R[ExecutionRuntime]
-    </pre><p>ComponentからGraphまでは構成、Compilerは解決と検証、ExecutablePlan以降はRuntimeの責務です。Runtimeは計画ノードの結果からStatePatch、イベント、コマンドを適用し、検証済みの状態境界を次のステップへ渡します。</p>
+    </pre><p>ComponentからGraphまでは構成、Compilerは解決と検証、ExecutablePlan以降はRuntimeの責務です。
+Runtimeは計画ノードの結果からStatePatch、イベント、コマンドを適用し、検証済みの状態境界を次のステップへ渡します。</p>
 </section>
 </section>
-<section id="construction-time-and-use-time">
-<h2>生成時点と利用時点<a class="headerlink" href="#construction-time-and-use-time" title="Link to this heading">#</a></h2>
-<p>Graphの構築後、Compilerは契約スナップショットを読み取り、ResolutionとVerificationを経てExecutablePlanを生成します。Runtimeは生成されたExecutablePlanを使い、実行中にCompilerの解決や検証を繰り返しません。</p>
+<section id="id5">
+<h2>構築時点と利用時点<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<p>Graphの構築後、Compilerは契約スナップショットを読み取り、ResolutionとVerificationを経てExecutablePlanを生成します。
+Runtimeは生成されたExecutablePlanを使い、実行中にCompilerの解決や検証を繰り返しません。</p>
 </section>
-<section id="invariants-and-diagnostics">
-<h2>不変条件と診断<a class="headerlink" href="#invariants-and-diagnostics" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Diagnostic</span></code>はseverity、code、message、contract path、resolution hintを持つ検証結果です。Compilerは失敗を任意の例外だけで表さず、計画の判断のために複数の問題をDiagnosticBagへ収集します。典型的な失敗には、未知のノード端点、未接続の必須ポート、不一致のDataSpec、未提供の必須サービス、未申告の状態アクセス、Runtime能力の不足があります。実装は<code class="docutils literal notranslate"><span class="pre">invalid_graph_edge</span></code>、<code class="docutils literal notranslate"><span class="pre">incompatible_port</span></code>、<code class="docutils literal notranslate"><span class="pre">unresolved_service</span></code>、<code class="docutils literal notranslate"><span class="pre">unknown_runtime_capability</span></code>などのコードで報告します。Compilerルールは未申告のGraph位置を変更せず、解決中にStructuredRegionの実行ツリーを任意に変更しません。違反は<code class="docutils literal notranslate"><span class="pre">unclaimed_rewrite</span></code>、<code class="docutils literal notranslate"><span class="pre">conflicting_rewrite</span></code>、<code class="docutils literal notranslate"><span class="pre">structured_execution_mutation</span></code>などのDiagnosticsになります。アダプターは変換の意味と無損失性を示す必要があり、ポート互換性検査を迂回してはなりません。解決不能または曖昧なアダプターは<code class="docutils literal notranslate"><span class="pre">ambiguous_adapter</span></code>などのDiagnosticsになります。</p>
+<section id="id6">
+<h2>不変条件と診断<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Diagnostic</span></code>はseverity、code、message、contract path、resolution hintを持つ検証結果です。
+Compilerは失敗を任意の例外だけで表さず、計画の判断のために複数の問題をDiagnosticBagへ収集します。
+典型的な失敗には、未知のノード端点、未接続の必須ポート、不一致のDataSpec、未提供の必須サービス、未申告の状態アクセス、Runtime能力の不足があります。
+実装は<code class="docutils literal notranslate"><span class="pre">invalid_graph_edge</span></code>、<code class="docutils literal notranslate"><span class="pre">incompatible_port</span></code>、<code class="docutils literal notranslate"><span class="pre">unresolved_service</span></code>、<code class="docutils literal notranslate"><span class="pre">unknown_runtime_capability</span></code>などのコードで報告します。
+Compilerルールは未申告のGraph位置を変更せず、解決中にStructuredRegionの実行ツリーを任意に変更しません。
+違反は<code class="docutils literal notranslate"><span class="pre">unclaimed_rewrite</span></code>、<code class="docutils literal notranslate"><span class="pre">conflicting_rewrite</span></code>、<code class="docutils literal notranslate"><span class="pre">structured_execution_mutation</span></code>などのDiagnosticsになります。
+アダプターは変換の意味と無損失性を示す必要があり、ポート互換性検査を迂回してはなりません。
+解決不能または曖昧なアダプターは<code class="docutils literal notranslate"><span class="pre">ambiguous_adapter</span></code>などのDiagnosticsになります。</p>
 </section>
-<section id="extension-points">
-<h2>拡張点<a class="headerlink" href="#extension-points" title="Link to this heading">#</a></h2>
-<p>Compilerのルール型とimport経路はリリースごとの<a class="reference internal" href="../api/index.html"><span class="std std-doc">APIリファレンス</span></a>で確認してください。<a class="reference internal" href="extensions.html"><span class="std std-doc">フレームワーク拡張</span></a>では拡張方法を説明します。</p>
+<section id="id7">
+<h2>拡張点<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<p>Compilerのルール型とimport経路はリリースごとの<a class="reference internal" href="../api/index.html"><span class="std std-doc">APIリファレンス</span></a>で確認してください。
+<a class="reference internal" href="extensions.html"><span class="std std-doc">フレームワーク拡張</span></a>では拡張方法を説明します。</p>
 </section>
-<section id="related-pages">
-<h2>関連ページ<a class="headerlink" href="#related-pages" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>関連ページ<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <p>構成要素の宣言は<a class="reference internal" href="contract.html"><span class="std std-doc">Contract</span></a>と<a class="reference internal" href="specs.html"><span class="std std-doc">Specs</span></a>を、実行計画の利用は<a class="reference internal" href="runtime.html"><span class="std std-doc">Runtime</span></a>を参照してください。</p>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>参照<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.core.CompilationRule.html#saealib.core.CompilationRule" title="saealib.core.CompilationRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.core.CompilationRule</span></code></a>・クラス</p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.core.ExecutablePlan.html#saealib.core.ExecutablePlan" title="saealib.core.ExecutablePlan"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.core.ExecutablePlan</span></code></a>・クラス</p></li>
@@ -1087,17 +1105,17 @@ window.runMermaid = runMermaid;</script>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compiler-s-role">Compilerの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compilation-verification-and-resolution">コンパイル、検証、解決</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#executable-plan">実行可能な計画</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-verification-to-execution">検証から実行まで</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Compilerの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">コンパイル、検証、解決</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">実行可能な計画</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">検証から実行まで</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#construction-time-and-use-time">生成時点と利用時点</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#invariants-and-diagnostics">不変条件と診断</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-points">拡張点</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-pages">関連ページ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">構築時点と利用時点</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">不変条件と診断</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">拡張点</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">関連ページ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">参照</a></li>
 </ul>
   </nav></div>
 

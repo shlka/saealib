@@ -3,11 +3,11 @@ primary_layer: layer2
 related_layers: [layer3, layer4]
 ---
 
-# Evaluation
+# 評価
 
-## Evaluator and graph-native contracts
+## Evaluatorとグラフネイティブ契約
 
-The graph-native path is `GenomeBatch → EvaluationAdapter → EvaluationPayload → Evaluator → ObservationBatch`.
+graph-native経路は `GenomeBatch → EvaluationAdapter → EvaluationPayload → Evaluator → ObservationBatch` です。
 
 ```{eval-rst}
 .. autosummary::
@@ -27,7 +27,7 @@ The graph-native path is `GenomeBatch → EvaluationAdapter → EvaluationPayloa
    saealib.PendingEvaluation
 ```
 
-## Evaluation policies and plans
+## 評価ポリシーと計画
 
 ```{eval-rst}
 .. autosummary::
@@ -46,9 +46,9 @@ The graph-native path is `GenomeBatch → EvaluationAdapter → EvaluationPayloa
    saealib.aggregate_replicates
 ```
 
-## Stage compatibility type
+## Stage互換型
 
-On the Stage compatibility path, use `Evaluator.evaluate_batch(...) -> EvaluationResult`. At this compatibility boundary, `EvaluationResult` requires shape and row-count consistency for `f`, `g`, and `cv`; when `candidate_ids` is provided, it must be unique and match the result row count. When `Evaluator.submit` returns `candidate_ids`, they must exactly match the request's candidate IDs.
+Stage互換経路では `Evaluator.evaluate_batch(...) -> EvaluationResult` を使います。`EvaluationResult` の `f`、`g`、`cv` のshape・行数整合性、および `candidate_ids` を指定した場合の結果行数との一致と一意性が、この互換境界の制約です。`Evaluator.submit` で `candidate_ids` を返す場合は、requestのcandidate IDsと完全一致する必要があります。
 
 ```{eval-rst}
 .. autosummary::

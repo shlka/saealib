@@ -4,82 +4,62 @@ related_layers: [layer2, layer3]
 page_type: concept
 ---
 
-# Feedback
+# フィードバック
 
-Feedback is the contract that passes observations associated with candidates in a form the Algorithm can use.
-It matches records by subject, candidate ID, proposal relation, sequence, status, source, and completion semantics rather than by row position.
-Partial, out-of-order, and repeated observations for the same candidate are valid inputs.
+フィードバックは、候補に対応する観測をアルゴリズムが利用できる形で渡す契約です。行位置ではなく、対象、候補ID、提案関係、順序、状態、出所、完了の意味論でレコードを対応付けます。同じ候補に対する部分的な観測、順不同の観測、繰り返しの観測も有効な入力です。
 
-## Feedback's role
+## Feedbackの役割
 
-Feedback passes observations associated with candidates in a form the Algorithm can use. It does not generate candidate representations or recalculate whether observations are correct.
+候補に対応する観測値を、アルゴリズムが利用できるフィードバックへ渡します。候補の表現を生成したり、観測値の正しさを再計算したりする責務は持ちません。
 
-## Proposals and observations
+## 提案と観測
 
-`ProposalBatch` collects candidates, relations among candidates, and the Feedback quantities they require.
-`ObservationBatch` contains an observation schema and records, representing quantities such as objectives, constraints, features, and costs together with their source and status.
-When the quantities requested by a proposal and provided by an observation batch are available, the proposal can proceed to later Feedback processing.
+`ProposalBatch` は候補と候補間の関係、必要なフィードバック量をまとめます。 `ObservationBatch` は観測スキーマと観測レコードを持ち、目的、制約、特徴、コストなどの量を観測の出所と状態とともに表します。 提案が要求する量と、観測バッチが提供する量が揃ったとき、提案は後続のフィードバック処理へ進めます。
 
-## Feedback on the graph-native path
+## graph-native経路のFeedback
 
-`FeedbackBatch` is the observation batch delivered for one proposal.
-`ObservationBatch` holds the subject, quantity, status, and source of each observation record, while `FeedbackBatch` adds the proposal ID, channel, sequence, and final flag.
-The consumer declares ordering, completion, multiplicity, and grouping in `FeedbackContract`.
-`FeedbackBuilder` is the boundary that projects observations into the dense `FeedbackResult` form.
+`FeedbackBatch`は一つの提案に対して届けられた観測バッチです。`ObservationBatch`は観測レコードの対象、量、状態、出所を保持し、`FeedbackBatch`は提案ID、チャネル、順序、最終フラグを加えます。利用側は`FeedbackContract`で順序、完了、多重度、グループ化を宣言します。`FeedbackBuilder`は観測を`FeedbackResult`の密な形へ投影する境界です。
 
-## FeedbackResult on the Stage compatibility path
+## Stage互換経路のFeedbackResult
 
-`FeedbackResult` is the dense compatibility data type passed to the Algorithm's `tell`.
-In this type, `candidate_ids` are unique, and the `f`, `g`, `cv`, `evaluated_mask`, `source`, and artifacts arrays follow the same row-count and shape rules.
-This constrains row consistency within `FeedbackResult`; it does not require row order to match an external `ObservationBatch`.
+`FeedbackResult`はAlgorithmの`tell`へ渡す密な互換データ型です。この型では`candidate_ids`が一意で、`f`、`g`、`cv`、`evaluated_mask`、`source`、artifactsの各配列が同じ行数・形状規則に従います。これは`FeedbackResult`内の行の整合性を制約しますが、外部の`ObservationBatch`と行順を一致させる必要はありません。
 
-## What Feedback holds
+## Feedbackが保持するもの
 
-| Type | Information held | Owning boundary |
+| 型 | 保持する情報 | 所有する境界 |
 |---|---|---|
-| `ProposalBatch` | Proposal ID, candidates, relations among candidates, Feedback requirements, and metadata | Proposal side |
-| `ObservationBatch` | Observation schema and records | Evaluation or observation side |
-| `FeedbackBatch` | Proposal ID, observations, channel, completion status, and sequence | Delivery side |
-| `FeedbackResult` | Candidate IDs, objective values, constraint values, evaluated mask, and value sources | Algorithm's tell boundary |
+| `ProposalBatch` | 提案ID、候補、候補間の関係、Feedback要件、メタデータ | 提案側 |
+| `ObservationBatch` | 観測スキーマと観測レコード | 評価または観測側 |
+| `FeedbackBatch` | 提案ID、観測、チャネル、完了状態、順序 | 配信側 |
+| `FeedbackResult` | 候補ID、目的値、制約値、評価済みマスク、値の出所 | Algorithmのtell境界 |
 
-Each `FeedbackResult` row is identified by candidate ID, with `evaluated_mask` and `source` kept on the same row.
-This lets later Algorithms and training data distinguish rows filled by predictions from rows directly evaluated.
+`FeedbackResult`の各行は候補IDで識別し、`evaluated_mask`と`source`を同じ行に保持します。これにより、予測値で補われた行と直接評価された行を、後続のAlgorithmや学習データが区別できます。
 
-## True, predicted, and mixed Feedback
+## 真値、予測値、混合フィードバック
 
-`TrueOnlyFeedback` returns only rows completed by true evaluation.
-`PredictedFeedback` returns the objective prediction channel for all candidates and supports an approximate update when true evaluation is unavailable.
-`MixedFeedback` gives priority to true evaluation and fills the remaining rows with objective predictions.
+`TrueOnlyFeedback` は真の評価で完了した行だけを返します。 `PredictedFeedback` は目的の予測チャンネルを候補全体に返し、真の評価がない場合の近似的な更新に使います。 `MixedFeedback` は真の評価を優先し、残りの行を目的予測で補います。
 
-These three are policies for selecting available observations and placing them in one Feedback result, not functions that decide which value is correct.
-Sources such as `true`, `surrogate`, `human`, and `simulator` remain on the observation side, so later contracts and training data can validate usage conditions.
+この三つは「どの値が正しいか」を判定する機能ではなく、利用可能な観測を選択して一つのフィードバック結果に配置する方針です。 `true`、`surrogate`、`human`、`simulator` などの出所は観測側に残るため、後続の契約や学習データが利用条件を検証できます。
 
-## Invariants
+## 不変条件
 
-Feedback is responsible for matching subject, candidate ID, proposal relation, sequence, status, source, and completion semantics.
-It does not generate candidate representations or recalculate whether observations are correct.
-Do not prohibit repeated observations for the same candidate ID as a general Feedback invariant; distinguish quantities requested by proposals from those provided by observations, and preserve each value's source.
+Feedbackの責務は、対象、候補ID、提案関係、順序、状態、出所、完了の意味論を対応付けることです。候補の表現を生成したり、観測値の正しさを再計算したりする責務は持ちません。同じ候補IDの繰り返し観測を一般Feedbackの不変条件で禁止せず、提案が要求する量と観測が提供する量を区別し、値の出所を失わないことが重要です。
 
-`ProposalBatch` and candidates are created when a proposal is made, while `ObservationBatch` is created when evaluation, prediction, or an external observation completes.
-`FeedbackBuilder` matches them immediately before the next Algorithm uses them, and the Runtime passes the result to the next state boundary after collecting asynchronous evaluation.
+`ProposalBatch`と候補は提案時に生成され、`ObservationBatch`は評価、予測、外部観測の完了時に生成されます。 `FeedbackBuilder`は後続アルゴリズムが利用する直前に両者を照合し、Runtimeは非同期評価の回収後にその結果を次の状態境界へ渡します。
 
-## Extending Feedback
+## Feedbackの拡張
 
-The Compiler verifies Feedback-related `PortContract`, schema bindings, required services, and lifecycle Feedback.
-The Runtime checks candidate-ID matching, waits for incomplete observations, and prevents the same result from being applied twice.
-An observation whose subject or proposal relation cannot be resolved, a delivery that violates declared ordering or completion contracts, missing requested quantities, or a choice that overwrites true evaluation with a prediction becomes a diagnostic or Feedback construction error.
+コンパイラはフィードバックに関係する`PortContract`、スキーマバインディング、必須サービス、ライフサイクルのフィードバックを検証します。ランタイムは候補IDの一致を確認し、未完了の観測を待ち、同じ結果が二度適用されるのを防ぎます。対象または提案との関係を解決できない観測、宣言した順序や完了の契約に違反する配信、要求量の不足、真の評価を予測で上書きする選択は、診断またはフィードバック構築エラーになります。
 
-When adding a Feedback policy, extend the Builder boundary while preserving observation sources and the evaluated mask.
-For proposal or observation contract changes, see [Specs](../../framework/specs.md) and [Compiler](../../framework/compiler.md); for the asynchronous application boundary, see [Runtime](../../framework/runtime.md).
-See the [API reference](../../api/index.md) for public import paths.
+Feedback方針を追加する場合は、観測の出所と評価済みマスクを保持したままBuilder境界を拡張します。提案または観測の契約を変更する場合は[Specs](../../framework/specs.md)と[Compiler](../../framework/compiler.md)を、非同期の適用境界については[Runtime](../../framework/runtime.md)を参照してください。公開インポートパスは[APIリファレンス](../../api/index.md)を参照してください。
 
-## Related components
+## 関連コンポーネント
 
-- [Algorithm](../search_algorithms/algorithm.md): Consumes Feedback with `tell()`.
-- [Evaluator](../execution_and_evaluation/evaluation.md): Produces evaluation results.
-- [OptimizationState](optimization_state.md): Holds execution state.
+- [Algorithm](../search_algorithms/algorithm.md)：フィードバックを `tell()` で消費します。
+- [Evaluator](../execution_and_evaluation/evaluation.md)：評価結果を生成します。
+- [OptimizationState](optimization_state.md)：実行状態を保持します。
 
-## References
+## 参照
 
 - {py:class}`saealib.FeedbackResult`
 - {py:class}`saealib.FeedbackBuilder`

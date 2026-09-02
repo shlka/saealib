@@ -4,66 +4,61 @@ related_layers: []
 page_type: concept
 ---
 
-# CORS-RBF (Constrained Optimization using Response Surfaces)
+# CORS-RBF（Constrained Optimization using Response Surfaces）
 
-CORS-RBF is a sequential optimization method for expensive-to-evaluate objective functions that selects the next evaluation point one at a time using a surrogate model built from RBF (Radial Basis Function) interpolation.
-CORS-RBF is the implementation of CORS (Constrained Optimization using Response Surfaces), the framework proposed by Regis & Shoemaker (2005), realized with an RBF surrogate model.
+CORS-RBFは、評価コストの高い目的関数を対象に、RBF(Radial Basis Function)補間によるサロゲートモデルを使って次の評価点を1点ずつ選ぶ逐次最適化の手法です。 Regis & Shoemaker (2005)が提案した枠組みCORS(Constrained Optimization using Response Surfaces)を、RBFサロゲートモデルで具体化した実装がCORS-RBFです。
 
-## Overview
+## 概要
 
-RBF interpolation only reconstructs a smooth surface passing through the training points, and unlike GP regression, it has no predictive variance.
-Because of this, the naive approach of simply minimizing the surrogate model's prediction to choose the next evaluation point ends up repeatedly searching only around points where good values have already been observed, and can converge to a point that isn't even a local minimum of the true function.
+RBF補間は、学習点を通る滑らかな曲面を再構成するだけで、GP回帰のような予測分散を持ちません。 そのため、サロゲートモデルの予測値をそのまま最小化して次の評価点を選ぶ素朴な方法は、既に良い値が観測された点の周辺だけを繰り返し探索してしまい、真の関数の局所最小値ですらない点に収束しかねません。
 
-CORS avoids this problem by building a **distance constraint** directly into the candidate-point selection itself.
-The auxiliary problem solved at each iteration is a constrained optimization that, in addition to minimizing the surrogate model $\hat f_i(x)$, requires the next candidate point to be at least $\beta_i \Delta_i$ away from every existing evaluated point ($\Delta_i$ being the maximum of the minimum distances from the existing point set).
-$\beta_i$ is given, iteration by iteration, as a sequence (the **search pattern**) that cycles from values near 1 (favoring global search) down to 0 (favoring local search, i.e. simply minimizing the surrogate model); this distance constraint takes over the role of exploration that a GP's predictive variance would otherwise play.
+CORSは、候補点の選択そのものに**距離制約**を組み込むことでこの問題を回避します。各反復で解く補助問題は制約付き最適化であり、サロゲートモデル$\hat f_i(x)$を最小化するだけでなく、次の候補点が既存の評価済み点すべてから少なくとも$\beta_i \Delta_i$離れていることを要求します（$\Delta_i$は既存点集合からの最小距離の最大値です）。$\beta_i$は反復ごとに数列（**探索パターン**）として与えられ、1に近い値（大域探索寄り）から0（局所探索寄り、つまりサロゲートモデルの単純な最小化）まで循環します。この距離制約が、GPの予測分散が担うはずの探索の役割を引き受けます。
 
-This distance constraint is not a side effect — it is the core of CORS.
-It has been proven that, as long as the search pattern contains at least one nonzero value, convergence to the global minimum of any continuous function is guaranteed, regardless of the type of surrogate model or how the initial evaluation points are chosen.
+この距離制約は副産物ではなく、CORSの核心です。 search patternに0でない値が1つでも含まれていれば、サロゲートモデルの種類や初期評価点の選び方によらず、任意の連続関数の大域最小値に収束することが証明されています。
 
-The source is {cite}`regis2005cors`. The concrete procedure is shown in the pseudocode below.
+出典は{cite}`regis2005cors`。具体的な手順は次の擬似コードに示します。
 
-## Pseudocode
+## 擬似コード
 
 ```{prf:algorithm} CORS-RBF
 :label: alg-rbf-cors
 
-**Inputs** objective function $f$, search domain $\mathcal{D}$, initial evaluated point set $S_1 = \{x_1, \ldots, x_k\}$, periodic distance-parameter sequence (search pattern) $\langle \beta_1, \ldots, \beta_{N+1}=0 \rangle$
-**Output** best solution $x^*$
+**Inputs** 目的関数 $f$、探索領域 $\mathcal{D}$、初期評価点集合 $S_1 = \{x_1, \ldots, x_k\}$、距離パラメータの周期列(search pattern) $\langle \beta_1, \ldots, \beta_{N+1}=0 \rangle$
+**Output** 最良解 $x^*$
 
-1. Evaluate $S_1$ with the true function $f$ and set $i := 1$
-2. Fit an RBF surrogate model $\hat f_i$ to the evaluated data so far, $D_i = \{(x, f(x)) \mid x \in S_i\}$
-3. Solve the constrained minimization problem $\min_{x \in \mathcal{D}} \hat f_i(x) \ \mathrm{s.t.} \ \|x - x_j\| \geqslant \beta_i \Delta_i \ (j=1,\ldots,|S_i|)$ to find the candidate point $x_{k+i}$ ($\Delta_i$ being the maximum of the minimum distances from the existing evaluated point set)
-4. Evaluate $x_{k+i}$ with the true function and add it to $S_{i+1} := S_i \cup \{x_{k+i}\}$
-5. Update $\beta_i$ according to the periodic sequence, set $i := i+1$, and return to step 2 until the termination condition is reached
+$S_1$ を真の関数 $f$ で評価し、$i := 1$ とする
+これまでの評価済みデータ $D_i = \{(x, f(x)) \mid x \in S_i\}$ にRBFサロゲートモデル $\hat f_i$ をフィットする
+制約付き最小化問題 $\min_{x \in \mathcal{D}} \hat f_i(x) \ \mathrm{s.t.} \ \|x - x_j\| \geqslant \beta_i \Delta_i \ (j=1,\ldots,|S_i|)$ を解いて候補点 $x_{k+i}$ を求める（$\Delta_i$は既存評価点集合からの最大最小距離）
+$x_{k+i}$ を真の関数で評価し、$S_{i+1} := S_i \cup \{x_{k+i}\}$ に追加する
+終了条件に達するまで、周期列に従い $\beta_i$ を更新して $i := i+1$ とし2へ戻る
 ```
 
-## Flowchart
+## フローチャート
 
 ```{mermaid}
 flowchart TD
-    INIT["Initializer<br/>Sample initial population<br/>→ true evaluation<br/>(L1)"] --> ASK
-    subgraph GEN["One generation (PreSelectionStrategy.step)"]
+    INIT["初期化器<br/>初期個体群をサンプリング<br/>→ 真の評価<br/>(L1)"] --> ASK
+    subgraph GEN["1世代 (PreSelectionStrategy.step)"]
         direction TB
-        ASK["GA.ask()<br/>Generate candidate points"] --> SCORE["SurrogateManager<br/>Fit RBF (L2)<br/>→ Score with CORSDistance<br/>Apply βᵢΔᵢ distance constraint<br/>(L3)"]
-        SCORE --> SORT["Select top-1 candidate<br/>by CORSDistance score"]
-        SORT --> EVAL["True evaluation →<br/>add to archive<br/>(L4)"]
-        EVAL --> TELL["GA.tell()<br/>Update population"]
+        ASK["GA.ask()<br/>候補点を生成"] --> SCORE["SurrogateManager<br/>RBFをフィット (L2)<br/>→ CORSDistanceでスコア化<br/>βᵢΔᵢ距離制約を適用<br/>(L3)"]
+        SCORE --> SORT["上位1候補を選択<br/>CORSDistanceスコア順"]
+        SORT --> EVAL["真の評価 →<br/>アーカイブに追加<br/>(L4)"]
+        EVAL --> TELL["GA.tell()<br/>個体群を更新"]
     end
-    GEN --> TERM{"Evaluation budget N<br/>reached?"}
-    TERM -- "Not yet (L5)" --> ASK
-    TERM -- "Reached" --> RESULT(["Best solution x*"])
+    GEN --> TERM{"評価予算N<br/>に達したか？"}
+    TERM -- "未達 (L5)" --> ASK
+    TERM -- "到達" --> RESULT(["最良解x*"])
 ```
 
-## Configuration in saealib
+## saealibでの構成
 
-| Role | saealib implementation | Corresponding step |
+|役割|saealibでの実装|対応ステップ|
 |---|---|---|
-| Search algorithm | `GA` (the specific combination of crossover, mutation, and selection is not part of CORS's definition) | L3 |
-| Surrogate model | `RBFSurrogate` (RBF interpolation; this example uses `GaussianKernel()`, whose default `polynomial_degree="auto"` adds a constant term, but `kernel` is a required argument and any `RBFKernel`/`polynomial_degree` can be injected — see Differences from the source) | L2 |
-| Acquisition function | `CORSDistance` (applies a $\beta_i\Delta_i$ distance constraint to the predictive mean) | L3 |
-| Surrogate management | `GlobalSurrogateManager` (fits the RBF over the entire archive) | L2-3 |
-| Evaluation strategy | `PreSelectionStrategy(n_select=1)` (source-faithful: one true evaluation per CORS decision) | L3-4 |
+|探索アルゴリズム本体|`GA`（交叉、突然変異、選択の組み合わせ自体はCORSの定義に含まれない）|手順 L3|
+|サロゲートモデル|`RBFSurrogate`（RBF補間。この例では`GaussianKernel()`を使い、既定の`polynomial_degree="auto"`が定数項を追加します。`kernel`は必須引数であり、任意の`RBFKernel`と`polynomial_degree`を注入できます。詳しくは「原法との差分」を参照してください）|手順 L2|
+|獲得関数|`CORSDistance`（予測平均に$\beta_i\Delta_i$の距離制約を適用）|手順 L3|
+|サロゲート管理|`GlobalSurrogateManager`（アーカイブ全体でRBFをフィットする）|「L2-3」|
+|評価戦略|`PreSelectionStrategy(n_select=1)`（原法に忠実な設定。CORSの判断1回につき真の評価を1点だけ行います）|「L3-4」|
 
 ```python
 import numpy as np
@@ -114,40 +109,24 @@ opt = (
 ctx = opt.run()
 ```
 
-## Differences from the source
+## 原法との差分
 
-The original CORS procedure selects candidate points sequentially by minimizing a constrained prediction, whereas saealib approximates this minimization by selecting the highest-`CORSDistance` candidates from the pool generated by `GA`.
-The example above uses `PreSelectionStrategy(n_select=1)` to maintain the source-faithful one-candidate-per-decision cadence.
-The crossover, mutation, parent-selection, and environmental-selection combination in the example is an saealib configuration choice, not part of the CORS definition.
-The paper's numerical experiments use a thin-plate-spline kernel ($\phi(r) = r^2 \log r$) with a first-order polynomial term $p(x)$.
-With the `kernel=GaussianKernel()` used above, `RBFSurrogate`'s default `polynomial_degree="auto"` resolves to a constant term (`GaussianKernel`'s `auto_polynomial_degree` is `0`), so swapping only the kernel does not reproduce the paper's first-order term.
-Passing `kernel=ThinPlateSplineKernel()` together with `polynomial_degree=1` reproduces it, since a linear polynomial term is what makes the interpolation system well-posed for a conditionally positive definite kernel such as thin-plate-spline.
+CORSの原法は、制約付き予測を最小化して候補点を逐次選びます。一方saealibは、`GA`が生成した候補プールから`CORSDistance`が最大の候補を選び、この最小化を近似します。上記の例では`PreSelectionStrategy(n_select=1)`を使い、判断1回につき候補1点という原法どおりのペースを保っています。例における交叉、突然変異、親選択、環境選択の組み合わせはsaealibの構成上の選択であり、CORSの定義には含まれません。論文の数値実験では、一次多項式項$p(x)$を持つ薄板スプラインカーネル（$\phi(r) = r^2 \log r$）を使います。上記で使った`kernel=GaussianKernel()`に対しては、`RBFSurrogate`の既定値`polynomial_degree="auto"`が定数項に解決されます（`GaussianKernel`の`auto_polynomial_degree`が`0`のため）。そのため、カーネルだけを差し替えても論文の一次項は再現できません。`kernel=ThinPlateSplineKernel()`と`polynomial_degree=1`を同時に渡すと再現できます。薄板スプラインのような条件付き正定値カーネルでは、線形多項式項が補間系を適切に定めるためです。
 
-## Parameters and variants
+## パラメータと変種
 
-**kernel (choice of RBF kernel)**: `RBFSurrogate(kernel=...)` requires an `RBFKernel` instance; there is no default.
-The example above passes `GaussianKernel()`.
+**kernel（RBFカーネルの選択）**：`RBFSurrogate(kernel=...)`は`RBFKernel`インスタンスを要求する必須引数であり、既定値はありません。上記の例では`GaussianKernel()`を渡しています。
 
-**delta**: With the default `delta=None`, `CORSDistance` approximates the
-paper's iteration-specific $\Delta_i$ with the candidate-pool maximin distance
-`max_candidate min_evaluated distance`. A finite positive numeric `delta`
-selects a fixed distance scale instead.
+**delta**: 既定の`delta=None`では、`CORSDistance`は論文の反復ごとの$\Delta_i$を、候補プールにおけるmaximin距離`max_candidate min_evaluated distance`で近似します。有限の正の数値を`delta`に渡すと、代わりに固定の距離スケールを使います。
 
-## Beta cadence
+## betaの進み方
 
-`CORSDistance.prepare(archive, ctx)` selects
-`search_pattern[ctx.decision_count % len(search_pattern)]`. `decision_count`
-counts the evaluation plans the runtime has confirmed, so the first decision
-uses `search_pattern[0]` and the pattern repeats cyclically, one entry per
-decision. Preparing the same decision a second time — after an archive change
-invalidates a cached reference, for instance — reuses that decision's entry
-instead of skipping ahead. Repeated `score()` calls use the prepared beta and
-do not advance the pattern.
+`CORSDistance.prepare(archive, ctx)`は`search_pattern[ctx.decision_count % len(search_pattern)]`を選びます。`decision_count`はランタイムが確定した評価計画の数なので、最初の判断では`search_pattern[0]`が使われ、以降は判断1回につき1要素ずつパターンを巡回します。同じ判断に対して再びprepareが呼ばれたとき（アーカイブの変更でキャッシュされた参照が無効になった場合など）は、その判断の要素を使い直し、先へ進めることはありません。`score()`を繰り返し呼んでも、用意済みのbetaを使うだけでパターンは進みません。
 
-## Related
+## 関連
 
-- [References](../references.md): Full bibliographic details for the source
-- [Surrogate](../concepts/surrogate_modeling/surrogate.md): List of surrogate models including `RBFSurrogate`/`GaussianKernel`
-- [AcquisitionFunction](../concepts/surrogate_modeling/acquisition_functions.md): List of acquisition functions including distance-constrained `CORSDistance` for CORS
-- [SurrogateManager](../concepts/surrogate_modeling/surrogate_manager.md): Detailed usage of `GlobalSurrogateManager`
-- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): List of strategies including `PreSelectionStrategy`
+- [文献リファレンス](../references.md)：出典の完全な書誌情報
+- [Surrogate](../concepts/surrogate_modeling/surrogate.md)：`RBFSurrogate`/`GaussianKernel`を含むサロゲートモデル一覧
+- [AcquisitionFunction](../concepts/surrogate_modeling/acquisition_functions.md)：CORSの距離制約付き`CORSDistance`を含む獲得関数一覧
+- [SurrogateManager](../concepts/surrogate_modeling/surrogate_manager.md)：`GlobalSurrogateManager`の詳しい使い方
+- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): `PreSelectionStrategy`を含む戦略の一覧

@@ -5,115 +5,115 @@ page_type: concept
 
 # Surrogate
 
-`saealib` restricts the responsibility of the predictive model approximating the objective function to `Surrogate`, a swappable component.
-`Surrogate` knows only fit/predict — it knows nothing about how a prediction is converted into a score ([AcquisitionFunction](acquisition_functions.md)), or where training data comes from ([TrainingSet](training_set.md), via [SurrogateManager](surrogate_manager.md)).
+`saealib`は、目的関数を近似する予測モデルの責務を`Surrogate`という差し替え可能なコンポーネントに限定しています。
+`Surrogate`はfit/predictだけを知り、予測値をどうスコアに変換するか（[AcquisitionFunction](acquisition_functions.md)）や、学習データをどこから集めるか（[TrainingSet](training_set.md)、[SurrogateManager](surrogate_manager.md)経由）は一切知りません。
 
-## Surrogate's role
+## Surrogateの役割
 
-`Surrogate` requires two methods to be implemented.
+`Surrogate`が実装を要求するメソッドは2つあります。
 
-**`fit(train_x, train_y) -> None`**: Trains the model on inputs of shape `(n_samples, n_features)` and outputs of shape `(n_samples, n_obj)` (or `(n_samples,)` for single-objective).
+**`fit(train_x, train_y) -> None`**：形状`(n_samples, n_features)`の入力と、形状`(n_samples, n_obj)`（単目的では`(n_samples,)`）の出力でモデルを学習します。
 
-**`predict(test_x) -> SurrogatePrediction`**: Returns predictions for inputs of shape `(n_samples, n_features)`.
+**`predict(test_x) -> SurrogatePrediction`**：形状`(n_samples, n_features)`の入力に対する予測を返します。
 
-The class attribute `provides_uncertainty: bool = False` indicates whether predictions carry uncertainty (standard deviation).
-The default is `False`; only Gaussian Process implementations override it to `True`.
+クラス属性`provides_uncertainty: bool = False`は、予測が不確実性（標準偏差）を伴うかどうかを示します。
+既定は`False`で、ガウス過程の実装だけが`True`にオーバーライドします。
 
-There are two marker base classes between `Surrogate` and `predict()`.
+`Surrogate`と`predict()`の間には2つのマーカー基底クラスがあります。
 
-**`RegressionSurrogate`**: A marker for regression surrogates where `train_y` is a real-valued objective function output.
+**`RegressionSurrogate`**：`train_y`が実数値の目的関数出力である回帰サロゲート向けのマーカー。
 
-**`ComparisonSurrogate`**: For comparison surrogates where `train_y` is a `{0, 1}`-valued binary comparison label.
-`predict_proba(test_x) -> SurrogatePrediction` (values are win probabilities in `[0, 1]`) is the primary interface, with `predict()` delegating to `predict_proba()` by default.
+**`ComparisonSurrogate`**：`train_y`が`{0, 1}`の二値比較ラベルである比較サロゲート向け。
+`predict_proba(test_x) -> SurrogatePrediction`（値は`[0, 1]`の勝率）が主インターフェースで、`predict()`は既定で`predict_proba()`に委譲します。
 
 ## SurrogatePrediction
 
-`predict()`'s return value is `SurrogatePrediction`, a unified dataclass.
+`predict()`の戻り値は`SurrogatePrediction`という統一データクラスです。
 
-| Field | Content |
+| フィールド | 内容 |
 |---|---|
-| `value` | The predicted value. Shape `(n_samples, n_obj)` |
-| `std` | Uncertainty (standard deviation). `None` for surrogates that don't provide it |
-| `label` | Class labels, only present for classification models |
-| `metadata` | A `dict` holding implementation-specific auxiliary information, such as SHAP values |
+| `value` | 予測値。形状 `(n_samples, n_obj)` |
+| `std` | 不確実性（標準偏差）。提供しないサロゲートでは`None` |
+| `label` | 分類モデルのみが持つクラスラベル |
+| `metadata` | SHAP値など実装固有の付加情報を格納する`dict` |
 
-`value` and `std` are convenience properties for the objective channel.
-When a surrogate's prediction represents a quantity that isn't the objective value (such as a novelty score), this mechanism prevents contaminating things like pbest.
-Archive-based criteria such as `NoveltyAcquisition` instead receive candidate and archive design points directly.
+`value`と`std`は目的関数チャンネル向けの便利なプロパティです。
+サロゲートの予測が目的関数値ではない量（新規性スコアなど）を表す場合、この仕組みによってpbestのような値が汚染されるのを防ぎます。
+`NoveltyAcquisition`などのアーカイブベースの基準は、候補とアーカイブの設計点を直接受け取ります。
 
-## Built-in Surrogates
+## 組み込みSurrogate
 
-**`RBFSurrogate(kernel, polynomial_degree="auto", solver="lstsq", alpha=1e-8)`**: A surrogate using RBF interpolation {cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml` (the origin of RBF interpolation itself is Hardy, 1971).
-`kernel` is a required `RBFKernel` object with no default (built-in kernels are listed below); a custom kernel is a subclass implementing `evaluate(r)`.
-`predict()` explicitly returns `std=None` (RBF interpolation provides no uncertainty).
+**`RBFSurrogate(kernel, polynomial_degree="auto", solver="lstsq", alpha=1e-8)`**：RBF補間によるサロゲートです{cite}`gutmann2001rbf,regis2005cors,rasmussen2006gpml`（RBF補間自体の起源はHardy, 1971）。
+`kernel`は既定値を持たない必須の`RBFKernel`オブジェクトです（組み込みカーネルは以下に示します）。カスタムカーネルは`evaluate(r)`を実装するサブクラスとして作ります。
+`predict()`は`std=None`を明示的に返します（RBF補間は不確実性を提供しません）。
 
-| Parameter | Values | Role |
+| パラメータ | 値 | 役割 |
 |---|---|---|
-| `polynomial_degree` | `"auto"` (default) / `None` / `0` / `1` | Augments the system with a polynomial term (from `kernel.auto_polynomial_degree` / none / constant / linear). A conditionally positive definite kernel such as `ThinPlateSplineKernel` requires one; a strictly positive definite kernel such as `GaussianKernel` does not, but resolves `"auto"` to a constant term so that predictions stay unchanged when a constant is added to every objective value. |
-| `solver` | `"lstsq"` (default) / `"solve"` / `"tikhonov"` | How the (possibly augmented) linear system is solved: least squares (tolerant of rank-deficient systems) / direct / ridge-regularized via `alpha`. |
-| `alpha` | `1e-8` (default) | Ridge regularization strength, used only when `solver="tikhonov"`. |
+| `polynomial_degree` | `"auto"`（既定） / `None` / `0` / `1` | 補間系を多項式項で拡張します（`kernel.auto_polynomial_degree`から決定 / なし / 定数 / 線形）。`ThinPlateSplineKernel`のような条件付き正定値カーネルには多項式項が必要です。`GaussianKernel`のような狭義正定値カーネルには不要ですが、`"auto"`は定数項に解決されます。目的関数値すべてに同じ定数を足しても予測が変わらないようにするためです。 |
+| `solver` | `"lstsq"`（既定） / `"solve"` / `"tikhonov"` | 線形系（多項式項で拡張されている場合を含む）の解法：最小二乗法（ランク落ちした系にも対応） / 直接法 / `alpha`によるリッジ正則化。 |
+| `alpha` | `1e-8`（既定） | リッジ正則化の強さ。`solver="tikhonov"`の場合だけ使われます。 |
 
-`kernel` and `polynomial_degree` are the values as configured; `resolved_kernel` and `resolved_polynomial_degree` expose what a `fit()` call actually resolves and uses, keeping the configured `RBFKernel` instance itself immutable.
-Reassigning `kernel`/`polynomial_degree`/`solver`/`alpha` invalidates any fitted state; `predict()` then raises `RuntimeError` until the next `fit()`.
+`kernel`と`polynomial_degree`は設定した値そのものです。`resolved_kernel`と`resolved_polynomial_degree`は、`fit()`が実際に解決して使う値を公開し、設定した`RBFKernel`インスタンス自体は不変に保ちます。
+`kernel`/`polynomial_degree`/`solver`/`alpha`を再設定すると、fit済みの状態は無効になり、次の`fit()`まで`predict()`は`RuntimeError`を送出します。
 
-Kernels carrying a `length_scale` field (in the same distance units as the input data) resolve it automatically to the median pairwise training-point distance when left `None`.
+`length_scale`フィールドを持つカーネル（入力データと同じ距離単位）は、`None`のままにすると訓練点間のペアワイズ距離の中央値へ自動的に解決されます。
 
-Each kernel declares two independent degrees. `min_polynomial_degree` is the lowest degree the kernel accepts — passing anything below it, `None` included, raises `ValidationError`. `auto_polynomial_degree` is what `polynomial_degree="auto"` resolves to, which may be higher than the minimum.
+各カーネルは独立した2つの次数を宣言します。`min_polynomial_degree`はそのカーネルが受け付ける最小の次数で、これを下回る値（`None`を含む）を渡すと`ValidationError`になります。`auto_polynomial_degree`は`polynomial_degree="auto"`の解決先で、最小次数より高いことがあります。
 
-| Kernel | Formula | `min_polynomial_degree` | `"auto"` resolves to |
+| カーネル | 式 | `min_polynomial_degree` | `"auto"`の解決先 |
 |---|---|---|---|
-| `GaussianKernel` | $\exp\left(-\dfrac{r^2}{2\,\ell^2}\right)$ | none | `0` (constant) |
-| `ThinPlateSplineKernel` | $r^2 \log r$ (no `length_scale`) | `1` (linear) | `1` (linear) |
-| `LinearKernel` | $r$ (no `length_scale`) | `0` (constant) | `0` (constant) |
-| `CubicKernel` | $r^3$ (no `length_scale`) | `1` (linear) | `1` (linear) |
-| `MultiquadricKernel` | $\sqrt{r^2 + \ell^2}$ | `0` (constant) | `0` (constant) |
-| `MaternKernel` (`nu=0.5/1.5/2.5`) | Matérn covariance, `length_scale` = $\ell$ | none | `0` (constant) |
+| `GaussianKernel` | $\exp\left(-\dfrac{r^2}{2\,\ell^2}\right)$ | なし | `0`（定数） |
+| `ThinPlateSplineKernel` | $r^2 \log r$（`length_scale`は未使用） | `1`（線形） | `1`（線形） |
+| `LinearKernel` | $r$（`length_scale`は未使用） | `0`（定数） | `0`（定数） |
+| `CubicKernel` | $r^3$（`length_scale`は未使用） | `1`（線形） | `1`（線形） |
+| `MultiquadricKernel` | $\sqrt{r^2 + \ell^2}$ | `0`（定数） | `0`（定数） |
+| `MaternKernel`（`nu=0.5/1.5/2.5`） | Matérn共分散。`length_scale` = $\ell$ | なし | `0`（定数） |
 
-All six kernels and all three `solver` values are supported: each is covered by tests and usable as shipped. Passing `polynomial_degree=None` to `GaussianKernel` or `MaternKernel` is likewise supported, and drops the constant term that `"auto"` would have added.
+6種類のカーネルと3種類の`solver`はいずれもサポート対象です。それぞれテストで検証されており、そのまま利用できます。`GaussianKernel`や`MaternKernel`に`polynomial_degree=None`を渡すこともサポートしており、`"auto"`が追加する定数項を落とせます。
 
-**`PerObjectiveSurrogate(surrogates)`**: A `RegressionSurrogate` subclass, a composite class that assigns a different surrogate per objective.
-Raises `ValueError` at `fit` time if `train_y`'s column count doesn't match `len(surrogates)`.
-`provides_uncertainty` is a composite judgment, returning `True` only if every constituent surrogate is `True`.
+**`PerObjectiveSurrogate(surrogates)`**：`RegressionSurrogate`のサブクラスで、目的ごとに異なるサロゲートを割り当てる合成クラス。
+`fit`時に`train_y`の列数と`len(surrogates)`が一致しないと`ValueError`になります。
+`provides_uncertainty`は、構成する全サロゲートが`True`の場合のみ`True`を返す複合判定になっています。
 
-### External library adapters
+### 外部ライブラリアダプタ
 
-Regression surrogates via a scikit-learn-compatible API carry a `Sklearn` prefix.
+scikit-learn互換API経由の回帰サロゲートには`Sklearn`という接頭辞が付きます。
 
-| Class | Model |
+| クラス | モデル |
 |---|---|
-| `SklearnGPRSurrogate` | Gaussian Process {cite}`sacks1989dace,rasmussen2006gpml`. The sole implementation with `provides_uncertainty=True` |
-| `SklearnRFRSurrogate` | Random Forest regression |
+| `SklearnGPRSurrogate` | ガウス過程{cite}`sacks1989dace,rasmussen2006gpml`。`provides_uncertainty=True`の唯一の実装 |
+| `SklearnRFRSurrogate` | ランダムフォレスト回帰 |
 | `SklearnSVMSurrogate` | SVM |
 | `SklearnNNSurrogate` | MLP |
-| `SklearnXGBSurrogate` | XGBoost (the `xgboost` extra) |
-| `SklearnLGBMSurrogate` | LightGBM (the `lightgbm` extra) |
-| `TorchSurrogate` | PyTorch-based models (the `torch` extra) |
+| `SklearnXGBSurrogate` | XGBoost（`xgboost` 追加機能） |
+| `SklearnLGBMSurrogate` | LightGBM（`lightgbm` 追加機能） |
+| `TorchSurrogate` | PyTorchベースのモデル（`torch` 追加機能） |
 
-`SklearnGPRSurrogate` computes standard deviation from the GP kernel via `return_std=True`, and returns `provides_uncertainty=True`.
+`SklearnGPRSurrogate`は`return_std=True`でGPカーネルから標準偏差を計算し、`provides_uncertainty=True`を返します。
 
-The following classes are classification surrogates aimed at feasibility prediction.
+実行可能性予測向けの分類サロゲートには次のクラスがあります。
 
-| Class | Model |
+| クラス | モデル |
 |---|---|
-| `SklearnClassificationSurrogate` | Classification models compatible with scikit-learn in general |
-| `SklearnRFCClassificationSurrogate` | Random Forest classification |
-| `SklearnSVCClassificationSurrogate` | SVM classification |
+| `SklearnClassificationSurrogate` | scikit-learn互換の分類モデル全般 |
+| `SklearnRFCClassificationSurrogate` | ランダムフォレスト分類 |
+| `SklearnSVCClassificationSurrogate` | SVM分類 |
 
-See [TrainingSet](training_set.md)'s `FeasibilityClassificationSet` for how training data is extracted for these classification surrogates.
-For pairwise comparison, use the dedicated `ComparisonSurrogate`-family implementations rather than these classification surrogates, paired with [SurrogateManager](surrogate_manager.md)'s `PairwiseSurrogateManager` and `PairwiseComparisonSet`.
+これらの分類サロゲートの学習データ抽出方法は[TrainingSet](training_set.md)の`FeasibilityClassificationSet`を参照してください。
+ペア比較には、これらの分類サロゲートではなく`ComparisonSurrogate`系の専用実装を使い、[SurrogateManager](surrogate_manager.md)の`PairwiseSurrogateManager`および`PairwiseComparisonSet`と組み合わせます。
 
-See [Installation](../../getting_started/installation.md) for how to install each extra.
+各追加機能のインストール方法は[インストール](../../getting_started/installation.md)を参照してください。
 
 ```{note}
-Adapters for BoTorch/SMT surrogates, beyond scikit-learn/XGBoost/LightGBM/PyTorch, are not currently implemented in `saealib`.
-`pyproject.toml` has no corresponding extra either.
-pymoo has adapters, but at the [Problem](../problem_and_ranking/problem.md)/[Crossover](../search_algorithms/crossover.md)/[Mutation](../search_algorithms/mutation.md)/[Algorithm](../search_algorithms/algorithm.md) level, not as a `Surrogate` — pymoo doesn't provide surrogate models.
+scikit-learn/XGBoost/LightGBM/PyTorch以外のBoTorch/SMTサロゲート用アダプターは、現時点で
+`saealib` に実装されていません。`pyproject.toml` に対応する追加機能もありません。pymooにはアダプターがありますが、[Problem](../problem_and_ranking/problem.md)/[Crossover](../search_algorithms/crossover.md)/[Mutation](../search_algorithms/mutation.md)/[Algorithm](../search_algorithms/algorithm.md)
+のレベルであり、`Surrogate` としてではありません。pymooはサロゲートモデルを提供しません。
 ```
 
-## Extension hooks
+## 拡張フック
 
-If you just want to add post-fit processing, you can add it to an existing `Surrogate` instance with `with_post_fit(fn)` instead of creating a new subclass.
-`with_post_fit` doesn't modify the original instance — it returns a copy with `fn` added.
+フィット後の後処理だけを足したい場合、サブクラスを新設せずに`with_post_fit(fn)`で既存の`Surrogate`インスタンスへ処理を追加できます。
+`with_post_fit`は元のインスタンスを変更せず、`fn`を追加したコピーを返します。
 
 ```python
 from saealib import GaussianKernel, RBFSurrogate
@@ -127,14 +127,14 @@ base = RBFSurrogate(kernel=GaussianKernel())
 logged = base.with_post_fit(log_fit)
 ```
 
-`fn`'s signature is `fn(train_x, train_y, ctx) -> None`.
+`fn`のシグネチャは`fn(train_x, train_y, ctx) -> None`です。
 
-## Implementing a custom Surrogate
+## 独自Surrogateの実装方法
 
-If you need a custom predictive model, subclass `Surrogate` and implement `fit()`/`predict()`.
-Choose `RegressionSurrogate` for regression, or `ComparisonSurrogate` (implementing `predict_proba()`) for comparison, as the class to subclass.
+独自の予測モデルが必要な場合は、`Surrogate`を継承して`fit()`/`predict()`を実装します。
+回帰なら`RegressionSurrogate`、比較なら`ComparisonSurrogate`（`predict_proba()`を実装）を継承先に選びます。
 
-The following example is a simple regression surrogate that returns the nearest training point's objective value directly as the prediction.
+次の例は、最近傍点の目的関数値をそのまま予測値として返す単純な回帰サロゲートです。
 
 ```python
 import numpy as np
@@ -156,27 +156,27 @@ class NearestNeighborSurrogate(RegressionSurrogate):
         return SurrogatePrediction(value=value)
 ```
 
-## Uncertainty support table
+## 不確実性対応表
 
-To use an uncertainty-based [AcquisitionFunction](acquisition_functions.md), `Surrogate` needs to return `std`.
+不確実性ベースの[AcquisitionFunction](acquisition_functions.md)を使うには、`Surrogate`が`std`を返す必要があります。
 
-| Class | `provides_uncertainty` |
+| クラス | `provides_uncertainty` |
 |---|---|
 | `SklearnGPRSurrogate` | `True` |
 | `RBFSurrogate` / `SklearnRFRSurrogate` / `SklearnSVMSurrogate` / `SklearnNNSurrogate` / `SklearnXGBSurrogate` / `SklearnLGBMSurrogate` / `TorchSurrogate` | `False` |
-| `PerObjectiveSurrogate` | `True` only if every constituent surrogate is `True` |
+| `PerObjectiveSurrogate` | 構成する全サロゲートが`True`の場合のみ`True` |
 
-`Optimizer.validate()` detects and warns about a mismatch between `AcquisitionFunction`'s `requires_uncertainty` and `Surrogate`'s `provides_uncertainty`.
+`Optimizer.validate()`は、`AcquisitionFunction`の`requires_uncertainty`と`Surrogate`の`provides_uncertainty`の不整合を検出して警告します。
 
-## Related components
+## 関連コンポーネント
 
-- [SurrogateManager](surrogate_manager.md): Coordinates `Surrogate`'s fit/predict
-- [TrainingSet](training_set.md): How training data passed to `Surrogate` is extracted
-- [AcquisitionFunction](acquisition_functions.md): Converts `predict()`'s result into a score
-- [Surrogate accuracy evaluation and dynamic switching](surrogate_switching.md): Evaluating a surrogate's generalization performance
-- [Installation](../../getting_started/installation.md): How to install each extra
+- [SurrogateManager](surrogate_manager.md)：`Surrogate`のfit/predictを協調させる
+- [TrainingSet](training_set.md)：`Surrogate`に渡す学習データの抽出方法
+- [AcquisitionFunction](acquisition_functions.md)：`predict()`の結果をスコアへ変換する
+- [サロゲート精度評価と動的切り替え](surrogate_switching.md)：サロゲートの汎化性能の評価
+- [インストール](../../getting_started/installation.md)：各追加機能のインストール方法
 
-## References
+## 参照
 
 - {py:class}`saealib.Surrogate`
 - {py:class}`saealib.RegressionSurrogate`

@@ -3,25 +3,21 @@ primary_layer: layer2
 page_type: guide
 ---
 
-# Assembling an Optimizer with the Low-Level API
+# Optimizerを低レベルAPIで組み立てる
 
-This page assumes you can express your objective function as a `Problem`.
+前提は、目的関数を `Problem` として表現できることです。
 
-:::{admonition} What you'll be able to do
+:::{admonition} このページでできるようになること
 :class: tip
 
-By the end of this page, you'll be able to register the components the defaults don't cover on an `Optimizer` and run it with `run()` or `iterate()`.
+このページを終えると、既定値では足りないコンポーネントを `Optimizer` に登録し、`run()` または `iterate()` で実行できます。
 :::
 
-Move to the low-level API when a single run of the high-level API isn't enough.
-If you only need to pick individual built-in components, start with [Swapping Built-in Components](component_swap.md); come here when you need per-generation state or want to swap components mid-run.
-The import policy is collected in [Canonical Imports](../api/imports.md).
+高レベルAPIの一回実行で足りない場合に低レベルAPIへ移ります。 ビルトインコンポーネントの個別選択だけなら [ビルトインコンポーネントの差し替え](component_swap.md) を先に使い、世代ごとの状態取得や実行中の交換が必要ならこのページの構成にします。 importの方針は [Canonical Imports](../api/imports.md) にまとめています。
 
-## Construct an Optimizer
+## Optimizerを構成する
 
-Create an `Optimizer(problem)` and chain `set_*()` calls to configure the execution components.
-`set_*()` is a chainable configuration API and does nothing but configure.
-`run()` or `iterate()` resolves the defaults, builds the execution plan, and validates the configuration before the run begins.
+`Optimizer(problem)` を作り、`set_*()` をチェーンして実行コンポーネントを設定します。 `set_*()` は連結可能な設定APIであり、設定だけを行います。 `run()` または `iterate()` が既定値解決、実行計画の構築、構成の検証を行ってから実行を始めます。
 
 ```python
 import numpy as np
@@ -44,16 +40,13 @@ problem = Problem(
 optimizer = Optimizer(problem, seed=0).set_termination(Termination(max_fe(100)))
 ```
 
-Add only the components you need, with `set_initializer()`, `set_algorithm()`, `set_surrogate_manager()`, `set_acquisition()`, `set_strategy()`, `set_evaluator()`, and so on.
-Each `set_*()` returns the `Optimizer` itself, so the calls chain.
+必要なコンポーネントだけを `set_initializer()`、`set_algorithm()`、`set_surrogate_manager()`、`set_acquisition()`、`set_strategy()`、`set_evaluator()` などで追加します。 `set_*()` は `Optimizer` 自身を返すため、設定を連結できます。
 
-## Assemble a full configuration with a surrogate
+## サロゲート込みで完全に構成する
 
-`minimize` wires up each component with a default combination, but doesn't let you tune individual parameters.
-Instantiating components individually and assembling them into `Optimizer` removes this limitation.
+`minimize` は各コンポーネントを既定の組み合わせで結線しますが、個別のパラメータは調整できません。 コンポーネントを個別に生成して `Optimizer` へ組み立てると、この制約がなくなります。
 
-`LocalSurrogateManager` takes the surrogate and how its training data is built; the acquisition function is configured separately, with `Optimizer.set_acquisition()`.
-Do not treat the two as the same constructor argument.
+`LocalSurrogateManager` にはSurrogateと学習データの作り方を渡し、AcquisitionFunctionは `Optimizer.set_acquisition()` で別に設定します。 この二つを同じコンストラクタ引数として扱わないでください。
 
 ```python
 import numpy as np
@@ -125,17 +118,17 @@ print("Objective value:", archive_f[best_idx])
 print("Evaluations:", ctx.fe)
 ```
 
-Pass the same value to both `Optimizer(problem, seed=SEED)` and `LHSInitializer(..., seed=SEED)` for the random seed.
+乱数シードは、`Optimizer(problem, seed=SEED)` と `LHSInitializer(..., seed=SEED)` の両方へ同じ値を渡します。
 
-`Optimizer`'s `seed` is only auto-propagated to the default `LHSInitializer` when you skip calling `set_initializer()` yourself (e.g. via `minimize`/`maximize`).
+`Optimizer` の `seed` が既定の `LHSInitializer` へ自動的に伝播するのは、`set_initializer()` を自分で呼ばない場合（`minimize`/`maximize` 経由など）だけです。
 
-If you assemble the `Initializer` yourself, you need to pass it explicitly.
+`Initializer` を自分で組み立てる場合は、明示的に渡す必要があります。
 
-## Combine termination conditions
+## 終了条件を組み合わせる
 
-`Termination` accepts multiple conditions.
+`Termination` は複数の条件を受け取ります。
 
-The run ends as soon as any one of the listed conditions is met (logical OR).
+列挙した条件のいずれかが満たされた時点で実行を終了します（論理OR）。
 
 ```python
 from saealib import Termination, max_fe, max_gen
@@ -143,7 +136,7 @@ from saealib import Termination, max_fe, max_gen
 termination = Termination(max_fe(500), max_gen(200))
 ```
 
-You can also add a custom condition with a lambda.
+lambdaで独自の条件を追加することもできます。
 
 ```python
 termination = Termination(
@@ -152,10 +145,9 @@ termination = Termination(
 )
 ```
 
-## Choose between run and iterate
+## runとiterateを使い分ける
 
-`run()` runs to termination and returns the final `OptimizationState`.
-`iterate()` yields the state generation by generation, so you can record history, swap components conditionally, or implement your own early stopping inside the loop.
+`run()` は終了まで実行し、最後の `OptimizationState` を返します。 `iterate()` は世代ごとの状態を生成するため、履歴の記録や条件付きのコンポーネント交換、独自の早期打ち切りをループの中で行えます。
 
 ```{mermaid}
 flowchart LR
@@ -172,7 +164,7 @@ ctx = optimizer.run()
 print(ctx.fe, ctx.gen)
 ```
 
-Use `iterate()` instead of `run()` when you need the state generation by generation.
+世代ごとの状態が必要な場合は `run()` の代わりに `iterate()` を使います。
 
 ```python
 history = []
@@ -184,18 +176,14 @@ for ctx in optimizer.iterate():
 print("Evaluations:", ctx.fe)
 ```
 
-`ctx.archive` holds the evaluated solutions, and `ctx.fe` and `ctx.gen` give the evaluation count and the number of completed generations.
-To swap the strategy or the surrogate manager mid-run, read each generation's `ctx` and call `optimizer.set_*()`. The execution environment detects the change, recompiles the plan, and applies it from the next generation onward.
-This works on both the Stage compatibility path and the graph-native path.
-For the path by which a component itself requests a recompile, see "Behavior of runtime swapping" in [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md).
-Saving and resuming a checkpoint is left to [Checkpointing](checkpoint.md).
+`ctx.archive` は評価済み解を保持し、`ctx.fe` と `ctx.gen` は評価回数と完了世代を示します。 途中でStrategyやSurrogateManagerを交換する場合は、各世代の `ctx` を読んで `optimizer.set_*()` を呼び出します。実行環境が変化を検出してplanを再コンパイルし、次世代から反映します。 この手順はStage互換経路とgraph-native経路のどちらでも利用できます。 Component側から再コンパイルを要求する経路については [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md) の「Behavior of runtime swapping」を参照してください。 checkpointの保存と再開は [Checkpointing](checkpoint.md) に委ねます。
 
-## Related concepts and reference
+## 関連するConceptとReference
 
 - [Stage](../concepts/observation_and_state/stage.md)
 - [OptimizationState](../concepts/observation_and_state/optimization_state.md)
-- [Optimizer reference](../api/optimizer.md)
-- [Termination reference](../api/termination.md)
+- [Optimizerリファレンス](../api/optimizer.md)
+- [Terminationリファレンス](../api/termination.md)
 - {py:class}`saealib.LocalSurrogateManager`
 - {py:class}`saealib.RBFSurrogate`
 - {py:class}`saealib.MeanPrediction`

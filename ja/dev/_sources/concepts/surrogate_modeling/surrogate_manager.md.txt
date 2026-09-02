@@ -3,77 +3,65 @@ primary_layer: layer3
 page_type: concept
 ---
 
-# SurrogateManager
+# サロゲート管理
 
-Where [Surrogate](surrogate.md) handles only fit/predict, `SurrogateManager` coordinates model fitting and batched prediction. An acquisition configured on the optimizer scores the returned predictions.
+[Surrogate](surrogate.md)がfit/predictだけを扱うのに対し、`SurrogateManager`はモデルのフィットとバッチ予測を協調させます。オプティマイザに設定した獲得関数が、返された予測をスコア化します。
 
-`Optimizer.set_surrogate_manager()` is a separate top-level swap point from `Optimizer.set_surrogate()` (a simplified version that wraps a [Surrogate](surrogate.md) in `LocalSurrogateManager`).
+`Optimizer.set_surrogate_manager()`は、`Optimizer.set_surrogate()`（[Surrogate](surrogate.md)を`LocalSurrogateManager`でラップする簡易版）とは別のトップレベル差し替え点です。
 
-## SurrogateManager's role
+## SurrogateManagerの役割
 
-`SurrogateManager`'s abstract method is `predict()`; fitting and generation hooks have default implementations.
+`SurrogateManager`の抽象メソッドは`predict()`です。フィットと世代フックには既定実装があります。
 
-**`predict(candidates_x, archive, ctx=None, *, refit=True) -> SurrogatePrediction`** (abstract): Predicts the candidates.
-With `refit=True` (the default), the surrogate is retrained before prediction.
+**`predict(candidates_x, archive, ctx=None, *, refit=True) -> SurrogatePrediction`**（抽象メソッド）：候補を予測します。`refit=True`（既定値）の場合は、予測前にサロゲートを再学習します。
 
-**`fit(archive, ctx=None) -> None`**: A no-op by default.
-A pre-fit hook meant to be called once before a series of `predict(..., refit=False)` calls, used when the archive does not change.
+**`fit(archive, ctx=None) -> None`**：既定では何もしません。アーカイブが変化しない場合に、`predict(..., refit=False)`を連続して呼び出す前に1回だけ呼ぶ事前フィット用フックです。
 
-**`last_accuracy: SurrogateAccuracy | None`** (class attribute): The accuracy metric computed by the most recent `fit`.
-Covered in detail in [Surrogate accuracy evaluation and dynamic switching](surrogate_switching.md).
+**`last_accuracy: SurrogateAccuracy | None`**（クラス属性）：直近の`fit`が計算した精度指標。詳細は[サロゲート精度評価と動的切り替え](surrogate_switching.md)で扱います。
 
-**`on_generation_end(gen, archive, ctx=None)`** / **`with_on_generation_end(fn)`**: An end-of-generation hook.
-Also extensible via the same copy-and-chain approach.
+**`on_generation_end(gen, archive, ctx=None)`** / **`with_on_generation_end(fn)`**：世代末フック。同じくコピー＋チェーン方式で拡張できます。
 
-The values received and returned at the two boundaries are:
+二つの境界で受け取る値と返す値は次のとおりです。
 
-| Boundary | Receives | Returns | Main users |
+| 境界 | 受け取る値 | 返す値 | 主な利用者 |
 |---|---|---|---|
-| Stage compatibility boundary | `archive`, `candidates_x: np.ndarray`, `ctx`, `refit` | `SurrogatePrediction`, fit completion state | compatibility Stages, sequential compatibility runtime |
-| graph-native boundary | `GenomeBatch`, `FeatureEncoder`, `FeatureBatch`, declared services | Features the Surrogate can fit and predict, plus predictions | Components, Compiler, structured runtime |
+| Stage互換境界 | `archive`、`candidates_x: np.ndarray`、`ctx`、`refit` | `SurrogatePrediction`、fit の完了状態 | 互換Stage、逐次互換ランタイム |
+| graph-native境界 | `GenomeBatch`、`FeatureEncoder`、`FeatureBatch`、宣言済みサービス | Surrogateがフィット・予測できる特徴と予測結果 | コンポーネント、Compiler、構造化ランタイム |
 
-The current vector-form Manager API on the Stage compatibility path uses `fit(archive, ctx=None)` and `predict(candidates_x: np.ndarray, archive, ctx=None, *, refit=True) -> SurrogatePrediction`.
-The current API also includes constructors such as `GlobalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)`, `LocalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)`, and `PairwiseSurrogateManager(surrogate, training_set=None, n_ref=10)`.
-In the structured runtime, the Surrogate input boundary is `GenomeBatch → FeatureEncoder → FeatureBatch → Surrogate`.
-`FeatureEncoder` performs semantic conversion and determines the features the surrogate can learn. It differs from a space capability such as `SamplingService`.
-In the current implementation, the SurrogateManager contract declares `ServiceRequirement("FeatureEncoder")`, and `VectorSpace` registers a default encoder as a service, so numeric vector spaces resolve without extra configuration. `ObjectSpace`, `PermutationSpace`, and `SequenceSpace` raise an error unless the user provides a `FeatureEncoder`. The user decides what to pass to the surrogate.
+Stage互換経路の現行vector形式のManager APIでは、`fit(archive, ctx=None)`と`predict(candidates_x: np.ndarray, archive, ctx=None, *, refit=True) -> SurrogatePrediction`を使います。現行APIには、`GlobalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)`、`LocalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)`、`PairwiseSurrogateManager(surrogate, training_set=None, n_ref=10)`などのコンストラクタも含まれます。構造化ランタイムでは、Surrogateの入力境界は`GenomeBatch → FeatureEncoder → FeatureBatch → Surrogate`です。`FeatureEncoder`は意味変換を行い、Surrogateが学習できる特徴を決めます。これは`SamplingService`のような空間の能力とは異なります。現行実装ではSurrogateManagerの契約が`ServiceRequirement("FeatureEncoder")`を宣言し、`VectorSpace`が既定のエンコーダをサービスとして登録するため、数値ベクトル空間は追加設定なしで解決されます。`ObjectSpace`、`PermutationSpace`、`SequenceSpace`は、利用者が`FeatureEncoder`を指定しないとエラーになります。Surrogateへ渡す内容は利用者が決めます。
 
-## Built-in SurrogateManagers
+## 組み込みSurrogateManager
 
-| Class | Approach |
+| クラス | 方式 |
 |---|---|
-| `GlobalSurrogateManager` | Fits globally once over the entire archive and predicts every candidate at once |
-| `LocalSurrogateManager` | Fits locally per candidate, using its k nearest neighbors |
-| `CompositeSurrogateManager` | Combines named prediction channels |
-| `PairwiseSurrogateManager` | Predicts win rates with a pairwise-comparison surrogate |
+| `GlobalSurrogateManager` | アーカイブ全体で1回グローバルにフィットし、全候補を一括予測する |
+| `LocalSurrogateManager` | 候補ごとにk近傍でローカルフィット |
+| `CompositeSurrogateManager` | 名前付きの予測チャンネルを組み合わせる |
+| `PairwiseSurrogateManager` | ペア比較サロゲートで勝率を予測する |
 
-`GlobalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)` uses `ArchiveObjectiveSet()` when `training_set` is omitted.
+`GlobalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)`は、`training_set`省略時に`ArchiveObjectiveSet()`が使われます。
 
-`LocalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)` uses `KNNObjectiveSet(n_neighbors=50)` when `training_set` is omitted.
-`n_neighbors` isn't a constructor argument of `LocalSurrogateManager` itself — it's a parameter of the default `training_set`.
-Because it reuses and refits the same `surrogate` instance across candidates, it isn't thread-safe.
+`LocalSurrogateManager(surrogate, training_set=None, accuracy_evaluator=None)`は、`training_set`省略時に`KNNObjectiveSet(n_neighbors=50)`が使われます。`n_neighbors`は`LocalSurrogateManager`自体のコンストラクタ引数ではなく、既定の`training_set`が持つパラメータです。候補間で同一の`surrogate`インスタンスを使い回して再フィットする実装のため、スレッドセーフではありません。
 
-`CompositeSurrogateManager(managers)` calls each named manager's `predict()` and returns a multi-channel `SurrogatePrediction`.
-Use `CompositeAcquisition` to evaluate one acquisition per channel and combine the resulting score arrays with `product_combine` or `rank_weighted_combine(weights=None)`.
+`CompositeSurrogateManager(managers)`は各名前付きマネージャーの`predict()`を呼び出し、複数チャンネルの`SurrogatePrediction`を返します。`CompositeAcquisition`を使うとチャンネルごとに取得関数を評価し、結果のスコア配列を`product_combine`または`rank_weighted_combine(weights=None)`で組み合わせられます。
 
-`PairwiseSurrogateManager(surrogate, training_set=None, n_ref=10)` uses `PairwiseComparisonSet()` when `training_set` is omitted.
+`PairwiseSurrogateManager(surrogate, training_set=None, n_ref=10)`は、`training_set`省略時に`PairwiseComparisonSet()`が使われます。
 
-See [TrainingSet](training_set.md) and [Surrogate accuracy evaluation and dynamic switching](surrogate_switching.md), respectively, for details on each manager's `training_set`/`accuracy_evaluator` arguments.
+各マネージャーの`training_set`/`accuracy_evaluator`引数の詳細は、それぞれ[TrainingSet](training_set.md)と[サロゲート精度評価と動的切り替え](surrogate_switching.md)を参照してください。
 
-### Archive-based acquisitions
+### アーカイブベースの取得関数
 
-These acquisitions score candidate geometry directly against the archive and do not require a surrogate prediction.
+これらの取得関数は候補の幾何学的な特徴をアーカイブと直接比較してスコア化するため、サロゲートの予測を必要としません。
 
-| Class | Parameters | Meaning of the score |
+| クラス | パラメータ | スコアの意味 |
 |---|---|---|
-| `NoveltyAcquisition` | `k=1` | Higher when the average distance to the k nearest archive points is larger |
-| `InverseDensityAcquisition` | `eps=1.0` | The reciprocal of the ε-neighborhood density |
-| `MaximinDistanceAcquisition` | None | The minimum distance among candidates plus the minimum distance to the archive |
+| `NoveltyAcquisition` | `k=1` | アーカイブへのk近傍平均距離が大きいほど良い |
+| `InverseDensityAcquisition` | `eps=1.0` | ε近傍密度の逆数 |
+| `MaximinDistanceAcquisition` | なし | 候補間の最小距離とアーカイブまでの最小距離の合計 |
 
-## Extending SurrogateManager and archive-based acquisitions
+## SurrogateManagerとアーカイブベースの取得関数の拡張
 
-If you need a custom prediction scheme, subclass `SurrogateManager` and implement `predict()`.
-For a custom archive-based criterion, subclass `AcquisitionFunction` and implement its evaluation contract.
+独自の予測方式が必要な場合は`SurrogateManager`を継承して`predict()`を実装します。独自のアーカイブベース基準が必要な場合は`AcquisitionFunction`を継承して評価契約を実装します。
 
 ```python
 import numpy as np
@@ -87,15 +75,15 @@ class ConstantAcquisition(AcquisitionFunction):
         return AcquisitionResult(scores=np.ones(len(candidates_x)))
 ```
 
-## Related components
+## 関連コンポーネント
 
-- [Surrogate](surrogate.md): The fit/predict implementation `SurrogateManager` coordinates
-- [TrainingSet](training_set.md): Used by each `SurrogateManager` to extract training data
-- [AcquisitionFunction](acquisition_functions.md): Scores the predictions in `AcquisitionStage`
-- [Surrogate accuracy evaluation and dynamic switching](surrogate_switching.md): Details of `accuracy_evaluator`/`last_accuracy`
-- [strategies](../execution_and_evaluation/strategies.md): Assemble `SurrogatePredictStage` and `AcquisitionStage`
+- [Surrogate](surrogate.md)：`SurrogateManager`が協調させるfit/predictの実体
+- [TrainingSet](training_set.md)：各`SurrogateManager`が学習データの抽出に使う
+- [AcquisitionFunction](acquisition_functions.md)：`AcquisitionStage`で予測をスコア化する
+- [サロゲート精度評価と動的切り替え](surrogate_switching.md)：`accuracy_evaluator`/`last_accuracy`の詳細
+- [strategies](../execution_and_evaluation/strategies.md)：`SurrogatePredictStage`と`AcquisitionStage`を組み立てる
 
-## References
+## 参照
 
 - {py:class}`saealib.SurrogateManager`
 - {py:class}`saealib.GlobalSurrogateManager`

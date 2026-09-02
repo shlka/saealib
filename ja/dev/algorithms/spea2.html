@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SPEA2（Strength Pareto Evolutionary Algorithm 2） &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>SPEA2 (Strength Pareto Evolutionary Algorithm 2) &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -503,7 +503,7 @@ window.runMermaid = runMermaid;</script>
     <link rel="icon" href="../_static/icon.svg"/>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="検索" href="../search.html" />
-    <link rel="next" title="式: NSGA-III" href="nsga3.html" />
+    <link rel="next" title="NSGA-III" href="nsga3.html" />
     <link rel="prev" title="NSGA-II（Nondominated Sorting Genetic Algorithm II）" href="nsga2.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
@@ -618,7 +618,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -800,7 +800,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -923,12 +923,12 @@ window.runMermaid = runMermaid;</script>
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="ego.html">EGO（Efficient Global Optimization）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（ガウス過程上側信頼限界）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB (Gaussian Process Upper Confidence Bound)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maxunc.html">MaxUnc（不確実性サンプリング）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rbf_cors.html">CORS-RBF（Constrained Optimization using Response Surfaces）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nsga2.html">NSGA-II（Nondominated Sorting Genetic Algorithm II）</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">SPEA2（Strength Pareto Evolutionary Algorithm 2）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="nsga3.html">式: NSGA-III</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">SPEA2 (Strength Pareto Evolutionary Algorithm 2)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsga3.html">NSGA-III</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sms_emoa.html">SMS-EMOA（S metric selection EMOA）</a></li>
 </ul>
 </div>
@@ -973,7 +973,7 @@ window.runMermaid = runMermaid;</script>
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">アルゴリズム</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">SPEA2（Strength Pareto Evolutionary Algorithm 2）</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">SPEA2 (Strength Pareto Evolutionary Algorithm 2)</span></li>
   </ul>
 </nav>
 </div>
@@ -991,34 +991,45 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="spea2-strength-pareto-evolutionary-algorithm-2">
-<h1>SPEA2（Strength Pareto Evolutionary Algorithm 2）<a class="headerlink" href="#spea2-strength-pareto-evolutionary-algorithm-2" title="Link to this heading">#</a></h1>
-<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>SPEA2は、初代SPEA（Strength Pareto Evolutionary Algorithm）の適応度割り当てとアーカイブ管理を改良した多目的進化アルゴリズムです。支配関係に基づく適応度と<span class="math notranslate nohighlight">\(k\)</span>最近傍密度を組み合わせて個体を順位付けし、固定サイズの外部アーカイブを境界解が失われない打ち切り手続きで維持します。</p>
-<section id="overview">
-<h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<h1>SPEA2 (Strength Pareto Evolutionary Algorithm 2)<a class="headerlink" href="#spea2-strength-pareto-evolutionary-algorithm-2" title="Link to this heading">#</a></h1>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>SPEA2は、初代SPEA（Strength Pareto Evolutionary Algorithm）の適応度割り当てとアーカイブ管理を改良した多目的進化アルゴリズムです。
+支配関係に基づく適応度と<span class="math notranslate nohighlight">\(k\)</span>最近傍密度を組み合わせて個体を順位付けし、固定サイズの外部アーカイブを境界解が失われない打ち切り手続きで維持します。</p>
+<section id="id1">
+<h2>概要<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>SPEAは初期の多目的進化アルゴリズムとして高い性能を示しましたが、2つの弱点を抱えていました。</p>
-<p>1つは、同じアーカイブ個体に支配される個体同士が同一の適応度を持ってしまい、優劣を区別できない点です。 もう1つは、アーカイブが上限を超えたときに使うクラスタリング手法が、非優越解集合の外周にある境界解を失うことがある点です。</p>
-<p>SPEA2は、この2つの弱点をそれぞれ独立した仕組みで解消します。 各個体<span class="math notranslate nohighlight">\(i\)</span>には、自分が支配する個体数を表す<strong>強度</strong> <span class="math notranslate nohighlight">\(S(i)\)</span>が割り当てられ、<span class="math notranslate nohighlight">\(i\)</span>を支配する個体群の強度の総和が<strong>生の適応度</strong> <span class="math notranslate nohighlight">\(R(i)\)</span>になります。 <span class="math notranslate nohighlight">\(R(i)=0\)</span>は<span class="math notranslate nohighlight">\(i\)</span>が非優越であることを意味し、値が大きいほど多くの（かつ強い）個体に支配されていることを示します。 同一の<span class="math notranslate nohighlight">\(R(i)\)</span>を持つ個体同士を区別するため、目的空間上で<span class="math notranslate nohighlight">\(k\)</span>番目に近い個体との距離<span class="math notranslate nohighlight">\(\sigma_i^k\)</span>の逆数を<strong>密度</strong> <span class="math notranslate nohighlight">\(D(i)=1/(\sigma_i^k+2)\)</span>として加えます。 最終的な<strong>適応度</strong> <span class="math notranslate nohighlight">\(F(i)=R(i)+D(i)\)</span>は値が小さいほど優れており、非優越個体は常に<span class="math notranslate nohighlight">\(F(i)&lt;1\)</span>になります。</p>
-<p>SPEA2は個体群とは別に、サイズを固定した外部アーカイブを維持します。 各世代で、個体群とアーカイブを合わせた集合から非優越個体（<span class="math notranslate nohighlight">\(F(i)&lt;1\)</span>）を新しいアーカイブへコピーします。 コピー後のアーカイブがちょうど規定サイズに収まればそのまま採用し、不足する場合は<span class="math notranslate nohighlight">\(F(i)\)</span>が小さい劣解から順に補充します。 規定サイズを超える場合は、<strong>打ち切り演算子</strong>を適用し、最近傍距離が最小の個体を1体ずつ、距離を再計算しながら取り除きます。 この手続きは、同じ距離を持つ個体が並ぶタイを2番目と3番目に近い個体との距離で順に解消するため、境界解が誤って除去されにくいです。</p>
-<p>出典は<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
+<p>1つは、同じアーカイブ個体に支配される個体同士が同一の適応度を持ってしまい、優劣を区別できない点です。
+もう1つは、アーカイブが上限を超えたときに使うクラスタリング手法が、非優越解集合の外周にある境界解を失うことがある点です。</p>
+<p>SPEA2は、この2つの弱点をそれぞれ独立した仕組みで解消します。
+各個体<span class="math notranslate nohighlight">\(i\)</span>には、自分が支配する個体数を表す<strong>強度</strong> <span class="math notranslate nohighlight">\(S(i)\)</span>が割り当てられ、<span class="math notranslate nohighlight">\(i\)</span>を支配する個体群の強度の総和が<strong>生の適応度</strong> <span class="math notranslate nohighlight">\(R(i)\)</span>になります。
+<span class="math notranslate nohighlight">\(R(i)=0\)</span>は<span class="math notranslate nohighlight">\(i\)</span>が非優越であることを意味し、値が大きいほど多くの（かつ強い）個体に支配されていることを示します。
+同一の<span class="math notranslate nohighlight">\(R(i)\)</span>を持つ個体同士を区別するため、目的空間上で<span class="math notranslate nohighlight">\(k\)</span>番目に近い個体との距離<span class="math notranslate nohighlight">\(\sigma_i^k\)</span>の逆数を<strong>密度</strong> <span class="math notranslate nohighlight">\(D(i)=1/(\sigma_i^k+2)\)</span>として加えます。
+最終的な<strong>適応度</strong> <span class="math notranslate nohighlight">\(F(i)=R(i)+D(i)\)</span>は値が小さいほど優れており、非優越個体は常に<span class="math notranslate nohighlight">\(F(i)&lt;1\)</span>になります。</p>
+<p>SPEA2は個体群とは別に、サイズを固定した外部アーカイブを維持します。
+各世代で、個体群とアーカイブを合わせた集合から非優越個体（<span class="math notranslate nohighlight">\(F(i)&lt;1\)</span>）を新しいアーカイブへコピーします。
+コピー後のアーカイブがちょうど規定サイズに収まればそのまま採用し、不足する場合は<span class="math notranslate nohighlight">\(F(i)\)</span>が小さい劣解から順に補充します。
+規定サイズを超える場合は、<strong>打ち切り演算子</strong>を適用し、最近傍距離が最小の個体を1体ずつ、距離を再計算しながら取り除きます。
+この手続きは、同じ距離を持つ個体が並ぶタイを2番目と3番目に近い個体との距離で順に解消するため、境界解が誤って除去されにくいです。</p>
+<p>出典は<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id24" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
 </section>
-<section id="pseudocode">
-<h2>擬似コード<a class="headerlink" href="#pseudocode" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>擬似コード<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <div class="proof algorithm admonition" id="alg-spea2">
-<p class="admonition-title"><span class="caption-number">アルゴリズム 6 </span>式: (SPEA2)</p>
+<p class="admonition-title"><span class="caption-number">アルゴリズム 6 </span> (SPEA2)</p>
 <section class="algorithm-content" id="proof-content">
-<p><strong>Inputs</strong> 個体群サイズ <span class="math notranslate nohighlight">\(N\)</span>、アーカイブサイズ <span class="math notranslate nohighlight">\(\bar N\)</span>、最大世代数 <span class="math notranslate nohighlight">\(T\)</span> <strong>Output</strong> 非優越解集合 <span class="math notranslate nohighlight">\(A\)</span></p>
+<p><strong>Inputs</strong> population size <span class="math notranslate nohighlight">\(N\)</span>, archive size <span class="math notranslate nohighlight">\(\bar N\)</span>, maximum generations <span class="math notranslate nohighlight">\(T\)</span>
+<strong>Output</strong> the non-dominated solution set <span class="math notranslate nohighlight">\(A\)</span></p>
 <ol class="arabic simple">
-<li><p>初期化：初期個体群 <span class="math notranslate nohighlight">\(P_0\)</span> を生成し、空のアーカイブ <span class="math notranslate nohighlight">\(\bar P_0 = \emptyset\)</span> を用意して <span class="math notranslate nohighlight">\(t=0\)</span> とする</p></li>
-<li><p>適応度割り当て：<span class="math notranslate nohighlight">\(P_t\)</span> と <span class="math notranslate nohighlight">\(\bar P_t\)</span> に含まれる各個体の適応度 <span class="math notranslate nohighlight">\(F(i) = R(i) + D(i)\)</span> を計算する</p></li>
-<li><p>環境選択：<span class="math notranslate nohighlight">\(P_t \cup \bar P_t\)</span> の非優越個体を <span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span> にコピーする。<span class="math notranslate nohighlight">\(|\bar P_{t+1}| &gt; \bar N\)</span> なら打ち切り演算子で削減し、<span class="math notranslate nohighlight">\(|\bar P_{t+1}| &lt; \bar N\)</span> なら <span class="math notranslate nohighlight">\(F(i)\)</span> が小さい劣解から順に補充する</p></li>
-<li><p>終了判定：<span class="math notranslate nohighlight">\(t \geq T\)</span> または他の終了条件を満たせば、<span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span> 中の非優越個体を <span class="math notranslate nohighlight">\(A\)</span> として出力し停止する</p></li>
-<li><p>交配選択：<span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span> に対して二項トーナメント選択（復元抽出）を行い、交配プールを満たす</p></li>
-<li><p>変異：交配プールに交叉と突然変異を適用して <span class="math notranslate nohighlight">\(P_{t+1}\)</span> を生成し、<span class="math notranslate nohighlight">\(t=t+1\)</span> として2へ戻る</p></li>
+<li><p>Initialization: generate an initial population <span class="math notranslate nohighlight">\(P_0\)</span>, prepare an empty archive <span class="math notranslate nohighlight">\(\bar P_0 = \emptyset\)</span>, and set <span class="math notranslate nohighlight">\(t=0\)</span></p></li>
+<li><p>Fitness assignment: compute the fitness <span class="math notranslate nohighlight">\(F(i) = R(i) + D(i)\)</span> of every individual in <span class="math notranslate nohighlight">\(P_t\)</span> and <span class="math notranslate nohighlight">\(\bar P_t\)</span></p></li>
+<li><p>Environmental selection: copy the non-dominated individuals of <span class="math notranslate nohighlight">\(P_t \cup \bar P_t\)</span> into <span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span>. If <span class="math notranslate nohighlight">\(|\bar P_{t+1}| &gt; \bar N\)</span>, reduce it with the truncation operator; if <span class="math notranslate nohighlight">\(|\bar P_{t+1}| &lt; \bar N\)</span>, fill it with inferior solutions in order of increasing <span class="math notranslate nohighlight">\(F(i)\)</span></p></li>
+<li><p>Termination check: if <span class="math notranslate nohighlight">\(t \geq T\)</span> or another termination condition is met, output the non-dominated individuals in <span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span> as <span class="math notranslate nohighlight">\(A\)</span> and stop</p></li>
+<li><p>Mating selection: perform binary tournament selection (with replacement) on <span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span> to fill the mating pool</p></li>
+<li><p>Variation: apply crossover and mutation to the mating pool to generate <span class="math notranslate nohighlight">\(P_{t+1}\)</span>, set <span class="math notranslate nohighlight">\(t=t+1\)</span>, and return to step 2</p></li>
 </ol>
 </section>
 </div></section>
-<section id="flowchart">
-<h2>フローチャート<a class="headerlink" href="#flowchart" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>フローチャート<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <pre  class="mermaid">
         flowchart TD
     INIT[&quot;LHSInitializer&lt;br/&gt;Sample n_init_archive individuals (≈ literature P0) →&lt;br/&gt;rank_population() ranks them&lt;br/&gt;(fitness assignment + environmental selection) →&lt;br/&gt;take top n_init_population as&lt;br/&gt;initial ctx.population (≈ literature P̄1)&lt;br/&gt;(L1, L2, L3)&quot;] --&gt; GEN
@@ -1033,8 +1044,8 @@ window.runMermaid = runMermaid;</script>
     TERM -- &quot;Not yet (L4)&quot; --&gt; GEN
     TERM -- &quot;Reached&quot; --&gt; RESULT([&quot;Non-dominated solution set A&quot;])
     </pre></section>
-<section id="configuration-in-saealib">
-<h2>saealibでの構成<a class="headerlink" href="#configuration-in-saealib" title="Link to this heading">#</a></h2>
+<section id="saealib">
+<h2>saealibでの構成<a class="headerlink" href="#saealib" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>役割</p></th>
@@ -1061,7 +1072,7 @@ window.runMermaid = runMermaid;</script>
 </tr>
 <tr class="row-even"><td><p>Mutation</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">MutationPolynomial(eta=20.0)</span></code></p></td>
-<td><p>手順 L6</p></td>
+<td><p>L6</p></td>
 </tr>
 <tr class="row-odd"><td><p>適応度計算と環境選択</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">SPEA2Comparator.rank_population()</span></code>（<code class="docutils literal notranslate"><span class="pre">prepare_population()</span></code>が<code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code>を介して<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>/<span class="math notranslate nohighlight">\(F(i)\)</span>を計算し個体群へ永続化、<code class="docutils literal notranslate"><span class="pre">sort_population()</span></code>が<span class="math notranslate nohighlight">\(F(i)&lt;1\)</span>の非劣解ブロックを<code class="docutils literal notranslate"><span class="pre">spea2_truncation_order</span></code>で、<span class="math notranslate nohighlight">\(F(i)\geq1\)</span>の劣解ブロックを<span class="math notranslate nohighlight">\(F(i)\)</span>昇順で、実行不可能解を<code class="docutils literal notranslate"><span class="pre">cv</span></code>昇順で並べる）+ <code class="docutils literal notranslate"><span class="pre">TruncationSelection()</span></code>（上位<span class="math notranslate nohighlight">\(\bar N\)</span>個体を採用）</p></td>
@@ -1107,26 +1118,37 @@ window.runMermaid = runMermaid;</script>
 <span class="n">pareto_f</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pareto_archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">problem.comparator</span> <span class="pre">=</span> <span class="pre">SPEA2Comparator()</span></code>の行は省略できません。 NSGA-IIでは<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>が<code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>のときの既定値なので同じ行を省略できましたが、SPEA2ではそうではありません。</p>
-<p><code class="docutils literal notranslate"><span class="pre">ctx.pareto_archive</span></code>はsaealib独自の累積非劣解アーカイブであり、特定のアルゴリズムとは独立に実行全体を通じて追跡されます。SPEA2の外部アーカイブ（<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>に対応）と同じ状態コンテナではありません。 原論文の出力<span class="math notranslate nohighlight">\(A\)</span>（最終的な外部アーカイブ<span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span>内の非劣解群）そのものが必要な場合は<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>を直接参照してください。</p>
+<p><code class="docutils literal notranslate"><span class="pre">problem.comparator</span> <span class="pre">=</span> <span class="pre">SPEA2Comparator()</span></code>の行は省略できません。
+NSGA-IIでは<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>が<code class="docutils literal notranslate"><span class="pre">n_obj</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>のときの既定値なので同じ行を省略できましたが、SPEA2ではそうではありません。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ctx.pareto_archive</span></code>はsaealib独自の累積非劣解アーカイブであり、特定のアルゴリズムとは独立に実行全体を通じて追跡されます。
+SPEA2の外部アーカイブ（<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>に対応）と同じ状態コンテナではありません。原論文の出力<span class="math notranslate nohighlight">\(A\)</span>（最終的な外部アーカイブ<span class="math notranslate nohighlight">\(\bar P_{t+1}\)</span>内の非劣解群）そのものが必要な場合は<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>を直接参照してください。</p>
 </section>
-<section id="differences-from-the-source">
-<h2>文献との差分<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
-<p>既定の<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>を制約なし問題で使う場合、saealibはSPEA2のselection semantics——strength/raw fitness/densityによる適応度割り当てと打ち切りベースの環境選択——を原論文の記述通りに再現します。 実行構造については、文献と異なる点が2箇所あります。</p>
-<p><strong>初期化</strong>：原論文は初期個体群<span class="math notranslate nohighlight">\(P_0\)</span>（サイズ<span class="math notranslate nohighlight">\(N\)</span>）を生成し、空のアーカイブ<span class="math notranslate nohighlight">\(\bar P_0 = \emptyset\)</span>から始めます。最初の適応度割り当てと環境選択（L2, L3）は、メインループが<span class="math notranslate nohighlight">\(t=0\)</span>で始まって初めて実行されます。 saealibの<code class="docutils literal notranslate"><span class="pre">LHSInitializer</span></code>は、この最初の適応度割り当てと環境選択を構築処理そのものに畳み込みます。<code class="docutils literal notranslate"><span class="pre">n_init_archive</span></code>個体をサンプルし（原論文の<span class="math notranslate nohighlight">\(P_0\)</span>の役割を担う）、真の評価を行い、<code class="docutils literal notranslate"><span class="pre">rank_population()</span></code>を呼んでランク付けした上で、上位<code class="docutils literal notranslate"><span class="pre">n_init_population</span></code>個体を初期<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>へ渡します。 したがって<span class="math notranslate nohighlight">\(t=0\)</span>時点の<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>は、空の<span class="math notranslate nohighlight">\(\bar P_0\)</span>ではなく、原論文の選択後のアーカイブ<span class="math notranslate nohighlight">\(\bar P_1\)</span>に既に対応しています。</p>
-<p><strong>制約処理</strong>：制約付き問題に対して、<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>はさらにDeb (2000)のfeasibility-firstルール<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id33" title="Kalyanmoy Deb. An efficient constraint handling method for genetic algorithms. Computer Methods in Applied Mechanics and Engineering, 186(2–4):311–338, 2000. doi:10.1016/S0045-7825(99)00389-8.">10</a>]</span>を適用します——feasible個体は常にinfeasible個体より優先され、infeasible個体同士は制約違反量の昇順で並びます。 発表されたSPEA2アルゴリズムは制約処理を扱っておらず、これはsaealib側の拡張です。</p>
+<section id="id5">
+<h2>文献との差分<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<p>既定の<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>を制約なし問題で使う場合、saealibはSPEA2のselection semantics——strength/raw fitness/densityによる適応度割り当てと打ち切りベースの環境選択——を原論文の記述通りに再現します。
+実行構造については、文献と異なる点が2箇所あります。</p>
+<p><strong>初期化</strong>：原論文は初期個体群<span class="math notranslate nohighlight">\(P_0\)</span>（サイズ<span class="math notranslate nohighlight">\(N\)</span>）を生成し、空のアーカイブ<span class="math notranslate nohighlight">\(\bar P_0 = \emptyset\)</span>から始めます。
+最初の適応度割り当てと環境選択（L2, L3）は、メインループが<span class="math notranslate nohighlight">\(t=0\)</span>で始まって初めて実行されます。
+saealibの<code class="docutils literal notranslate"><span class="pre">LHSInitializer</span></code>は、この最初の適応度割り当てと環境選択を構築処理そのものに畳み込みます。<code class="docutils literal notranslate"><span class="pre">n_init_archive</span></code>個体をサンプルし（原論文の<span class="math notranslate nohighlight">\(P_0\)</span>の役割を担う）、真の評価を行い、<code class="docutils literal notranslate"><span class="pre">rank_population()</span></code>を呼んでランク付けした上で、上位<code class="docutils literal notranslate"><span class="pre">n_init_population</span></code>個体を初期<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>へ渡します。したがって<span class="math notranslate nohighlight">\(t=0\)</span>時点の<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>は、空の<span class="math notranslate nohighlight">\(\bar P_0\)</span>ではなく、原論文の選択後のアーカイブ<span class="math notranslate nohighlight">\(\bar P_1\)</span>に既に対応しています。</p>
+<p><strong>制約処理</strong>：制約付き問題に対して、<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>はさらにDeb (2000)のfeasibility-firstルール<span class="bibtex-citation" id="id6">[<a class="reference internal" href="../references.html#id34" title="Kalyanmoy Deb. An efficient constraint handling method for genetic algorithms. Computer Methods in Applied Mechanics and Engineering, 186(2–4):311–338, 2000. doi:10.1016/S0045-7825(99)00389-8.">10</a>]</span>を適用します——feasible個体は常にinfeasible個体より優先され、infeasible個体同士は制約違反量の昇順で並びます。
+発表されたSPEA2アルゴリズムは制約処理を扱っておらず、これはsaealib側の拡張です。</p>
 </section>
-<section id="parameters-and-variants">
-<h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<section id="complexity">
-<h3>計算量<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h3>
-<p>適応度計算(<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>)は<span class="math notranslate nohighlight">\(O(M^2)\)</span>（<span class="math notranslate nohighlight">\(M=N+\bar N\)</span>）で、密度推定のための距離ソートを含めると<span class="math notranslate nohighlight">\(O(M^2\log M)\)</span>になります。 打ち切り演算子は最悪<span class="math notranslate nohighlight">\(O(M^3)\)</span>、平均では<span class="math notranslate nohighlight">\(O(M^2\log M)\)</span>です<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>。</p>
-<p><strong><span class="math notranslate nohighlight">\(N\)</span>と<span class="math notranslate nohighlight">\(\bar N\)</span>の独立設定</strong>：<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>はSPEA2のアーカイブ<span class="math notranslate nohighlight">\(\bar P\)</span>の役割を担います——<code class="docutils literal notranslate"><span class="pre">GA.tell()</span></code>がこれを子個体群と統合し、<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code>（<code class="docutils literal notranslate"><span class="pre">problem.comparator</span></code>で設定された<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>を利用）がその結果に対して環境選択を行います——そのため<code class="docutils literal notranslate"><span class="pre">LHSInitializer(n_init_population=...)</span></code>が<span class="math notranslate nohighlight">\(\bar N\)</span>を、<code class="docutils literal notranslate"><span class="pre">DirectStrategy(n_offspring=...)</span></code>が各世代で生成（かつ真の評価が行われる）子個体数<span class="math notranslate nohighlight">\(N\)</span>を設定します。 <code class="docutils literal notranslate"><span class="pre">LHSInitializer</span></code>のもう一方のサイズパラメータ<code class="docutils literal notranslate"><span class="pre">n_init_archive</span></code>は、saealib自身の累積<code class="docutils literal notranslate"><span class="pre">Archive</span></code>（<code class="docutils literal notranslate"><span class="pre">ctx.archive</span></code>）——SPEA2の外部アーカイブとは異なり、以降の各世代の評価によって増え続ける、より長命なコンテナ——に最初に評価されるエントリ数を設定します。 <span class="math notranslate nohighlight">\(t=0\)</span>時点に限っては、これは最初の適応度割り当てと環境選択の対象となる候補プールのサイズも兼ねるため（前述の<em>Differences from the source</em>参照）、文献に忠実な初期化では<code class="docutils literal notranslate"><span class="pre">n_init_archive=N</span></code>とします。 組み込みのInitializerは<code class="docutils literal notranslate"><span class="pre">n_init_population</span> <span class="pre">&lt;=</span> <span class="pre">n_init_archive</span></code>を前提とするため、<span class="math notranslate nohighlight">\(\bar N &gt; N\)</span>という初期状態を直接構成することはできません。</p>
-<p><strong>支配述語の差し替え</strong>：<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator(dominator=...)</span></code>では、既定の<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>以外の<a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a>を注入できます。<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>の計算はこの支配述語に依存するため、差し替えるとSPEA2の適応度自体が変わります。</p>
+<section id="id7">
+<h2>パラメータと変種<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h3>計算量<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
+<p>適応度計算(<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>/<span class="math notranslate nohighlight">\(D(i)\)</span>)は<span class="math notranslate nohighlight">\(O(M^2)\)</span>（<span class="math notranslate nohighlight">\(M=N+\bar N\)</span>）で、密度推定のための距離ソートを含めると<span class="math notranslate nohighlight">\(O(M^2\log M)\)</span>になります。
+打ち切り演算子は最悪<span class="math notranslate nohighlight">\(O(M^3)\)</span>、平均では<span class="math notranslate nohighlight">\(O(M^2\log M)\)</span>です<span class="bibtex-citation" id="id9">[<a class="reference internal" href="../references.html#id24" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>。</p>
+<p><strong><span class="math notranslate nohighlight">\(N\)</span>と<span class="math notranslate nohighlight">\(\bar N\)</span>の独立設定</strong>：<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>はSPEA2のアーカイブ<span class="math notranslate nohighlight">\(\bar P\)</span>の役割を担います——<code class="docutils literal notranslate"><span class="pre">GA.tell()</span></code>がこれを子個体群と統合し、<code class="docutils literal notranslate"><span class="pre">TruncationSelection</span></code>（<code class="docutils literal notranslate"><span class="pre">problem.comparator</span></code>で設定された<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>を利用）がその結果に対して環境選択を行います——そのため<code class="docutils literal notranslate"><span class="pre">LHSInitializer(n_init_population=...)</span></code>が<span class="math notranslate nohighlight">\(\bar N\)</span>を、<code class="docutils literal notranslate"><span class="pre">DirectStrategy(n_offspring=...)</span></code>が各世代で生成（かつ真の評価が行われる）子個体数<span class="math notranslate nohighlight">\(N\)</span>を設定します。
+<code class="docutils literal notranslate"><span class="pre">LHSInitializer</span></code>のもう一方のサイズパラメータ<code class="docutils literal notranslate"><span class="pre">n_init_archive</span></code>は、saealib自身の累積<code class="docutils literal notranslate"><span class="pre">Archive</span></code>（<code class="docutils literal notranslate"><span class="pre">ctx.archive</span></code>）——SPEA2の外部アーカイブとは異なり、以降の各世代の評価によって増え続ける、より長命なコンテナ——に最初に評価されるエントリ数を設定します。
+<span class="math notranslate nohighlight">\(t=0\)</span>時点に限っては、これは最初の適応度割り当てと環境選択の対象となる候補プールのサイズも兼ねるため（前述の<em>Differences from the source</em>参照）、文献に忠実な初期化では<code class="docutils literal notranslate"><span class="pre">n_init_archive=N</span></code>とします。
+組み込みのInitializerは<code class="docutils literal notranslate"><span class="pre">n_init_population</span> <span class="pre">&lt;=</span> <span class="pre">n_init_archive</span></code>を前提とするため、<span class="math notranslate nohighlight">\(\bar N &gt; N\)</span>という初期状態を直接構成することはできません。</p>
+<p><strong>支配述語の差し替え</strong>：<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator(dominator=...)</span></code>では、既定の<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>以外の<a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a>を注入できます。
+<span class="math notranslate nohighlight">\(S(i)\)</span>/<span class="math notranslate nohighlight">\(R(i)\)</span>の計算はこの支配述語に依存するため、差し替えるとSPEA2の適応度自体が変わります。</p>
 </section>
 </section>
-<section id="related">
-<h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
+<section id="id10">
+<h2>関連<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>：出典の完全な書誌情報</p></li>
 <li><p><a class="reference internal" href="../concepts/problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>の詳細仕様</p></li>
@@ -1165,7 +1187,7 @@ window.runMermaid = runMermaid;</script>
        title="次ページ">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">次へ</p>
-        <p class="prev-next-title">式: NSGA-III</p>
+        <p class="prev-next-title">NSGA-III</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -1188,16 +1210,16 @@ window.runMermaid = runMermaid;</script>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">概要</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">擬似コード</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">フローチャート</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">saealibでの構成</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">文献との差分</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">計算量</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">概要</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">擬似コード</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">フローチャート</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib">saealibでの構成</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">文献との差分</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">パラメータと変種</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">計算量</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">関連</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">関連</a></li>
 </ul>
   </nav></div>
 

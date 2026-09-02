@@ -4,13 +4,13 @@ related_layers: [layer3]
 page_type: reference
 ---
 
-# Optimization Strategies
+# 最適化戦略
 
-Built-in Strategies compose candidate generation, evaluation planning, Feedback, and Population updates.
-The canonical extension point for a new Strategy is `build_graph(provider) -> ComponentGraph`.
-`build_pipeline()` is the compatibility representation for the existing Pipeline DSL.
+組み込みStrategyは、候補生成、評価計画、Feedback、Population更新を構成します。
+新しいStrategyの正規の拡張点は`build_graph(provider) -> ComponentGraph`です。
+`build_pipeline()`は既存のPipeline DSLに対する互換性用の記述形式です。
 
-## Base
+## 基底
 
 ```{eval-rst}
 .. autosummary::
@@ -20,7 +20,7 @@ The canonical extension point for a new Strategy is `build_graph(provider) -> Co
    saealib.OptimizationStrategy
 ```
 
-## Implementations
+## 実装
 
 ```{eval-rst}
 .. autosummary::
@@ -34,7 +34,7 @@ The canonical extension point for a new Strategy is `build_graph(provider) -> Co
    saealib.SteadyStateStrategy
 ```
 
-## Island execution
+## Island実行
 
 ```{eval-rst}
 .. autosummary::

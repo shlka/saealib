@@ -2,7 +2,7 @@
 primary_layer: layer2
 ---
 
-# Optimizer
+# オプティマイザー
 
 ```{eval-rst}
 .. autosummary::

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Evaluator &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Evaluator &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -593,8 +593,8 @@
   <section class="tex2jax_ignore mathjax_ignore" id="evaluator">
 <h1>Evaluator<a class="headerlink" href="#evaluator" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p><code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code> は <code class="docutils literal notranslate"><span class="pre">EvaluationPlan</span></code> を作り、Evaluatorへ評価を委譲します。</p>
-<section id="evaluator-s-role">
-<h2>Evaluatorの役割<a class="headerlink" href="#evaluator-s-role" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>Evaluatorの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>同期・非同期の二つの評価境界で受け取る値と返す値は次のとおりです。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -628,8 +628,8 @@
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">candidate_ids</span></code></strong>：結果の各行に対応する候補ID。</p></li>
 </ul>
 </section>
-<section id="built-in-evaluators">
-<h2>組み込みEvaluator<a class="headerlink" href="#built-in-evaluators" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>組み込みEvaluator<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>クラス</p></th>
@@ -661,8 +661,8 @@
 <p>同期Evaluatorは<code class="docutils literal notranslate"><span class="pre">Optimizer.set_evaluator(evaluator)</span></code>で差し替えます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">EvaluationRequest.metadata</span></code>は、明示的な実行プランナーを公開するEvaluatorが消費します。 <code class="docutils literal notranslate"><span class="pre">RepeatedEvaluation</span></code>は、安定した候補IDを持つリクエストを複製ごとに1つずつ含む<code class="docutils literal notranslate"><span class="pre">EvaluationPlan</span></code>を返します。 Schedulerが容量、予算、リクエストのライフサイクルを管理します。</p>
 </section>
-<section id="implementing-a-custom-evaluator">
-<h2>独自Evaluatorの実装方法<a class="headerlink" href="#implementing-a-custom-evaluator" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>独自Evaluatorの実装方法<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p>次の例は、<code class="docutils literal notranslate"><span class="pre">evaluate_batch()</span></code>を実装するStage互換の同期Evaluatorです。ベクトルでないGenomeでは、評価関数に渡すペイロードを<code class="docutils literal notranslate"><span class="pre">EvaluationAdapter</span></code>で定義します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationResult</span><span class="p">,</span> <span class="n">Evaluator</span>
@@ -687,8 +687,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">problem.evaluate_constraints(xi)</span></code> を <code class="docutils literal notranslate"><span class="pre">problem.evaluate(xi,</span> <span class="pre">g_i)</span></code> より先に呼び出す順序を維持します。<a class="reference internal" href="../problem_and_ranking/constraints.html"><span class="std std-doc">ConstraintHandler</span></a> は制約値を使って目的値を補正するため、この順序を逆にすると補正が正しく適用されません。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>関連コンポーネント<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../problem_and_ranking/problem.html"><span class="std std-doc">Problem</span></a>：<code class="docutils literal notranslate"><span class="pre">evaluate_batch</span></code> が評価する目的関数と制約関数の定義</p></li>
 <li><p><a class="reference internal" href="../problem_and_ranking/constraints.html"><span class="std std-doc">ConstraintHandler</span></a>：<code class="docutils literal notranslate"><span class="pre">problem.evaluate</span></code>内で制約違反を集約し、目的値を補正します</p></li>
@@ -697,8 +697,8 @@
 <li><p><a class="reference internal" href="../observation_and_state/feedback.html"><span class="std std-doc">Feedback</span></a>：評価結果をAlgorithmへ渡すFeedbackの構成</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>参照<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.Evaluator.html#saealib.Evaluator" title="saealib.Evaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Evaluator</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.SerialEvaluator.html#saealib.SerialEvaluator" title="saealib.SerialEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SerialEvaluator</span></code></a></p></li>
@@ -757,11 +757,11 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#evaluator-s-role">Evaluatorの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-evaluators">組み込みEvaluator</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-evaluator">独自Evaluatorの実装方法</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Evaluatorの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">組み込みEvaluator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">独自Evaluatorの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">参照</a></li>
 </ul>
   </nav></div>
 

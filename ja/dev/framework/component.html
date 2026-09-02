@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Component &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Component &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -66,7 +66,7 @@
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="検索" href="../search.html" />
     <link rel="next" title="ComponentContract" href="contract.html" />
-    <link rel="prev" title="フレームワーク" href="index.html" />
+    <link rel="prev" title="Framework" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
   <meta name="docsearch:version" content="" />
@@ -180,7 +180,7 @@
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -532,7 +532,7 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="index.html" class="nav-link">フレームワーク</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Framework</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Component</span></li>
   </ul>
@@ -554,12 +554,12 @@
   <section class="tex2jax_ignore mathjax_ignore" id="component">
 <h1>Component<a class="headerlink" href="#component" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 4: Extend Framework</span></div><p>最適化の処理を実行するコンポーネントは、実行内容と静的な契約を分けて扱います。 <code class="docutils literal notranslate"><span class="pre">Component</span></code> Protocolは、そのコンポーネントが<code class="docutils literal notranslate"><span class="pre">ComponentContract</span></code>を返す境界だけを定めます。</p>
-<section id="component-s-role">
-<h2>Componentの役割<a class="headerlink" href="#component-s-role" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>Componentの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>Componentは、実行内容と静的な契約の境界を所有します。 <code class="docutils literal notranslate"><span class="pre">Component</span></code> Protocolが定めるのは、コンパイル時に<code class="docutils literal notranslate"><span class="pre">ComponentContract</span></code>を返す責務だけであり、ポート互換性や状態ストアの更新は担当しません。</p>
 </section>
-<section id="component-protocol-and-contract">
-<h2>Component Protocolと<code class="docutils literal notranslate"><span class="pre">contract()</span></code><a class="headerlink" href="#component-protocol-and-contract" title="Link to this heading">#</a></h2>
+<section id="component-protocolcontract">
+<h2>Component Protocolと<code class="docutils literal notranslate"><span class="pre">contract()</span></code><a class="headerlink" href="#component-protocolcontract" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Component</span></code>は<code class="docutils literal notranslate"><span class="pre">contract()</span> <span class="pre">-&gt;</span> <span class="pre">ComponentContract</span></code>を提供します。 <code class="docutils literal notranslate"><span class="pre">contract()</span></code>はコンパイル時に読み取る純粋な契約のスナップショットを返し、実行中の可変状態を返す場所ではありません。</p>
 <p><code class="docutils literal notranslate"><span class="pre">Component</span></code> Protocol自体は<code class="docutils literal notranslate"><span class="pre">execute()</span></code>を定義しません。 Graph-nativeの実行コンポーネントが<code class="docutils literal notranslate"><span class="pre">execute(StateView)</span></code>を提供することは、Runtimeが利用する別の実行境界です。</p>
 <p>ComponentContractはComponentの基底クラスでも派生型でもありません。 Componentがコンポーネントを保持する場合、各コンポーネントの契約を<code class="docutils literal notranslate"><span class="pre">PartSpec</span></code>として親契約に包含します。</p>
@@ -573,29 +573,29 @@
 </div>
 <p>この例はProtocolの最小境界だけを示します。実際の入力、出力、状態、サービスは<a class="reference internal" href="contract.html"><span class="std std-doc">ComponentContract</span></a>と<a class="reference internal" href="specs.html"><span class="std std-doc">Specs</span></a>で宣言します。</p>
 </section>
-<section id="partspec-inclusion">
-<h2>PartSpecの包含<a class="headerlink" href="#partspec-inclusion" title="Link to this heading">#</a></h2>
+<section id="partspec">
+<h2>PartSpecの包含<a class="headerlink" href="#partspec" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">PartSpec</span></code>は、Componentがコンストラクターなどで保持する別のComponentの契約を名前付きで宣言します。 親Componentは子Componentを継承するのではなく、<code class="docutils literal notranslate"><span class="pre">parts</span></code>に子の契約を含めます。 <code class="docutils literal notranslate"><span class="pre">optional=True</span></code>は、そのコンポーネントが構成上省略可能であることを表します。</p>
 <p>この包含により、Compilerは親のポートや状態効果と、保持コンポーネントの契約を同じ計画上で検証できます。 実行時のコンポーネントインスタンスの所有者はComponentであり、契約の不変性は<code class="docutils literal notranslate"><span class="pre">ComponentContract</span></code>が担保します。</p>
 </section>
-<section id="construction-time-and-use-time">
-<h2>生成時点と利用時点<a class="headerlink" href="#construction-time-and-use-time" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>生成時点と利用時点<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p>ComponentのインスタンスはGraph構築時に<code class="docutils literal notranslate"><span class="pre">ComponentNode</span></code>へ配置されます。 Compilerはコンパイル開始時に<code class="docutils literal notranslate"><span class="pre">contract()</span></code>を読み取り、同じコンパイルの解決と検証ではそのスナップショットを使います。 Runtimeは契約を再解釈せず、ExecutablePlanが指定したポート、サービス、状態境界を使います。</p>
 </section>
-<section id="invariants-and-diagnostics">
-<h2>不変条件と診断<a class="headerlink" href="#invariants-and-diagnostics" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>不変条件と診断<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p>Componentは任意のStateStoreを直接変更せず、宣言したStateKeyのStateViewを読み、StatePatchまたはNodeResultを返します。 Componentはポートの互換性を自分で決めず、接続後の判定をCompilerへ委譲します。 <code class="docutils literal notranslate"><span class="pre">contract()</span></code>がComponentContractを返さない場合、Graph構築またはCompilerの契約スナップショット取得で<code class="docutils literal notranslate"><span class="pre">contract_unavailable</span></code>診断になります。</p>
 </section>
-<section id="extension-points">
-<h2>拡張点<a class="headerlink" href="#extension-points" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>拡張点<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p>新しいComponentを作る最小の拡張は、<code class="docutils literal notranslate"><span class="pre">contract()</span></code>とRuntimeが利用する実行境界を実装し、必要な契約を返すことです。</p>
 </section>
-<section id="related-pages">
-<h2>関連ページ<a class="headerlink" href="#related-pages" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>関連ページ<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>未宣言の状態アクセスやコンポーネント間の不整合は、<a class="reference internal" href="contract.html"><span class="std std-doc">Contract</span></a>、<a class="reference internal" href="graph.html"><span class="std std-doc">Graph</span></a>、<a class="reference internal" href="compiler.html"><span class="std std-doc">Compiler</span></a>の検証対象です。 拡張手順は<a class="reference internal" href="extensions.html"><span class="std std-doc">フレームワーク拡張</span></a>を、公開import経路は<a class="reference internal" href="../api/index.html"><span class="std std-doc">APIリファレンス</span></a>で確認してください。</p>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>参照<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.core.Component.html#saealib.core.Component" title="saealib.core.Component"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.core.Component</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.core.ComponentContract.html#saealib.core.ComponentContract" title="saealib.core.ComponentContract"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.core.ComponentContract</span></code></a></p></li>
@@ -619,7 +619,7 @@
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">前へ</p>
-        <p class="prev-next-title">フレームワーク</p>
+        <p class="prev-next-title">Framework</p>
       </div>
     </a>
     <a class="right-next"
@@ -650,14 +650,14 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#component-s-role">Componentの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#component-protocol-and-contract">Component Protocolと<code class="docutils literal notranslate"><span class="pre">contract()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#partspec-inclusion">PartSpecの包含</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#construction-time-and-use-time">生成時点と利用時点</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#invariants-and-diagnostics">不変条件と診断</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-points">拡張点</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-pages">関連ページ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Componentの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#component-protocolcontract">Component Protocolと<code class="docutils literal notranslate"><span class="pre">contract()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#partspec">PartSpecの包含</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">生成時点と利用時点</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">不変条件と診断</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">拡張点</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">関連ページ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">参照</a></li>
 </ul>
   </nav></div>
 

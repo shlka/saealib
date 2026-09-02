@@ -6,56 +6,56 @@ page_type: concept
 
 # CallbackManager
 
-`Optimizer` delegates notifications about execution progress to `CallbackManager`.
-CallbackManager supports observation such as logging, collecting convergence history, and making conditional decisions.
-Events observe execution boundaries; changing an Event field does not replace a Pipeline input.
+`Optimizer`は、実行経過を外部へ通知する処理を`CallbackManager`に委譲します。
+CallbackManagerは、ログ記録、収束履歴の収集、条件判断などの観測をサポートします。
+Eventは実行境界を観測するものであり、Eventのフィールドを変更してもPipelineの入力は差し替わりません。
 
-## CallbackManager's role
+## CallbackManagerの役割
 
-`CallbackManager` keeps a list of handlers per event type.
+`CallbackManager`は、イベント型ごとにハンドラのリストを保持します。
 
 | Method | Description |
 |---|---|
-| `register(event_type, func)` | Registers `func(event)` to be called every time an event of `event_type` fires |
-| `dispatch(event)` | Calls every registered handler, in registration order |
-| `unregister(event_type, func)` | Removes a registered handler |
-| `replace(event_type, old, new)` | Replaces a registered handler with a different one |
+| `register(event_type, func)` | イベント型`event_type`のイベントが発生するたびに呼び出す`func(event)`を登録します |
+| `dispatch(event)` | 登録順に、登録されたすべてのハンドラを呼び出します |
+| `unregister(event_type, func)` | 登録されたハンドラを削除します |
+| `replace(event_type, old, new)` | 登録されたハンドラを別のハンドラに置き換えます |
 
-An Event's `ctx` is an `_EventContext` Protocol for reading values such as `archive`, `comparator`, `n_obj`, `gen`, and `fe`.
-In ordinary sequential execution its concrete value is `OptimizationState`, but the Event's public contract is limited to those read capabilities.
-Treat `ctx` as read-only; use an official boundary such as `with_post`, Component, or Stage to change values.
+Eventの`ctx`は、`archive`、`comparator`、`n_obj`、`gen`、`fe`などの値を読み取るための`_EventContext` Protocolです。
+通常のsequential実行では実体が`OptimizationState`ですが、Eventの公開契約はそれらを読み取る能力に限定されます。
+`ctx`は読み取り専用として扱い、値を変更するときは`with_post`、Component、Stageなどの正式な境界を使います。
 
-## List of available events
+## 利用可能なイベント一覧
 
 | Event | Fired when | Main fields |
 |---|---|---|
-| `RunStartEvent` | Once, at the start of a run | — |
-| `RunEndEvent` | Once, at the end of a run | — |
-| `GenerationStartEvent` | At the start of each generation | — |
-| `GenerationEndEvent` | At the end of each generation (before the state is yielded) | — |
-| `SurrogateStartEvent` / `SurrogateEndEvent` | Before/after surrogate-based scoring | `offspring` |
-| `AcquisitionStartEvent` / `AcquisitionEndEvent` | Before/after acquisition scoring | `offspring` at start; `offspring` and `result` at end |
-| `PostCrossoverEvent` | After crossover and repair | `candidates` |
-| `PostMutationEvent` | After mutation and repair | `candidates` |
-| `PostAskEvent` | After all of `ask()` (crossover and mutation) | `candidates` |
-| `PostSurrogateFitEvent` | After the surrogate is fitted | `surrogate`; `train_x` and `train_f` are optional |
-| `PostEvaluationEvent` | After true evaluation of the chosen candidates | `offspring` |
-| `InitialEvaluationStartEvent` | After initial sampling, before initial evaluation | `candidates_x` |
-| `InitialEvaluationEndEvent` | After initial evaluation, before the archive is sorted | `archive` |
+| `RunStartEvent` | 実行開始時に1回 | — |
+| `RunEndEvent` | 実行終了時に1回 | — |
+| `GenerationStartEvent` | 各世代の開始時 | — |
+| `GenerationEndEvent` | 各世代の終了時（stateがyieldされる前） | — |
+| `SurrogateStartEvent` / `SurrogateEndEvent` | Surrogateベースのスコアリングの前後 | `offspring` |
+| `AcquisitionStartEvent` / `AcquisitionEndEvent` | acquisitionスコアリングの前後 | 開始時は`offspring`、終了時は`offspring`と`result` |
+| `PostCrossoverEvent` | crossoverとrepairの後 | `candidates` |
+| `PostMutationEvent` | mutationとrepairの後 | `candidates` |
+| `PostAskEvent` | `ask()`（crossoverとmutation）のすべての処理の後 | `candidates` |
+| `PostSurrogateFitEvent` | surrogateのfit後 | `surrogate`、`train_x`と`train_f`はoptional |
+| `PostEvaluationEvent` | 選択された候補のtrue evaluation後 | `offspring` |
+| `InitialEvaluationStartEvent` | 初期サンプリング後、初期評価前 | `candidates_x` |
+| `InitialEvaluationEndEvent` | 初期評価後、archiveのソート前 | `archive` |
 
-`PostSurrogateFitEvent` is fired by the built-in Stage after the Surrogate is fit.
-Events fired by built-in Stages may not set `train_x` and `train_f`.
-`PostEvaluationEvent` may include `request_id`, `candidate_ids`, and `status` in addition to the evaluated `offspring`.
+`PostSurrogateFitEvent`は、Surrogateのfit後に組み込みStageから発火します。
+組み込みStageが発火するイベントでは、`train_x`と`train_f`が設定されない場合があります。
+`PostEvaluationEvent`には、評価済みの`offspring`に加えて`request_id`、`candidate_ids`、`status`が含まれる場合があります。
 
-## Default logging output
+## 既定のログ出力
 
-`Optimizer` automatically registers `logging_generation` on `GenerationStartEvent` at construction time.
-Configuring the standard library's `logging` module makes per-generation progress (evaluation count, best objective value, or for multi-objective, the size and range of the first front) appear in the log.
+`Optimizer`は構築時に`logging_generation`を`GenerationStartEvent`へ自動登録します。
+標準ライブラリの`logging`モジュールを設定すると、世代ごとの進捗（評価回数、最良目的値、または多目的の場合は第一フロントのサイズと範囲）がログに出力されます。
 
-## Registering custom handlers and recording convergence history
+## カスタムハンドラの登録と収束履歴の記録
 
-Register any handler with `cbmanager.register(EventType, handler)`.
-To record convergence history, register a handler holding a list accumulated via closure.
+`cbmanager.register(EventType, handler)`で任意のハンドラを登録します。
+収束履歴を記録するには、クロージャで蓄積するリストを保持するハンドラを登録します。
 
 ```python
 from saealib import GenerationEndEvent
@@ -73,9 +73,9 @@ ctx = optimizer.run()
 print(history)
 ```
 
-## Tracking hypervolume
+## ハイパーボリュームの追跡
 
-`logging_generation_hv(reference_point)` returns a handler that logs the first front's hypervolume relative to the specified reference point, every generation.
+`logging_generation_hv(reference_point)`は、指定したreference pointに対する第一フロントのhypervolumeを世代ごとにログへ出力するハンドラを返します。
 
 ```python
 from saealib import GenerationStartEvent, logging_generation_hv
@@ -86,9 +86,9 @@ optimizer.cbmanager.register(
 )
 ```
 
-## Replacing the default handler
+## 既定ハンドラの差し替え
 
-You can remove the auto-registered `logging_generation` with `unregister(event_type, func)`, or replace it with a different handler via `replace(event_type, old, new)`.
+自動登録された`logging_generation`は`unregister(event_type, func)`で削除でき、`replace(event_type, old, new)`で別のハンドラに置き換えられます。
 
 ```python
 from saealib import GenerationStartEvent, logging_generation
@@ -96,52 +96,51 @@ from saealib import GenerationStartEvent, logging_generation
 optimizer.cbmanager.unregister(GenerationStartEvent, logging_generation)
 ```
 
-## The candidates field is for observation only
+## candidatesフィールドは観測専用
 
-The `candidates` field on `PostCrossoverEvent`/`PostMutationEvent`/`PostAskEvent` is for observation; reassigning it inside a handler (`event.candidates = new_array`) has no effect on the pipeline's output.
-`GA` keeps using its own local array reference after the event fires, so an in-place change (`event.candidates[:] = ...`) does reach `GA`.
-`PSO`, on the other hand, fires this event after `Population.extend()` has already finished copying the candidates, so even an in-place change is too late and has no effect at all.
+`PostCrossoverEvent`/`PostMutationEvent`/`PostAskEvent`の`candidates`フィールドは観測用です。ハンドラ内で再代入しても（`event.candidates = new_array`）、Pipelineの出力には影響しません。
+Event発火後も`GA`は自身のローカルな配列参照を使い続けるため、インプレースの変更（`event.candidates[:] = ...`）は`GA`に反映されます。
+一方、`PSO`は`Population.extend()`が候補をコピーし終えた後にこのイベントを発火するため、インプレースの変更でも遅すぎてまったく影響しません。
 
-If you want to actually swap out the candidate array, use `with_post(fn)` on [Crossover](../search_algorithms/crossover.md)/[Mutation](../search_algorithms/mutation.md) instead of `CallbackManager`.
-Think of `CallbackManager` as a mechanism for observation (logging, recording, conditional branching decisions) by design, not a means of rewriting pipeline data.
+候補配列そのものを差し替えたい場合は、`CallbackManager`ではなく[Crossover](../search_algorithms/crossover.md)/[Mutation](../search_algorithms/mutation.md)の`with_post(fn)`を使ってください。
+`CallbackManager`は設計上、観測（ログ、記録、条件付きの分岐判断）のための仕組みであり、Pipelineデータを書き換える手段ではありません。
 
-## Switching configuration at runtime
+## 実行時の構成切り替え
 
-`Event` is for observation, and directly changing `Optimizer` internals from a Callback closure is not the standard procedure.
-Use `with_post()` or `with_post_fit()` to change data flow, and switch execution configuration at a step boundary in `iterate()` or `run()`.
+`Event`は観測用であり、Callbackクロージャから`Optimizer`の内部を直接変更するのは標準的な手順ではありません。
+データフローを変更するには`with_post()`または`with_post_fit()`を使い、実行構成は`iterate()`または`run()`のステップ境界で切り替えます。
+ステップ境界で`optimizer.set_*()`またはコンポーネント属性が変更されると、実行環境が変更を検出してプランを再コンパイルし、次の世代から適用します。
+この手順はStage互換パスとgraph-nativeパスの両方で機能します。
+Componentが要求する再コンパイル経路については、[OptimizationStrategy](../execution_and_evaluation/strategies.md)の「実行時の差し替えの動作」を参照してください。
+Callbackハンドラは`RuntimeCommand`を返せません。
+Callbackクロージャで`optimizer.set_*()`を呼び出した変更は上述の経路で適用されますが、構成変更は`iterate()`側の手順として文書化されています。
 
-When `optimizer.set_*()` or a component attribute changes at a step boundary, the execution environment detects the change, recompiles the plan, and applies it from the next generation.
-This procedure works on both the Stage compatibility path and the graph-native path.
-For a Component-requested recompilation path, see [OptimizationStrategy](../execution_and_evaluation/strategies.md)'s "Behavior of runtime swapping".
-A Callback handler cannot return a `RuntimeCommand`.
-A change made by calling `optimizer.set_*()` in a Callback closure is applied through the path above, but configuration changes are documented as a procedure on the `iterate()` side.
-
-## When to use CallbackManager vs. iterate()
+## CallbackManagerとiterate()の使い分け
 
 | Aspect | CallbackManager | `iterate()` |
 |---|---|---|
-| Granularity of invocation | When a specific event occurs | Per generation (a `for` loop on the host side) |
-| Main use | Logging, observation, conditional side effects | Intervening in the loop structure itself, e.g. switching components based on surrogate accuracy |
-| Relationship to `run()` | Works with either `run()` or `iterate()` | Used in place of `run()` |
+| 呼び出しの粒度 | 特定のイベントが発生したとき | 世代ごと（ホスト側の`for`ループ） |
+| 主な用途 | ログ、観測、条件付きの副作用 | ループ構造そのものへの介入（例：surrogateの精度に基づくコンポーネントの切り替え） |
+| `run()`との関係 | `run()`と`iterate()`のどちらでも動作 | `run()`の代わりに使用 |
 
-The switcher classes in [Surrogate accuracy evaluation and dynamic switching](../surrogate_modeling/surrogate_switching.md) are meant to be used inside an `iterate()` loop.
+[Surrogate accuracy evaluation and dynamic switching](../surrogate_modeling/surrogate_switching.md)のswitcherクラスは、`iterate()`ループ内で使うことを想定しています。
 
-## CheckpointCallback
+## チェックポイントコールバック
 
-`CheckpointCallback` is an example Callback implementation.
-The npz format uses `OptimizationState.save()`, while the pickle format uses `Optimizer.save_pickle()`.
-Because the saved values and resumption conditions differ by format, see [Checkpointing](../../tutorials/checkpoint.md) for details.
-Use this Callback as a reference for registering a custom Callback.
+`CheckpointCallback`はCallback実装の例です。
+npz形式では`OptimizationState.save()`を使い、pickle形式では`Optimizer.save_pickle()`を使います。
+形式によって保存対象の値と再開条件が異なるため、詳細は[Checkpointing](../../tutorials/checkpoint.md)を参照してください。
+このCallbackをカスタムCallback登録の参考にしてください。
 
-## Related components
+## 関連コンポーネント
 
-- [Extension guidelines](../extension_guidelines.md): When to use `with_post`-style hooks instead
-- [Crossover](../search_algorithms/crossover.md) / [Mutation](../search_algorithms/mutation.md): The actual means of swapping the candidate array
-- [strategies](../execution_and_evaluation/strategies.md): When a runtime component swap takes effect
-- [Surrogate accuracy evaluation and dynamic switching](../surrogate_modeling/surrogate_switching.md): Dynamic switching inside an `iterate()` loop
-- [Checkpointing](../../tutorials/checkpoint.md): How to use `CheckpointCallback`
+- [Extension guidelines](../extension_guidelines.md): `with_post`形式のフックを使う場面
+- [Crossover](../search_algorithms/crossover.md) / [Mutation](../search_algorithms/mutation.md): 候補配列を差し替える実際の手段
+- [strategies](../execution_and_evaluation/strategies.md): 実行時のコンポーネント差し替えが有効になる時点
+- [Surrogate accuracy evaluation and dynamic switching](../surrogate_modeling/surrogate_switching.md): `iterate()`ループ内での動的な切り替え
+- [Checkpointing](../../tutorials/checkpoint.md): `CheckpointCallback`の使い方
 
-## References
+## 参照
 
 - {py:class}`saealib.CallbackManager`
 - {py:class}`saealib.RunStartEvent`

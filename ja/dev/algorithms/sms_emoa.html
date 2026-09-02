@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SMS-EMOA（S metric selection EMOA） &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>SMS-EMOA（S metric selection EMOA） &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -504,7 +504,7 @@ window.runMermaid = runMermaid;</script>
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="検索" href="../search.html" />
     <link rel="next" title="参照" href="../references.html" />
-    <link rel="prev" title="式: NSGA-III" href="nsga3.html" />
+    <link rel="prev" title="NSGA-III" href="nsga3.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
   <meta name="docsearch:version" content="" />
@@ -618,7 +618,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -800,7 +800,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -923,12 +923,12 @@ window.runMermaid = runMermaid;</script>
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="ego.html">EGO（Efficient Global Optimization）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB（ガウス過程上側信頼限界）</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_ucb.html">GP-UCB (Gaussian Process Upper Confidence Bound)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maxunc.html">MaxUnc（不確実性サンプリング）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rbf_cors.html">CORS-RBF（Constrained Optimization using Response Surfaces）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nsga2.html">NSGA-II（Nondominated Sorting Genetic Algorithm II）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2（Strength Pareto Evolutionary Algorithm 2）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="nsga3.html">式: NSGA-III</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2 (Strength Pareto Evolutionary Algorithm 2)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsga3.html">NSGA-III</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">SMS-EMOA（S metric selection EMOA）</a></li>
 </ul>
 </div>
@@ -993,17 +993,17 @@ window.runMermaid = runMermaid;</script>
   <section class="tex2jax_ignore mathjax_ignore" id="sms-emoa-s-metric-selection-emoa">
 <h1>SMS-EMOA（S metric selection EMOA）<a class="headerlink" href="#sms-emoa-s-metric-selection-emoa" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>SMS-EMOAは、被支配超体積（<span class="math notranslate nohighlight">\(\mathcal{S}\)</span>メトリック）を選択基準に直接組み込んだ、定常状態の多目的進化アルゴリズムです。 非優越ソートで個体群をフロントに分割したうえで、最下位フロント内の超体積寄与度が最小の個体を1体ずつ淘汰し、世代を追うごとに個体群全体の被支配超体積を単調に増大させます。</p>
-<section id="overview">
-<h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>概要<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p>超体積指標は、パレートフロント近似の質を測る指標として広く使われています。 基準点<span class="math notranslate nohighlight">\(\mathbf{y}_{\mathrm{ref}}\)</span>を1つ固定すると、解集合<span class="math notranslate nohighlight">\(B\)</span>が支配する領域のルベーグ測度<span class="math notranslate nohighlight">\(\mathcal{S}(B, \mathbf{y}_{\mathrm{ref}})\)</span>が定義でき、有限のパレートフロント近似において<span class="math notranslate nohighlight">\(\mathcal{S}\)</span>を最大化することが真のパレート集合を求めることと等価になることが知られています。</p>
 <p>SMS-EMOAは、この超体積指標を評価用途にとどめず、選択演算子そのものに採用します。 NSGA-IIと同じ<strong>非優越ソート</strong>で個体群をフロント<span class="math notranslate nohighlight">\(\mathcal{R}_1, \ldots, \mathcal{R}_v\)</span>に分割し、最下位フロント<span class="math notranslate nohighlight">\(\mathcal{R}_v\)</span>の中で、除いたときに<span class="math notranslate nohighlight">\(\mathcal{S}\)</span>メトリックの減少量が最小となる個体を1体だけ淘汰します。 この減少量を<strong>排他的超体積寄与度</strong> <span class="math notranslate nohighlight">\(\Delta_{\mathcal{S}}(s, \mathcal{R}_v) := \mathcal{S}(\mathcal{R}_v) - \mathcal{S}(\mathcal{R}_v \setminus \{s\})\)</span>と呼びます。</p>
 <p>超体積の計算コストが高いため、SMS-EMOAは<strong>定常状態</strong>の世代交代を採ります。 1世代につき交叉と突然変異で新個体を1体だけ生成し、個体群サイズ<span class="math notranslate nohighlight">\(\mu\)</span>を保つために既存個体を1体だけ淘汰します。 <span class="math notranslate nohighlight">\((\mu+\lambda)\)</span>世代交代のように<span class="math notranslate nohighlight">\(\binom{\mu+\lambda}{\mu}\)</span>通りの組み合わせを比較する必要がなく、最下位フロント内で高々<span class="math notranslate nohighlight">\(\mu+1\)</span>回の<span class="math notranslate nohighlight">\(\mathcal{S}\)</span>メトリック評価に抑えられます。</p>
-<p>出典は<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id25" title="Nicola Beume, Boris Naujoks, and Michael Emmerich. Sms-emoa: multiobjective selection based on dominated hypervolume. European Journal of Operational Research, 181(3):1653–1669, 2007. doi:10.1016/j.ejor.2006.08.008.">5</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
+<p>出典は<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id26" title="Nicola Beume, Boris Naujoks, and Michael Emmerich. Sms-emoa: multiobjective selection based on dominated hypervolume. European Journal of Operational Research, 181(3):1653–1669, 2007. doi:10.1016/j.ejor.2006.08.008.">5</a>]</span>。具体的な手順は次の擬似コードに示します。</p>
 </section>
-<section id="pseudocode">
-<h2>擬似コード<a class="headerlink" href="#pseudocode" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>擬似コード<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <div class="proof algorithm admonition" id="alg-sms-emoa">
-<p class="admonition-title"><span class="caption-number">アルゴリズム 8 </span>式: (SMS-EMOA)</p>
+<p class="admonition-title"><span class="caption-number">アルゴリズム 8 </span> (SMS-EMOA)</p>
 <section class="algorithm-content" id="proof-content">
 <p><strong>Inputs</strong> 目的関数群、個体数 <span class="math notranslate nohighlight">\(\mu\)</span>、初期個体群 <span class="math notranslate nohighlight">\(P_0\)</span> <strong>Output</strong> 最終世代の個体群 <span class="math notranslate nohighlight">\(P_{t+1}\)</span></p>
 <ol class="arabic simple">
@@ -1017,24 +1017,24 @@ window.runMermaid = runMermaid;</script>
 </ol>
 </section>
 </div></section>
-<section id="flowchart">
-<h2>フローチャート<a class="headerlink" href="#flowchart" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>フローチャート<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <pre  class="mermaid">
         flowchart TD
     INIT[&quot;Initializer&lt;br/&gt;Generate initial population P0 of μ individuals&lt;br/&gt;(L1)&quot;] --&gt; GEN
     subgraph GEN[&quot;One generation (SteadyStateStrategy.step)&quot;]
         direction TB
-        ASK[&quot;GA.ask(n_offspring=1)&lt;br/&gt;Randomly select parent →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate one new individual q_t+1&lt;br/&gt;(L2)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved)&quot;]
+        ASK[&quot;GA.ask(n_offspring=1)&lt;br/&gt;Randomly select parent →&lt;br/&gt;SBX crossover →&lt;br/&gt;Polynomial mutation to generate one new individual q_t+1&lt;br/&gt;(手順 L2)&quot;] --&gt; EVAL[&quot;True evaluation&lt;br/&gt;(no surrogate involved)&quot;]
         EVAL --&gt; COMB[&quot;GA.tell()&lt;br/&gt;Combine Q = Pt ∪ {q_t+1}&lt;br/&gt;(L3)&quot;]
-        COMB --&gt; SORT[&quot;HypervolumeComparator.sort_population()&lt;br/&gt;Non-dominated sorting →&lt;br/&gt;HV contribution within front&lt;br/&gt;(L3-5)&quot;]
-        SORT --&gt; TRUNC[&quot;TruncationSelection&lt;br/&gt;Cull the last individual&lt;br/&gt;(smallest contribution in the lowest front)&lt;br/&gt;(L4-6)&quot;]
+        COMB --&gt; SORT[&quot;HypervolumeComparator.sort_population()&lt;br/&gt;Non-dominated sorting →&lt;br/&gt;HV contribution within front&lt;br/&gt;(L3〜5)&quot;]
+        SORT --&gt; TRUNC[&quot;TruncationSelection&lt;br/&gt;Cull the last individual&lt;br/&gt;(smallest contribution in the lowest front)&lt;br/&gt;(L4〜6)&quot;]
     end
     GEN --&gt; TERM{&quot;Termination condition&lt;br/&gt;reached?&quot;}
     TERM -- &quot;Not yet (L7)&quot; --&gt; GEN
     TERM -- &quot;Reached&quot; --&gt; RESULT([&quot;Population of the final generation&quot;])
     </pre></section>
-<section id="configuration-in-saealib">
-<h2>saealibでの構成<a class="headerlink" href="#configuration-in-saealib" title="Link to this heading">#</a></h2>
+<section id="saealib">
+<h2>saealibでの構成<a class="headerlink" href="#saealib" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>役割</p></th>
@@ -1051,11 +1051,11 @@ window.runMermaid = runMermaid;</script>
 <td><p><code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code>（比較処理を伴わない一様ランダム選択。論文は親選択方式を明記していない）</p></td>
 <td><p>手順 L2</p></td>
 </tr>
-<tr class="row-even"><td><p>Crossover</p></td>
+<tr class="row-even"><td><p>交叉</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">CrossoverSBX(prob=0.9,</span> <span class="pre">eta=20.0)</span></code></p></td>
 <td><p>手順 L2</p></td>
 </tr>
-<tr class="row-odd"><td><p>Mutation</p></td>
+<tr class="row-odd"><td><p>突然変異</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">MutationPolynomial(eta=20.0)</span></code></p></td>
 <td><p>手順 L2</p></td>
 </tr>
@@ -1127,24 +1127,24 @@ window.runMermaid = runMermaid;</script>
 </pre></div>
 </div>
 </section>
-<section id="differences-from-the-source">
-<h2>原法との差分<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>原法との差分<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>原法のSMS-EMOAは一度に1個体を評価する定常状態手続きを使います。この設計により、最下位フロントのハイパーボリューム計算は最大でも<span class="math notranslate nohighlight">\(\mu+1\)</span>個に制限されます。上の構成も<code class="docutils literal notranslate"><span class="pre">SteadyStateStrategy</span></code>で一度に1個体を生成します。代わりに<code class="docutils literal notranslate"><span class="pre">DirectStrategy</span></code>が世代ごとに複数個体を生成すると、<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>は全フロントにわたるハイパーボリューム寄与を順位付けするため、最下位フロントだけを対象とする原法の手続きには従わなくなります。原法は親選択を指定していないため、例では比較を行わない<code class="docutils literal notranslate"><span class="pre">TournamentSelection(tournament_size=1)</span></code>を使います。<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>は論文に記載されたSMS-EMOAのdp変種も実装しておらず、基本的なハイパーボリューム寄与だけを提供します。</p>
 </section>
-<section id="parameters-and-variants">
-<h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
-<section id="complexity">
-<h3>計算量<a class="headerlink" href="#complexity" title="Link to this heading">#</a></h3>
+<section id="id6">
+<h2>パラメータと変種<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h3>計算量<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
 <p>超体積計算自体は、点数について多項式だが目的数について指数的な計算量を持ちます。 saealibの<code class="docutils literal notranslate"><span class="pre">hypervolume</span></code>（再帰的スライシング）は<span class="math notranslate nohighlight">\(O(n^{m-1} n \log n)\)</span>（<span class="math notranslate nohighlight">\(n\)</span>は点数、<span class="math notranslate nohighlight">\(m\)</span>は目的数）です。</p>
-<p>排他的寄与度は1点抜きでサイズ<span class="math notranslate nohighlight">\(k\)</span>のフロントに対し<span class="math notranslate nohighlight">\(k\)</span>回のHV計算を要するため、フロント1つ分の計算は<span class="math notranslate nohighlight">\(O(k^{m} \log k)\)</span>になります。 論文の削減手順は最下位フロント（サイズ高々<span class="math notranslate nohighlight">\(\mu+1\)</span>）だけにこれを適用するため、1世代あたり<span class="math notranslate nohighlight">\(O(\mu^{m} \log \mu)\)</span>に収まります<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id25" title="Nicola Beume, Boris Naujoks, and Michael Emmerich. Sms-emoa: multiobjective selection based on dominated hypervolume. European Journal of Operational Research, 181(3):1653–1669, 2007. doi:10.1016/j.ejor.2006.08.008.">5</a>]</span>。</p>
+<p>排他的寄与度は1点抜きでサイズ<span class="math notranslate nohighlight">\(k\)</span>のフロントに対し<span class="math notranslate nohighlight">\(k\)</span>回のHV計算を要するため、フロント1つ分の計算は<span class="math notranslate nohighlight">\(O(k^{m} \log k)\)</span>になります。 論文の削減手順は最下位フロント（サイズ高々<span class="math notranslate nohighlight">\(\mu+1\)</span>）だけにこれを適用するため、1世代あたり<span class="math notranslate nohighlight">\(O(\mu^{m} \log \mu)\)</span>に収まります<span class="bibtex-citation" id="id8">[<a class="reference internal" href="../references.html#id26" title="Nicola Beume, Boris Naujoks, and Michael Emmerich. Sms-emoa: multiobjective selection based on dominated hypervolume. European Journal of Operational Research, 181(3):1653–1669, 2007. doi:10.1016/j.ejor.2006.08.008.">5</a>]</span>。</p>
 <p><code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>は全フロントに対して寄与度を計算する一般化を行いますが、フロントサイズの総和は<span class="math notranslate nohighlight">\(\mu+1\)</span>を超えないため、漸近的な上界は<span class="math notranslate nohighlight">\(O(\mu^{m} \log \mu)\)</span>のまま変わりません。</p>
 <p><strong>代替のreduce手続き（&quot;SMS-EMOA dp&quot;）</strong>：論文は、超体積寄与度の代わりに支配点数<span class="math notranslate nohighlight">\(d(s, P(t))\)</span>を使う高速な変種も提案しています。</p>
 <p><strong>参照点の扱い</strong>：<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator(reference_point=...)</span></code>では固定値を指定できます。<code class="docutils literal notranslate"><span class="pre">None</span></code>の場合は、論文の定義どおり各目的の最悪値に1.0を加えて、各世代の各フロントの参照点を計算します。2目的の場合は、参照点を計算せずに両端の境界解を残す論文の扱いに従います。</p>
 <p><strong>支配述語の差し替え</strong>：<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator(reference_point=...,</span> <span class="pre">dominator=...)</span></code>で、既定の<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>以外の<a class="reference internal" href="../concepts/problem_and_ranking/dominance.html"><span class="std std-doc">Dominator</span></a>を注入できます。非劣ソートの結果が変わるため、フロント分割と寄与度計算の対象となる個体群もこの支配述語に依存します。</p>
 </section>
 </section>
-<section id="related">
-<h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>関連<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>：出典の完全な書誌情報</p></li>
 <li><p><a class="reference internal" href="../concepts/problem_and_ranking/comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>の詳しい仕様、個体群相対的なComparatorの扱い</p></li>
@@ -1175,7 +1175,7 @@ window.runMermaid = runMermaid;</script>
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">前へ</p>
-        <p class="prev-next-title">式: NSGA-III</p>
+        <p class="prev-next-title">NSGA-III</p>
       </div>
     </a>
     <a class="right-next"
@@ -1206,16 +1206,16 @@ window.runMermaid = runMermaid;</script>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">概要</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">擬似コード</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">フローチャート</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">saealibでの構成</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">原法との差分</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#complexity">計算量</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">概要</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">擬似コード</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">フローチャート</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib">saealibでの構成</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">原法との差分</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">パラメータと変種</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">計算量</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">関連</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">関連</a></li>
 </ul>
   </nav></div>
 

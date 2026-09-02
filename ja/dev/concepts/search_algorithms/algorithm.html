@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>探索アルゴリズム &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>探索アルゴリズム &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -182,7 +182,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -364,7 +364,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -487,11 +487,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -509,7 +509,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -522,7 +522,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -592,19 +592,19 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="algorithm">
-<h1>探索アルゴリズム<a class="headerlink" href="#algorithm" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>探索アルゴリズム<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 3: Extend Components</span></div><p><code class="docutils literal notranslate"><span class="pre">saealib</span></code> は候補生成とフィードバックの消費を分離し、その契約を <code class="docutils literal notranslate"><span class="pre">Algorithm</span></code> にまとめます。 <code class="docutils literal notranslate"><span class="pre">Algorithm</span></code> は <code class="docutils literal notranslate"><span class="pre">Optimizer.set_algorithm(algorithm)</span></code> で差し替えられます。</p>
 <p>現行の <code class="docutils literal notranslate"><span class="pre">Algorithm</span></code> は、候補を生成するProposerと、評価結果を消費するFeedbackConsumerを兼ねる契約です。 通常の利用では、利用者がこの契約を意識する必要はありません。 独自の探索アルゴリズムを実装するときだけ、次の状態境界を実装します。</p>
-<section id="algorithm-s-role">
-<h2>Algorithmの役割<a class="headerlink" href="#algorithm-s-role" title="Link to this heading">#</a></h2>
+<section id="algorithm">
+<h2>Algorithmの役割<a class="headerlink" href="#algorithm" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Algorithm</span></code> は、読み取り専用の <code class="docutils literal notranslate"><span class="pre">StateView</span></code> を受け取り、状態を直接変更せずに結果を返します。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">ask(request,</span> <span class="pre">state)</span> <span class="pre">-&gt;</span> <span class="pre">ProposalBatch</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">ProposalRequest</span></code> と <code class="docutils literal notranslate"><span class="pre">StateView</span></code> から候補のバッチを生成します。 <code class="docutils literal notranslate"><span class="pre">request.n_offspring</span></code> が <code class="docutils literal notranslate"><span class="pre">None</span></code> の場合の候補数は、アルゴリズムが現在のPopulationから決定します。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">tell(feedback,</span> <span class="pre">state)</span> <span class="pre">-&gt;</span> <span class="pre">StatePatch</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">FeedbackBatch</span></code> を消費し、適用すべき状態変更を <code class="docutils literal notranslate"><span class="pre">StatePatch</span></code> として返します。 <code class="docutils literal notranslate"><span class="pre">tell()</span></code> は <code class="docutils literal notranslate"><span class="pre">OptimizationState</span></code> や <code class="docutils literal notranslate"><span class="pre">Population</span></code> を直接変更しません。</p>
 <p>この分離によって、どの候補を高コストな真の評価へ送るかを <code class="docutils literal notranslate"><span class="pre">Algorithm</span></code> の外側に置けます。 その判断は <a class="reference internal" href="../execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a> と評価計画、<code class="docutils literal notranslate"><span class="pre">FeedbackPolicy</span></code>の組み合わせが担います。</p>
 </section>
-<section id="built-in-algorithms">
-<h2>組み込みAlgorithm<a class="headerlink" href="#built-in-algorithms" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>組み込みAlgorithm<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>クラス</p></th>
@@ -625,8 +625,8 @@
 </table>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">GenomeGA</span></code> は、<code class="docutils literal notranslate"><span class="pre">GenomeBatch</span></code> と <code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code> の契約を使うGenome-native経路のAlgorithmです。 固定幅のdense vectorを前提とする <code class="docutils literal notranslate"><span class="pre">GA</span></code> と同じ <code class="docutils literal notranslate"><span class="pre">x</span></code> 列の経路へ暗黙に変換せず、Genomeの表現と空間サービスを維持します。</p>
-<section id="ga-a-container-that-combines-operators">
-<h3>GA：演算子を組み合わせるコンテナ<a class="headerlink" href="#ga-a-container-that-combines-operators" title="Link to this heading">#</a></h3>
+<section id="ga">
+<h3>GA：演算子を組み合わせるコンテナ<a class="headerlink" href="#ga" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">GA</span></code>自体には探索ロジックがなく、<code class="docutils literal notranslate"><span class="pre">crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">parent_selection</span></code>/<code class="docutils literal notranslate"><span class="pre">survivor_selection</span></code>という4つの演算子を注入して組み立てるコンテナです。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">GA</span><span class="p">(</span><span class="n">crossover</span><span class="p">,</span> <span class="n">mutation</span><span class="p">,</span> <span class="n">parent_selection</span><span class="p">,</span> <span class="n">survivor_selection</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
    <span class="n">duplicate_elimination</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -645,14 +645,14 @@
 <p><code class="docutils literal notranslate"><span class="pre">variation_execution</span></code>は交叉と突然変異のバッチ実行または逐次実行を選択し、辞書でそれぞれを個別に制御できます。既定値はバッチです。操作・フックの完全な順序と再現性の仕様については、下記の<code class="docutils literal notranslate"><span class="pre">GA</span></code> APIリファレンスを参照してください。</p>
 <p><code class="docutils literal notranslate"><span class="pre">GA.tell()</span></code>は現在の個体群と<code class="docutils literal notranslate"><span class="pre">ask()</span></code>が生成した候補を1つのプールにまとめ、<code class="docutils literal notranslate"><span class="pre">survivor_selection</span></code>で次の個体群を選びます。これは<span class="math notranslate nohighlight">\((\mu+\lambda)\)</span>型の更新に相当します。プールに何を入れるか（親を含めるかどうか）は<code class="docutils literal notranslate"><span class="pre">GA</span></code>自身の責務であり、<code class="docutils literal notranslate"><span class="pre">SurvivorSelection</span></code>のインターフェース自体には現れません。</p>
 </section>
-<section id="ga-handling-mixed-variable-problems">
-<h3>GA：混合変数問題<a class="headerlink" href="#ga-handling-mixed-variable-problems" title="Link to this heading">#</a></h3>
+<section id="id3">
+<h3>GA：混合変数問題<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
 <p>設計変数に整数変数とカテゴリ変数が混在する問題では、<code class="docutils literal notranslate"><span class="pre">GA</span></code>は連続変数用の<code class="docutils literal notranslate"><span class="pre">crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">mutation</span></code>に加えて、型ごとの演算子を使います。<code class="docutils literal notranslate"><span class="pre">integer_crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">integer_mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">categorical_crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">categorical_mutation</span></code>を省略すると、それぞれ<code class="docutils literal notranslate"><span class="pre">CrossoverIntegerSBX</span></code>/<code class="docutils literal notranslate"><span class="pre">MutationIntegerUniform</span></code>/<code class="docutils literal notranslate"><span class="pre">CrossoverCategorical</span></code>/<code class="docutils literal notranslate"><span class="pre">MutationCategorical</span></code>が自動的に設定されます。自動設定された演算子の確率パラメータ（<code class="docutils literal notranslate"><span class="pre">prob</span></code>/<code class="docutils literal notranslate"><span class="pre">prob_var</span></code>）は、連続変数用の<code class="docutils literal notranslate"><span class="pre">crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">mutation</span></code>から引き継がれます。</p>
 <p>型ごとに設定する演算子でも、<code class="docutils literal notranslate"><span class="pre">n_children</span></code>/<code class="docutils literal notranslate"><span class="pre">n_parents</span></code>は連続変数用の<code class="docutils literal notranslate"><span class="pre">crossover</span></code>と一致しなければなりません。一致しない場合は<code class="docutils literal notranslate"><span class="pre">ConfigurationError</span></code>を送出します。これは、<code class="docutils literal notranslate"><span class="pre">GA</span></code>が親個体を変数型ごとの列に分割し、対応する列にだけ各演算子を適用してから、結果を1つの個体に再構成するためです。この実装では、型によって子個体数と親個体数を変えられません。既定のバッチモードでは、各型専用演算子のバッチメソッドをその列に対して呼び出します。<code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;sequential&quot;</span></code>では従来のペア単位・個体単位の振り分けを使い、乱数列を維持します。</p>
 <p>Variable types は defined via <a class="reference internal" href="../problem_and_ranking/problem.html"><span class="std std-doc">Problem</span></a>'s <code class="docutils literal notranslate"><span class="pre">variables</span></code> argument.。</p>
 </section>
-<section id="ga-auxiliary-utilities">
-<h3>GA：補助ユーティリティ<a class="headerlink" href="#ga-auxiliary-utilities" title="Link to this heading">#</a></h3>
+<section id="id4">
+<h3>GA：補助ユーティリティ<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
 <p>**<code class="docutils literal notranslate"><span class="pre">duplicate_elimination</span></code>**引数に<code class="docutils literal notranslate"><span class="pre">DuplicateElimination(atol=1e-16,</span> <span class="pre">rtol=0.0,</span> <span class="pre">max_retries=100)</span></code>を渡すと、現在の個体群と重複する子個体を再生成して置き換えます。重複検出の許容誤差は<code class="docutils literal notranslate"><span class="pre">atol</span></code>/<code class="docutils literal notranslate"><span class="pre">rtol</span></code>で、再生成の最大試行回数は<code class="docutils literal notranslate"><span class="pre">max_retries</span></code>で指定します。省略した場合（既定値は<code class="docutils literal notranslate"><span class="pre">None</span></code>）、重複除去は行われません。</p>
 <p><code class="docutils literal notranslate"><span class="pre">saealib.repair_clipping(candidates,</span> <span class="pre">bounds)</span></code>は、候補集合を<code class="docutils literal notranslate"><span class="pre">(lb,</span> <span class="pre">ub)</span></code>に単純に<code class="docutils literal notranslate"><span class="pre">np.clip</span></code>する独立したユーティリティ関数です。<code class="docutils literal notranslate"><span class="pre">GA</span></code>自身は<a class="reference internal" href="../problem_and_ranking/constraints.html"><span class="std std-doc">ConstraintHandler</span></a>の<code class="docutils literal notranslate"><span class="pre">repair()</span></code>（これも既定では<code class="docutils literal notranslate"><span class="pre">np.clip</span></code>）と<code class="docutils literal notranslate"><span class="pre">Problem.repair()</span></code>（<code class="docutils literal notranslate"><span class="pre">Variable</span></code>ごとの射影）を通じて候補を修復します。<code class="docutils literal notranslate"><span class="pre">repair_clipping</span></code>はGAの内部処理に自動接続されません。<code class="docutils literal notranslate"><span class="pre">ConstraintHandler</span></code>を通らないカスタム評価パイプラインを書く場合など、同じクリッピング動作を単独で使いたいときのために公開されています。</p>
 </section>
@@ -661,8 +661,8 @@
 <p><code class="docutils literal notranslate"><span class="pre">PSO(w=0.7,</span> <span class="pre">c1=1.5,</span> <span class="pre">c2=1.5,</span> <span class="pre">v_max=None)</span></code>は、慣性項<code class="docutils literal notranslate"><span class="pre">w</span></code>、個体最良値への誘引<code class="docutils literal notranslate"><span class="pre">c1</span></code>、群最良値への誘引<code class="docutils literal notranslate"><span class="pre">c2</span></code>の重みを使って速度を更新し、その速度で位置を進めます。<code class="docutils literal notranslate"><span class="pre">v_max</span></code>を指定すると、各次元の速度の大きさをその値に制限します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">GA</span></code>と異なり、演算子を注入して組み立てるものではありません。<code class="docutils literal notranslate"><span class="pre">ask()</span></code>/<code class="docutils literal notranslate"><span class="pre">tell()</span></code>が速度と位置の更新を直接行い、各粒子のpbest（個体最良値）を追跡します。群最良値（リーダー）は<code class="docutils literal notranslate"><span class="pre">ctx.comparator</span></code>を使って全粒子のpbestから選ぶため、任意の単目的<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>を自動的に利用できます。多目的PSO（MOPSO）には、非劣解集合を管理する専用サブクラスが必要です。組み込みの<code class="docutils literal notranslate"><span class="pre">PSO</span></code>は単目的問題を対象とします。</p>
 </section>
-<section id="external-library-adapters">
-<h3>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>
+<section id="id5">
+<h3>外部ライブラリアダプタ<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">PymooAlgorithm(pymoo_algorithm,</span> <span class="pre">*,</span> <span class="pre">allow_partial_tell=False)</span></code>は、構築済みの<a class="reference external" href="https://pymoo.org/">pymoo</a>アルゴリズム（例：<code class="docutils literal notranslate"><span class="pre">NSGA2()</span></code>、<code class="docutils literal notranslate"><span class="pre">DE()</span></code>）をラップし、既存のpymooアルゴリズムでsaealibのask-tellループとサロゲート支援戦略を変更せずに動かせるようにします。</p>
 <p><code class="docutils literal notranslate"><span class="pre">GA</span></code>/<code class="docutils literal notranslate"><span class="pre">PSO</span></code>は<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>を正本とみなしますが、<code class="docutils literal notranslate"><span class="pre">PymooAlgorithm</span></code>は「エンジンモード」で動作します。ラップしたpymooアルゴリズムが独自の個体群と内部の生存状態を保持し、各 <code class="docutils literal notranslate"><span class="pre">tell()</span></code> の終了時に<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>がそこから更新されます。これは正本ではなくミラーです。pymooアルゴリズム自身の検証済みの生存選択ロジックを変更せずに再利用する唯一の方法ですが、利用前に知っておくべき実際の制約があります。</p>
 <ul class="simple">
@@ -673,8 +673,8 @@
 <p><code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extraのインストールについては<a class="reference internal" href="../../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
 </section>
 </section>
-<section id="implementing-a-custom-algorithm">
-<h2>独自Algorithmの実装方法<a class="headerlink" href="#implementing-a-custom-algorithm" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>独自Algorithmの実装方法<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p>独自の探索アルゴリズムを実装するときは、<code class="docutils literal notranslate"><span class="pre">Algorithm</span></code> を継承して <code class="docutils literal notranslate"><span class="pre">ask()</span></code> と <code class="docutils literal notranslate"><span class="pre">tell()</span></code> を実装します。 <code class="docutils literal notranslate"><span class="pre">get_required_attrs()</span></code>、<code class="docutils literal notranslate"><span class="pre">population_class</span></code>、<code class="docutils literal notranslate"><span class="pre">archive_class</span></code> も、既存のPopulation互換経路を使う場合には実装が必要です。</p>
 <p>新しい実装では、<code class="docutils literal notranslate"><span class="pre">ask()</span></code> は <code class="docutils literal notranslate"><span class="pre">ProposalBatch</span></code> を返し、<code class="docutils literal notranslate"><span class="pre">tell()</span></code> は <code class="docutils literal notranslate"><span class="pre">StatePatch</span></code> を返します。 <code class="docutils literal notranslate"><span class="pre">state</span></code> は宣言された状態キーだけを参照できる <code class="docutils literal notranslate"><span class="pre">StateView</span></code> です。 候補数、候補ID、評価結果の対応付けは <code class="docutils literal notranslate"><span class="pre">ProposalBatch</span></code> と <code class="docutils literal notranslate"><span class="pre">FeedbackBatch</span></code> の契約に従います。</p>
 <p>次の骨格は、独自Algorithmが実装する境界だけを示しています。</p>
@@ -710,8 +710,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">tell()</span></code> が受け取るFeedbackは、どの評価経路から届いたかと、候補IDとの対応を保持します。 真の評価だけを必要とするか、予測値を受け入れるかは、Algorithmの契約と<code class="docutils literal notranslate"><span class="pre">FeedbackPolicy</span></code>で宣言します。 PSOのpbestのような永続的な補助情報は、Population属性または宣言済みの<code class="docutils literal notranslate"><span class="pre">StateKey</span></code>として扱います。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>関連コンポーネント<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="crossover.html"><span class="std std-doc">Crossover</span></a> / <a class="reference internal" href="mutation.html"><span class="std std-doc">Mutation</span></a> / <a class="reference internal" href="parent_selection.html"><span class="std std-doc">ParentSelection</span></a> / <a class="reference internal" href="survivor_selection.html"><span class="std std-doc">SurvivorSelection</span></a>：<code class="docutils literal notranslate"><span class="pre">GA</span></code>が組み合わせる4つの演算子。</p></li>
 <li><p><a class="reference internal" href="../problem_and_ranking/problem.html"><span class="std std-doc">Problem</span></a>：<code class="docutils literal notranslate"><span class="pre">variables</span></code>による混合変数の定義</p></li>
@@ -720,8 +720,8 @@
 <li><p><a class="reference internal" href="../observation_and_state/population.html"><span class="std std-doc">Population</span></a>: Algorithmの互換性経路で利用するPopulationと<code class="docutils literal notranslate"><span class="pre">GenomeBatch</span></code></p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>参照<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.Algorithm.html#saealib.Algorithm" title="saealib.Algorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Algorithm</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.GA.html#saealib.GA" title="saealib.GA"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GA</span></code></a></p></li>
@@ -780,18 +780,18 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#algorithm-s-role">Algorithmの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-algorithms">組み込みAlgorithm</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ga-a-container-that-combines-operators">GA：演算子を組み合わせるコンテナ</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ga-handling-mixed-variable-problems">GA：混合変数問題</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ga-auxiliary-utilities">GA：補助ユーティリティ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#algorithm">Algorithmの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">組み込みAlgorithm</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ga">GA：演算子を組み合わせるコンテナ</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">GA：混合変数問題</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">GA：補助ユーティリティ</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pso">PSO法</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">外部ライブラリアダプタ</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">外部ライブラリアダプタ</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-algorithm">独自Algorithmの実装方法</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">独自Algorithmの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">参照</a></li>
 </ul>
   </nav></div>
 

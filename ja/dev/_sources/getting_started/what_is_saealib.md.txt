@@ -2,60 +2,56 @@
 primary_layer: cross
 ---
 
-# What is saealib?
+# saealibとは
 
-saealib is a Python library for evolutionary computation with surrogate models.
-It targets optimization problems whose objective evaluations are expensive.
+saealibは、サロゲートモデルを使う進化計算のためのPythonライブラリです。目的関数の評価コストが高い最適化問題を対象とします。
 
-## What is SAEA?
+## SAEAとは
 
-Evolutionary computation repeatedly generates candidate solutions, evaluates them with an objective function, and uses the results to create the next candidates.
-When objective evaluations take time or money, directly evaluating many candidates becomes a major burden.
+進化計算では、候補解を生成し、目的関数で評価し、その結果を使って次の候補解を作る処理を繰り返します。目的関数の評価に時間や費用がかかる場合、多数の候補解を直接評価することが大きな負担になります。
 
-SAEA uses a surrogate model that estimates objective values from past evaluations to narrow the candidates sent for direct evaluation.
-Surrogate predictions are inexpensive but approximate, so final decisions use direct objective evaluations.
+SAEAは、過去の評価から目的値を推定するサロゲートモデルを使い、直接評価に送る候補を絞り込みます。サロゲートの予測は低コストですが近似値なので、最終的な判断には目的関数の直接評価を使います。
 
 ```{mermaid}
 flowchart TD
-    A[Generate candidates] --> B[Predict with surrogate model]
-    B --> C[Select candidates for true evaluation]
-    C --> D[Evaluate with objective function]
-    D --> E[Update model and search]
+    A[候補を生成] --> B[サロゲートモデルで予測]
+    B --> C[実評価する候補を選択]
+    C --> D[目的関数で評価]
+    D --> E[モデルと探索を更新]
     E --> A
 ```
 
-## What saealib provides
+## saealibの特徴
 
-Candidate generation, surrogate modeling, and selection of candidates for evaluation are separate and replaceable.
-`OptimizationStrategy` is the independent strategy that decides which candidates receive direct evaluation.
+候補解の生成、代理モデル、評価対象の選択といった処理が分離されており、それぞれを交換できます。`OptimizationStrategy`は、どの候補を直接評価するかを決める独立した戦略です。
 
-## Read next
+## 次に読む
 
 ::::{grid} 1 2 2 2
 :gutter: 3
 
-:::{grid-item-card} {fa}`rocket;sd-mr-1` Quickstart
+:::{grid-item-card} {fa}`rocket;sd-mr-1` クイックスタート
 :link: ../getting_started/quickstart
 :link-type: doc
-Run your first optimization with the smallest configuration.
+最小構成で最初の最適化を実行します。
 :::
 
-:::{grid-item-card} {fa}`graduation-cap;sd-mr-1` Tutorials
+:::{grid-item-card} {fa}`graduation-cap;sd-mr-1` チュートリアル
 :link: ../tutorials/index
 :link-type: doc
-Learn task-oriented usage from examples.
+目的に合わせた使い方を例から学びます。
 :::
 
-:::{grid-item-card} {fa}`cubes;sd-mr-1` Optimization components
+:::{grid-item-card} {fa}`cubes;sd-mr-1` 最適化コンポーネント
 :link: ../concepts/index
 :link-type: doc
-Review the roles of the components that make up saealib.
+saealibを構成するコンポーネントの役割を確認します。
 :::
 
-:::{grid-item-card} {fa}`diagram-project;sd-mr-1` Algorithms
+:::{grid-item-card} {fa}`diagram-project;sd-mr-1` アルゴリズム
 :link: ../algorithms/index
 :link-type: doc
-Review the configurations of the available algorithms.
+利用できるアルゴリズムの構成を確認します。
 :::
 
 ::::

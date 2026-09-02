@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Termination &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Termination &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -593,8 +593,8 @@
   <section class="tex2jax_ignore mathjax_ignore" id="termination">
 <h1>Termination<a class="headerlink" href="#termination" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p><code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>は、交換可能なトップレベルコンポーネントである<code class="docutils literal notranslate"><span class="pre">Termination</span></code>に、最適化をいつ停止するかの判断を委譲します。<code class="docutils literal notranslate"><span class="pre">Optimizer.set_termination(termination)</span></code>で渡します。Stage互換経路（同期パイプライン）では、各世代の終了時に<code class="docutils literal notranslate"><span class="pre">is_terminated(ctx)</span> <span class="pre">-&gt;</span> <span class="pre">bool</span></code>が呼び出されます。</p>
-<section id="termination-s-role">
-<h2>Terminationの役割<a class="headerlink" href="#termination-s-role" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>Terminationの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Termination(*conditions)</span></code>は1つ以上の条件を受け取り、そのいずれか1つでも真になった時点で終了します（OR結合）。 コンストラクタに複数条件を渡す書き方は、後述する<code class="docutils literal notranslate"><span class="pre">any_of</span></code>と同じ意味になります。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span><span class="p">,</span> <span class="n">max_gen</span>
 
@@ -622,8 +622,8 @@
 </table>
 </div>
 </section>
-<section id="built-in-termination-conditions">
-<h2>組み込み終了条件<a class="headerlink" href="#built-in-termination-conditions" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>組み込み終了条件<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Termination</span></code>に渡す各条件は、<code class="docutils literal notranslate"><span class="pre">TerminationCondition</span></code>という薄いラッパーです。 組み込みのファクトリ関数はいずれも<code class="docutils literal notranslate"><span class="pre">TerminationCondition</span></code>を返します。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -649,8 +649,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">stalled</span></code>が返す<code class="docutils literal notranslate"><span class="pre">TerminationCondition</span></code>は、内部に「これまでの最良スコア」をクロージャで保持する状態付きの条件です。 1回の<code class="docutils literal notranslate"><span class="pre">run</span></code>につき1つのインスタンスを使う想定であり、複数の<code class="docutils literal notranslate"><span class="pre">run</span></code>で使い回すと前回の状態が残ってしまいます。</p>
 </section>
-<section id="extending-termination">
-<h2>Terminationの拡張<a class="headerlink" href="#extending-termination" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>Terminationの拡張<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">TerminationCondition</span></code>は抽象基底クラスではなく、任意のcallableを受け取って<code class="docutils literal notranslate"><span class="pre">|</span></code>(OR)/<code class="docutils literal notranslate"><span class="pre">&amp;</span></code>(AND)/<code class="docutils literal notranslate"><span class="pre">~</span></code>(NOT)という演算子オーバーロードを提供する合成用のラッパーです。 <code class="docutils literal notranslate"><span class="pre">OptimizationState</span> <span class="pre">-&gt;</span> <span class="pre">bool</span></code>を返すプレーンな関数はどこでも自動的に<code class="docutils literal notranslate"><span class="pre">TerminationCondition</span></code>へ変換されるため、独自の終了条件を追加するのに基底クラスを継承する必要はありません。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Termination</span><span class="p">,</span> <span class="n">max_fe</span>
 
@@ -677,15 +677,15 @@
 <p><code class="docutils literal notranslate"><span class="pre">TerminationCondition</span></code> のコンストラクタの <code class="docutils literal notranslate"><span class="pre">spec</span></code> 引数は、<a class="reference internal" href="../extension_guidelines.html"><span class="std std-doc">Registry</span></a> がプリセットへシリアライズするときに使う内部フィールドであり、通常のユーザーコードで意識する必要はありません。</p>
 </div>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>関連コンポーネント<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../observation_and_state/optimization_state.html"><span class="std std-doc">OptimizationState</span></a>：各終了条件が受け取る<code class="docutils literal notranslate"><span class="pre">ctx</span></code></p></li>
 <li><p><a class="reference internal" href="../extension_guidelines.html"><span class="std std-doc">拡張ガイドライン</span></a>：<code class="docutils literal notranslate"><span class="pre">Registry</span></code>による設定駆動の構築</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>参照<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.Termination.html#saealib.Termination" title="saealib.Termination"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Termination</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.TerminationCondition.html#saealib.TerminationCondition" title="saealib.TerminationCondition"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.TerminationCondition</span></code></a></p></li>
@@ -744,11 +744,11 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#termination-s-role">Terminationの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-termination-conditions">組み込み終了条件</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-termination">Terminationの拡張</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Terminationの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">組み込み終了条件</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">Terminationの拡張</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">参照</a></li>
 </ul>
   </nav></div>
 

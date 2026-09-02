@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>サロゲート精度に応じた動的な切り替え &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>サロゲート精度に応じた動的な切り替え &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -491,7 +491,7 @@
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">サロゲート精度に応じた動的な切り替え</a></li>
 <li class="toctree-l1"><a class="reference internal" href="checkpoint.html">再現性とチェックポイント</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">進捗のログ記録</a></li>
-<li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリとの連携</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリの統合</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="component_swap.html">ビルトインコンポーネントを選んで差し替える</a></li>
@@ -559,8 +559,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="dynamic-switching-based-on-surrogate-accuracy">
-<h1>サロゲート精度に応じた動的な切り替え<a class="headerlink" href="#dynamic-switching-based-on-surrogate-accuracy" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>サロゲート精度に応じた動的な切り替え<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>サロゲートモデルの予測精度は、世代が進むにつれて変化します。</p>
 <p>学習データが少ない序盤は精度が低く、アーカイブが充実してくると精度が上がり、探索が収束して目的値の差が縮まると再び精度が落ちることもあります。</p>
 <p>この変化に応じて、評価戦略や<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>を実行中に切り替える方法を扱います。</p>
@@ -569,8 +569,8 @@
 <p>このページを終えると、Surrogateの精度を世代ごとに追跡し、その値に応じてStrategyやSurrogateManagerを実行中に切り替えられます。</p>
 </div>
 <p>評価戦略を固定する場合は<a class="reference internal" href="lowlevel_api.html"><span class="std std-doc">低レベルAPI</span></a>を使い、独自の切り替え条件を実装する場合は<a class="reference internal" href="custom_components.html"><span class="std std-doc">独自コンポーネント</span></a>を参照してください。このページでは、サロゲートの精度を読み取りながら<code class="docutils literal notranslate"><span class="pre">iterate()</span></code>中に実行構成を切り替える方法を示します。</p>
-<section id="set-up-the-problem">
-<h2>Problemを準備する<a class="headerlink" href="#set-up-the-problem" title="Link to this heading">#</a></h2>
+<section id="problem">
+<h2>Problemを準備する<a class="headerlink" href="#problem" title="Link to this heading">#</a></h2>
 <p>ここでは単純なSphere関数を使います。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -584,8 +584,8 @@
 </pre></div>
 </div>
 </section>
-<section id="track-surrogate-accuracy">
-<h2>サロゲートの精度を追跡する<a class="headerlink" href="#track-surrogate-accuracy" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>サロゲートの精度を追跡する<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>に<code class="docutils literal notranslate"><span class="pre">accuracy_evaluator</span></code>を渡すと、フィットのたびに精度が計算され、<code class="docutils literal notranslate"><span class="pre">surrogate_manager.last_accuracy</span></code>に記録されます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">LOOAccuracyEvaluator</span></code>は、追加の検証用データを用意せず、現在の学習データに対する一個抜き交差検証で精度を求めます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>のコンストラクタにはSurrogateと精度評価器を渡します。 AcquisitionFunctionは <code class="docutils literal notranslate"><span class="pre">Optimizer.set_acquisition()</span></code> で別に設定します。</p>
@@ -636,8 +636,8 @@
 <p><code class="docutils literal notranslate"><span class="pre">last_accuracy</span></code>は<code class="docutils literal notranslate"><span class="pre">SurrogateAccuracy</span></code>インスタンスで、<code class="docutils literal notranslate"><span class="pre">.get(&quot;spearman&quot;)</span></code>のように指標名を指定して値を取り出せます。</p>
 <p>最初の世代では<code class="docutils literal notranslate"><span class="pre">last_accuracy</span></code>が<code class="docutils literal notranslate"><span class="pre">None</span></code>である点に注意してください。</p>
 </section>
-<section id="switch-the-evaluation-strategy-with-strategyswitcher">
-<h2>StrategySwitcherで評価戦略を切り替える<a class="headerlink" href="#switch-the-evaluation-strategy-with-strategyswitcher" title="Link to this heading">#</a></h2>
+<section id="strategyswitcher">
+<h2>StrategySwitcherで評価戦略を切り替える<a class="headerlink" href="#strategyswitcher" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">StrategySwitcher(primary,</span> <span class="pre">fallback,</span> <span class="pre">metric=&quot;spearman&quot;,</span> <span class="pre">threshold=0.56)</span></code>は、精度が閾値以上なら<code class="docutils literal notranslate"><span class="pre">primary</span></code>を、そうでなければ<code class="docutils literal notranslate"><span class="pre">fallback</span></code>を返します。</p>
 <p>次のコード例は、<code class="docutils literal notranslate"><span class="pre">iterate()</span></code> の各ステップで <code class="docutils literal notranslate"><span class="pre">set_strategy()</span></code> を呼び出して構成を変更する手順です。実行環境が変化を検出してplanを再コンパイルし、<code class="docutils literal notranslate"><span class="pre">switch()</span></code> が返すStrategyは次世代から反映されます。 この手順はStage互換経路とgraph-native経路のどちらでも利用できます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreSelectionStrategy</span><span class="p">,</span> <span class="n">IndividualBasedStrategy</span><span class="p">,</span> <span class="n">StrategySwitcher</span>
@@ -667,8 +667,8 @@
 <p>探索が進んで目的値の差が縮まり精度が再び落ちれば、<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy</span></code>へ戻ります。</p>
 <p>Component側から再コンパイルを要求する経路については <a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a> の「ランタイム差し替えの挙動」を参照してください。</p>
 </section>
-<section id="choose-another-switcher">
-<h2>別のSwitcherを選ぶ<a class="headerlink" href="#choose-another-switcher" title="Link to this heading">#</a></h2>
+<section id="switcher">
+<h2>別のSwitcherを選ぶ<a class="headerlink" href="#switcher" title="Link to this heading">#</a></h2>
 <p>同じ<code class="docutils literal notranslate"><span class="pre">switch()</span></code>インターフェースを持つ切り替え器が、<code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>以外にも用意されています。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -702,8 +702,8 @@
 </pre></div>
 </div>
 </section>
-<section id="related-concepts-and-reference">
-<h2>関連するConceptとReference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
+<section id="conceptreference">
+<h2>関連するConceptとReference<a class="headerlink" href="#conceptreference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.StrategySwitcher.html#saealib.StrategySwitcher" title="saealib.StrategySwitcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.StrategySwitcher</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.ManagerSwitcher.html#saealib.ManagerSwitcher" title="saealib.ManagerSwitcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ManagerSwitcher</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.GenCtrlSwitcher.html#saealib.GenCtrlSwitcher" title="saealib.GenCtrlSwitcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GenCtrlSwitcher</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.LOOAccuracyEvaluator.html#saealib.LOOAccuracyEvaluator" title="saealib.LOOAccuracyEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.LOOAccuracyEvaluator</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.HeldOutAccuracyEvaluator.html#saealib.HeldOutAccuracyEvaluator" title="saealib.HeldOutAccuracyEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.HeldOutAccuracyEvaluator</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.KFoldAccuracyEvaluator.html#saealib.KFoldAccuracyEvaluator" title="saealib.KFoldAccuracyEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.KFoldAccuracyEvaluator</span></code></a></p></li>
@@ -760,11 +760,11 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-the-problem">Problemを準備する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#track-surrogate-accuracy">サロゲートの精度を追跡する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#switch-the-evaluation-strategy-with-strategyswitcher">StrategySwitcherで評価戦略を切り替える</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#choose-another-switcher">別のSwitcherを選ぶ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">関連するConceptとReference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem">Problemを準備する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">サロゲートの精度を追跡する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#strategyswitcher">StrategySwitcherで評価戦略を切り替える</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#switcher">別のSwitcherを選ぶ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conceptreference">関連するConceptとReference</a></li>
 </ul>
   </nav></div>
 

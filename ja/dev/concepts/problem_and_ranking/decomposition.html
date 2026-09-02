@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Decomposition &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Decomposition &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -571,7 +571,7 @@
     <li class="breadcrumb-item"><a href="../index.html" class="nav-link">最適化の構成要素</a></li>
     
     
-    <li class="breadcrumb-item"><a href="../problem_and_ranking.html" class="nav-link">問題定義と順位付け</a></li>
+    <li class="breadcrumb-item"><a href="../problem_and_ranking.html" class="nav-link">問題定義とランキング</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Decomposition</span></li>
   </ul>
@@ -592,15 +592,17 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="decomposition">
 <h1>Decomposition<a class="headerlink" href="#decomposition" title="Link to this heading">#</a></h1>
-<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p><code class="docutils literal notranslate"><span class="pre">DecompositionComparator</span></code>は、複数目的を1つのスカラー値へ集約する処理を、<code class="docutils literal notranslate"><span class="pre">Decomposition</span></code>という差し替え可能なコンポーネントに委ねています。 MOEA/D<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id29" title="Qingfu Zhang and Hui Li. Moea/d: a multiobjective evolutionary algorithm based on decomposition. IEEE Transactions on Evolutionary Computation, 11(6):712–731, 2007. doi:10.1109/TEVC.2007.892759.">9</a>]</span>のようにサブ問題ごとの重みベクトルで探索を誘導する方式は、<code class="docutils literal notranslate"><span class="pre">Decomposition</span></code>と<code class="docutils literal notranslate"><span class="pre">DecompositionComparator</span></code>を組み合わせて実現します。</p>
-<section id="decomposition-s-role">
-<h2>Decompositionの役割<a class="headerlink" href="#decomposition-s-role" title="Link to this heading">#</a></h2>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p><code class="docutils literal notranslate"><span class="pre">DecompositionComparator</span></code>は、複数目的を1つのスカラー値へ集約する処理を、<code class="docutils literal notranslate"><span class="pre">Decomposition</span></code>という差し替え可能なコンポーネントに委ねています。
+MOEA/D<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id30" title="Qingfu Zhang and Hui Li. Moea/d: a multiobjective evolutionary algorithm based on decomposition. IEEE Transactions on Evolutionary Computation, 11(6):712–731, 2007. doi:10.1109/TEVC.2007.892759.">9</a>]</span>のようにサブ問題ごとの重みベクトルで探索を誘導する方式は、<code class="docutils literal notranslate"><span class="pre">Decomposition</span></code>と<code class="docutils literal notranslate"><span class="pre">DecompositionComparator</span></code>を組み合わせて実現します。</p>
+<section id="id2">
+<h2>Decompositionの役割<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Decomposition</span></code>が実装する必要があるメソッドは<code class="docutils literal notranslate"><span class="pre">aggregate(f,</span> <span class="pre">weights,</span> <span class="pre">ideal_point)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code>の1つだけです。<code class="docutils literal notranslate"><span class="pre">f</span></code>は形状<code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">n_obj)</span></code>の目的値行列、<code class="docutils literal notranslate"><span class="pre">weights</span></code>は形状<code class="docutils literal notranslate"><span class="pre">(n_obj,)</span></code>の非負の重みベクトル、<code class="docutils literal notranslate"><span class="pre">ideal_point</span></code>は形状<code class="docutils literal notranslate"><span class="pre">(n_obj,)</span></code>の理想点であり、形状<code class="docutils literal notranslate"><span class="pre">(N,)</span></code>のスカラー値を返します。スコアは低いほど良いという規約に統一されています。</p>
-<p><code class="docutils literal notranslate"><span class="pre">f</span></code>は、呼び出し側の<code class="docutils literal notranslate"><span class="pre">DecompositionComparator</span></code>が<code class="docutils literal notranslate"><span class="pre">direction</span></code>変換を適用済みの、最小化フレームである前提で渡されます。 独自の<code class="docutils literal notranslate"><span class="pre">Decomposition</span></code>を実装する際、<code class="docutils literal notranslate"><span class="pre">aggregate</span></code>の内部で改めて<code class="docutils literal notranslate"><span class="pre">direction</span></code>変換をする必要はありません。</p>
+<p><code class="docutils literal notranslate"><span class="pre">f</span></code>は、呼び出し側の<code class="docutils literal notranslate"><span class="pre">DecompositionComparator</span></code>が<code class="docutils literal notranslate"><span class="pre">direction</span></code>変換を適用済みの、最小化フレームである前提で渡されます。
+独自の<code class="docutils literal notranslate"><span class="pre">Decomposition</span></code>を実装する際、<code class="docutils literal notranslate"><span class="pre">aggregate</span></code>の内部で改めて<code class="docutils literal notranslate"><span class="pre">direction</span></code>変換をする必要はありません。</p>
 </section>
-<section id="built-in-decompositions">
-<h2>組み込みDecomposition<a class="headerlink" href="#built-in-decompositions" title="Link to this heading">#</a></h2>
-<p>いずれも<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id29" title="Qingfu Zhang and Hui Li. Moea/d: a multiobjective evolutionary algorithm based on decomposition. IEEE Transactions on Evolutionary Computation, 11(6):712–731, 2007. doi:10.1109/TEVC.2007.892759.">9</a>]</span>のMOEA/D論文がベースになっています。</p>
+<section id="id3">
+<h2>組み込みDecomposition<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p>いずれも<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../../references.html#id30" title="Qingfu Zhang and Hui Li. Moea/d: a multiobjective evolutionary algorithm based on decomposition. IEEE Transactions on Evolutionary Computation, 11(6):712–731, 2007. doi:10.1109/TEVC.2007.892759.">9</a>]</span>のMOEA/D論文がベースになっています。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>クラス</p></th>
@@ -624,19 +626,25 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">TchebycheffDecomposition</span></code>は、ゼロの重みをそのまま使うと退化してしまうため、内部で<code class="docutils literal notranslate"><span class="pre">1e-6</span></code>へ置換します（<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../references.html#id29" title="Qingfu Zhang and Hui Li. Moea/d: a multiobjective evolutionary algorithm based on decomposition. IEEE Transactions on Evolutionary Computation, 11(6):712–731, 2007. doi:10.1109/TEVC.2007.892759.">9</a>]</span> Appendix Aの慣習）。</p>
-<p><code class="docutils literal notranslate"><span class="pre">PBIDecomposition</span></code>の<code class="docutils literal notranslate"><span class="pre">theta</span></code>は、収束（重みベクトル方向への射影距離<code class="docutils literal notranslate"><span class="pre">d1</span></code>）と多様性（直交距離<code class="docutils literal notranslate"><span class="pre">d2</span></code>へのペナルティ）のトレードオフを制御するパラメータです。 値が大きいほど、重みベクトルの方向から外れた解に強いペナルティがかかります。 <code class="docutils literal notranslate"><span class="pre">theta=5.0</span></code>は<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../../references.html#id29" title="Qingfu Zhang and Hui Li. Moea/d: a multiobjective evolutionary algorithm based on decomposition. IEEE Transactions on Evolutionary Computation, 11(6):712–731, 2007. doi:10.1109/TEVC.2007.892759.">9</a>]</span>の既定値です。</p>
+<p><code class="docutils literal notranslate"><span class="pre">TchebycheffDecomposition</span></code>は、ゼロの重みをそのまま使うと退化してしまうため、内部で<code class="docutils literal notranslate"><span class="pre">1e-6</span></code>へ置換します（<span class="bibtex-citation" id="id5">[<a class="reference internal" href="../../references.html#id30" title="Qingfu Zhang and Hui Li. Moea/d: a multiobjective evolutionary algorithm based on decomposition. IEEE Transactions on Evolutionary Computation, 11(6):712–731, 2007. doi:10.1109/TEVC.2007.892759.">9</a>]</span> Appendix Aの慣習）。</p>
+<p><code class="docutils literal notranslate"><span class="pre">PBIDecomposition</span></code>の<code class="docutils literal notranslate"><span class="pre">theta</span></code>は、収束（重みベクトル方向への射影距離<code class="docutils literal notranslate"><span class="pre">d1</span></code>）と多様性（直交距離<code class="docutils literal notranslate"><span class="pre">d2</span></code>へのペナルティ）のトレードオフを制御するパラメータです。
+値が大きいほど、重みベクトルの方向から外れた解に強いペナルティがかかります。
+<code class="docutils literal notranslate"><span class="pre">theta=5.0</span></code>は<span class="bibtex-citation" id="id6">[<a class="reference internal" href="../../references.html#id30" title="Qingfu Zhang and Hui Li. Moea/d: a multiobjective evolutionary algorithm based on decomposition. IEEE Transactions on Evolutionary Computation, 11(6):712–731, 2007. doi:10.1109/TEVC.2007.892759.">9</a>]</span>の既定値です。</p>
 </section>
 <section id="decompositioncomparator">
 <h2>DecompositionComparator<a class="headerlink" href="#decompositioncomparator" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">DecompositionComparator(decomposition,</span> <span class="pre">weights,</span> <span class="pre">ideal_point=None,</span> <span class="pre">direction=None,</span> <span class="pre">*,</span> <span class="pre">eps_cv=1e-6,</span> <span class="pre">eps_obj=1e-6)</span></code>は、<a class="reference internal" href="comparators.html"><span class="std std-doc">Comparator</span></a>のサブクラスとしてMOEA/D風の順位付けを実装します。</p>
-<p>順序付けの規則は、実行可能性を優先（実行可能性優先<span class="bibtex-citation" id="id5">[<a class="reference internal" href="../../references.html#id33" title="Kalyanmoy Deb. An efficient constraint handling method for genetic algorithms. Computer Methods in Applied Mechanics and Engineering, 186(2–4):311–338, 2000. doi:10.1016/S0045-7825(99)00389-8.">10</a>]</span>）した上で、集約スコアの昇順で並べます。</p>
-<p><code class="docutils literal notranslate"><span class="pre">ideal_point</span></code>を省略（<code class="docutils literal notranslate"><span class="pre">None</span></code>）すると、<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>は個体群の実行可能個体から理想点を動的に計算します。 一方、2点だけを比較する<code class="docutils literal notranslate"><span class="pre">compare</span></code>では、その2点の目的関数値の最小値をローカルな理想点近似として使います。 この2つの計算方法は完全には一致しない場合があります。</p>
-<p><code class="docutils literal notranslate"><span class="pre">weights</span></code>は非負の大きさのみを持ち、符号（最小化/最大化）は<code class="docutils literal notranslate"><span class="pre">direction</span></code>が表現するという役割分担になっています。 <a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a>の<code class="docutils literal notranslate"><span class="pre">direction</span></code>/<code class="docutils literal notranslate"><span class="pre">weight</span></code>の役割分担と対応します。</p>
+<p>順序付けの規則は、実行可能性を優先（実行可能性優先<span class="bibtex-citation" id="id7">[<a class="reference internal" href="../../references.html#id34" title="Kalyanmoy Deb. An efficient constraint handling method for genetic algorithms. Computer Methods in Applied Mechanics and Engineering, 186(2–4):311–338, 2000. doi:10.1016/S0045-7825(99)00389-8.">10</a>]</span>）した上で、集約スコアの昇順で並べます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ideal_point</span></code>を省略（<code class="docutils literal notranslate"><span class="pre">None</span></code>）すると、<code class="docutils literal notranslate"><span class="pre">sort_population</span></code>は個体群の実行可能個体から理想点を動的に計算します。
+一方、2点だけを比較する<code class="docutils literal notranslate"><span class="pre">compare</span></code>では、その2点の目的関数値の最小値をローカルな理想点近似として使います。
+この2つの計算方法は完全には一致しない場合があります。</p>
+<p><code class="docutils literal notranslate"><span class="pre">weights</span></code>は非負の大きさのみを持ち、符号（最小化/最大化）は<code class="docutils literal notranslate"><span class="pre">direction</span></code>が表現するという役割分担になっています。
+<a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a>の<code class="docutils literal notranslate"><span class="pre">direction</span></code>/<code class="docutils literal notranslate"><span class="pre">weight</span></code>の役割分担と対応します。</p>
 </section>
-<section id="implementing-a-custom-decomposition">
-<h2>独自Decompositionの実装方法<a class="headerlink" href="#implementing-a-custom-decomposition" title="Link to this heading">#</a></h2>
-<p>独自のスカラー化関数が必要な場合は、<code class="docutils literal notranslate"><span class="pre">Decomposition</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">aggregate()</span></code>だけを実装すればよいです。 次の例は、重み付き積で集約する（全目的が正であることを前提とする）単純な実装です。</p>
+<section id="id8">
+<h2>独自Decompositionの実装方法<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<p>独自のスカラー化関数が必要な場合は、<code class="docutils literal notranslate"><span class="pre">Decomposition</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">aggregate()</span></code>だけを実装すればよいです。
+次の例は、重み付き積で集約する（全目的が正であることを前提とする）単純な実装です。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decomposition</span>
 
@@ -652,15 +660,15 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">f</span></code>は既に最小化フレームに変換済みの値として渡されるため、この実装内で<code class="docutils literal notranslate"><span class="pre">direction</span></code>を意識する必要はありません。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>関連コンポーネント<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">DecompositionComparator</span></code>が継承する基底クラス</p></li>
 <li><p><a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a>：<code class="docutils literal notranslate"><span class="pre">direction</span></code>/<code class="docutils literal notranslate"><span class="pre">weights</span></code>の役割分担</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id10">
+<h2>参照<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.Decomposition.html#saealib.Decomposition" title="saealib.Decomposition"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Decomposition</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.WeightedSumDecomposition.html#saealib.WeightedSumDecomposition" title="saealib.WeightedSumDecomposition"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.WeightedSumDecomposition</span></code></a></p></li>
@@ -718,12 +726,12 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#decomposition-s-role">Decompositionの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-decompositions">組み込みDecomposition</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Decompositionの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">組み込みDecomposition</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#decompositioncomparator">DecompositionComparator</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-decomposition">独自Decompositionの実装方法</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">独自Decompositionの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">参照</a></li>
 </ul>
   </nav></div>
 

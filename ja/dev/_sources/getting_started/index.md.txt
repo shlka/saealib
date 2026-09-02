@@ -4,51 +4,50 @@ related_layers: []
 page_type: entry
 ---
 
-# Getting started
+# はじめに
 
-Learn what you need to start using saealib and how to run a simple optimization.
+saealibを使い始めるための準備と簡単な実行方法を紹介します。
 
-## Start with the basics
+## 基本情報
 
-Start here for installation and a simple implementation.
+まずはここから始めましょう。
 
 ::::{grid} 1 2 2 3
 :gutter: 3
 
-:::{grid-item-card} {fa}`circle-info;sd-mr-1` What is saealib?
+:::{grid-item-card} {fa}`circle-info;sd-mr-1` saealibとは
 :link: what_is_saealib
 :link-type: doc
-Learn saealib's purpose and overall structure.
+saealibの目的と全体像を確認します。
 :::
 
-:::{grid-item-card} {fa}`download;sd-mr-1` Installation
+:::{grid-item-card} {fa}`download;sd-mr-1` インストール
 :link: installation
 :link-type: doc
-Install saealib in your environment.
+saealibを環境に導入します。
 :::
 
-:::{grid-item-card} {fa}`rocket;sd-mr-1` Quickstart
+:::{grid-item-card} {fa}`rocket;sd-mr-1` クイックスタート
 :link: quickstart
 :link-type: doc
-Run your first optimization.
+最初の最適化を実行します。
 :::
 
 ::::
 
 (choose-your-layer)=
-## Choose how to use saealib
+## saealibの使い方を選ぶ
 
-saealib offers four ways to work, depending on how much of the configuration you assemble yourself.
+saealibには、自分で組み立てる構成の量に応じて4つの使い方があります。
 
-| Layer | Usage | First step |
+| レイヤー | 使い方 | 最初のステップ |
 |---|---|---|
-| Layer 1: Use | Run an optimization with the defaults. Define a problem and pass it to `minimize()` or `maximize()`. | [Quickstart](quickstart.md), [Tutorials](../tutorials/index.md) |
-| Layer 2: Compose | Choose built-in components and combine them with `Optimizer`. Reproduce algorithms from the literature. | [Optimization components](../concepts/index.md), [Algorithms](../algorithms/index.md) |
-| Layer 3: Extend Components | Replace an existing responsibility with a custom implementation by subclassing an abstract base. | [Implement a custom component](../tutorials/custom_components.md) |
-| Layer 4: Extend Framework | Extend the meaning of contracts, graphs, compilers, and execution itself. | [Framework extensions](../framework/extensions.md) |
+| Layer 1: Use | 既定の構成で最適化を実行します。問題を定義し、`minimize()`または`maximize()`に渡します。 | [クイックスタート](quickstart.md)、[チュートリアル](../tutorials/index.md) |
+| Layer 2: Compose | ビルトインコンポーネントを選び、`Optimizer`と組み合わせます。文献にあるアルゴリズムも再現できます。 | [Optimizationコンポーネント](../concepts/index.md)、[アルゴリズム](../algorithms/index.md) |
+| Layer 3: Extend Components | 抽象基底クラスを継承し、既存の責務を独自実装に置き換えます。 | [独自Componentを実装する](../tutorials/custom_components.md) |
+| Layer 4: Extend Framework | 契約、グラフ、コンパイラ、実行そのものの意味を拡張します。 | [フレームワーク拡張](../framework/extensions.md) |
 
-Start at Layer 1 and move down the layers when the defaults no longer cover your needs.
-To choose a layer by the part you want to change, see [Choosing an extension point](../concepts/extension_guidelines.md).
+Layer 1から始め、既定値で足りない場合に下位のLayerへ進みます。変更したい部分からLayerを選ぶ場合は、[拡張点の選び方](../concepts/extension_guidelines.md)を参照してください。
 
 ```{toctree}
 :hidden:

@@ -2,30 +2,23 @@
 primary_layer: cross
 ---
 
-# Canonical Imports
+# 標準インポート
 
-saealib is still pre-1.0, so public APIs may evolve before the first stable
-release. Within that constraint, use these four layers when choosing an import
-path:
+saealibはまだ1.0未満であるため、最初の安定版までは公開APIが変更される可能性があります。この制約のもとで、インポートパスを選ぶ際は次の4層を使います：
 
-## 1. Root convenience API
+## 1. ルートの利便性API
 
-Use the root package for common, user-facing entry points and convenience
-examples:
+一般的な利用者向けの入口や簡便な例には、ルートパッケージを使います。
 
 ```python
 from saealib import minimize, Problem, GA
 ```
 
-Root exports are intended to make the common path easy. An existing root import
-is preserved as part of the root compatibility surface, but a name being
-available elsewhere does not automatically make it a root export.
+ルートのエクスポートは一般的な利用経路を簡単にするためのものです。既存のルートインポートは互換性の一部として維持されますが、別の場所で利用できる名前が自動的にルートのエクスポートになるわけではありません。
 
-## 2. Domain namespaces
+## 2. ドメイン名前空間
 
-Use public namespaces when an object belongs to a particular domain. Examples
-include `saealib.surrogate`, `saealib.acquisition`, and
-`saealib.operators`:
+オブジェクトが特定のドメインに属する場合は公開名前空間を使います。例として`saealib.surrogate`、`saealib.acquisition`、`saealib.operators`があります：
 
 ```python
 from saealib.surrogate import RBFSurrogate
@@ -33,15 +26,13 @@ from saealib.acquisition import MeanPrediction
 from saealib.operators import MutationPolynomial
 ```
 
-Import SearchSpace, execution, and Feedback names from the public namespaces `saealib.space`, `saealib.execution`, and `saealib.policies`, respectively.
+SearchSpace、execution、Feedbackの名前は、それぞれ公開名前空間 `saealib.space`、`saealib.execution`、`saealib.policies` からインポートします。
 
-Other public domain namespaces follow the same rule. Prefer the namespace
-export over a deeper module path when both are available.
+その他の公開ドメイン名前空間も同じ規則に従います。両方が利用できる場合は、より深いモジュールパスより名前空間のエクスポートを優先してください。
 
-## 3. Framework and runtime extension APIs
+## 3. フレームワークとランタイムの拡張API
 
-Use `saealib.core` as the framework extension facade for contracts and
-composition primitives:
+契約と構成プリミティブのフレームワーク拡張ファサードとして `saealib.core` を使います。
 
 ```python
 from saealib.core import (
@@ -59,16 +50,12 @@ from saealib.core import (
 )
 ```
 
-The facade contains the contract vocabulary needed for an ordinary custom
-component. More specialized contract descriptors remain under
-`saealib.core.contracts`.
-`saealib.core.contracts` is a public specialized submodule, not a
-compatibility-only path; treat it as an advanced API when the `saealib.core`
-facade does not expose the descriptor you need.
+このファサードには、通常のカスタムコンポーネントに必要な契約語彙が含まれます。より専門的な契約記述子は
+`saealib.core.contracts` にあります。
+`saealib.core.contracts`は互換性専用のパスではなく、公開された専門サブモジュールです。必要な記述子を
+`saealib.core`ファサードが公開していない場合は、高度なAPIとして扱ってください。
 
-Use `saealib.execution` for runtime extension points. The canonical
-provider-author surface consists of `RuntimeRegistry`, `RuntimeRegistration`,
-and `create_runtime`:
+ランタイムの拡張点には`saealib.execution`を使います。プロバイダー実装者向けの標準的な入口は`RuntimeRegistry`、`RuntimeRegistration`、`create_runtime`です：
 
 ```python
 from saealib.execution import (
@@ -78,13 +65,9 @@ from saealib.execution import (
 )
 ```
 
-`RuntimeFactory` and `default_runtime_registry` remain beta compatibility and
-advanced customization hooks. They are available from `saealib.execution`,
-but are distinct from the canonical three-name provider-author surface. The
-deeper `saealib.execution.runtime` module is an implementation path, not a
-canonical import path.
+`RuntimeFactory`と`default_runtime_registry`は、ベータ互換性と高度なカスタマイズのためのフックとして残されています。これらは`saealib.execution`から利用できますが、プロバイダー実装者向けの標準的な3名の入口とは異なります。より深い`saealib.execution.runtime`モジュールは実装パスであり、標準的なインポートパスではありません。
 
-Asynchronous provider boundaries report nonblocking poll progress explicitly:
+非同期プロバイダーの境界では、ノンブロッキングなポーリングの進捗を明示的に報告します。
 
 ```python
 from saealib.execution import PollResult
@@ -92,13 +75,11 @@ from saealib.execution import PollResult
 return PollResult(state=state, progressed=False)
 ```
 
-These facades are the supported starting points for framework and runtime
-extensions. Their detailed behavior may still change while saealib remains
-pre-1.0.
+これらのファサードが、フレームワークとランタイムを拡張する際にサポートされる開始点です。saealibが1.0未満である間は、詳細な動作が変わる可能性があります。
 
-## 4. Deep implementation paths
+## 4. 深い実装パス
 
-Paths below the public facades, such as `saealib.core.compiler.compiler`, are
-deep implementation paths. They are non-canonical and have no compatibility
-guarantee; do not use them as the basis for application imports or extension
-documentation.
+公開ファサードより下のパス（`saealib.core.compiler.compiler`など）は、
+深い実装パスです。
+標準ではなく、互換性も保証されないため、
+アプリケーションのインポートや拡張ドキュメントの基盤として使わないでください。

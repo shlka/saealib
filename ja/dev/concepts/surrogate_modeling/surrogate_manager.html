@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>サロゲート管理 &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>サロゲート管理 &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="surrogate.html">Surrogate</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -590,17 +590,17 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="surrogatemanager">
-<h1>サロゲート管理<a class="headerlink" href="#surrogatemanager" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>サロゲート管理<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 3: Extend Components</span></div><p><a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>がfit/predictだけを扱うのに対し、<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>はモデルのフィットとバッチ予測を協調させます。オプティマイザに設定した獲得関数が、返された予測をスコア化します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">Optimizer.set_surrogate_manager()</span></code>は、<code class="docutils literal notranslate"><span class="pre">Optimizer.set_surrogate()</span></code>（<a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>を<code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>でラップする簡易版）とは別のトップレベル差し替え点です。</p>
-<section id="surrogatemanager-s-role">
-<h2>SurrogateManagerの役割<a class="headerlink" href="#surrogatemanager-s-role" title="Link to this heading">#</a></h2>
+<section id="surrogatemanager">
+<h2>SurrogateManagerの役割<a class="headerlink" href="#surrogatemanager" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>の抽象メソッドは<code class="docutils literal notranslate"><span class="pre">predict()</span></code>です。フィットと世代フックには既定実装があります。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">predict(candidates_x,</span> <span class="pre">archive,</span> <span class="pre">ctx=None,</span> <span class="pre">*,</span> <span class="pre">refit=True)</span> <span class="pre">-&gt;</span> <span class="pre">SurrogatePrediction</span></code></strong>（抽象メソッド）：候補を予測します。<code class="docutils literal notranslate"><span class="pre">refit=True</span></code>（既定値）の場合は、予測前にサロゲートを再学習します。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">fit(archive,</span> <span class="pre">ctx=None)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></strong>：既定では何もしません。アーカイブが変化しない場合に、<code class="docutils literal notranslate"><span class="pre">predict(...,</span> <span class="pre">refit=False)</span></code>を連続して呼び出す前に1回だけ呼ぶ事前フィット用フックです。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">last_accuracy:</span> <span class="pre">SurrogateAccuracy</span> <span class="pre">|</span> <span class="pre">None</span></code></strong>（クラス属性）：直近の<code class="docutils literal notranslate"><span class="pre">fit</span></code>が計算した精度指標。 詳細は<a class="reference internal" href="surrogate_switching.html"><span class="std std-doc">サロゲート精度評価と動的切り替え</span></a>で扱います。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">on_generation_end(gen,</span> <span class="pre">archive,</span> <span class="pre">ctx=None)</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">with_on_generation_end(fn)</span></code></strong>：世代末フック。 同じくコピー＋チェーン方式で拡張できます。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">last_accuracy:</span> <span class="pre">SurrogateAccuracy</span> <span class="pre">|</span> <span class="pre">None</span></code></strong>（クラス属性）：直近の<code class="docutils literal notranslate"><span class="pre">fit</span></code>が計算した精度指標。詳細は<a class="reference internal" href="surrogate_switching.html"><span class="std std-doc">サロゲート精度評価と動的切り替え</span></a>で扱います。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">on_generation_end(gen,</span> <span class="pre">archive,</span> <span class="pre">ctx=None)</span></code></strong> / <strong><code class="docutils literal notranslate"><span class="pre">with_on_generation_end(fn)</span></code></strong>：世代末フック。同じくコピー＋チェーン方式で拡張できます。</p>
 <p>二つの境界で受け取る値と返す値は次のとおりです。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -626,8 +626,8 @@
 </div>
 <p>Stage互換経路の現行vector形式のManager APIでは、<code class="docutils literal notranslate"><span class="pre">fit(archive,</span> <span class="pre">ctx=None)</span></code>と<code class="docutils literal notranslate"><span class="pre">predict(candidates_x:</span> <span class="pre">np.ndarray,</span> <span class="pre">archive,</span> <span class="pre">ctx=None,</span> <span class="pre">*,</span> <span class="pre">refit=True)</span> <span class="pre">-&gt;</span> <span class="pre">SurrogatePrediction</span></code>を使います。現行APIには、<code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager(surrogate,</span> <span class="pre">training_set=None,</span> <span class="pre">accuracy_evaluator=None)</span></code>、<code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager(surrogate,</span> <span class="pre">training_set=None,</span> <span class="pre">accuracy_evaluator=None)</span></code>、<code class="docutils literal notranslate"><span class="pre">PairwiseSurrogateManager(surrogate,</span> <span class="pre">training_set=None,</span> <span class="pre">n_ref=10)</span></code>などのコンストラクタも含まれます。構造化ランタイムでは、Surrogateの入力境界は<code class="docutils literal notranslate"><span class="pre">GenomeBatch</span> <span class="pre">→</span> <span class="pre">FeatureEncoder</span> <span class="pre">→</span> <span class="pre">FeatureBatch</span> <span class="pre">→</span> <span class="pre">Surrogate</span></code>です。<code class="docutils literal notranslate"><span class="pre">FeatureEncoder</span></code>は意味変換を行い、Surrogateが学習できる特徴を決めます。これは<code class="docutils literal notranslate"><span class="pre">SamplingService</span></code>のような空間の能力とは異なります。現行実装ではSurrogateManagerの契約が<code class="docutils literal notranslate"><span class="pre">ServiceRequirement(&quot;FeatureEncoder&quot;)</span></code>を宣言し、<code class="docutils literal notranslate"><span class="pre">VectorSpace</span></code>が既定のエンコーダをサービスとして登録するため、数値ベクトル空間は追加設定なしで解決されます。<code class="docutils literal notranslate"><span class="pre">ObjectSpace</span></code>、<code class="docutils literal notranslate"><span class="pre">PermutationSpace</span></code>、<code class="docutils literal notranslate"><span class="pre">SequenceSpace</span></code>は、利用者が<code class="docutils literal notranslate"><span class="pre">FeatureEncoder</span></code>を指定しないとエラーになります。Surrogateへ渡す内容は利用者が決めます。</p>
 </section>
-<section id="built-in-surrogatemanagers">
-<h2>組み込みSurrogateManager<a class="headerlink" href="#built-in-surrogatemanagers" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>組み込みSurrogateManager<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>クラス</p></th>
@@ -651,12 +651,12 @@
 </table>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager(surrogate,</span> <span class="pre">training_set=None,</span> <span class="pre">accuracy_evaluator=None)</span></code>は、<code class="docutils literal notranslate"><span class="pre">training_set</span></code>省略時に<code class="docutils literal notranslate"><span class="pre">ArchiveObjectiveSet()</span></code>が使われます。</p>
-<p><code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager(surrogate,</span> <span class="pre">training_set=None,</span> <span class="pre">accuracy_evaluator=None)</span></code>は、<code class="docutils literal notranslate"><span class="pre">training_set</span></code>省略時に<code class="docutils literal notranslate"><span class="pre">KNNObjectiveSet(n_neighbors=50)</span></code>が使われます。 <code class="docutils literal notranslate"><span class="pre">n_neighbors</span></code>は<code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>自体のコンストラクタ引数ではなく、既定の<code class="docutils literal notranslate"><span class="pre">training_set</span></code>が持つパラメータです。 候補間で同一の<code class="docutils literal notranslate"><span class="pre">surrogate</span></code>インスタンスを使い回して再フィットする実装のため、スレッドセーフではありません。</p>
+<p><code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager(surrogate,</span> <span class="pre">training_set=None,</span> <span class="pre">accuracy_evaluator=None)</span></code>は、<code class="docutils literal notranslate"><span class="pre">training_set</span></code>省略時に<code class="docutils literal notranslate"><span class="pre">KNNObjectiveSet(n_neighbors=50)</span></code>が使われます。<code class="docutils literal notranslate"><span class="pre">n_neighbors</span></code>は<code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>自体のコンストラクタ引数ではなく、既定の<code class="docutils literal notranslate"><span class="pre">training_set</span></code>が持つパラメータです。候補間で同一の<code class="docutils literal notranslate"><span class="pre">surrogate</span></code>インスタンスを使い回して再フィットする実装のため、スレッドセーフではありません。</p>
 <p><code class="docutils literal notranslate"><span class="pre">CompositeSurrogateManager(managers)</span></code>は各名前付きマネージャーの<code class="docutils literal notranslate"><span class="pre">predict()</span></code>を呼び出し、複数チャンネルの<code class="docutils literal notranslate"><span class="pre">SurrogatePrediction</span></code>を返します。<code class="docutils literal notranslate"><span class="pre">CompositeAcquisition</span></code>を使うとチャンネルごとに取得関数を評価し、結果のスコア配列を<code class="docutils literal notranslate"><span class="pre">product_combine</span></code>または<code class="docutils literal notranslate"><span class="pre">rank_weighted_combine(weights=None)</span></code>で組み合わせられます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">PairwiseSurrogateManager(surrogate,</span> <span class="pre">training_set=None,</span> <span class="pre">n_ref=10)</span></code>は、<code class="docutils literal notranslate"><span class="pre">training_set</span></code>省略時に<code class="docutils literal notranslate"><span class="pre">PairwiseComparisonSet()</span></code>が使われます。</p>
 <p>各マネージャーの<code class="docutils literal notranslate"><span class="pre">training_set</span></code>/<code class="docutils literal notranslate"><span class="pre">accuracy_evaluator</span></code>引数の詳細は、それぞれ<a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>と<a class="reference internal" href="surrogate_switching.html"><span class="std std-doc">サロゲート精度評価と動的切り替え</span></a>を参照してください。</p>
-<section id="archive-based-acquisitions">
-<h3>アーカイブベースの取得関数<a class="headerlink" href="#archive-based-acquisitions" title="Link to this heading">#</a></h3>
+<section id="id3">
+<h3>アーカイブベースの取得関数<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
 <p>これらの取得関数は候補の幾何学的な特徴をアーカイブと直接比較してスコア化するため、サロゲートの予測を必要としません。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -683,8 +683,8 @@
 </div>
 </section>
 </section>
-<section id="extending-surrogatemanager-and-archive-based-acquisitions">
-<h2>SurrogateManagerとアーカイブベースの取得関数の拡張<a class="headerlink" href="#extending-surrogatemanager-and-archive-based-acquisitions" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>SurrogateManagerとアーカイブベースの取得関数の拡張<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p>独自の予測方式が必要な場合は<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">predict()</span></code>を実装します。独自のアーカイブベース基準が必要な場合は<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>を継承して評価契約を実装します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">AcquisitionResult</span>
@@ -698,8 +698,8 @@
 </pre></div>
 </div>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>関連コンポーネント<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="surrogate.html"><span class="std std-doc">Surrogate</span></a>：<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>が協調させるfit/predictの実体</p></li>
 <li><p><a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>：各<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>が学習データの抽出に使う</p></li>
@@ -708,8 +708,8 @@
 <li><p><a class="reference internal" href="../execution_and_evaluation/strategies.html"><span class="std std-doc">strategies</span></a>：<code class="docutils literal notranslate"><span class="pre">SurrogatePredictStage</span></code>と<code class="docutils literal notranslate"><span class="pre">AcquisitionStage</span></code>を組み立てる</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>参照<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.SurrogateManager.html#saealib.SurrogateManager" title="saealib.SurrogateManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SurrogateManager</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.GlobalSurrogateManager.html#saealib.GlobalSurrogateManager" title="saealib.GlobalSurrogateManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GlobalSurrogateManager</span></code></a></p></li>
@@ -772,14 +772,14 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogatemanager-s-role">SurrogateManagerの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-surrogatemanagers">組み込みSurrogateManager</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#archive-based-acquisitions">アーカイブベースの取得関数</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogatemanager">SurrogateManagerの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">組み込みSurrogateManager</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">アーカイブベースの取得関数</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-surrogatemanager-and-archive-based-acquisitions">SurrogateManagerとアーカイブベースの取得関数の拡張</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">SurrogateManagerとアーカイブベースの取得関数の拡張</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">参照</a></li>
 </ul>
   </nav></div>
 

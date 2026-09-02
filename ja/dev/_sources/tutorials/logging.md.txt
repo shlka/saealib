@@ -3,24 +3,24 @@ primary_layer: layer2
 page_type: guide
 ---
 
-# Logging Progress
+# 進捗のログ記録
 
-Record optimization progress with the standard `logging` module.
+標準の `logging` モジュールで最適化の進捗を記録します。
 
-:::{admonition} What you'll be able to do
+:::{admonition} このページでできるようになること
 :class: tip
 
-By the end of this page, you'll be able to record progress, warnings, and custom events with Python's standard `logging` module.
+このページを終えると、Python標準の `logging` モジュールで進捗、警告、独自イベントを記録できるようになります。
 :::
 
-Use the [High-level API](highlevel_api.md) for a basic optimization, and see the [Low-Level API](lowlevel_api.md) when you need to tune generation-level configuration.
-This page shows how to configure the destination and level for standard logging and record built-in or custom events.
+基本的な最適化の実行は [高レベルAPI](highlevel_api.md) を使い、世代単位の構成まで調整する場合は [低レベルAPI](lowlevel_api.md) を参照してください。
+このページでは、標準loggingの出力先とログレベルを設定し、組み込み・独自のイベントを記録する方法を扱います。
 
-## Use the default logging behavior
+## 既定のログ動作を使う
 
-`Optimizer` registers a handler (`logging_generation`) that records progress at the start of every generation, but only when `minimize`/`maximize`'s `verbose=True` (the default).
+`Optimizer` は各世代の開始時に進捗を記録するハンドラ（`logging_generation`）を登録しますが、`minimize`/`maximize` の `verbose=True`（既定値）の場合に限られます。
 
-However, this handler only calls `logging.getLogger(__name__).info(...)`, so nothing is displayed unless INFO-level output is enabled on Python's `logging` module.
+ただし、このハンドラは `logging.getLogger(__name__).info(...)` を呼ぶだけなので、Pythonの `logging` モジュールでINFOレベルの出力を有効にしない限り何も表示されません。
 
 ```python
 import numpy as np
@@ -39,7 +39,7 @@ result = minimize(
 )
 ```
 
-To display progress, enable INFO level with `logging.basicConfig`.
+進捗を表示するには、`logging.basicConfig` でINFOレベルを有効にします。
 
 ```python
 import logging
@@ -54,9 +54,9 @@ result = minimize(
 # ...
 ```
 
-`logging_generation` switches what it records based on the number of objectives: for single-objective it records the best objective value, and for multi-objective it records the size of the first non-dominated front and the range of values per objective.
+`logging_generation` は目的数に応じて記録内容を切り替えます。単目的では最良の目的値を記録し、多目的では最初の非劣フロントのサイズと目的ごとの値の範囲を記録します。
 
-If you don't want progress recorded at all, specify `verbose=False` to stop the handler from being registered.
+進捗をまったく記録しない場合は、`verbose=False` を指定してハンドラの登録を停止します。
 
 ```python
 result = minimize(
@@ -70,9 +70,9 @@ result = minimize(
 )
 ```
 
-## Write progress to a file
+## 進捗をファイルへ書き込む
 
-Adding a `FileHandler` to the `saealib` logger writes progress out to a file.
+`saealib`ロガーに`FileHandler`を追加すると、進捗をファイルへ書き出せます。
 
 ```python
 import logging
@@ -89,9 +89,9 @@ result = minimize(
 )
 ```
 
-## Log hypervolume for multi-objective problems
+## 多目的問題のハイパーボリュームを記録する
 
-For multi-objective problems, registering the handler returned by `logging_generation_hv(reference_point)` records the hypervolume for each generation.
+多目的問題では、`logging_generation_hv(reference_point)` が返すハンドラを登録すると、各世代のハイパーボリュームを記録します。
 
 ```python
 import numpy as np
@@ -119,20 +119,17 @@ ctx = optimizer.run()
 # ...
 ```
 
-By minimization convention, `reference_point` should be a value larger than the best achievable value for each objective.
+最小化の規約では、`reference_point` は各目的で達成可能な最良値より大きい値にします。
 
-## Handle warning-level logs
+## warningレベルのログを扱う
 
-Some components record numerical issues via `logger.warning(...)`.
+一部のコンポーネントは `logger.warning(...)` で数値上の問題を記録します。
 
-For example, `RBFSurrogate` issues a warning when the kernel matrix becomes ill-conditioned.
+たとえば `RBFSurrogate` は、カーネル行列の条件が悪くなったときに警告を発します。
 
-saealib does not configure an output handler of its own. It installs only a `NullHandler`, which
-produces no output.
+saealibは独自の出力ハンドラを構成しません。出力を生成しない`NullHandler`だけをインストールします。
 
-If you want to display warnings or other `saealib` logs, configure Python's `logging` module
-yourself. For example, enabling WARNING-level logs makes an ill-conditioned kernel matrix warning
-from `RBFSurrogate` visible.
+警告などの`saealib`ログを表示したい場合は、Pythonの`logging`モジュールを自分で構成します。たとえばWARNINGレベルのログを有効にすると、`RBFSurrogate`によるカーネル行列の悪条件警告が表示されます。
 
 ```python
 import logging
@@ -145,15 +142,15 @@ surrogate = RBFSurrogate(kernel=GaussianKernel(length_scale=1.0), solver="solve"
 surrogate.fit(np.array([[0.0], [0.0], [0.0]]), np.array([1.0, 2.0, 3.0]))
 ```
 
-## Add custom logging
+## 独自のログ記録を追加する
 
-If you want to log something other than what `logging_generation`/`logging_generation_hv` record, register your own handler on `CallbackManager`.
+`logging_generation`/`logging_generation_hv` と異なる内容を記録したい場合は、`CallbackManager` に独自のハンドラを登録します。
 
-See [CallbackManager](../concepts/observation_and_state/callbacks.md) for the underlying mechanism.
+仕組みの詳細は [CallbackManager](../concepts/observation_and_state/callbacks.md) を参照してください。
 
-## Related concepts and reference
+## 関連コンセプトと参考情報
 
 - {py:func}`saealib.logging_generation` / {py:func}`saealib.logging_generation_hv`
 - {py:class}`saealib.CallbackManager` / {py:class}`saealib.GenerationStartEvent`
 - {py:func}`saealib.minimize`
-- [Diagnostics and observation](../concepts/observation_and_state/diagnostics.md)
+- [診断と観測](../concepts/observation_and_state/diagnostics.md)

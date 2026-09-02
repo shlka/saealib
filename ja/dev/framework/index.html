@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>フレームワーク &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Framework &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="#">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="#">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -531,7 +531,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">フレームワーク</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Framework</span></li>
   </ul>
 </nav>
 </div>
@@ -549,11 +549,14 @@
                 <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="framework">
-<h1>フレームワーク<a class="headerlink" href="#framework" title="Link to this heading">#</a></h1>
-<div class="layer-badges"><span class="layer-badge">Layer 4: Extend Framework</span></div><p>saealibのフレームワークはComponentの契約をComponentGraphに配置し、Compilerが検証済みのExecutablePlanへ変換するための実行基盤を提供します。契約構造と実行フローは別の関係として扱います。</p>
-<section id="concept-pages">
-<h2>概念ページ<a class="headerlink" href="#concept-pages" title="Link to this heading">#</a></h2>
-<p>Componentは<code class="docutils literal notranslate"><span class="pre">contract()</span></code>で静的な契約を返します。ComponentContractは、Componentが保持するコンポーネントの契約包含と必要な能力を記述するもので、Componentの継承階層を表すものではありません。<code class="docutils literal notranslate"><span class="pre">PortSpec</span></code>、<code class="docutils literal notranslate"><span class="pre">DataSpec</span></code>、<code class="docutils literal notranslate"><span class="pre">StateContract</span></code>は契約を構成する宣言的な値であり、Componentサブクラスではありません。</p>
+<h1>Framework<a class="headerlink" href="#framework" title="Link to this heading">#</a></h1>
+<div class="layer-badges"><span class="layer-badge">Layer 4: Extend Framework</span></div><p>saealibのフレームワークはComponentの契約をComponentGraphに配置し、Compilerが検証済みのExecutablePlanへ変換するための実行基盤を提供します。
+契約構造と実行フローは別の関係として扱います。</p>
+<section id="id1">
+<h2>概念ページ<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>Componentは<code class="docutils literal notranslate"><span class="pre">contract()</span></code>で静的な契約を返します。
+ComponentContractは、Componentが保持するコンポーネントの契約包含と必要な能力を記述するもので、Componentの継承階層を表すものではありません。
+<code class="docutils literal notranslate"><span class="pre">PortSpec</span></code>、<code class="docutils literal notranslate"><span class="pre">DataSpec</span></code>、<code class="docutils literal notranslate"><span class="pre">StateContract</span></code>は契約を構成する宣言的な値であり、Componentサブクラスではありません。</p>
 <p>次のページで、拡張時に必要な概念を分担して説明します。</p>
 <div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
 <div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-3 sd-g-3 sd-g-xs-3 sd-g-sm-3 sd-g-md-3 sd-g-lg-3 docutils">
@@ -624,7 +627,7 @@
 <div class="sd-card sd-sphinx-override sd-w-100 sd-shadow-sm sd-card-hover docutils">
 <div class="sd-card-body docutils">
 <div class="sd-card-title sd-font-weight-bold docutils">
-<span class="fa fa-comment-dots sd-mr-1"></span> フィードバック</div>
+<span class="fa fa-comment-dots sd-mr-1"></span> Feedback</div>
 <p class="sd-card-text">候補ID、観測、真値と予測の対応。</p>
 </div>
 <a class="sd-stretched-link sd-hide-link-text reference internal" href="../concepts/observation_and_state/feedback.html"><span class="doc">フィードバック</span></a></div>
@@ -641,14 +644,17 @@
 </div>
 </div>
 </section>
-<section id="execution-flow">
-<h2>実行の流れ<a class="headerlink" href="#execution-flow" title="Link to this heading">#</a></h2>
-<p>Runtime上の関係は<code class="docutils literal notranslate"><span class="pre">Component</span> <span class="pre">→</span> <span class="pre">ComponentNode</span> <span class="pre">→</span> <span class="pre">ComponentGraph</span> <span class="pre">→</span> <span class="pre">Compiler</span> <span class="pre">→</span> <span class="pre">ExecutablePlan</span> <span class="pre">→</span> <span class="pre">ExecutionRuntime</span></code>です。この流れは契約ツリーとは別であり、ComponentContractが実行順序を直接表すことはありません。</p>
+<section id="id2">
+<h2>実行フロー<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<p>Runtime上の関係は<code class="docutils literal notranslate"><span class="pre">Component</span> <span class="pre">→</span> <span class="pre">ComponentNode</span> <span class="pre">→</span> <span class="pre">ComponentGraph</span> <span class="pre">→</span> <span class="pre">Compiler</span> <span class="pre">→</span> <span class="pre">ExecutablePlan</span> <span class="pre">→</span> <span class="pre">ExecutionRuntime</span></code>です。
+この流れは契約ツリーとは別であり、ComponentContractが実行順序を直接表すことはありません。</p>
 <p>詳細な状態境界は<a class="reference internal" href="../concepts/observation_and_state/optimization_state.html"><span class="std std-doc">OptimizationState</span></a>と<a class="reference internal" href="runtime.html"><span class="std std-doc">Runtime</span></a>で、候補表現と観測の境界は<a class="reference internal" href="../concepts/problem_and_ranking/search_space.html"><span class="std std-doc">SearchSpace</span></a>と<a class="reference internal" href="../concepts/observation_and_state/feedback.html"><span class="std std-doc">Feedback</span></a>で説明します。</p>
 </section>
-<section id="extension-paths">
-<h2>拡張方法<a class="headerlink" href="#extension-paths" title="Link to this heading">#</a></h2>
-<p>既存のビルトインコンポーネントの振る舞いだけを差し替える場合は、対応する拡張ページを選びます。新しい契約、候補表現、Graph接続、Compilerルール、Runtimeの意味論が必要な場合は<a class="reference internal" href="extensions.html"><span class="std std-doc">フレームワーク拡張</span></a>を参照してください。公開型のimport経路は<a class="reference internal" href="../api/index.html"><span class="std std-doc">APIリファレンス</span></a>で確認します。</p>
+<section id="id3">
+<h2>拡張経路<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<p>既存のビルトインコンポーネントの振る舞いだけを差し替える場合は、対応する拡張ページを選びます。
+新しい契約、候補表現、Graph接続、Compilerルール、Runtimeの意味論が必要な場合は<a class="reference internal" href="extensions.html"><span class="std std-doc">フレームワーク拡張</span></a>を参照してください。
+公開型のimport経路は<a class="reference internal" href="../api/index.html"><span class="std std-doc">APIリファレンス</span></a>で確認します。</p>
 <div class="toctree-wrapper compound">
 </div>
 </section>
@@ -701,9 +707,9 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#concept-pages">概念ページ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#execution-flow">実行の流れ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-paths">拡張方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">概念ページ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">実行フロー</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">拡張経路</a></li>
 </ul>
   </nav></div>
 

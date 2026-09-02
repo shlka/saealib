@@ -60,7 +60,7 @@ related_layers: [layer3]
    saealib.MaternKernel
 ```
 
-## Scikit-learn / External Library Adapters
+## scikit-learn / 外部ライブラリアダプター
 
 ```{eval-rst}
 .. autosummary::
@@ -80,7 +80,7 @@ related_layers: [layer3]
    saealib.TorchSurrogate
 ```
 
-## Per-Objective Surrogate
+## 目的ごとのサロゲート
 
 ```{eval-rst}
 .. autosummary::

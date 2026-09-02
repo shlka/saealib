@@ -2,7 +2,7 @@
 primary_layer: cross
 ---
 
-# References
+# 参照
 
 ```{bibliography}
 ```

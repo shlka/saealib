@@ -4,25 +4,23 @@ related_layers: [layer2]
 page_type: tutorial
 ---
 
-# Mixed-Variable Optimization
+# 混合変数最適化
 
-Solve problems that include not only continuous variables but also integer and categorical variables, using `saealib`.
+連続変数だけでなく、整数変数やカテゴリ変数を含む問題を、`saealib`で解きます。
 
-With `minimize()`, you can specify strings or instances for the algorithm, surrogate model, and evaluation strategy.
-The examples on this page add only problem-specific settings and use defaults for everything else.
+`minimize()`では、アルゴリズム、サロゲートモデル、評価戦略に文字列またはインスタンスを指定できます。このページの例では問題固有の設定だけを追加し、それ以外はすべて既定値を使います。
 
-:::{admonition} What you'll be able to do
+:::{admonition} このページでできるようになること
 :class: tip
 
-By the end of this page, you'll be able to define continuous, integer, and categorical variables in a `Problem` and run type-aware search.
+このページを終えると、連続・整数・カテゴリ変数を`Problem`に定義し、型に対応した探索を実行できます。
 :::
 
-For ordinary continuous variables, use the [high-level API](highlevel_api.md); to add custom variables or operators, see [Custom components](custom_components.md).
-This page defines variable types in a `Problem` and runs search with type-aware built-in operators.
+通常の連続変数だけなら[高レベルAPI](highlevel_api.md)を使い、独自の変数や演算子を追加する場合は[独自コンポーネント](custom_components.md)を参照してください。このページでは`Problem`に変数型を定義し、型に対応した組み込み演算子で探索を実行します。
 
-## Set up the problem
+## 問題を設定する
 
-Assume an objective function where each design variable is one of three types: continuous, integer, or categorical.
+設計変数ごとに、連続値、整数値、カテゴリの3種類が混在する目的関数を想定します。
 
 ```python
 def func(x):
@@ -30,17 +28,17 @@ def func(x):
     return x[0] ** 2 + (x[1] - 3) ** 2 + (0.0 if x[2] == 1 else 5.0)
 ```
 
-`x[2]` represents one of three categories (`0`, `1`, `2`), and no penalty is applied only when `1` is chosen.
+`x[2]`は3つのカテゴリ(`0`, `1`, `2`)のいずれかを表す値で、`1`を選んだときだけペナルティが付きません。
 
-## Define variables
+## 変数の定義
 
-Each dimension's type is specified with a subclass of `Variable`, passed to `Problem`'s `variables` argument.
+各次元の型は`Variable`のサブクラスで指定し、`Problem`の`variables`引数に渡します。
 
-| Class | Meaning |
+| クラス | 意味 |
 |--------|------|
-| `ContinuousVariable(lb, ub)` | Continuous value. A regular `Problem` with `lb`/`ub` omitted is treated as this type |
-| `IntegerVariable(lb, ub)` | Integer value |
-| `CategoricalVariable(categories)` | Selects one from a list of categories |
+| `ContinuousVariable(lb, ub)` | 連続値。`lb`/`ub`を省略した通常の`Problem`はこの型として扱われる |
+| `IntegerVariable(lb, ub)` | 整数値 |
+| `CategoricalVariable(categories)` | カテゴリのリストから1つを選ぶ |
 
 ```python
 import numpy as np
@@ -61,9 +59,9 @@ problem = Problem(
 )
 ```
 
-Passing `variables` automatically derives `Problem.lb`/`Problem.ub` from each element's `lb`/`ub`, so you don't specify the `lb`/`ub` arguments.
+`variables`を渡すと、各要素の`lb`/`ub`から`Problem.lb`/`Problem.ub`が自動的に導出されるため、`lb`/`ub`引数は指定しません。
 
-## Run minimize
+## minimizeを実行する
 
 ```python
 from saealib import minimize
@@ -72,15 +70,15 @@ result = minimize(problem, max_fe=500, seed=0)
 print(result.x, result.f)
 ```
 
-`GA` comes with dedicated crossover and mutation operators for each variable type by default (`CrossoverIntegerSBX`/`MutationIntegerUniform` for integers, `CrossoverCategorical`/`MutationCategorical` for categorical variables), so passing `variables` alone gives you type-aware search.
+`GA`は、変数の型ごとに専用の交叉と突然変異の演算子（整数用の`CrossoverIntegerSBX`/`MutationIntegerUniform`、カテゴリ変数用の`CrossoverCategorical`/`MutationCategorical`）を既定で備えており、`variables`を渡すだけで型に応じた探索が行われます。
 
-`PSO` is a velocity-based update scheme and cannot correctly handle integer and categorical variables.
+`PSO`は速度に基づく更新方式のため、整数変数とカテゴリ変数を正しく扱えません。
 
-For mixed-variable problems, stick with `algorithm='GA'` (the default).
+混合変数問題では`algorithm='GA'`（既定）のまま使ってください。
 
-## Customize operators
+## 演算子のカスタマイズ
 
-The operators for integer and categorical variables can also be specified individually via `GA`'s keyword arguments.
+整数変数用とカテゴリ変数用の演算子も、`GA`のキーワード引数で個別に指定できます。
 
 ```python
 from saealib import (
@@ -109,11 +107,12 @@ ga = GA(
 result = minimize(problem, algorithm=ga, max_fe=500, seed=0)
 ```
 
-See [Algorithm](../concepts/search_algorithms/algorithm.md) for details on each operator.
+各演算子の詳細は[Algorithm](../concepts/search_algorithms/algorithm.md)を参照してください。
 
-## Related concepts and reference
+## 関連するConceptとReference
 
 - {py:class}`saealib.Problem`
 - {py:class}`saealib.ContinuousVariable` / {py:class}`saealib.IntegerVariable` / {py:class}`saealib.CategoricalVariable`
 - {py:class}`saealib.GA`
 - {py:func}`saealib.minimize`
+

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>探索アルゴリズム &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>探索アルゴリズム &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -587,9 +587,11 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="search-algorithms">
-<h1>探索アルゴリズム<a class="headerlink" href="#search-algorithms" title="Link to this heading">#</a></h1>
-<div class="layer-badges"><span class="layer-badge">Cross-layer</span></div><p><code class="docutils literal notranslate"><span class="pre">Algorithm</span></code>は候補を生成する<code class="docutils literal notranslate"><span class="pre">ask</span></code>と、評価結果を受け取る<code class="docutils literal notranslate"><span class="pre">tell</span></code>を担います。 <code class="docutils literal notranslate"><span class="pre">Crossover</span></code>と<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>が候補を変化させ、<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>が交叉に使う親を選びます。 生成された候補のうち次世代へ残す個体は<code class="docutils literal notranslate"><span class="pre">SurvivorSelection</span></code>が選びます。</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>探索アルゴリズム<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
+<div class="layer-badges"><span class="layer-badge">Cross-layer</span></div><p><code class="docutils literal notranslate"><span class="pre">Algorithm</span></code>は候補を生成する<code class="docutils literal notranslate"><span class="pre">ask</span></code>と、評価結果を受け取る<code class="docutils literal notranslate"><span class="pre">tell</span></code>を担います。
+<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>と<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>が候補を変化させ、<code class="docutils literal notranslate"><span class="pre">ParentSelection</span></code>が交叉に使う親を選びます。
+生成された候補のうち次世代へ残す個体は<code class="docutils literal notranslate"><span class="pre">SurvivorSelection</span></code>が選びます。</p>
 <div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
 <div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-3 sd-g-3 sd-g-xs-3 sd-g-sm-3 sd-g-md-3 sd-g-lg-3 docutils">
 <div class="sd-col sd-d-flex-row docutils">

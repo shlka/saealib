@@ -6,31 +6,31 @@ page_type: concept
 
 # SPEA2 (Strength Pareto Evolutionary Algorithm 2)
 
-SPEA2 is a multi-objective evolutionary algorithm that improves the fitness assignment and archive management of the original SPEA (Strength Pareto Evolutionary Algorithm).
-It ranks individuals by combining a dominance-based fitness with $k$-th-nearest-neighbor density, and maintains a fixed-size external archive using a truncation procedure that avoids losing boundary solutions.
+SPEA2は、初代SPEA（Strength Pareto Evolutionary Algorithm）の適応度割り当てとアーカイブ管理を改良した多目的進化アルゴリズムです。
+支配関係に基づく適応度と$k$最近傍密度を組み合わせて個体を順位付けし、固定サイズの外部アーカイブを境界解が失われない打ち切り手続きで維持します。
 
-## Overview
+## 概要
 
-SPEA showed strong performance as an early multi-objective evolutionary algorithm, but had two weaknesses.
+SPEAは初期の多目的進化アルゴリズムとして高い性能を示しましたが、2つの弱点を抱えていました。
 
-One was that individuals dominated by the same archive individuals ended up with identical fitness, making it impossible to distinguish between them.
-The other was that the clustering technique used when the archive exceeded its capacity could lose boundary solutions on the outer edge of the non-dominated solution set.
+1つは、同じアーカイブ個体に支配される個体同士が同一の適応度を持ってしまい、優劣を区別できない点です。
+もう1つは、アーカイブが上限を超えたときに使うクラスタリング手法が、非優越解集合の外周にある境界解を失うことがある点です。
 
-SPEA2 resolves each of these two weaknesses with an independent mechanism.
-Each individual $i$ is assigned a **strength** $S(i)$, the number of individuals it dominates, and the sum of the strengths of the individuals that dominate $i$ becomes its **raw fitness** $R(i)$.
-$R(i)=0$ means $i$ is non-dominated, and a larger value indicates it is dominated by more (and stronger) individuals.
-To distinguish between individuals sharing the same $R(i)$, the reciprocal of the distance $\sigma_i^k$ to the $k$-th nearest individual in objective space is added as a **density** term, $D(i)=1/(\sigma_i^k+2)$.
-The final **fitness** $F(i)=R(i)+D(i)$ is better when smaller, and non-dominated individuals always have $F(i)<1$.
+SPEA2は、この2つの弱点をそれぞれ独立した仕組みで解消します。
+各個体$i$には、自分が支配する個体数を表す**強度** $S(i)$が割り当てられ、$i$を支配する個体群の強度の総和が**生の適応度** $R(i)$になります。
+$R(i)=0$は$i$が非優越であることを意味し、値が大きいほど多くの（かつ強い）個体に支配されていることを示します。
+同一の$R(i)$を持つ個体同士を区別するため、目的空間上で$k$番目に近い個体との距離$\sigma_i^k$の逆数を**密度** $D(i)=1/(\sigma_i^k+2)$として加えます。
+最終的な**適応度** $F(i)=R(i)+D(i)$は値が小さいほど優れており、非優越個体は常に$F(i)<1$になります。
 
-SPEA2 maintains a fixed-size external archive separate from the population.
-In each generation, non-dominated individuals ($F(i)<1$) are copied from the combined set of the population and archive into a new archive.
-If the copied archive fits exactly within the specified size, it is used as-is; if it falls short, inferior solutions are added in order of increasing $F(i)$ to fill it.
-If it exceeds the specified size, a **truncation operator** is applied, removing individuals one at a time — always the one with the smallest nearest-neighbor distance — recomputing distances as it goes.
-Because this procedure breaks ties between individuals with equal distance using the distance to their second- and third-nearest neighbors in turn, boundary solutions are unlikely to be removed by mistake.
+SPEA2は個体群とは別に、サイズを固定した外部アーカイブを維持します。
+各世代で、個体群とアーカイブを合わせた集合から非優越個体（$F(i)<1$）を新しいアーカイブへコピーします。
+コピー後のアーカイブがちょうど規定サイズに収まればそのまま採用し、不足する場合は$F(i)$が小さい劣解から順に補充します。
+規定サイズを超える場合は、**打ち切り演算子**を適用し、最近傍距離が最小の個体を1体ずつ、距離を再計算しながら取り除きます。
+この手続きは、同じ距離を持つ個体が並ぶタイを2番目と3番目に近い個体との距離で順に解消するため、境界解が誤って除去されにくいです。
 
-The source is {cite}`zitzler2001spea2`. The concrete procedure is shown in the pseudocode below.
+出典は{cite}`zitzler2001spea2`。具体的な手順は次の擬似コードに示します。
 
-## Pseudocode
+## 擬似コード
 
 ```{prf:algorithm} SPEA2
 :label: alg-spea2
@@ -46,7 +46,7 @@ The source is {cite}`zitzler2001spea2`. The concrete procedure is shown in the p
 6. Variation: apply crossover and mutation to the mating pool to generate $P_{t+1}$, set $t=t+1$, and return to step 2
 ```
 
-## Flowchart
+## フローチャート
 
 ```{mermaid}
 flowchart TD
@@ -63,17 +63,17 @@ flowchart TD
     TERM -- "Reached" --> RESULT(["Non-dominated solution set A"])
 ```
 
-## Configuration in saealib
+## saealibでの構成
 
-| Role | saealib implementation | Corresponding step |
+| 役割 | saealibでの実装 | 対応ステップ |
 |---|---|---|
-| Initialization | `LHSInitializer` (samples `n_init_archive` individuals, true-evaluates them, and calls `rank_population()` — folding the paper's initial fitness assignment and first environmental selection into initialization — then hands the top `n_init_population` to the initial population) | L1, L2, L3 |
-| Search algorithm | `GA` (`ask()` performs mating selection and variation; `tell()` combines the population and offspring into a single pool and performs environmental selection) | L3, L5, L6 |
-| Parent selection | `TournamentSelection(tournament_size=2)` (binary tournament; the winner is decided via `compare_population`) | L5 |
-| Crossover | `CrossoverSBX(prob=0.9, eta=20.0)` | L6 |
+| 初期化 | `LHSInitializer`（`n_init_archive`個体をサンプルし真の評価を行い、`rank_population()`を呼ぶ——原論文の初期fitness assignmentと最初のenvironmental selectionを初期化に畳み込んでいる——その後上位`n_init_population`個体を初期populationへ渡す） | 「L1, L2, L3」 |
+| 探索アルゴリズム本体 | `GA`（`ask()`が交配選択と変異を行い、`tell()`が個体群と子個体を1つのプールに統合し環境選択を行う） | 「L3, L5, L6」 |
+| 親選択 | `TournamentSelection(tournament_size=2)`（二項トーナメント。勝者は`compare_population`によって決まります） | 手順 L5 |
+| Crossover | `CrossoverSBX(prob=0.9, eta=20.0)` | 手順 L6 |
 | Mutation | `MutationPolynomial(eta=20.0)` | L6 |
-| Fitness computation & environmental selection | `SPEA2Comparator.rank_population()` (`prepare_population()` computes $S(i)$/$R(i)$/$D(i)$/$F(i)$ via `spea2_fitness` and persists it onto the population; `sort_population()` orders the non-dominated $F(i)<1$ block via `spea2_truncation_order`, the dominated $F(i)\geq1$ block by ascending $F(i)$, and infeasible solutions by ascending `cv`) + `TruncationSelection()` (takes the top $\bar N$) | L2, L3 |
-| Evaluation strategy | `DirectStrategy` (no surrogate involved; every candidate generated by `GA.ask()` is evaluated with the true objective function) | No independent step (occurs after L6, before the next L2) |
+| 適応度計算と環境選択 | `SPEA2Comparator.rank_population()`（`prepare_population()`が`spea2_fitness`を介して$S(i)$/$R(i)$/$D(i)$/$F(i)$を計算し個体群へ永続化、`sort_population()`が$F(i)<1$の非劣解ブロックを`spea2_truncation_order`で、$F(i)\geq1$の劣解ブロックを$F(i)$昇順で、実行不可能解を`cv`昇順で並べる）+ `TruncationSelection()`（上位$\bar N$個体を採用） | 「L2, L3」 |
+| 評価戦略 | `DirectStrategy`（サロゲートを介さず、`GA.ask()`が生成した候補を全て真の目的関数で評価する） | 独立したステップ番号なし（L6の後、次のL2の前に発生） |
 
 ```python
 from saealib import GA, LHSInitializer, SPEA2Comparator, Optimizer
@@ -109,47 +109,47 @@ ctx = opt.run()
 pareto_f = ctx.pareto_archive.get_array("f")
 ```
 
-The `problem.comparator = SPEA2Comparator()` line cannot be omitted.
-In NSGA-II, `NSGA2Comparator` is the default for `n_obj > 1`, so the same line could be omitted, but this is not the case for SPEA2.
+`problem.comparator = SPEA2Comparator()`の行は省略できません。
+NSGA-IIでは`NSGA2Comparator`が`n_obj > 1`のときの既定値なので同じ行を省略できましたが、SPEA2ではそうではありません。
 
-`ctx.pareto_archive` is saealib's own cumulative non-dominated archive, tracked across the entire run independently of any specific algorithm; it is not the same state container as SPEA2's external archive, which corresponds to `ctx.population`.
-Read `ctx.population` directly if the paper's output $A$ (the non-dominated solutions in the final external archive $\bar P_{t+1}$) is specifically what's needed.
+`ctx.pareto_archive`はsaealib独自の累積非劣解アーカイブであり、特定のアルゴリズムとは独立に実行全体を通じて追跡されます。
+SPEA2の外部アーカイブ（`ctx.population`に対応）と同じ状態コンテナではありません。原論文の出力$A$（最終的な外部アーカイブ$\bar P_{t+1}$内の非劣解群）そのものが必要な場合は`ctx.population`を直接参照してください。
 
-## Differences from the source
+## 文献との差分
 
-With the default `ParetoDominator` on an unconstrained problem, saealib reproduces SPEA2's core selection semantics — the strength/raw-fitness/density fitness assignment and the truncation-based environmental selection — as described in the paper.
-Two aspects of the execution structure differ from the source.
+既定の`ParetoDominator`を制約なし問題で使う場合、saealibはSPEA2のselection semantics——strength/raw fitness/densityによる適応度割り当てと打ち切りベースの環境選択——を原論文の記述通りに再現します。
+実行構造については、文献と異なる点が2箇所あります。
 
-**Initialization**: the paper generates an initial population $P_0$ (size $N$) and starts with an empty archive $\bar P_0 = \emptyset$; the first fitness assignment and environmental selection (L2, L3) only happen once the main loop begins at $t=0$.
-saealib's `LHSInitializer` folds this initial fitness assignment and environmental selection into construction itself: it samples `n_init_archive` individuals (playing the role of the paper's $P_0$), true-evaluates them, and calls `rank_population()` to rank them before handing the top `n_init_population` to the initial `ctx.population`.
-The resulting `ctx.population` at $t=0$ therefore already corresponds to the paper's post-selection archive $\bar P_1$, not to the empty $\bar P_0$.
+**初期化**：原論文は初期個体群$P_0$（サイズ$N$）を生成し、空のアーカイブ$\bar P_0 = \emptyset$から始めます。
+最初の適応度割り当てと環境選択（L2, L3）は、メインループが$t=0$で始まって初めて実行されます。
+saealibの`LHSInitializer`は、この最初の適応度割り当てと環境選択を構築処理そのものに畳み込みます。`n_init_archive`個体をサンプルし（原論文の$P_0$の役割を担う）、真の評価を行い、`rank_population()`を呼んでランク付けした上で、上位`n_init_population`個体を初期`ctx.population`へ渡します。したがって$t=0$時点の`ctx.population`は、空の$\bar P_0$ではなく、原論文の選択後のアーカイブ$\bar P_1$に既に対応しています。
 
-**Constraint handling**: for constrained problems, `SPEA2Comparator` additionally applies Deb (2000)'s feasibility-first rule {cite}`deb2000feasibility` — feasible individuals always outrank infeasible ones, and infeasible individuals are ordered by ascending constraint violation.
-The SPEA2 algorithm as published does not address constraint handling; this is a saealib-side extension.
+**制約処理**：制約付き問題に対して、`SPEA2Comparator`はさらにDeb (2000)のfeasibility-firstルール{cite}`deb2000feasibility`を適用します——feasible個体は常にinfeasible個体より優先され、infeasible個体同士は制約違反量の昇順で並びます。
+発表されたSPEA2アルゴリズムは制約処理を扱っておらず、これはsaealib側の拡張です。
 
-## Parameters and variants
+## パラメータと変種
 
-### Complexity
+### 計算量
 
-Fitness computation ($S(i)$/$R(i)$/$D(i)$) is $O(M^2)$ ($M=N+\bar N$), or $O(M^2\log M)$ including the distance sort needed for density estimation.
-The truncation operator is $O(M^3)$ in the worst case and $O(M^2\log M)$ on average {cite}`zitzler2001spea2`.
+適応度計算($S(i)$/$R(i)$/$D(i)$)は$O(M^2)$（$M=N+\bar N$）で、密度推定のための距離ソートを含めると$O(M^2\log M)$になります。
+打ち切り演算子は最悪$O(M^3)$、平均では$O(M^2\log M)$です{cite}`zitzler2001spea2`。
 
-**Sizing $N$ and $\bar N$ independently**: `ctx.population` plays the role of SPEA2's archive $\bar P$ — `GA.tell()` merges it with the offspring, and `TruncationSelection` (using the `SPEA2Comparator` configured via `problem.comparator`) performs environmental selection on the result — so `LHSInitializer(n_init_population=...)` sets $\bar N$, and `DirectStrategy(n_offspring=...)` sets the number of offspring generated (and true-evaluated) per generation, $N$.
-`LHSInitializer`'s other size parameter, `n_init_archive`, sets the number of initially evaluated entries in saealib's own cumulative `Archive` (`ctx.archive`) — a different, longer-lived container than SPEA2's external archive, which keeps growing with every subsequent generation's evaluations.
-At $t=0$ specifically it also sizes the candidate pool subjected to the first fitness assignment and environmental selection (see *Differences from the source* above), so a literature-faithful initialization sets `n_init_archive=N`.
-Built-in initializers require `n_init_population <= n_init_archive`, so an initial state with $\bar N > N$ cannot be constructed directly.
+**$N$と$\bar N$の独立設定**：`ctx.population`はSPEA2のアーカイブ$\bar P$の役割を担います——`GA.tell()`がこれを子個体群と統合し、`TruncationSelection`（`problem.comparator`で設定された`SPEA2Comparator`を利用）がその結果に対して環境選択を行います——そのため`LHSInitializer(n_init_population=...)`が$\bar N$を、`DirectStrategy(n_offspring=...)`が各世代で生成（かつ真の評価が行われる）子個体数$N$を設定します。
+`LHSInitializer`のもう一方のサイズパラメータ`n_init_archive`は、saealib自身の累積`Archive`（`ctx.archive`）——SPEA2の外部アーカイブとは異なり、以降の各世代の評価によって増え続ける、より長命なコンテナ——に最初に評価されるエントリ数を設定します。
+$t=0$時点に限っては、これは最初の適応度割り当てと環境選択の対象となる候補プールのサイズも兼ねるため（前述の*Differences from the source*参照）、文献に忠実な初期化では`n_init_archive=N`とします。
+組み込みのInitializerは`n_init_population <= n_init_archive`を前提とするため、$\bar N > N$という初期状態を直接構成することはできません。
 
-**Swapping the dominator (dominance predicate)**: `SPEA2Comparator(dominator=...)` lets you inject a [Dominator](../concepts/problem_and_ranking/dominance.md) other than the default `ParetoDominator`.
-Since the computation of $S(i)$/$R(i)$ depends on this dominance predicate, swapping it changes SPEA2's fitness itself.
+**支配述語の差し替え**：`SPEA2Comparator(dominator=...)`では、既定の`ParetoDominator`以外の[Dominator](../concepts/problem_and_ranking/dominance.md)を注入できます。
+$S(i)$/$R(i)$の計算はこの支配述語に依存するため、差し替えるとSPEA2の適応度自体が変わります。
 
-## Related
+## 関連
 
-- [References](../references.md): Full bibliographic details for the source
-- [Comparator](../concepts/problem_and_ranking/comparators.md): Detailed specification of `SPEA2Comparator`
-- [Crossover](../concepts/search_algorithms/crossover.md): List of crossover operators including `CrossoverSBX`
-- [Mutation](../concepts/search_algorithms/mutation.md): List of mutation operators including `MutationPolynomial`
-- [ParentSelection](../concepts/search_algorithms/parent_selection.md): Detailed usage of `TournamentSelection`
-- [SurvivorSelection](../concepts/search_algorithms/survivor_selection.md): Detailed usage of `TruncationSelection`
-- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): List of strategies including `DirectStrategy`
-- [Dominator](../concepts/problem_and_ranking/dominance.md): List of dominance predicates that can be swapped in via the `dominator` argument
-- [Initializer](../concepts/execution_and_evaluation/initialization.md): How `LHSInitializer`'s `n_init_archive`/`n_init_population` parameters size the initial archive and population
+- [文献リファレンス](../references.md)：出典の完全な書誌情報
+- [Comparator](../concepts/problem_and_ranking/comparators.md)：`SPEA2Comparator`の詳細仕様
+- [Crossover](../concepts/search_algorithms/crossover.md): `CrossoverSBX`を含む交叉演算子の一覧
+- [Mutation](../concepts/search_algorithms/mutation.md): `MutationPolynomial`を含む突然変異演算子の一覧
+- [ParentSelection](../concepts/search_algorithms/parent_selection.md)：`TournamentSelection`の詳しい使い方
+- [SurvivorSelection](../concepts/search_algorithms/survivor_selection.md)：`TruncationSelection`の詳しい使い方
+- [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md): `DirectStrategy`を含む戦略の一覧
+- [Dominator](../concepts/problem_and_ranking/dominance.md)：`dominator`引数で差し替えられる支配述語の一覧
+- [Initializer](../concepts/execution_and_evaluation/initialization.md)：`LHSInitializer`の`n_init_archive`/`n_init_population`引数が初期アーカイブと個体群のサイズをどう決めるか

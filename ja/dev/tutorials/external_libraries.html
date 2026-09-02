@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>外部ライブラリとの連携 &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>外部ライブラリの統合 &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -491,7 +491,7 @@
 <li class="toctree-l1"><a class="reference internal" href="dynamic_optimization.html">サロゲート精度に応じた動的な切り替え</a></li>
 <li class="toctree-l1"><a class="reference internal" href="checkpoint.html">再現性とチェックポイント</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">進捗のログ記録</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">外部ライブラリとの連携</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">外部ライブラリの統合</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="component_swap.html">ビルトインコンポーネントを選んで差し替える</a></li>
@@ -542,7 +542,7 @@
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">チュートリアル</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">外部ライブラリとの連携</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">外部ライブラリの統合</span></li>
   </ul>
 </nav>
 </div>
@@ -559,8 +559,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="integrating-external-libraries">
-<h1>外部ライブラリとの連携<a class="headerlink" href="#integrating-external-libraries" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>外部ライブラリの統合<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 3: Extend Components</span></div><p><code class="docutils literal notranslate"><span class="pre">saealib</span></code>は、外部の機械学習ライブラリおよび進化計算ライブラリを、独自の抽象基底クラスの背後に薄くラップしたアダプタを提供します。</p>
 <p>アダプタが翻訳するのは<code class="docutils literal notranslate"><span class="pre">Problem</span></code>/<code class="docutils literal notranslate"><span class="pre">Population</span></code>/<code class="docutils literal notranslate"><span class="pre">ctx</span></code>といった<code class="docutils literal notranslate"><span class="pre">saealib</span></code>側のデータ表現だけで、学習アルゴリズムや探索演算子そのものは外部ライブラリの実装をそのまま使います。</p>
 <p>現時点では、サロゲートモデルのアダプター（scikit-learn、XGBoost、LightGBM、PyTorch）と、pymooアダプター（<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">Algorithm</span></code>/<code class="docutils literal notranslate"><span class="pre">Problem</span></code>）を実装しています。外部の進化計算ライブラリへのランタイム依存を取り除きたい場合は、<a class="reference internal" href="custom_components.html#port-operators-to-native-saealib-code"><span class="std std-ref">saealibネイティブなコードへの演算子の移植</span></a>で、pymooやDEAP風の演算子をネイティブな<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>/<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>サブクラスとして書き直す方法を扱います。</p>
@@ -569,8 +569,8 @@
 <p>このページを終えると、外部ライブラリの依存関係を導入し、saealibのアダプター経由でモデルや演算子を利用できます。</p>
 </div>
 <p>ビルトインのモデルや演算子で足りる場合は<a class="reference internal" href="highlevel_api.html"><span class="std std-doc">高レベルAPI</span></a>を使い、独自実装へ移植する場合は<a class="reference internal" href="custom_components.html"><span class="std std-doc">独自コンポーネント</span></a>を参照してください。</p>
-<section id="install-the-adapter-extras">
-<h2>アダプタ用extrasをインストールする<a class="headerlink" href="#install-the-adapter-extras" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>アダプター追加機能のインストール<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p>各アダプタは、対応する<code class="docutils literal notranslate"><span class="pre">extra</span></code>を指定してインストールしたときだけ使えます。</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;saealib[sklearn]&quot;</span>
 </pre></div>
@@ -578,8 +578,8 @@
 <p>インストール方法とextra一覧の詳細は<a class="reference internal" href="../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
 <p>対応する<code class="docutils literal notranslate"><span class="pre">extra</span></code>をインストールしていない状態でアダプタをインポートすると、<code class="docutils literal notranslate"><span class="pre">ImportError</span></code>になります。</p>
 </section>
-<section id="use-surrogate-adapters">
-<h2>サロゲートアダプタ<a class="headerlink" href="#use-surrogate-adapters" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>サロゲートアダプターを使う<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p>各アダプタは<code class="docutils literal notranslate"><span class="pre">saealib</span></code>の<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>基底クラスを実装しており、組み込みの<code class="docutils literal notranslate"><span class="pre">RBFSurrogate</span></code>と同じように<code class="docutils literal notranslate"><span class="pre">surrogate</span></code>引数へ渡せます。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -645,12 +645,12 @@
 <p><code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>インスタンスを <code class="docutils literal notranslate"><span class="pre">minimize(...,</span> <span class="pre">surrogate=...)</span></code> に渡すと、内部で <code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code> にラップされます。</p>
 <p>分類問題向けのアダプタ（実行可能性分類など）や、各アダプタの詳細な引数は<a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>を参照してください。</p>
 </section>
-<section id="use-pymoo-adapters">
-<h2>pymooアダプタ<a class="headerlink" href="#use-pymoo-adapters" title="Link to this heading">#</a></h2>
+<section id="pymoo">
+<h2>pymooアダプターを使う<a class="headerlink" href="#pymoo" title="Link to this heading">#</a></h2>
 <p>各アダプタは構築済みのpymooオブジェクトをラップし、対応する<code class="docutils literal notranslate"><span class="pre">saealib</span></code>の基底クラスを実装しているため、その基底クラスが期待される場所ならどこにでも渡せます。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
-<tr class="row-odd"><th class="head"><p>クラス</p></th>
+<tr class="row-odd"><th class="head"><p>Class</p></th>
 <th class="head"><p>ラップする対象</p></th>
 </tr>
 </thead>
@@ -720,10 +720,11 @@
 <span class="p">)</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">PymooAlgorithm</span></code>は「エンジンモード」で動作します。ラップしたpymooアルゴリズムが自身の個体群と内部の生存選択状態を保持し、<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>は基準となるデータではなく、各世代後にそこから更新されます。実際の意味（チェックポイントと再開には非対応、<code class="docutils literal notranslate"><span class="pre">n_offspring</span></code>は無視される、<code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code>の部分的な<code class="docutils literal notranslate"><span class="pre">tell()</span></code>には明示的なオプトインが必要）については<a class="reference internal" href="../concepts/search_algorithms/algorithm.html"><span class="std std-doc">Algorithm</span></a>を参照してください。</p>
+<p><code class="docutils literal notranslate"><span class="pre">PymooAlgorithm</span></code>は「エンジンモード」で動作します。
+ラップしたpymooアルゴリズムが自身の個体群と内部の生存選択状態を保持し、<code class="docutils literal notranslate"><span class="pre">ctx.population</span></code>は基準となるデータではなく、各世代後にそこから更新されます。実際の意味（チェックポイントと再開には非対応、<code class="docutils literal notranslate"><span class="pre">n_offspring</span></code>は無視される、<code class="docutils literal notranslate"><span class="pre">PreSelectionStrategy</span></code>の部分的な<code class="docutils literal notranslate"><span class="pre">tell()</span></code>には明示的なオプトインが必要）については<a class="reference internal" href="../concepts/search_algorithms/algorithm.html"><span class="std std-doc">Algorithm</span></a>を参照してください。</p>
 </section>
-<section id="related-concepts-and-reference">
-<h2>関連するConceptとReference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>関連コンセプトと参考情報<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Surrogate</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.SklearnGPRSurrogate.html#saealib.SklearnGPRSurrogate" title="saealib.SklearnGPRSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SklearnGPRSurrogate</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.SklearnRFRSurrogate.html#saealib.SklearnRFRSurrogate" title="saealib.SklearnRFRSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SklearnRFRSurrogate</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.SklearnSVMSurrogate.html#saealib.SklearnSVMSurrogate" title="saealib.SklearnSVMSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SklearnSVMSurrogate</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.SklearnNNSurrogate.html#saealib.SklearnNNSurrogate" title="saealib.SklearnNNSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.SklearnNNSurrogate</span></code></a></p></li>
@@ -784,10 +785,10 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#install-the-adapter-extras">アダプタ用extrasをインストールする</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-surrogate-adapters">サロゲートアダプタ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-pymoo-adapters">pymooアダプタ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">関連するConceptとReference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">アダプター追加機能のインストール</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">サロゲートアダプターを使う</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pymoo">pymooアダプターを使う</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">関連コンセプトと参考情報</a></li>
 </ul>
   </nav></div>
 

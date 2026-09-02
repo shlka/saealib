@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>制約付き最適化 &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>制約付き最適化 &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -491,7 +491,7 @@
 <li class="toctree-l1"><a class="reference internal" href="dynamic_optimization.html">サロゲート精度に応じた動的な切り替え</a></li>
 <li class="toctree-l1"><a class="reference internal" href="checkpoint.html">再現性とチェックポイント</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">進捗のログ記録</a></li>
-<li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリとの連携</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリの統合</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="component_swap.html">ビルトインコンポーネントを選んで差し替える</a></li>
@@ -559,8 +559,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="constrained-optimization">
-<h1>制約付き最適化<a class="headerlink" href="#constrained-optimization" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>制約付き最適化<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 1: Use</span></div><p>設計変数に制約がある問題を、<code class="docutils literal notranslate"><span class="pre">saealib</span></code>で解きます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">minimize()</span></code>では、アルゴリズム、代理モデル、評価戦略に文字列またはインスタンスを指定できます。 このページの例では問題固有の設定だけを追加し、それ以外にはデフォルトを使います。</p>
 <div class="tip admonition">
@@ -568,8 +568,8 @@
 <p>このページを終えると、<code class="docutils literal notranslate"><span class="pre">Problem</span></code>に制約を定義し、実行可能性を確認しながら<code class="docutils literal notranslate"><span class="pre">ConstraintHandler</span></code>を選べます。</p>
 </div>
 <p>単純な目的関数の最適化には<a class="reference internal" href="single_objective.html"><span class="std std-doc">単目的最適化</span></a>を使い、独自の制約処理を実装する場合は<a class="reference internal" href="custom_components.html"><span class="std std-doc">独自コンポーネント</span></a>を参照してください。このページでは、<code class="docutils literal notranslate"><span class="pre">Problem</span></code>への制約定義、実行可能性の確認、<code class="docutils literal notranslate"><span class="pre">ConstraintHandler</span></code>の選択を扱います。</p>
-<section id="set-up-the-problem">
-<h2>Problemを準備する<a class="headerlink" href="#set-up-the-problem" title="Link to this heading">#</a></h2>
+<section id="problem">
+<h2>Problemを準備する<a class="headerlink" href="#problem" title="Link to this heading">#</a></h2>
 <p>目的関数に加えて、解が満たすべき不等式制約<code class="docutils literal notranslate"><span class="pre">g(x)</span> <span class="pre">&lt;=</span> <span class="pre">0</span></code>を持つ問題を想定します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -590,8 +590,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">g1(x)</span> <span class="pre">&lt;=</span> <span class="pre">0</span></code>を満たす解だけが実行可能解です。</p>
 </section>
-<section id="define-constraints">
-<h2>制約を定義する<a class="headerlink" href="#define-constraints" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>制約を定義する<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p>制約は<code class="docutils literal notranslate"><span class="pre">InequalityConstraint(func,</span> <span class="pre">threshold=0.0)</span></code>で定義し、<code class="docutils literal notranslate"><span class="pre">Problem</span></code>の<code class="docutils literal notranslate"><span class="pre">constraints</span></code>引数に渡します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">InequalityConstraint</span><span class="p">,</span> <span class="n">Problem</span><span class="p">,</span> <span class="n">minimize</span>
 
@@ -627,8 +627,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">EqualityConstraint</span></code>は、<code class="docutils literal notranslate"><span class="pre">|h(x)|</span> <span class="pre">&lt;=</span> <span class="pre">tolerance</span></code>を満たす解を実行可能解として扱います。</p>
 </section>
-<section id="check-feasibility">
-<h2>実行可能性を確認する<a class="headerlink" href="#check-feasibility" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>実行可能性を確認する<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Problem</span></code>の<code class="docutils literal notranslate"><span class="pre">eps_cv</span></code>（既定値<code class="docutils literal notranslate"><span class="pre">1e-6</span></code>）以下の制約違反量<code class="docutils literal notranslate"><span class="pre">cv</span></code>を持つ解が実行可能解です。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">archive_cv</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">archive</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="s2">&quot;cv&quot;</span><span class="p">)</span>
 <span class="n">feasible</span> <span class="o">=</span> <span class="n">archive_cv</span> <span class="o">&lt;=</span> <span class="n">problem</span><span class="o">.</span><span class="n">eps_cv</span>
@@ -636,8 +636,8 @@
 </pre></div>
 </div>
 </section>
-<section id="customize-constraint-handling-with-constrainthandler">
-<h2>ConstraintHandlerで制約処理をカスタマイズする<a class="headerlink" href="#customize-constraint-handling-with-constrainthandler" title="Link to this heading">#</a></h2>
+<section id="constrainthandler">
+<h2>ConstraintHandlerで制約処理をカスタマイズする<a class="headerlink" href="#constrainthandler" title="Link to this heading">#</a></h2>
 <p>複数の制約から<code class="docutils literal notranslate"><span class="pre">cv</span></code>を集約する方法と、その値をもとに実行可能性を判定する方法は、<code class="docutils literal notranslate"><span class="pre">ConstraintHandler</span></code>が決めます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">Problem</span></code>の<code class="docutils literal notranslate"><span class="pre">handler</span></code>引数を省略すると、<code class="docutils literal notranslate"><span class="pre">StaticToleranceHandler(eps_cv=problem.eps_cv)</span></code>が使われ、<code class="docutils literal notranslate"><span class="pre">cv</span> <span class="pre">&lt;=</span> <span class="pre">eps_cv</span></code>かどうかで実行可能性を判定します。</p>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -681,8 +681,8 @@
 </pre></div>
 </div>
 </section>
-<section id="related-concepts-and-reference">
-<h2>関連するConceptとReference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
+<section id="conceptreference">
+<h2>関連するConceptとReference<a class="headerlink" href="#conceptreference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.InequalityConstraint.html#saealib.InequalityConstraint" title="saealib.InequalityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.InequalityConstraint</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.EqualityConstraint.html#saealib.EqualityConstraint" title="saealib.EqualityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.EqualityConstraint</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Problem</span></code></a></p></li>
@@ -739,11 +739,11 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-the-problem">Problemを準備する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#define-constraints">制約を定義する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#check-feasibility">実行可能性を確認する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customize-constraint-handling-with-constrainthandler">ConstraintHandlerで制約処理をカスタマイズする</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">関連するConceptとReference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem">Problemを準備する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">制約を定義する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">実行可能性を確認する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#constrainthandler">ConstraintHandlerで制約処理をカスタマイズする</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conceptreference">関連するConceptとReference</a></li>
 </ul>
   </nav></div>
 

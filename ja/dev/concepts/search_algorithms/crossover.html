@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Crossover &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Crossover &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -593,14 +593,14 @@
   <section class="tex2jax_ignore mathjax_ignore" id="crossover">
 <h1>Crossover<a class="headerlink" href="#crossover" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 3: Extend Components</span></div><p><code class="docutils literal notranslate"><span class="pre">GA</span></code>(<code class="docutils literal notranslate"><span class="pre">saealib.GA</span></code>)は、選択した親個体から子個体を生成する処理を、<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>という差し替え可能な演算子に委ねています。 交叉の方式を変えたいときは、<code class="docutils literal notranslate"><span class="pre">GA</span></code>本体ではなくこの<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>だけを差し替えればよいです。</p>
-<section id="crossover-s-role">
-<h2>Crossoverの役割<a class="headerlink" href="#crossover-s-role" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>Crossoverの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Crossover</span></code>が実装する必要があるメソッドは<code class="docutils literal notranslate"><span class="pre">crossover_batch(parents_batch,</span> <span class="pre">bounds=None,</span> <span class="pre">rng=...)</span></code>の1つだけです。形状<code class="docutils literal notranslate"><span class="pre">(n_pair,</span> <span class="pre">n_parents,</span> <span class="pre">dim)</span></code>の<code class="docutils literal notranslate"><span class="pre">n_pair</span></code>個の親グループを受け取り、形状<code class="docutils literal notranslate"><span class="pre">(n_pair,</span> <span class="pre">n_children,</span> <span class="pre">dim)</span></code>の子を返します。既定では各グループが<code class="docutils literal notranslate"><span class="pre">n_parents</span> <span class="pre">=</span> <span class="pre">2</span></code>個の親を含み、<code class="docutils literal notranslate"><span class="pre">n_children</span> <span class="pre">=</span> <span class="pre">2</span></code>個の子を生成します。2親2子以外の交叉方式を実装するには、サブクラスで<code class="docutils literal notranslate"><span class="pre">n_parents</span></code>/<code class="docutils literal notranslate"><span class="pre">n_children</span></code>クラス属性を上書きします。<code class="docutils literal notranslate"><span class="pre">bounds</span></code>には設計変数の下限と上限が<code class="docutils literal notranslate"><span class="pre">(lb,</span> <span class="pre">ub)</span></code>タプルとして渡され、<code class="docutils literal notranslate"><span class="pre">None</span></code>の場合は上限・下限なしです。</p>
 <p>基底クラスは、<code class="docutils literal notranslate"><span class="pre">crossover_batch()</span></code>を1つの親グループで呼び出すことで、簡便メソッド<code class="docutils literal notranslate"><span class="pre">crossover(parent,</span> <span class="pre">bounds=None,</span> <span class="pre">rng=...)</span></code>を提供します。<code class="docutils literal notranslate"><span class="pre">GA</span></code>は<code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;sequential&quot;</span></code>でこのメソッドを使います。<code class="docutils literal notranslate"><span class="pre">crossover()</span></code>だけを上書きしても既定のバッチモードには影響しません。<code class="docutils literal notranslate"><span class="pre">variation_execution</span></code>については<a class="reference internal" href="algorithm.html"><span class="std std-doc">Algorithm</span></a>と<code class="docutils literal notranslate"><span class="pre">GA</span></code>のAPIリファレンスを参照してください。</p>
 <p>交叉を実行するかどうかを決める個体レベルの確率は、どちらの交叉メソッド内でもなく<code class="docutils literal notranslate"><span class="pre">GA</span></code>が判定します。既定のバッチモードでは<code class="docutils literal notranslate"><span class="pre">GA.ask()</span></code>がゲートを抽選し、通過した親グループだけを<code class="docutils literal notranslate"><span class="pre">crossover_batch()</span></code>へ渡します。逐次モードでは、通過したグループごとに<code class="docutils literal notranslate"><span class="pre">crossover()</span></code>を呼びます。ゲートを通過しなかったグループは親をそのまま子として複製するため、どちらのメソッドも交叉が実行される前提で実装できます。</p>
 </section>
-<section id="built-in-crossovers">
-<h2>組み込みCrossover<a class="headerlink" href="#built-in-crossovers" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>組み込みCrossover<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>クラス</p></th>
@@ -615,7 +615,7 @@
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">prob,</span> <span class="pre">eta,</span> <span class="pre">*,</span> <span class="pre">prob_var=0.5</span></code></p></td>
-<td><p>シミュレーテッドバイナリ交叉<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id12" title="Kalyanmoy Deb and Ram Bhushan Agrawal. Simulated binary crossover for continuous search space. Complex Systems, 9(2):115–148, 1995.">11</a>]</span>。<code class="docutils literal notranslate"><span class="pre">bounds</span></code>が有限値なら境界付き版に自動で切り替わる。<code class="docutils literal notranslate"><span class="pre">eta</span></code>が大きいほど子個体は親に近づく</p></td>
+<td><p>シミュレーテッドバイナリ交叉<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../references.html#id13" title="Kalyanmoy Deb and Ram Bhushan Agrawal. Simulated binary crossover for continuous search space. Complex Systems, 9(2):115–148, 1995.">11</a>]</span>。<code class="docutils literal notranslate"><span class="pre">bounds</span></code>が有限値なら境界付き版に自動で切り替わる。<code class="docutils literal notranslate"><span class="pre">eta</span></code>が大きいほど子個体は親に近づく</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CrossoverUniform</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">prob,</span> <span class="pre">swap_rate=0.5</span></code></p></td>
@@ -631,7 +631,7 @@
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">CrossoverIntegerSBX</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">prob,</span> <span class="pre">eta,</span> <span class="pre">*,</span> <span class="pre">prob_var=0.5</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code><span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id12" title="Kalyanmoy Deb and Ram Bhushan Agrawal. Simulated binary crossover for continuous search space. Complex Systems, 9(2):115–148, 1995.">11</a>]</span>と同じ計算をしたのち整数に丸める。整数変数向け</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">CrossoverSBX</span></code><span class="bibtex-citation" id="id4">[<a class="reference internal" href="../../references.html#id13" title="Kalyanmoy Deb and Ram Bhushan Agrawal. Simulated binary crossover for continuous search space. Complex Systems, 9(2):115–148, 1995.">11</a>]</span>と同じ計算をしたのち整数に丸める。整数変数向け</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CrossoverCategorical</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">prob</span></code></p></td>
@@ -645,17 +645,17 @@
 <p>変数の型と<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>の対応づけは<a class="reference internal" href="../problem_and_ranking/problem.html"><span class="std std-doc">Problem</span></a>の<code class="docutils literal notranslate"><span class="pre">variables</span></code>引数で決まります。</p>
 <div class="admonition note">
 <p class="admonition-title">注釈</p>
-<p><code class="docutils literal notranslate"><span class="pre">CrossoverBLXAlpha</span></code>のみ<code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>済みで、他の6クラスは現状Registry未登録です。 Registry経由でクラスを文字列から解決する使い方をする場合はこの違いに注意してください。</p>
+<p><code class="docutils literal notranslate"><span class="pre">CrossoverBLXAlpha</span></code>のみ<code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>済みで、他の6クラスは現状Registry未登録です。Registry経由でクラスを文字列から解決する場合はこの違いに注意してください。</p>
 </div>
-<section id="external-library-adapters">
-<h3>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>
+<section id="id5">
+<h3>外部ライブラリアダプタ<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">PymooCrossover(operator,</span> <span class="pre">*,</span> <span class="pre">prob=None,</span> <span class="pre">n_parents=None,</span> <span class="pre">n_children=None)</span></code>は、構築済みの<a class="reference external" href="https://pymoo.org/">pymoo</a>交叉演算子（例：<code class="docutils literal notranslate"><span class="pre">SBX()</span></code>）をラップし、既存のpymooベースの研究コードを<code class="docutils literal notranslate"><span class="pre">GA</span></code>内でそのまま再利用できるようにします。 <code class="docutils literal notranslate"><span class="pre">prob</span></code>/<code class="docutils literal notranslate"><span class="pre">n_parents</span></code>/<code class="docutils literal notranslate"><span class="pre">n_children</span></code>は、ラップした演算子自身の値が既定になります。</p>
 <p><code class="docutils literal notranslate"><span class="pre">GA</span></code>の既定のバッチモードでは、<code class="docutils literal notranslate"><span class="pre">PymooCrossover.crossover_batch()</span></code>がゲートを通過したバッチ全体に対して、ラップした演算子の<code class="docutils literal notranslate"><span class="pre">_do()</span></code>を1回だけ呼び、pymooの集団単位のベクトル化を維持します。<code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;sequential&quot;</span></code>では、継承した<code class="docutils literal notranslate"><span class="pre">crossover()</span></code>が1つの親グループをバッチ実装へ渡すため、直接<code class="docutils literal notranslate"><span class="pre">crossover()</span></code>を呼ぶ場合と同じくグループごとに<code class="docutils literal notranslate"><span class="pre">_do()</span></code>が1回呼ばれます。大きな集団でこのグループ単位のオーバーヘッドを避けられることが、既定のバッチモードでアダプタを使う主な利点です。<code class="docutils literal notranslate"><span class="pre">rng</span></code>はpymooの<code class="docutils literal notranslate"><span class="pre">random_state</span></code>引数を介してラップした演算子へ渡され、saealibのシード管理下で再現性が保たれます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extraのインストールについては<a class="reference internal" href="../../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
 </section>
 </section>
-<section id="extension-hooks">
-<h2>拡張フック<a class="headerlink" href="#extension-hooks" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>拡張フック<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p>境界外に出た値を丸めるといった後処理だけを足したい場合、サブクラスを新設せずに<code class="docutils literal notranslate"><span class="pre">with_post(fn)</span></code>で既存の<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>インスタンスへ処理を追加できます。 <code class="docutils literal notranslate"><span class="pre">with_post</span></code>は元のインスタンスを変更せず、<code class="docutils literal notranslate"><span class="pre">fn</span></code>を追加したコピーを返します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">CrossoverBLXAlpha</span>
@@ -673,8 +673,8 @@
 <p><code class="docutils literal notranslate"><span class="pre">fn</span></code>のシグネチャは<code class="docutils literal notranslate"><span class="pre">fn(offspring,</span> <span class="pre">parents,</span> <span class="pre">rng,</span> <span class="pre">ctx)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code>で、既存のフック（既定では何もしない恒等関数）の結果を受け取って追加の変換を返します。 複数回<code class="docutils literal notranslate"><span class="pre">with_post</span></code>を呼べば、フックは呼び出した順に連結されます。</p>
 <p>バッチモードでは、<code class="docutils literal notranslate"><span class="pre">GA</span></code>が<code class="docutils literal notranslate"><span class="pre">post_crossover_batch(offspring_batch,</span> <span class="pre">parents_batch,</span> <span class="pre">rng,</span> <span class="pre">ctx)</span></code>を呼びます。既定の実装は親グループごとに<code class="docutils literal notranslate"><span class="pre">post_crossover()</span></code>を呼ぶため、<code class="docutils literal notranslate"><span class="pre">with_post()</span></code>で追加したフックも引き続き動作します。後処理自体をベクトル化する場合は<code class="docutils literal notranslate"><span class="pre">post_crossover_batch()</span></code>を上書きします。この上書きでは、維持したい<code class="docutils literal notranslate"><span class="pre">with_post()</span></code>フックも自ら合成する必要があります。</p>
 </section>
-<section id="implementing-a-custom-crossover">
-<h2>独自Crossoverの実装方法<a class="headerlink" href="#implementing-a-custom-crossover" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>独自Crossoverの実装方法<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <p>独自の交叉方式が必要な場合は、<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">crossover_batch()</span></code>を実装します。次の例は、各親ペアの平均を2個の子として返します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Crossover</span>
@@ -692,8 +692,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">n_parents</span></code>/<code class="docutils literal notranslate"><span class="pre">n_children</span></code>を2以外にする場合や、<code class="docutils literal notranslate"><span class="pre">bounds</span></code>を使う独自の丸め処理が必要な場合は、クラス属性を上書きして<code class="docutils literal notranslate"><span class="pre">crossover_batch()</span></code>内で<code class="docutils literal notranslate"><span class="pre">bounds</span></code>を使います。継承した<code class="docutils literal notranslate"><span class="pre">crossover()</span></code>が1つの親グループを自動的に処理します。<code class="docutils literal notranslate"><span class="pre">crossover()</span></code>だけの上書きが有効なのは、実装済みの具体的な交叉を<code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;sequential&quot;</span></code>専用に拡張する場合です。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>関連コンポーネント<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="algorithm.html"><span class="std std-doc">Algorithm</span></a>：<code class="docutils literal notranslate"><span class="pre">GA</span></code>が<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>をどう組み合わせるか</p></li>
 <li><p><a class="reference internal" href="mutation.html"><span class="std std-doc">Mutation</span></a>：交叉の次に呼ばれる、対になる演算子</p></li>
@@ -702,8 +702,8 @@
 <li><p><a class="reference internal" href="../extension_guidelines.html"><span class="std std-doc">拡張のガイドライン</span></a>：<code class="docutils literal notranslate"><span class="pre">with_post</span></code>系フックの一般的な設計思想</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>参照<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.Crossover.html#saealib.Crossover" title="saealib.Crossover"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Crossover</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.CrossoverBLXAlpha.html#saealib.CrossoverBLXAlpha" title="saealib.CrossoverBLXAlpha"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CrossoverBLXAlpha</span></code></a></p></li>
@@ -765,15 +765,15 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crossover-s-role">Crossoverの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-crossovers">組み込みCrossover</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">外部ライブラリアダプタ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Crossoverの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">組み込みCrossover</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">外部ライブラリアダプタ</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-hooks">拡張フック</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-crossover">独自Crossoverの実装方法</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">拡張フック</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">独自Crossoverの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">参照</a></li>
 </ul>
   </nav></div>
 

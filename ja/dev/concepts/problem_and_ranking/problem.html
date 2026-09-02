@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Problem &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Problem &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -66,7 +66,7 @@
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="検索" href="../../search.html" />
     <link rel="next" title="SearchSpace" href="search_space.html" />
-    <link rel="prev" title="問題定義と順位付け" href="../problem_and_ranking.html" />
+    <link rel="prev" title="問題定義とランキング" href="../problem_and_ranking.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
   <meta name="docsearch:version" content="" />
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -571,7 +571,7 @@
     <li class="breadcrumb-item"><a href="../index.html" class="nav-link">最適化の構成要素</a></li>
     
     
-    <li class="breadcrumb-item"><a href="../problem_and_ranking.html" class="nav-link">問題定義と順位付け</a></li>
+    <li class="breadcrumb-item"><a href="../problem_and_ranking.html" class="nav-link">問題定義とランキング</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Problem</span></li>
   </ul>
@@ -594,8 +594,8 @@
 <h1>Problem<a class="headerlink" href="#problem" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 1: Use</span></div><p><code class="docutils literal notranslate"><span class="pre">Problem</span></code>は、目的関数、目的方向、制約、比較方法、SearchSpaceを一つにまとめます。<code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>と各コンポーネントは、この<code class="docutils literal notranslate"><span class="pre">Problem</span></code>を使って同じ最適化対象を参照します。</p>
 <p>ベクトル表現では、<code class="docutils literal notranslate"><span class="pre">lb</span></code>、<code class="docutils literal notranslate"><span class="pre">ub</span></code>、または<code class="docutils literal notranslate"><span class="pre">variables</span></code>から<code class="docutils literal notranslate"><span class="pre">VectorSpace</span></code>が作られます。非ベクトル表現では、<code class="docutils literal notranslate"><span class="pre">space</span></code>に<code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code>を渡します。<code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code>とGenomeの設計は<a class="reference internal" href="search_space.html"><span class="std std-doc">SearchSpace</span></a>で説明します。</p>
-<section id="problem-s-role">
-<h2>Problemの役割<a class="headerlink" href="#problem-s-role" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>Problemの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Problem</span></code> のコンストラクタは次の引数を受け取ります。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Problem</span><span class="p">(</span>
     <span class="n">func</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">n_obj</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -620,19 +620,19 @@
 <p>旧バージョンのチュートリアルには<code class="docutils literal notranslate"><span class="pre">weight=</span></code>という引数を使う例がありますが、現行の<code class="docutils literal notranslate"><span class="pre">Problem</span></code>にこの引数は存在しません。 <code class="docutils literal notranslate"><span class="pre">weight=</span></code>を渡すと<code class="docutils literal notranslate"><span class="pre">TypeError</span></code>になります。</p>
 </div>
 </section>
-<section id="what-problem-holds">
-<h2>Problemが保持するもの<a class="headerlink" href="#what-problem-holds" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>Problemが保持するもの<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">direction</span></code>は、符号だけを表すsaealib全体で統一された<code class="docutils literal notranslate"><span class="pre">±1</span></code>配列です。一方、<code class="docutils literal notranslate"><span class="pre">WeightedSumComparator</span></code>や<code class="docutils literal notranslate"><span class="pre">DecompositionComparator</span></code>が受け取る<code class="docutils literal notranslate"><span class="pre">weights</span></code>は、複数の目的をスカラー値へ集約するための非負の重みであり、方向とは独立した別の概念です。</p>
 <p>この役割分担のもとでは、目的の重要度そのもの（スケーリング）を<code class="docutils literal notranslate"><span class="pre">weights</span></code>で表現することはできません。 目的関数値の大きさを調整したい場合は<code class="docutils literal notranslate"><span class="pre">func</span></code>の内部でスケーリングします。 <code class="docutils literal notranslate"><span class="pre">direction</span></code>は符号だけを、<code class="docutils literal notranslate"><span class="pre">weights</span></code>は集約の重み配分だけを表す、という2軸に整理されています。</p>
 </section>
-<section id="invariants">
-<h2>不変条件<a class="headerlink" href="#invariants" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>不変条件<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">direction</span></code> は目的ごとに <code class="docutils literal notranslate"><span class="pre">+1</span></code> または <code class="docutils literal notranslate"><span class="pre">-1</span></code> でなければならず、<code class="docutils literal notranslate"><span class="pre">dim</span></code>、変数、探索空間の表現は互いに整合していなければなりません。これらが一致しないと、構築時の検証や評価時の候補処理が失敗します。</p>
 </section>
-<section id="extending-problem">
-<h2>Problemの拡張<a class="headerlink" href="#extending-problem" title="Link to this heading">#</a></h2>
-<section id="implementing-a-custom-variable">
-<h3>独自Variableの実装方法<a class="headerlink" href="#implementing-a-custom-variable" title="Link to this heading">#</a></h3>
+<section id="id4">
+<h2>Problemの拡張<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<section id="variable">
+<h3>独自Variableの実装方法<a class="headerlink" href="#variable" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">Variable</span></code>(ABC)は、<code class="docutils literal notranslate"><span class="pre">lb</span></code>/<code class="docutils literal notranslate"><span class="pre">ub</span></code>という2つのプロパティと<code class="docutils literal notranslate"><span class="pre">repair(x)</span></code>というメソッドだけを要求します。 組み込みの<code class="docutils literal notranslate"><span class="pre">ContinuousVariable</span></code>/<code class="docutils literal notranslate"><span class="pre">IntegerVariable</span></code>/<code class="docutils literal notranslate"><span class="pre">CategoricalVariable</span></code>は、いずれも自分の定義域へ値を射影するだけの薄い実装であり、これ以外の変数型（周期変数、対数スケール変数など）が必要な場合は<code class="docutils literal notranslate"><span class="pre">Variable</span></code>を直接継承すればよいです。</p>
 <p>次の例は、値を切り詰めるのではなく境界で折り返す変数です。 角度のように、上限を超えた値が下限側から連続しているとみなしたい設計変数に使えます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -660,14 +660,14 @@
 <p><code class="docutils literal notranslate"><span class="pre">ContinuousVariable.repair()</span></code>が<code class="docutils literal notranslate"><span class="pre">np.clip</span></code>で範囲外の値を境界に留めるのに対し、この実装は<code class="docutils literal notranslate"><span class="pre">np.mod</span></code>で範囲外の値を反対側の境界から巻き戻します。 <code class="docutils literal notranslate"><span class="pre">Variable</span></code>が表す値は、<code class="docutils literal notranslate"><span class="pre">Population</span></code>配列上で扱われる「エンコード済みfloat空間」上の値である点に注意してください。 <code class="docutils literal notranslate"><span class="pre">CategoricalVariable</span></code>のようにカテゴリ値と内部インデックスの対応が必要な変数型では、<code class="docutils literal notranslate"><span class="pre">repair()</span></code>はインデックス空間上で完結させ、実際のカテゴリ値への変換は別のメソッドで行います。</p>
 </section>
 </section>
-<section id="external-library-adapters">
-<h2>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>外部ライブラリアダプタ<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">PymooProblem(pymoo_problem,</span> <span class="pre">*,</span> <span class="pre">eq_tolerance=1e-6,</span> <span class="pre">**problem_kwargs)</span></code>は、構築済みの<a class="reference external" href="https://pymoo.org/">pymoo</a>問題インスタンス（組み込みベンチマークや既存の研究コード）を<code class="docutils literal notranslate"><span class="pre">Problem</span></code>としてラップし、<code class="docutils literal notranslate"><span class="pre">problem_kwargs</span></code>（<code class="docutils literal notranslate"><span class="pre">comparator</span></code>、<code class="docutils literal notranslate"><span class="pre">handler</span></code>、<code class="docutils literal notranslate"><span class="pre">eps_cv</span></code>、<code class="docutils literal notranslate"><span class="pre">eps_obj</span></code>）は<code class="docutils literal notranslate"><span class="pre">Problem.__init__</span></code>へそのまま渡されます。 pymooの問題は常に最小化なので<code class="docutils literal notranslate"><span class="pre">direction</span></code>は常に全て<code class="docutils literal notranslate"><span class="pre">-1</span></code>になり、pymooの不等式制約（<code class="docutils literal notranslate"><span class="pre">G</span></code>）は<code class="docutils literal notranslate"><span class="pre">InequalityConstraint</span></code>へ、等式制約（<code class="docutils literal notranslate"><span class="pre">H</span></code>）は<code class="docutils literal notranslate"><span class="pre">EqualityConstraint</span></code>へ、いずれも符号を変えずにそのままマッピングされます。</p>
 <p>pymooの問題はバッチ評価（<code class="docutils literal notranslate"><span class="pre">_evaluate(X,</span> <span class="pre">out)</span></code>）を前提としており、<code class="docutils literal notranslate"><span class="pre">PymooProblem.evaluate_batch</span></code>はラップした問題自身の<code class="docutils literal notranslate"><span class="pre">evaluate(X,</span> <span class="pre">return_as_dictionary=True)</span></code>をバッチ全体に対して1回だけ呼び出すことで、これを直接活用します。 <code class="docutils literal notranslate"><span class="pre">SerialEvaluator</span></code>は利用可能な場合これを自動的に使用します。 一方、<code class="docutils literal notranslate"><span class="pre">SerialEvaluator</span></code>を介さず<code class="docutils literal notranslate"><span class="pre">Problem.evaluate</span></code>/<code class="docutils literal notranslate"><span class="pre">evaluate_constraints</span></code>を直接呼んで個体単位で評価する呼び出し元に対しては、<code class="docutils literal notranslate"><span class="pre">x</span></code>をキーとする1スロットのキャッシュにより、候補ごとにpymoo呼び出しは正確に1回で済みます。<code class="docutils literal notranslate"><span class="pre">evaluate_constraints()</span></code>と<code class="docutils literal notranslate"><span class="pre">evaluate()</span></code>は同じ<code class="docutils literal notranslate"><span class="pre">x</span></code>に対して連続して呼ばれるため、キャッシュがなければ制約の数だけpymoo呼び出しが発生し、さらに目的関数の分も加わってしまいます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extraのインストールについては<a class="reference internal" href="../../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>関連コンポーネント<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">comparator</span></code>引数で解の比較方法を差し替える</p></li>
 <li><p><a class="reference internal" href="constraints.html"><span class="std std-doc">ConstraintHandler</span></a>：<code class="docutils literal notranslate"><span class="pre">handler</span></code>引数で制約違反の扱い方を差し替える</p></li>
@@ -675,8 +675,8 @@
 <li><p><a class="reference internal" href="../../tutorials/constraints.html"><span class="std std-doc">制約付き最適化</span></a>：制約の定義方法と組み込みの<code class="docutils literal notranslate"><span class="pre">ConstraintHandler</span></code>の選び方</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>参照<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.Problem.html#saealib.Problem" title="saealib.Problem"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Problem</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.PymooProblem.html#saealib.PymooProblem" title="saealib.PymooProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PymooProblem</span></code></a></p></li>
@@ -704,7 +704,7 @@
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">前へ</p>
-        <p class="prev-next-title">問題定義と順位付け</p>
+        <p class="prev-next-title">問題定義とランキング</p>
       </div>
     </a>
     <a class="right-next"
@@ -735,16 +735,16 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#problem-s-role">Problemの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-problem-holds">Problemが保持するもの</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#invariants">不変条件</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-problem">Problemの拡張</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-variable">独自Variableの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Problemの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Problemが保持するもの</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">不変条件</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Problemの拡張</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#variable">独自Variableの実装方法</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">外部ライブラリアダプタ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">外部ライブラリアダプタ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">参照</a></li>
 </ul>
   </nav></div>
 

@@ -4,28 +4,27 @@ related_layers: [layer2]
 page_type: tutorial
 ---
 
-# Single-Objective Optimization
+# 単目的最適化
 
-Solve a single-objective optimization problem with an expensive-to-evaluate objective function, using `saealib`.
+評価コストの高い目的関数を持つ単目的最適化問題を、`saealib`で解きます。
 
-First define the problem, then run single-objective optimization with the high-level API's `minimize`.
+まず問題を定義し、高レベルAPIの `minimize` で単目的最適化を実行します。
 
-For the detailed specification and customization of each component, see the [Concepts](../concepts/index.md) pages linked from the following sections.
+各コンポーネントの詳しい仕様やカスタマイズ方法は、この後の節からリンクする[コンポーネント](../concepts/index.md)配下の各ページを参照してください。
 
-:::{admonition} What you'll be able to do
+:::{admonition} このページでできるようになること
 :class: tip
 
-By the end of this page, you'll be able to optimize an expensive single-objective function with `minimize()`.
+このページを終えると、高コストな単目的関数を `minimize()` で最適化できます。
 :::
 
-For a quick run that only requires an objective function, use the [high-level API](highlevel_api.md); to choose components by responsibility, see [Swap built-in components](component_swap.md).
-This page covers running single-objective optimization with `minimize()` and selecting the algorithm, Surrogate, and evaluation Strategy with string arguments.
+目的関数を渡してすぐ実行したいだけなら[高レベルAPI](highlevel_api.md)、コンポーネントを責務から選びたい場合は[ビルトインコンポーネントの差し替え](component_swap.md)を参照してください。このページでは`minimize()`による単目的最適化を実行し、文字列引数でアルゴリズム、Surrogate、評価Strategyを選びます。
 
-## Set up the problem
+## 問題を設定する
 
-Assume an objective function whose single call takes a long time, like a simulation.
+シミュレーションのように、1回の呼び出しに時間がかかる目的関数を想定します。
 
-Here, as an example, we minimize the Sphere function as a stand-in for an expensive-to-evaluate function.
+ここでは例として、評価コストの高さを模したSphere関数を最小化します。
 
 ```python
 import numpy as np
@@ -41,13 +40,13 @@ LB = [-5.0] * DIM
 UB = [5.0] * DIM
 ```
 
-`DIM` is the number of design-variable dimensions, and `LB`/`UB` are `DIM`-dimensional lists giving its lower and upper bounds.
+`DIM`は設計変数の次元数、`LB`と`UB`はその下限と上限を与える`DIM`次元のリストです。
 
-The objective function is defined as a `Callable` that takes a `DIM`-dimensional design variable and returns the objective value.
+目的関数は、`DIM`次元の設計変数を受け取り、目的関数値を返す`Callable`として定義します。
 
-## Run minimize or maximize
+## 高レベルAPI：minimize / maximize
 
-`minimize` is a high-level API that runs an optimization just by specifying `dim`, `lb`, and `ub`.
+`minimize`は、`dim`、`lb`、`ub`を指定するだけで最適化を実行できる高レベルAPIです。
 
 ```python
 from saealib import minimize
@@ -60,30 +59,30 @@ print(result.fe)  # true function evaluations
 print(result.gen)  # completed generations
 ```
 
-If the maximum number of evaluations `max_fe` is omitted, `200 * dim` is used as the default.
+最大評価回数`max_fe`を省略すると、`200 * dim`が既定値として使われます。
 
-To explicitly limit the number of evaluations, specify it as follows.
+評価回数を明示的に制限するには、次のように指定します。
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, max_fe=500, seed=0)
 ```
 
-## Switch components
+## コンポーネントの切り替え
 
-`minimize` lets you switch three components — the evolutionary algorithm, the surrogate model, and the evaluation strategy — via the string-valued `algorithm`, `surrogate`, and `strategy` arguments, respectively.
+`minimize`は、進化的アルゴリズム、サロゲートモデル、評価戦略という3つのコンポーネントを、それぞれ`algorithm`、`surrogate`、`strategy`引数の文字列で切り替えられます。
 
-For all three, you can also pass an instance directly instead of a string.
+3つとも、文字列の代わりにインスタンスを直接渡すこともできます。
 
-The internal behavior and customization of each component are covered on the [Algorithm](../concepts/search_algorithms/algorithm.md), [Surrogate](../concepts/surrogate_modeling/surrogate.md), and [OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md) pages.
+各コンポーネントの内部動作やカスタマイズ方法は、[Algorithm](../concepts/search_algorithms/algorithm.md)、[Surrogate](../concepts/surrogate_modeling/surrogate.md)、[OptimizationStrategy](../concepts/execution_and_evaluation/strategies.md)のページで扱います。
 
-### Algorithm
+### アルゴリズム
 
-The `algorithm` argument selects the evolutionary algorithm that generates candidate solutions.
+`algorithm`引数は、候補解を生成する進化的アルゴリズムを選びます。
 
-| String | Class | Characteristics |
+| 文字列 | クラス | 特徴 |
 |--------|--------|------|
-| `'GA'` | `GA` | Search via crossover and mutation (default) |
-| `'PSO'` | `PSO` | Search via particle velocity updates |
+| `'GA'` | `GA` | 交叉と突然変異による探索（既定） |
+| `'PSO'` | `PSO` | 粒子の速度更新による探索 |
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, algorithm="PSO", seed=0)
@@ -91,33 +90,33 @@ result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, algorithm="PSO", seed=0
 
 ### Surrogate
 
-The `surrogate` argument selects the surrogate model that approximates the objective function.
+`surrogate`引数は、目的関数を近似するサロゲートモデルを選びます。
 
-| String | Resolved configuration | Description |
+| 文字列 | 解決される構成 | 説明 |
 |--------|--------|------|
-| `'rbf'` | `RBFSurrogate` + `LocalSurrogateManager` (default) | Local fit over nearby points using a Gaussian RBF kernel |
+| `'rbf'` | `RBFSurrogate` + `LocalSurrogateManager`（既定） | ガウスRBFカーネルによる近傍点の局所フィット |
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, surrogate="rbf", seed=0)
 ```
 
-### Evaluation strategy
+### 評価戦略
 
-The `strategy` argument selects the evaluation strategy that decides which of the generated candidates receive a true (expensive) evaluation.
+`strategy`引数は、生成した候補解のうちどれに真の（高コストな）評価を行うかを決める評価戦略を選びます。
 
-| String | Class | Behavior |
+| 文字列 | クラス | 動作 |
 |--------|--------|------|
-| `'ib'` | `IndividualBasedStrategy` | Evaluates each candidate individually with the surrogate and truly evaluates only the top `evaluation_ratio` fraction (default) |
-| `'gb'` | `GenerationBasedStrategy` | Advances `gen_ctrl` generations using only the surrogate, then truly evaluates a single generation |
-| `'ps'` | `PreSelectionStrategy` | Narrows down a large pool of candidates with the surrogate and truly evaluates only the top `n_select` |
+| `'ib'` | `IndividualBasedStrategy` | 候補を個別にサロゲートで評価し、上位`evaluation_ratio`の割合だけを真に評価する（既定） |
+| `'gb'` | `GenerationBasedStrategy` | `gen_ctrl`世代分をサロゲートのみで進め、1世代だけ真に評価する |
+| `'ps'` | `PreSelectionStrategy` | 大量の候補をサロゲートで絞り込み、上位`n_select`個だけを真に評価する |
 
 ```python
 result = minimize(expensive_func, dim=DIM, lb=LB, ub=UB, strategy="ib", seed=0)
 ```
 
-When the default `minimize()` configuration is insufficient, configure components individually and register them with `Optimizer`. [Build an Optimizer with the low-level API](lowlevel_api.md) also covers multiple Termination conditions and per-generation progress through `iterate()`.
+`minimize()` の既定構成では足りない場合は、各コンポーネントを個別に構成して `Optimizer` に登録できます。[Optimizerを低レベルAPIで組み立てる](lowlevel_api.md) では、Terminationの複数条件や `iterate()` による世代ごとの進捗取得も扱います。
 
-## Related concepts and reference
+## 関連するConceptとReference
 
 - {py:func}`saealib.minimize` / {py:func}`saealib.maximize`
 - {py:class}`saealib.GA` / {py:class}`saealib.PSO`

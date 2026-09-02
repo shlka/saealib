@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>AccuracyBasedSurrogateSwitcher &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>AccuracyBasedSurrogateSwitcher &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -66,7 +66,7 @@
     <link rel="index" title="索引" href="../../genindex.html" />
     <link rel="search" title="検索" href="../../search.html" />
     <link rel="next" title="実行と評価" href="../execution_and_evaluation.html" />
-    <link rel="prev" title="獲得関数" href="acquisition_functions.html" />
+    <link rel="prev" title="AcquisitionFunction" href="acquisition_functions.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
   <meta name="docsearch:version" content="" />
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -599,12 +599,12 @@
 <li><p><strong>切り替え判断</strong>（<code class="docutils literal notranslate"><span class="pre">AccuracyBasedSurrogateSwitcher</span></code>）：評価結果を受けて、次に使うコンポーネントやパラメータを決める</p></li>
 </ul>
 <p>精度評価方法は<code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>などの<code class="docutils literal notranslate"><span class="pre">accuracy_evaluator</span></code>引数として注入され、その結果は<code class="docutils literal notranslate"><span class="pre">surrogate_manager.last_accuracy</span></code>プロパティを経由して切り替え判断へ渡されます。 この一連の仕組みは<code class="docutils literal notranslate"><span class="pre">iterate()</span></code>ループでの利用を前提としています。 高レベルAPI（<code class="docutils literal notranslate"><span class="pre">minimize</span></code>/<code class="docutils literal notranslate"><span class="pre">maximize</span></code>）は実行中のコンポーネント差し替え手段を提供しないため、これらのSwitcherは使えません。</p>
-<section id="surrogateswitcher-s-role">
-<h2>SurrogateSwitcherの役割<a class="headerlink" href="#surrogateswitcher-s-role" title="Link to this heading">#</a></h2>
+<section id="surrogateswitcher">
+<h2>SurrogateSwitcherの役割<a class="headerlink" href="#surrogateswitcher" title="Link to this heading">#</a></h2>
 <p>この仕組みは、精度指標、精度評価、切り替え判断を分離して組み合わせ、次に使う<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>または<code class="docutils literal notranslate"><span class="pre">OptimizationStrategy</span></code>の構成を決めます。</p>
 </section>
-<section id="accuracy-metric-surrogateaccuracymetric">
-<h2>精度指標：SurrogateAccuracyMetric<a class="headerlink" href="#accuracy-metric-surrogateaccuracymetric" title="Link to this heading">#</a></h2>
+<section id="surrogateaccuracymetric">
+<h2>精度指標：SurrogateAccuracyMetric<a class="headerlink" href="#surrogateaccuracymetric" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">SurrogateAccuracyMetric</span></code>が実装を要求するのは<code class="docutils literal notranslate"><span class="pre">name</span></code>（プロパティ）と<code class="docutils literal notranslate"><span class="pre">compute(y_true,</span> <span class="pre">y_pred)</span> <span class="pre">-&gt;</span> <span class="pre">float</span></code>の2つです。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -616,7 +616,7 @@
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SpearmanCorrelation</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">[-1,</span> <span class="pre">1]</span></code>、高いほど良い</p></td>
-<td><p>目的ごとのSpearman順位相関の平均。EAではランクの保存性が重要という観点<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id53" title="Haibo Yu, Ying Tan, Chaoli Sun, and Jianchao Zeng. A comparison of quality measures for model selection in surrogate-assisted evolutionary algorithm. Soft Computing, 23(23):12417–12436, 2019. doi:10.1007/s00500-019-03783-0.">33</a>]</span>に基づく</p></td>
+<td><p>目的ごとのSpearman順位相関の平均。EAではランクの保存性が重要という観点<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id54" title="Haibo Yu, Ying Tan, Chaoli Sun, and Jianchao Zeng. A comparison of quality measures for model selection in surrogate-assisted evolutionary algorithm. Soft Computing, 23(23):12417–12436, 2019. doi:10.1007/s00500-019-03783-0.">33</a>]</span>に基づく</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">RMSE</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">∞)</span></code>、低いほど良い</p></td>
@@ -631,8 +631,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">AccuracyEvaluator</span></code>のコンストラクタで<code class="docutils literal notranslate"><span class="pre">metrics</span></code>を省略すると、この3指標全てが既定として使われます。</p>
 </section>
-<section id="accuracy-evaluation-method-accuracyevaluator">
-<h2>精度評価方法：AccuracyEvaluator<a class="headerlink" href="#accuracy-evaluation-method-accuracyevaluator" title="Link to this heading">#</a></h2>
+<section id="accuracyevaluator">
+<h2>精度評価方法：AccuracyEvaluator<a class="headerlink" href="#accuracyevaluator" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">AccuracyEvaluator</span></code>が実装を要求するのは<code class="docutils literal notranslate"><span class="pre">evaluate(surrogate,</span> <span class="pre">train_x,</span> <span class="pre">train_y)</span> <span class="pre">-&gt;</span> <span class="pre">SurrogateAccuracy</span></code>の1つだけです。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -657,11 +657,11 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">HeldOutAccuracyEvaluator</span></code>は、直近の真の評価点との比較用途<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id54" title="Yuki Hanawa, Tomohiro Harada, and Yukiya Miura. Impact of surrogate model accuracy on performance and model management strategy in surrogate-assisted evolutionary algorithms. Array, 27:100461, 2025. doi:10.1016/j.array.2025.100461.">34</a>]</span>で使います。</p>
+<p><code class="docutils literal notranslate"><span class="pre">HeldOutAccuracyEvaluator</span></code>は、直近の真の評価点との比較用途<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id55" title="Yuki Hanawa, Tomohiro Harada, and Yukiya Miura. Impact of surrogate model accuracy on performance and model management strategy in surrogate-assisted evolutionary algorithms. Array, 27:100461, 2025. doi:10.1016/j.array.2025.100461.">34</a>]</span>で使います。</p>
 <p><code class="docutils literal notranslate"><span class="pre">SurrogateAccuracy</span></code>（<code class="docutils literal notranslate"><span class="pre">metrics:</span> <span class="pre">dict[str,</span> <span class="pre">float]</span></code>, <code class="docutils literal notranslate"><span class="pre">n_samples:</span> <span class="pre">int</span></code>）は、評価結果を保持する単純なコンテナで、<code class="docutils literal notranslate"><span class="pre">get(name,</span> <span class="pre">default=nan)</span></code>で指標名から値を取り出します。</p>
 </section>
-<section id="switching-decision-accuracybasedsurrogateswitcher">
-<h2>切り替え判断：AccuracyBasedSurrogateSwitcher<a class="headerlink" href="#switching-decision-accuracybasedsurrogateswitcher" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>切り替え判断：AccuracyBasedSurrogateSwitcher<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">AccuracyBasedSurrogateSwitcher</span></code>が実装する必要があるメソッドは<code class="docutils literal notranslate"><span class="pre">switch(accuracy:</span> <span class="pre">SurrogateAccuracy</span> <span class="pre">|</span> <span class="pre">None)</span> <span class="pre">-&gt;</span> <span class="pre">T</span></code>の1つだけです。精度結果から次のコンポーネントまたはパラメータを選びます。その選択をRuntimeの計画へ適用する操作は別です。</p>
 <p>次の例では、<code class="docutils literal notranslate"><span class="pre">iterate()</span></code>と<code class="docutils literal notranslate"><span class="pre">optimizer.set_*()</span></code>で構成を変更します。実行環境が変更を検出して計画を再コンパイルし、次の世代から変更を適用します。この手順は、反復中に構成を変更する他のケースにも使えます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">switcher</span> <span class="o">=</span> <span class="n">ManagerSwitcher</span><span class="p">(</span><span class="n">primary</span><span class="p">,</span> <span class="n">fallback</span><span class="p">)</span>
@@ -694,12 +694,12 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">ManagerSwitcher</span></code>/<code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>は、指定した指標が閾値以上なら<code class="docutils literal notranslate"><span class="pre">primary</span></code>、そうでなければ<code class="docutils literal notranslate"><span class="pre">fallback</span></code>を返す単純な二値切り替えです。 <code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>の既定閾値<code class="docutils literal notranslate"><span class="pre">0.56</span></code>は、<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../references.html#id54" title="Yuki Hanawa, Tomohiro Harada, and Yukiya Miura. Impact of surrogate model accuracy on performance and model management strategy in surrogate-assisted evolutionary algorithms. Array, 27:100461, 2025. doi:10.1016/j.array.2025.100461.">34</a>]</span>によるPS/IB-GB切り替えの設定値に基づきます。</p>
-<p><code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher</span></code>は、二値切り替えではなく<code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code>を指数平滑化で連続的に調整します<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../../references.html#id55" title="Jiří Repický, Lukas Bajer, Zbyněk Pitra, and Martin Holeňa. Adaptive generation-based evolution control for gaussian process surrogate models. In Proceedings of the 17th Conference on Information Technologies – Applications and Theory (ITAT 2017), volume 1885 of CEUR Workshop Proceedings, 136–143. 2017.">35</a>]</span>。 公開属性<code class="docutils literal notranslate"><span class="pre">smoothed_error</span></code>に平滑化済みの誤差推定値を保持する状態を持つため、1回の<code class="docutils literal notranslate"><span class="pre">run</span></code>につき1つのインスタンスを使います。 <code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher.switch()</span></code>が返す<code class="docutils literal notranslate"><span class="pre">int</span></code>は、そのまま<a class="reference internal" href="../execution_and_evaluation/strategies.html"><span class="std std-doc">GenerationBasedStrategy</span></a>の<code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code>引数に渡す想定です。</p>
+<p><code class="docutils literal notranslate"><span class="pre">ManagerSwitcher</span></code>/<code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>は、指定した指標が閾値以上なら<code class="docutils literal notranslate"><span class="pre">primary</span></code>、そうでなければ<code class="docutils literal notranslate"><span class="pre">fallback</span></code>を返す単純な二値切り替えです。 <code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>の既定閾値<code class="docutils literal notranslate"><span class="pre">0.56</span></code>は、<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../../references.html#id55" title="Yuki Hanawa, Tomohiro Harada, and Yukiya Miura. Impact of surrogate model accuracy on performance and model management strategy in surrogate-assisted evolutionary algorithms. Array, 27:100461, 2025. doi:10.1016/j.array.2025.100461.">34</a>]</span>によるPS/IB-GB切り替えの設定値に基づきます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher</span></code>は、二値切り替えではなく<code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code>を指数平滑化で連続的に調整します<span class="bibtex-citation" id="id5">[<a class="reference internal" href="../../references.html#id56" title="Jiří Repický, Lukas Bajer, Zbyněk Pitra, and Martin Holeňa. Adaptive generation-based evolution control for gaussian process surrogate models. In Proceedings of the 17th Conference on Information Technologies – Applications and Theory (ITAT 2017), volume 1885 of CEUR Workshop Proceedings, 136–143. 2017.">35</a>]</span>。 公開属性<code class="docutils literal notranslate"><span class="pre">smoothed_error</span></code>に平滑化済みの誤差推定値を保持する状態を持つため、1回の<code class="docutils literal notranslate"><span class="pre">run</span></code>につき1つのインスタンスを使います。 <code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher.switch()</span></code>が返す<code class="docutils literal notranslate"><span class="pre">int</span></code>は、そのまま<a class="reference internal" href="../execution_and_evaluation/strategies.html"><span class="std std-doc">GenerationBasedStrategy</span></a>の<code class="docutils literal notranslate"><span class="pre">gen_ctrl</span></code>引数に渡す想定です。</p>
 <p>コンポーネント側から再コンパイルを要求する経路については、<a class="reference internal" href="../execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>の「ランタイム差し替えの動作」を参照してください。</p>
 </section>
-<section id="implementing-a-custom-switcher">
-<h2>独自Switcherの実装方法<a class="headerlink" href="#implementing-a-custom-switcher" title="Link to this heading">#</a></h2>
+<section id="switcher">
+<h2>独自Switcherの実装方法<a class="headerlink" href="#switcher" title="Link to this heading">#</a></h2>
 <p>独自の切り替えロジックが必要な場合は、<code class="docutils literal notranslate"><span class="pre">AccuracyBasedSurrogateSwitcher</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">switch()</span></code>だけを実装すればよいです。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">AccuracyBasedSurrogateSwitcher</span>
 
@@ -714,15 +714,15 @@
 </pre></div>
 </div>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>関連コンポーネント<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">accuracy_evaluator</span></code>引数と<code class="docutils literal notranslate"><span class="pre">last_accuracy</span></code>プロパティ</p></li>
 <li><p><a class="reference internal" href="../execution_and_evaluation/strategies.html"><span class="std std-doc">strategies</span></a>：<code class="docutils literal notranslate"><span class="pre">StrategySwitcher</span></code>/<code class="docutils literal notranslate"><span class="pre">GenCtrlSwitcher</span></code>が切り替える対象</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>参照<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.AccuracyBasedSurrogateSwitcher.html#saealib.AccuracyBasedSurrogateSwitcher" title="saealib.AccuracyBasedSurrogateSwitcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.AccuracyBasedSurrogateSwitcher</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.ManagerSwitcher.html#saealib.ManagerSwitcher" title="saealib.ManagerSwitcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.ManagerSwitcher</span></code></a></p></li>
@@ -757,7 +757,7 @@
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">前へ</p>
-        <p class="prev-next-title">獲得関数</p>
+        <p class="prev-next-title">AcquisitionFunction</p>
       </div>
     </a>
     <a class="right-next"
@@ -788,13 +788,13 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogateswitcher-s-role">SurrogateSwitcherの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#accuracy-metric-surrogateaccuracymetric">精度指標：SurrogateAccuracyMetric</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#accuracy-evaluation-method-accuracyevaluator">精度評価方法：AccuracyEvaluator</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#switching-decision-accuracybasedsurrogateswitcher">切り替え判断：AccuracyBasedSurrogateSwitcher</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-switcher">独自Switcherの実装方法</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogateswitcher">SurrogateSwitcherの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogateaccuracymetric">精度指標：SurrogateAccuracyMetric</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#accuracyevaluator">精度評価方法：AccuracyEvaluator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">切り替え判断：AccuracyBasedSurrogateSwitcher</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#switcher">独自Switcherの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">参照</a></li>
 </ul>
   </nav></div>
 

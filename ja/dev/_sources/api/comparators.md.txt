@@ -3,9 +3,9 @@ primary_layer: layer2
 related_layers: [layer3]
 ---
 
-# Comparators
+# 比較器
 
-## Base
+## 基底
 
 ```{eval-rst}
 .. autosummary::
@@ -15,7 +15,7 @@ related_layers: [layer3]
    saealib.Comparator
 ```
 
-## Implementations
+## 実装
 
 ```{eval-rst}
 .. autosummary::
@@ -33,7 +33,7 @@ related_layers: [layer3]
    saealib.EpsilonDominanceComparator
 ```
 
-## Dominance
+## 支配関係
 
 ```{eval-rst}
 .. autosummary::
@@ -45,7 +45,7 @@ related_layers: [layer3]
    saealib.EpsilonDominator
 ```
 
-## Non-Dominated Sorting
+## 非劣ソート
 
 ```{eval-rst}
 .. autosummary::

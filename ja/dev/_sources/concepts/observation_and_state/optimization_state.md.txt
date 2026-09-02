@@ -6,64 +6,51 @@ page_type: concept
 
 # OptimizationState
 
-`OptimizationState` is the value that carries an `Optimizer` run's execution context and its checkpoint.
-On the Stage compatibility path, a `Stage` receives this state directly and hands the copy it updated with `replace()` to the next `Stage`.
+`OptimizationState`は、`Optimizer`の実行コンテキストとチェックポイントを保持する値です。Stage互換経路では、`Stage`がこの状態を直接受け取り、`replace()`で更新したコピーを次の`Stage`へ渡します。
 
-In the structured runtime, a graph-native component never receives the whole `OptimizationState`.
-A component receives a `StateView` limited to the `StateKey`s it declared, and returns its changes as a `StatePatch`.
-The runtime applies that patch to the `StateStore`, producing the next execution boundary.
+構造化ランタイムでは、グラフネイティブコンポーネントが`OptimizationState`全体を受け取ることはありません。コンポーネントは宣言した`StateKey`に限定された`StateView`を受け取り、変更を`StatePatch`として返します。ランタイムはそのパッチを`StateStore`へ適用し、次の実行境界を生成します。
 
-## OptimizationState's role
+## OptimizationStateの役割
 
-`OptimizationState` gathers three things: the values the Stage compatibility path runs on, the results a user inspects, and the values needed to resume.
-It is not where component contracts, graph structure, or compiler rules live.
-Ownership of state belongs to `Optimizer` and the state itself on the Stage compatibility path, and to `StateStore` on the graph-native path.
+`OptimizationState`は、Stage互換経路が実行に使う値、利用者が確認する結果、再開に必要な値の3つをまとめます。コンポーネント契約、グラフ構造、コンパイラの規則を保持する場所ではありません。状態の所有者は、Stage互換経路では`Optimizer`と状態自体、graph-native経路では`StateStore`です。
 
-`OptimizationState` produces a new value with `replace()`; `StateStore` applies a `StatePatch` to produce a new generation.
-If a component were allowed to mutate `StateStore` or `OptimizationState` directly, neither the compiler nor the runtime could trace writes made outside the contract, or detect a resume point that no longer matches.
+`OptimizationState`は`replace()`で新しい値を生成し、`StateStore`は`StatePatch`を適用して新しい世代を生成します。コンポーネントが`StateStore`や`OptimizationState`を直接変更できると、コンパイラもランタイムも、契約外で行われた書き込みを追跡したり、もはや一致しない再開地点を検出したりできません。
 
-## The two state boundaries
+## 二つの状態境界
 
-`OptimizationState` and `StateView` represent different execution boundaries.
+`OptimizationState` と `StateView` は、異なる実行境界を表します。
 
-| Boundary | Receives | Returns | Main users |
+| 境界 | 受け取る値 | 返す値 | 主な利用者 |
 |---|---|---|---|
-| Stage compatibility boundary | `OptimizationState` | `OptimizationState` | existing Stages, sequential compatibility runtime |
-| graph-native boundary | a declared `StateView` | `StatePatch` or `NodeResult` | components, compiler, structured runtime |
+| Stage互換境界 | `OptimizationState` | `OptimizationState` | 既存Stage、sequential compatibility ランタイム |
+| graph-native境界 | 宣言済みの `StateView` | `StatePatch` または `NodeResult` | Component、Compiler、構造化ランタイム |
 
-Conflating the two makes it look as if a graph-native component could read and write arbitrary state.
-In a structured pipeline, `ComponentContract` declares which `StateKey`s are read and which are written, and the runtime hands the component only that range.
+この二つの境界を混同すると、グラフネイティブコンポーネントが任意の状態を読み書きできるように見えます。構造化パイプラインでは、`ComponentContract`が読み書きする`StateKey`を宣言し、ランタイムはその範囲だけをコンポーネントへ渡します。
 
-## What OptimizationState holds
+## OptimizationStateが保持する値
 
-`OptimizationState` holds the values you need to inspect a result or resume a run.
+`OptimizationState` は、利用者が結果を確認したり、実行を再開したりするための値を保持します。
 
-| Value | Contents |
+| 値 | 内容 |
 |---|---|
-| `problem` | the `Problem` being optimized |
-| `population` | compatibility shortcut to the current `Population` |
-| `archive` | compatibility shortcut to the `Archive` of evaluated solutions |
-| `pareto_archive` | compatibility shortcut to the non-dominated solution set |
-| `rng` | the random number generator |
-| `fe` | the number of true evaluations |
-| `gen` | the generation count |
-| `data` | extra data for Stage compatibility extensions |
+| `problem` | 最適化対象の`Problem` |
+| `population` | 現在の`Population`への互換性用ショートカット |
+| `archive` | 評価済み解の`Archive`への互換性用ショートカット |
+| `pareto_archive` | 非劣解集合への互換性用ショートカット |
+| `rng` | 乱数生成器 |
+| `fe` | 真の評価回数 |
+| `gen` | 世代数 |
+| `data` | Stage互換拡張用の追加データ |
 
-`population`, `archive`, and `pareto_archive` refer to named collections internally.
-Do not design a new graph-native component to put arbitrary values into `data` — declare a `StateKey` in its `StateContract` instead.
+`population`、`archive`、`pareto_archive`は、内部で名前付きのコレクションを参照します。新しいグラフネイティブコンポーネントが任意の値を`data`へ入れる設計にはせず、代わりに`StateContract`で`StateKey`を宣言します。
 
-## StateStore, StateView, and StatePatch
+## StateStore、StateView、StatePatch
 
-`StateStore` is the state store that maps a typed `StateKey` to a value.
-The `StateView` handed to a component exposes only the read keys its `ComponentContract` declared.
+`StateStore`は、型付きの`StateKey`を値に対応付ける状態ストアです。コンポーネントに渡される`StateView`は、`ComponentContract`が宣言した読み取りキーだけを公開します。
 
-When a component changes state, it returns a `StatePatch` rather than mutating the store.
-The runtime applies the patch to the current store to produce the next state.
-This is what prevents a component from incidentally reading or writing state it never declared.
+Componentが状態を変更するときは、直接Storeを変更せずに `StatePatch` を返します。 RuntimeはPatchを現在のStoreへ適用し、次の状態を生成します。 この方式によって、Componentが宣言していないStateを偶然に読み書きすることを防ぎます。
 
-The compiler checks that a `StateContract`'s reads, writes, and exports line up with its `StateBinding`.
-The runtime restricts a `StateView` to the declared read keys, and applies a `StatePatch`'s writes to the store's typed keys and generation.
-Patches that conflict on the same key, or that delete a key which does not exist, are handled according to the runtime's diagnostics.
+コンパイラは、`StateContract`のreads、writes、exportsが`StateBinding`と対応していることを確認します。ランタイムは`StateView`を宣言済みの読み取りキーに限定し、`StatePatch`の書き込みをストアの型付きキーと世代へ適用します。同じキーで競合するパッチや、存在しないキーを削除するパッチは、ランタイムの診断規則に従って扱います。
 
 ```python
 from saealib.core import StatePatch, StateView
@@ -75,12 +62,11 @@ def execute(view: StateView) -> StatePatch:
     return StatePatch(writes={RUNTIME_GENERATION: current + 1})
 ```
 
-Real `StateKey`s are the typed keys provided by `saealib.core.state`, not strings.
-The code above is simplified to show only the boundary: read from the view, return a patch.
+実際の`StateKey`は文字列ではなく、`saealib.core.state`が提供する型付きキーです。上のコードは、ビューから読み取り、パッチを返す境界だけを示すよう簡略化しています。
 
-## Updating on the Stage compatibility path
+## Stage互換経路での更新
 
-A custom `Stage` receives an `OptimizationState` and returns the updated state via `state.replace(...)`.
+カスタム`Stage`は`OptimizationState`を受け取り、`state.replace(...)`で更新後の状態を返します。
 
 ```python
 from saealib import Stage
@@ -94,45 +80,38 @@ class LogGenerationStage(Stage):
         return state
 ```
 
-To carry an extra value on the Stage compatibility path, copy `state.data` before passing it to `replace()`.
-To carry the same value in a graph-native component, use a `StateKey` and a `StatePatch`.
+Stage互換経路で追加の値を持たせる場合は、`state.data`をコピーしてから`replace()`に渡します。グラフネイティブコンポーネントで同じ値を扱う場合は、`StateKey`と`StatePatch`を使います。
 
-## Updating and checkpointing
+## 更新とチェックポイント
 
-`replace(**kwargs) -> OptimizationState` is the method for updating values on the Stage compatibility path.
-`archive` is mutated as it accumulates evaluation results, and `rng` advances its internal state every time it draws a random number.
-These are explicit exceptions to the design in which every other value goes through `replace()`.
+`replace(**kwargs) -> OptimizationState` は、Stage互換経路で値を更新するためのメソッドです。 `archive` は評価結果を蓄積するために変更され、`rng` は乱数を生成するたびに内部状態が進みます。 これらは、他の値を `replace()` で渡す設計と異なる、明示された例外です。
 
-`save(path)` and `load(path, problem)` handle the npz checkpoint of an `OptimizationState`.
-For automatic checkpointing, see [Checkpointing](../../tutorials/checkpoint.md).
-The pickle format additionally requires `Optimizer`-side state, so which save path applies is decided by the combination of `CheckpointCallback` and `Optimizer`.
+`save(path)`と`load(path, problem)`は`OptimizationState`のnpzチェックポイントを扱います。自動チェックポイントについては[Checkpointing](../../tutorials/checkpoint.md)を参照してください。pickle形式では`Optimizer`側の状態も必要なため、どの保存経路を使うかは`CheckpointCallback`と`Optimizer`の組み合わせで決まります。
 
-## Choosing a state boundary
+## どの状態境界を使うか
 
-- Implementing an existing Stage: use `OptimizationState` and `replace()`.
-- Implementing a new graph-native component: use `ComponentContract`, `StateView`, and `StatePatch`.
-- Inspecting the result of a run: use the `OptimizationState` returned by `Optimizer.run()` or `Optimizer.iterate()`.
-- Resuming a run: use `saealib.context.OptimizationState.load()` and `Optimizer.run_from()`.
+- 既存のStageを実装する：`OptimizationState` と `replace()` を使う。
+- 新しいグラフネイティブComponentを実装する：`ComponentContract`、`StateView`、`StatePatch` を使う。
+- Optimizerの実行結果を確認する：`Optimizer.run()` または `Optimizer.iterate()` が返す `OptimizationState` を使う。
+- 実行を再開する：`saealib.context.OptimizationState.load()` と `Optimizer.run_from()` を使う。
 
-## Typical failures
+## 代表的な失敗
 
-Calling `replace()` on the wrong target on the Stage compatibility path leaves the next Stage without the value it expects.
-Reading, writing, or exporting a key absent from the `StateContract` on the graph-native path becomes a diagnostic in the compiler's state-effect validation.
-Applying a checkpoint to a different `Problem`, or to an incompatible plan, leaves the saved state and the execution boundary out of step.
+Stage互換経路で誤った対象に`replace()`を呼ぶと、次のStageが期待する値を受け取れません。graph-native経路で`StateContract`にないキーを読み取り、書き込み、または公開すると、コンパイラの状態効果検証で診断になります。別の`Problem`や互換性のない計画にチェックポイントを適用すると、保存された状態と実行境界がずれます。
 
-## Related components
+## 関連コンポーネント
 
-- [Stage](stage.md): the compatibility execution unit that receives `OptimizationState` directly
-- [Framework](../../framework/index.md): how component, contract, graph, and compiler relate
-- [Runtime](../../framework/runtime.md): plan, runtime, and the boundary at which a `StatePatch` is applied
-- [Population](population.md): the `Population`, `Archive`, and `ParetoArchive` data structures
-- [Checkpointing](../../tutorials/checkpoint.md): saving and resuming a checkpoint
+- [Stage](stage.md)：`OptimizationState` を直接受け取る互換性用の実行単位
+- [Framework](../../framework/index.md)：Component、Contract、Graph、Compilerの関係
+- [Runtime](../../framework/runtime.md)：計画、ランタイム、`StatePatch`が適用される境界
+- [Population](population.md)：`Population`、`Archive`、`ParetoArchive`のデータ構造
+- [Checkpointing](../../tutorials/checkpoint.md)：チェックポイントの保存と再開
 
-## References
+## 参照
 
 - {py:class}`saealib.context.OptimizationState`
 - {py:class}`saealib.core.StateStore`
 - {py:class}`saealib.core.StateView`
 - {py:class}`saealib.core.StatePatch`
-- [Framework ComponentContract](../../framework/contract.md): the contract, including state declarations
-- [Framework Compiler](../../framework/compiler.md): state-effect validation and diagnostics
+- [Framework ComponentContract](../../framework/contract.md)：状態宣言を含む契約
+- [Framework Compiler](../../framework/compiler.md)：状態効果の検証と診断

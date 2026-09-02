@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>単目的最適化 &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>単目的最適化 &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -491,7 +491,7 @@
 <li class="toctree-l1"><a class="reference internal" href="dynamic_optimization.html">サロゲート精度に応じた動的な切り替え</a></li>
 <li class="toctree-l1"><a class="reference internal" href="checkpoint.html">再現性とチェックポイント</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">進捗のログ記録</a></li>
-<li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリとの連携</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリの統合</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="component_swap.html">ビルトインコンポーネントを選んで差し替える</a></li>
@@ -559,8 +559,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="single-objective-optimization">
-<h1>単目的最適化<a class="headerlink" href="#single-objective-optimization" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>単目的最適化<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 1: Use</span></div><p>評価コストの高い目的関数を持つ単目的最適化問題を、<code class="docutils literal notranslate"><span class="pre">saealib</span></code>で解きます。</p>
 <p>まず問題を定義し、高レベルAPIの <code class="docutils literal notranslate"><span class="pre">minimize</span></code> で単目的最適化を実行します。</p>
 <p>各コンポーネントの詳しい仕様やカスタマイズ方法は、この後の節からリンクする<a class="reference internal" href="../concepts/index.html"><span class="std std-doc">コンポーネント</span></a>配下の各ページを参照してください。</p>
@@ -569,8 +569,8 @@
 <p>このページを終えると、高コストな単目的関数を <code class="docutils literal notranslate"><span class="pre">minimize()</span></code> で最適化できます。</p>
 </div>
 <p>目的関数を渡してすぐ実行したいだけなら<a class="reference internal" href="highlevel_api.html"><span class="std std-doc">高レベルAPI</span></a>、コンポーネントを責務から選びたい場合は<a class="reference internal" href="component_swap.html"><span class="std std-doc">ビルトインコンポーネントの差し替え</span></a>を参照してください。このページでは<code class="docutils literal notranslate"><span class="pre">minimize()</span></code>による単目的最適化を実行し、文字列引数でアルゴリズム、Surrogate、評価Strategyを選びます。</p>
-<section id="set-up-the-problem">
-<h2>問題を設定する<a class="headerlink" href="#set-up-the-problem" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>問題を設定する<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p>シミュレーションのように、1回の呼び出しに時間がかかる目的関数を想定します。</p>
 <p>ここでは例として、評価コストの高さを模したSphere関数を最小化します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -589,8 +589,8 @@
 <p><code class="docutils literal notranslate"><span class="pre">DIM</span></code>は設計変数の次元数、<code class="docutils literal notranslate"><span class="pre">LB</span></code>と<code class="docutils literal notranslate"><span class="pre">UB</span></code>はその下限と上限を与える<code class="docutils literal notranslate"><span class="pre">DIM</span></code>次元のリストです。</p>
 <p>目的関数は、<code class="docutils literal notranslate"><span class="pre">DIM</span></code>次元の設計変数を受け取り、目的関数値を返す<code class="docutils literal notranslate"><span class="pre">Callable</span></code>として定義します。</p>
 </section>
-<section id="run-minimize-or-maximize">
-<h2>高レベルAPI：minimize / maximize<a class="headerlink" href="#run-minimize-or-maximize" title="Link to this heading">#</a></h2>
+<section id="api-minimize-maximize">
+<h2>高レベルAPI：minimize / maximize<a class="headerlink" href="#api-minimize-maximize" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">minimize</span></code>は、<code class="docutils literal notranslate"><span class="pre">dim</span></code>、<code class="docutils literal notranslate"><span class="pre">lb</span></code>、<code class="docutils literal notranslate"><span class="pre">ub</span></code>を指定するだけで最適化を実行できる高レベルAPIです。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
 
@@ -608,13 +608,13 @@
 </pre></div>
 </div>
 </section>
-<section id="switch-components">
-<h2>コンポーネントの切り替え<a class="headerlink" href="#switch-components" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>コンポーネントの切り替え<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">minimize</span></code>は、進化的アルゴリズム、サロゲートモデル、評価戦略という3つのコンポーネントを、それぞれ<code class="docutils literal notranslate"><span class="pre">algorithm</span></code>、<code class="docutils literal notranslate"><span class="pre">surrogate</span></code>、<code class="docutils literal notranslate"><span class="pre">strategy</span></code>引数の文字列で切り替えられます。</p>
 <p>3つとも、文字列の代わりにインスタンスを直接渡すこともできます。</p>
 <p>各コンポーネントの内部動作やカスタマイズ方法は、<a class="reference internal" href="../concepts/search_algorithms/algorithm.html"><span class="std std-doc">Algorithm</span></a>、<a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">Surrogate</span></a>、<a class="reference internal" href="../concepts/execution_and_evaluation/strategies.html"><span class="std std-doc">OptimizationStrategy</span></a>のページで扱います。</p>
-<section id="algorithm">
-<h3>アルゴリズム<a class="headerlink" href="#algorithm" title="Link to this heading">#</a></h3>
+<section id="id4">
+<h3>アルゴリズム<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">algorithm</span></code>引数は、候補解を生成する進化的アルゴリズムを選びます。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -661,8 +661,8 @@
 </pre></div>
 </div>
 </section>
-<section id="evaluation-strategy">
-<h3>評価戦略<a class="headerlink" href="#evaluation-strategy" title="Link to this heading">#</a></h3>
+<section id="id5">
+<h3>評価戦略<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">strategy</span></code>引数は、生成した候補解のうちどれに真の（高コストな）評価を行うかを決める評価戦略を選びます。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -693,8 +693,8 @@
 <p><code class="docutils literal notranslate"><span class="pre">minimize()</span></code> の既定構成では足りない場合は、各コンポーネントを個別に構成して <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> に登録できます。<a class="reference internal" href="lowlevel_api.html"><span class="std std-doc">Optimizerを低レベルAPIで組み立てる</span></a> では、Terminationの複数条件や <code class="docutils literal notranslate"><span class="pre">iterate()</span></code> による世代ごとの進捗取得も扱います。</p>
 </section>
 </section>
-<section id="related-concepts-and-reference">
-<h2>関連するConceptとReference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
+<section id="conceptreference">
+<h2>関連するConceptとReference<a class="headerlink" href="#conceptreference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/highlevel.html#saealib.minimize" title="saealib.minimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.minimize()</span></code></a> / <a class="reference internal" href="../api/highlevel.html#saealib.maximize" title="saealib.maximize"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.maximize()</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.GA.html#saealib.GA" title="saealib.GA"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.GA</span></code></a> / <a class="reference internal" href="../api/_autosummary/saealib.PSO.html#saealib.PSO" title="saealib.PSO"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PSO</span></code></a></p></li>
@@ -750,15 +750,15 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-up-the-problem">問題を設定する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#run-minimize-or-maximize">高レベルAPI：minimize / maximize</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#switch-components">コンポーネントの切り替え</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#algorithm">アルゴリズム</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">問題を設定する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-minimize-maximize">高レベルAPI：minimize / maximize</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">コンポーネントの切り替え</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">アルゴリズム</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogate">Surrogate</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#evaluation-strategy">評価戦略</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">評価戦略</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">関連するConceptとReference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conceptreference">関連するConceptとReference</a></li>
 </ul>
   </nav></div>
 

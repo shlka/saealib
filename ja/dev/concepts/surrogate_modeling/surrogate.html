@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Surrogate &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>Surrogate &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -182,7 +182,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -364,7 +364,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -487,11 +487,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
@@ -509,7 +509,7 @@
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -522,7 +522,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -594,16 +594,19 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="surrogate">
 <h1>Surrogate<a class="headerlink" href="#surrogate" title="Link to this heading">#</a></h1>
-<div class="layer-badges"><span class="layer-badge">Layer 3: Extend Components</span></div><p><code class="docutils literal notranslate"><span class="pre">saealib</span></code>は、目的関数を近似する予測モデルの責務を<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>という差し替え可能なコンポーネントに限定しています。 <code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>はfit/predictだけを知り、予測値をどうスコアに変換するか（<a class="reference internal" href="acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>）や、学習データをどこから集めるか（<a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>、<a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>経由）は一切知りません。</p>
-<section id="surrogate-s-role">
-<h2>Surrogateの役割<a class="headerlink" href="#surrogate-s-role" title="Link to this heading">#</a></h2>
+<div class="layer-badges"><span class="layer-badge">Layer 3: Extend Components</span></div><p><code class="docutils literal notranslate"><span class="pre">saealib</span></code>は、目的関数を近似する予測モデルの責務を<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>という差し替え可能なコンポーネントに限定しています。
+<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>はfit/predictだけを知り、予測値をどうスコアに変換するか（<a class="reference internal" href="acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>）や、学習データをどこから集めるか（<a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>、<a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>経由）は一切知りません。</p>
+<section id="id1">
+<h2>Surrogateの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>が実装を要求するメソッドは2つあります。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">fit(train_x,</span> <span class="pre">train_y)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></strong>：形状<code class="docutils literal notranslate"><span class="pre">(n_samples,</span> <span class="pre">n_features)</span></code>の入力と、形状<code class="docutils literal notranslate"><span class="pre">(n_samples,</span> <span class="pre">n_obj)</span></code>（単目的では<code class="docutils literal notranslate"><span class="pre">(n_samples,)</span></code>）の出力でモデルを学習します。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">predict(test_x)</span> <span class="pre">-&gt;</span> <span class="pre">SurrogatePrediction</span></code></strong>：形状<code class="docutils literal notranslate"><span class="pre">(n_samples,</span> <span class="pre">n_features)</span></code>の入力に対する予測を返します。</p>
-<p>クラス属性<code class="docutils literal notranslate"><span class="pre">provides_uncertainty:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></code>は、予測が不確実性（標準偏差）を伴うかどうかを示します。 既定は<code class="docutils literal notranslate"><span class="pre">False</span></code>で、ガウス過程の実装だけが<code class="docutils literal notranslate"><span class="pre">True</span></code>にオーバーライドします。</p>
+<p>クラス属性<code class="docutils literal notranslate"><span class="pre">provides_uncertainty:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></code>は、予測が不確実性（標準偏差）を伴うかどうかを示します。
+既定は<code class="docutils literal notranslate"><span class="pre">False</span></code>で、ガウス過程の実装だけが<code class="docutils literal notranslate"><span class="pre">True</span></code>にオーバーライドします。</p>
 <p><code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>と<code class="docutils literal notranslate"><span class="pre">predict()</span></code>の間には2つのマーカー基底クラスがあります。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">RegressionSurrogate</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">train_y</span></code>が実数値の目的関数出力である回帰サロゲート向けのマーカー。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">ComparisonSurrogate</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">train_y</span></code>が<code class="docutils literal notranslate"><span class="pre">{0,</span> <span class="pre">1}</span></code>の二値比較ラベルである比較サロゲート向け。 <code class="docutils literal notranslate"><span class="pre">predict_proba(test_x)</span> <span class="pre">-&gt;</span> <span class="pre">SurrogatePrediction</span></code>（値は<code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>の勝率）が主インターフェースで、<code class="docutils literal notranslate"><span class="pre">predict()</span></code>は既定で<code class="docutils literal notranslate"><span class="pre">predict_proba()</span></code>に委譲します。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">ComparisonSurrogate</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">train_y</span></code>が<code class="docutils literal notranslate"><span class="pre">{0,</span> <span class="pre">1}</span></code>の二値比較ラベルである比較サロゲート向け。
+<code class="docutils literal notranslate"><span class="pre">predict_proba(test_x)</span> <span class="pre">-&gt;</span> <span class="pre">SurrogatePrediction</span></code>（値は<code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>の勝率）が主インターフェースで、<code class="docutils literal notranslate"><span class="pre">predict()</span></code>は既定で<code class="docutils literal notranslate"><span class="pre">predict_proba()</span></code>に委譲します。</p>
 </section>
 <section id="surrogateprediction">
 <h2>SurrogatePrediction<a class="headerlink" href="#surrogateprediction" title="Link to this heading">#</a></h2>
@@ -630,13 +633,15 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">value</span></code>と<code class="docutils literal notranslate"><span class="pre">std</span></code>は目的関数チャンネル向けの便利なプロパティです。サロゲートの予測が目的関数値ではない量（新規性スコアなど）を表す場合、この仕組みによってpbestのような値が汚染されるのを防ぎます。<code class="docutils literal notranslate"><span class="pre">NoveltyAcquisition</span></code>などのアーカイブベースの基準は、候補とアーカイブの設計点を直接受け取ります。</p>
+<p><code class="docutils literal notranslate"><span class="pre">value</span></code>と<code class="docutils literal notranslate"><span class="pre">std</span></code>は目的関数チャンネル向けの便利なプロパティです。
+サロゲートの予測が目的関数値ではない量（新規性スコアなど）を表す場合、この仕組みによってpbestのような値が汚染されるのを防ぎます。
+<code class="docutils literal notranslate"><span class="pre">NoveltyAcquisition</span></code>などのアーカイブベースの基準は、候補とアーカイブの設計点を直接受け取ります。</p>
 </section>
-<section id="built-in-surrogates">
-<h2>組み込みSurrogate<a class="headerlink" href="#built-in-surrogates" title="Link to this heading">#</a></h2>
-<p><strong><code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel,</span> <span class="pre">polynomial_degree=&quot;auto&quot;,</span> <span class="pre">solver=&quot;lstsq&quot;,</span> <span class="pre">alpha=1e-8)</span></code></strong>: A surrogate using RBF interpolation <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id37" title="Hans-Martin Gutmann. A radial basis function method for global optimization. Journal of Global Optimization, 19(3):201–227, 2001. doi:10.1023/A:1011255519438.">16</a>, <a class="reference internal" href="../../references.html#id38" title="Rommel G. Regis and Christine A. Shoemaker. Constrained global optimization of expensive black box functions using radial basis functions. Journal of Global Optimization, 31(1):153–171, 2005. doi:10.1007/s10898-004-0570-0.">17</a>, <a class="reference internal" href="../../references.html#id40" title="Carl Edward Rasmussen and Christopher K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006.">18</a>]</span> (the origin of RBF interpolation itself is Hardy, 1971).
-<code class="docutils literal notranslate"><span class="pre">kernel</span></code> is a required <code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code> object with no default (built-in kernels are listed below); a custom kernel is a subclass implementing <code class="docutils literal notranslate"><span class="pre">evaluate(r)</span></code>.
-<code class="docutils literal notranslate"><span class="pre">predict()</span></code> explicitly returns <code class="docutils literal notranslate"><span class="pre">std=None</span></code> (RBF interpolation provides no uncertainty).</p>
+<section id="id2">
+<h2>組み込みSurrogate<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<p><strong><code class="docutils literal notranslate"><span class="pre">RBFSurrogate(kernel,</span> <span class="pre">polynomial_degree=&quot;auto&quot;,</span> <span class="pre">solver=&quot;lstsq&quot;,</span> <span class="pre">alpha=1e-8)</span></code></strong>：RBF補間によるサロゲートです<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../references.html#id38" title="Hans-Martin Gutmann. A radial basis function method for global optimization. Journal of Global Optimization, 19(3):201–227, 2001. doi:10.1023/A:1011255519438.">16</a>, <a class="reference internal" href="../../references.html#id39" title="Rommel G. Regis and Christine A. Shoemaker. Constrained global optimization of expensive black box functions using radial basis functions. Journal of Global Optimization, 31(1):153–171, 2005. doi:10.1007/s10898-004-0570-0.">17</a>, <a class="reference internal" href="../../references.html#id41" title="Carl Edward Rasmussen and Christopher K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006.">18</a>]</span>（RBF補間自体の起源はHardy, 1971）。
+<code class="docutils literal notranslate"><span class="pre">kernel</span></code>は既定値を持たない必須の<code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>オブジェクトです（組み込みカーネルは以下に示します）。カスタムカーネルは<code class="docutils literal notranslate"><span class="pre">evaluate(r)</span></code>を実装するサブクラスとして作ります。
+<code class="docutils literal notranslate"><span class="pre">predict()</span></code>は<code class="docutils literal notranslate"><span class="pre">std=None</span></code>を明示的に返します（RBF補間は不確実性を提供しません）。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>パラメータ</p></th>
@@ -650,8 +655,8 @@
 <td><p>補間系を多項式項で拡張します（<code class="docutils literal notranslate"><span class="pre">kernel.auto_polynomial_degree</span></code>から決定 / なし / 定数 / 線形）。<code class="docutils literal notranslate"><span class="pre">ThinPlateSplineKernel</span></code>のような条件付き正定値カーネルには多項式項が必要です。<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>のような狭義正定値カーネルには不要ですが、<code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>は定数項に解決されます。目的関数値すべてに同じ定数を足しても予測が変わらないようにするためです。</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">solver</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">&quot;lstsq&quot;</span></code> (default) / <code class="docutils literal notranslate"><span class="pre">&quot;solve&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">&quot;tikhonov&quot;</span></code></p></td>
-<td><p>How the (possibly augmented) linear system is solved: least squares (tolerant of rank-deficient systems) / direct / ridge-regularized via <code class="docutils literal notranslate"><span class="pre">alpha</span></code>.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;lstsq&quot;</span></code>（既定） / <code class="docutils literal notranslate"><span class="pre">&quot;solve&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">&quot;tikhonov&quot;</span></code></p></td>
+<td><p>線形系（多項式項で拡張されている場合を含む）の解法：最小二乗法（ランク落ちした系にも対応） / 直接法 / <code class="docutils literal notranslate"><span class="pre">alpha</span></code>によるリッジ正則化。</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">1e-8</span></code>（既定）</p></td>
@@ -660,7 +665,8 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">kernel</span></code>と<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code>は設定した値そのものです。<code class="docutils literal notranslate"><span class="pre">resolved_kernel</span></code>と<code class="docutils literal notranslate"><span class="pre">resolved_polynomial_degree</span></code>は、<code class="docutils literal notranslate"><span class="pre">fit()</span></code>が実際に解決して使う値を公開し、設定した<code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>インスタンス自体は不変に保ちます。<code class="docutils literal notranslate"><span class="pre">kernel</span></code>/<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code>/<code class="docutils literal notranslate"><span class="pre">solver</span></code>/<code class="docutils literal notranslate"><span class="pre">alpha</span></code>を再設定すると、fit済みの状態は無効になり、次の<code class="docutils literal notranslate"><span class="pre">fit()</span></code>まで<code class="docutils literal notranslate"><span class="pre">predict()</span></code>は<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code>を送出します。</p>
+<p><code class="docutils literal notranslate"><span class="pre">kernel</span></code>と<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code>は設定した値そのものです。<code class="docutils literal notranslate"><span class="pre">resolved_kernel</span></code>と<code class="docutils literal notranslate"><span class="pre">resolved_polynomial_degree</span></code>は、<code class="docutils literal notranslate"><span class="pre">fit()</span></code>が実際に解決して使う値を公開し、設定した<code class="docutils literal notranslate"><span class="pre">RBFKernel</span></code>インスタンス自体は不変に保ちます。
+<code class="docutils literal notranslate"><span class="pre">kernel</span></code>/<code class="docutils literal notranslate"><span class="pre">polynomial_degree</span></code>/<code class="docutils literal notranslate"><span class="pre">solver</span></code>/<code class="docutils literal notranslate"><span class="pre">alpha</span></code>を再設定すると、fit済みの状態は無効になり、次の<code class="docutils literal notranslate"><span class="pre">fit()</span></code>まで<code class="docutils literal notranslate"><span class="pre">predict()</span></code>は<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code>を送出します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">length_scale</span></code>フィールドを持つカーネル（入力データと同じ距離単位）は、<code class="docutils literal notranslate"><span class="pre">None</span></code>のままにすると訓練点間のペアワイズ距離の中央値へ自動的に解決されます。</p>
 <p>各カーネルは独立した2つの次数を宣言します。<code class="docutils literal notranslate"><span class="pre">min_polynomial_degree</span></code>はそのカーネルが受け付ける最小の次数で、これを下回る値（<code class="docutils literal notranslate"><span class="pre">None</span></code>を含む）を渡すと<code class="docutils literal notranslate"><span class="pre">ValidationError</span></code>になります。<code class="docutils literal notranslate"><span class="pre">auto_polynomial_degree</span></code>は<code class="docutils literal notranslate"><span class="pre">polynomial_degree=&quot;auto&quot;</span></code>の解決先で、最小次数より高いことがあります。</p>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -706,9 +712,11 @@
 </table>
 </div>
 <p>6種類のカーネルと3種類の<code class="docutils literal notranslate"><span class="pre">solver</span></code>はいずれもサポート対象です。それぞれテストで検証されており、そのまま利用できます。<code class="docutils literal notranslate"><span class="pre">GaussianKernel</span></code>や<code class="docutils literal notranslate"><span class="pre">MaternKernel</span></code>に<code class="docutils literal notranslate"><span class="pre">polynomial_degree=None</span></code>を渡すこともサポートしており、<code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>が追加する定数項を落とせます。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">PerObjectiveSurrogate(surrogates)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">RegressionSurrogate</span></code>のサブクラスで、目的ごとに異なるサロゲートを割り当てる合成クラス。 <code class="docutils literal notranslate"><span class="pre">fit</span></code>時に<code class="docutils literal notranslate"><span class="pre">train_y</span></code>の列数と<code class="docutils literal notranslate"><span class="pre">len(surrogates)</span></code>が一致しないと<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>になります。 <code class="docutils literal notranslate"><span class="pre">provides_uncertainty</span></code>は、構成する全サロゲートが<code class="docutils literal notranslate"><span class="pre">True</span></code>の場合のみ<code class="docutils literal notranslate"><span class="pre">True</span></code>を返す複合判定になっています。</p>
-<section id="external-library-adapters">
-<h3>外部ライブラリアダプタ<a class="headerlink" href="#external-library-adapters" title="Link to this heading">#</a></h3>
+<p><strong><code class="docutils literal notranslate"><span class="pre">PerObjectiveSurrogate(surrogates)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">RegressionSurrogate</span></code>のサブクラスで、目的ごとに異なるサロゲートを割り当てる合成クラス。
+<code class="docutils literal notranslate"><span class="pre">fit</span></code>時に<code class="docutils literal notranslate"><span class="pre">train_y</span></code>の列数と<code class="docutils literal notranslate"><span class="pre">len(surrogates)</span></code>が一致しないと<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>になります。
+<code class="docutils literal notranslate"><span class="pre">provides_uncertainty</span></code>は、構成する全サロゲートが<code class="docutils literal notranslate"><span class="pre">True</span></code>の場合のみ<code class="docutils literal notranslate"><span class="pre">True</span></code>を返す複合判定になっています。</p>
+<section id="id4">
+<h3>外部ライブラリアダプタ<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
 <p>scikit-learn互換API経由の回帰サロゲートには<code class="docutils literal notranslate"><span class="pre">Sklearn</span></code>という接頭辞が付きます。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -718,7 +726,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SklearnGPRSurrogate</span></code></p></td>
-<td><p>ガウス過程<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id40" title="Carl Edward Rasmussen and Christopher K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006.">18</a>, <a class="reference internal" href="../../references.html#id39" title="Jerome Sacks, William J. Welch, Toby J. Mitchell, and Henry P. Wynn. Design and analysis of computer experiments. Statistical Science, 4(4):409–423, 1989. doi:10.1214/ss/1177012413.">19</a>]</span>。<code class="docutils literal notranslate"><span class="pre">provides_uncertainty=True</span></code>の唯一の実装</p></td>
+<td><p>ガウス過程<span class="bibtex-citation" id="id5">[<a class="reference internal" href="../../references.html#id41" title="Carl Edward Rasmussen and Christopher K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006.">18</a>, <a class="reference internal" href="../../references.html#id40" title="Jerome Sacks, William J. Welch, Toby J. Mitchell, and Henry P. Wynn. Design and analysis of computer experiments. Statistical Science, 4(4):409–423, 1989. doi:10.1214/ss/1177012413.">19</a>]</span>。<code class="docutils literal notranslate"><span class="pre">provides_uncertainty=True</span></code>の唯一の実装</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">SklearnRFRSurrogate</span></code></p></td>
 <td><p>ランダムフォレスト回帰</p></td>
@@ -762,17 +770,21 @@
 </tbody>
 </table>
 </div>
-<p>これらの分類サロゲートの学習データ抽出方法は<a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>の<code class="docutils literal notranslate"><span class="pre">FeasibilityClassificationSet</span></code>を参照してください。 ペア比較には、これらの分類サロゲートではなく<code class="docutils literal notranslate"><span class="pre">ComparisonSurrogate</span></code>系の専用実装を使い、<a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>の<code class="docutils literal notranslate"><span class="pre">PairwiseSurrogateManager</span></code>および<code class="docutils literal notranslate"><span class="pre">PairwiseComparisonSet</span></code>と組み合わせます。</p>
+<p>これらの分類サロゲートの学習データ抽出方法は<a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>の<code class="docutils literal notranslate"><span class="pre">FeasibilityClassificationSet</span></code>を参照してください。
+ペア比較には、これらの分類サロゲートではなく<code class="docutils literal notranslate"><span class="pre">ComparisonSurrogate</span></code>系の専用実装を使い、<a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>の<code class="docutils literal notranslate"><span class="pre">PairwiseSurrogateManager</span></code>および<code class="docutils literal notranslate"><span class="pre">PairwiseComparisonSet</span></code>と組み合わせます。</p>
 <p>各追加機能のインストール方法は<a class="reference internal" href="../../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
 <div class="admonition note">
 <p class="admonition-title">注釈</p>
-<p>scikit-learn/XGBoost/LightGBM/PyTorch以外のBoTorch/SMTサロゲート用アダプターは、現時点で <code class="docutils literal notranslate"><span class="pre">saealib</span></code> に実装されていません。<code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> に対応する追加機能もありません。pymooにはアダプターがありますが、<a class="reference internal" href="../problem_and_ranking/problem.html"><span class="std std-doc">Problem</span></a>/<a class="reference internal" href="../search_algorithms/crossover.html"><span class="std std-doc">Crossover</span></a>/<a class="reference internal" href="../search_algorithms/mutation.html"><span class="std std-doc">Mutation</span></a>/<a class="reference internal" href="../search_algorithms/algorithm.html"><span class="std std-doc">Algorithm</span></a> のレベルであり、<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code> としてではありません。pymooはサロゲートモデルを提供しません。</p>
+<p>scikit-learn/XGBoost/LightGBM/PyTorch以外のBoTorch/SMTサロゲート用アダプターは、現時点で
+<code class="docutils literal notranslate"><span class="pre">saealib</span></code> に実装されていません。<code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> に対応する追加機能もありません。pymooにはアダプターがありますが、<a class="reference internal" href="../problem_and_ranking/problem.html"><span class="std std-doc">Problem</span></a>/<a class="reference internal" href="../search_algorithms/crossover.html"><span class="std std-doc">Crossover</span></a>/<a class="reference internal" href="../search_algorithms/mutation.html"><span class="std std-doc">Mutation</span></a>/<a class="reference internal" href="../search_algorithms/algorithm.html"><span class="std std-doc">Algorithm</span></a>
+のレベルであり、<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code> としてではありません。pymooはサロゲートモデルを提供しません。</p>
 </div>
 </section>
 </section>
-<section id="extension-hooks">
-<h2>拡張フック<a class="headerlink" href="#extension-hooks" title="Link to this heading">#</a></h2>
-<p>フィット後の後処理だけを足したい場合、サブクラスを新設せずに<code class="docutils literal notranslate"><span class="pre">with_post_fit(fn)</span></code>で既存の<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>インスタンスへ処理を追加できます。 <code class="docutils literal notranslate"><span class="pre">with_post_fit</span></code>は元のインスタンスを変更せず、<code class="docutils literal notranslate"><span class="pre">fn</span></code>を追加したコピーを返します。</p>
+<section id="id6">
+<h2>拡張フック<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<p>フィット後の後処理だけを足したい場合、サブクラスを新設せずに<code class="docutils literal notranslate"><span class="pre">with_post_fit(fn)</span></code>で既存の<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>インスタンスへ処理を追加できます。
+<code class="docutils literal notranslate"><span class="pre">with_post_fit</span></code>は元のインスタンスを変更せず、<code class="docutils literal notranslate"><span class="pre">fn</span></code>を追加したコピーを返します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianKernel</span><span class="p">,</span> <span class="n">RBFSurrogate</span>
 
 
@@ -786,9 +798,10 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">fn</span></code>のシグネチャは<code class="docutils literal notranslate"><span class="pre">fn(train_x,</span> <span class="pre">train_y,</span> <span class="pre">ctx)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code>です。</p>
 </section>
-<section id="implementing-a-custom-surrogate">
-<h2>独自Surrogateの実装方法<a class="headerlink" href="#implementing-a-custom-surrogate" title="Link to this heading">#</a></h2>
-<p>独自の予測モデルが必要な場合は、<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">fit()</span></code>/<code class="docutils literal notranslate"><span class="pre">predict()</span></code>を実装します。 回帰なら<code class="docutils literal notranslate"><span class="pre">RegressionSurrogate</span></code>、比較なら<code class="docutils literal notranslate"><span class="pre">ComparisonSurrogate</span></code>（<code class="docutils literal notranslate"><span class="pre">predict_proba()</span></code>を実装）を継承先に選びます。</p>
+<section id="id7">
+<h2>独自Surrogateの実装方法<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<p>独自の予測モデルが必要な場合は、<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">fit()</span></code>/<code class="docutils literal notranslate"><span class="pre">predict()</span></code>を実装します。
+回帰なら<code class="docutils literal notranslate"><span class="pre">RegressionSurrogate</span></code>、比較なら<code class="docutils literal notranslate"><span class="pre">ComparisonSurrogate</span></code>（<code class="docutils literal notranslate"><span class="pre">predict_proba()</span></code>を実装）を継承先に選びます。</p>
 <p>次の例は、最近傍点の目的関数値をそのまま予測値として返す単純な回帰サロゲートです。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegressionSurrogate</span><span class="p">,</span> <span class="n">SurrogatePrediction</span>
@@ -810,8 +823,8 @@
 </pre></div>
 </div>
 </section>
-<section id="uncertainty-support-table">
-<h2>不確実性対応表<a class="headerlink" href="#uncertainty-support-table" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>不確実性対応表<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <p>不確実性ベースの<a class="reference internal" href="acquisition_functions.html"><span class="std std-doc">AcquisitionFunction</span></a>を使うには、<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>が<code class="docutils literal notranslate"><span class="pre">std</span></code>を返す必要があります。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -834,8 +847,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">Optimizer.validate()</span></code>は、<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>の<code class="docutils literal notranslate"><span class="pre">requires_uncertainty</span></code>と<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>の<code class="docutils literal notranslate"><span class="pre">provides_uncertainty</span></code>の不整合を検出して警告します。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>関連コンポーネント<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>のfit/predictを協調させる</p></li>
 <li><p><a class="reference internal" href="training_set.html"><span class="std std-doc">TrainingSet</span></a>：<code class="docutils literal notranslate"><span class="pre">Surrogate</span></code>に渡す学習データの抽出方法</p></li>
@@ -844,8 +857,8 @@
 <li><p><a class="reference internal" href="../../getting_started/installation.html"><span class="std std-doc">インストール</span></a>：各追加機能のインストール方法</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id10">
+<h2>参照<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.Surrogate.html#saealib.Surrogate" title="saealib.Surrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Surrogate</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.RegressionSurrogate.html#saealib.RegressionSurrogate" title="saealib.RegressionSurrogate"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.RegressionSurrogate</span></code></a></p></li>
@@ -921,17 +934,17 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogate-s-role">Surrogateの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Surrogateの役割</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#surrogateprediction">SurrogatePrediction</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-surrogates">組み込みSurrogate</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#external-library-adapters">外部ライブラリアダプタ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">組み込みSurrogate</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">外部ライブラリアダプタ</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extension-hooks">拡張フック</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#implementing-a-custom-surrogate">独自Surrogateの実装方法</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#uncertainty-support-table">不確実性対応表</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">拡張フック</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">独自Surrogateの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">不確実性対応表</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">参照</a></li>
 </ul>
   </nav></div>
 

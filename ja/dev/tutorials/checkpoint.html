@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>再現性とチェックポイント &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>再現性とチェックポイント &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -491,7 +491,7 @@
 <li class="toctree-l1"><a class="reference internal" href="dynamic_optimization.html">サロゲート精度に応じた動的な切り替え</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">再現性とチェックポイント</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">進捗のログ記録</a></li>
-<li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリとの連携</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリの統合</a></li>
 </ul>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="component_swap.html">ビルトインコンポーネントを選んで差し替える</a></li>
@@ -559,8 +559,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="reproducibility-and-checkpointing">
-<h1>再現性とチェックポイント<a class="headerlink" href="#reproducibility-and-checkpointing" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>再現性とチェックポイント<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>長時間実行する最適化を再現可能にし、途中から再開できるようにします。</p>
 <p>チェックポイント機能は低レベルの <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> APIで使います。 <code class="docutils literal notranslate"><span class="pre">Optimizer(problem)</span></code>を構築し、<code class="docutils literal notranslate"><span class="pre">set_*()</span></code>を連鎖させてコンポーネントを設定し、<code class="docutils literal notranslate"><span class="pre">run()</span></code>で実行します。 保存した状態からは <code class="docutils literal notranslate"><span class="pre">run_from()</span></code>で再開できます。</p>
 <div class="tip admonition">
@@ -568,8 +568,8 @@
 <p>このページを終えると、乱数シードで再現性を確保し、チェックポイントを保存・読み込みして最適化を再開できます。</p>
 </div>
 <p>高レベルAPIでの一回実行だけで足りる場合は <a class="reference internal" href="highlevel_api.html"><span class="std std-doc">高レベルAPI</span></a> を使い、実行状態を細かく構成する場合は <a class="reference internal" href="lowlevel_api.html"><span class="std std-doc">低レベルAPI</span></a> を参照してください。 このページでは、低レベルAPIで再現可能な実行を保存し、途中から再開する手順を扱います。</p>
-<section id="reproduce-runs-with-a-random-seed">
-<h2>乱数シードで実行を再現する<a class="headerlink" href="#reproduce-runs-with-a-random-seed" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>乱数シードで実行を再現する<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p>同じ <code class="docutils literal notranslate"><span class="pre">seed</span></code> を <code class="docutils literal notranslate"><span class="pre">Optimizer(problem,</span> <span class="pre">seed=...)</span></code> に渡すと、乱数を使うすべての処理が同じ順序で初期化され、同一の結果が得られます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -640,8 +640,8 @@
 <p>以降の節でも、同じコンポーネント構成で <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> を再構築するために <code class="docutils literal notranslate"><span class="pre">build_optimizer</span></code> を使います。</p>
 <p>再現性を保つには、SurrogateManagerとAcquisitionFunctionを同じ構成で再生成します。 <code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>の引数にAcquisitionFunctionを渡す構成は現行APIでは使いません。</p>
 </section>
-<section id="save-and-resume-a-checkpoint">
-<h2>チェックポイントを保存して再開する<a class="headerlink" href="#save-and-resume-a-checkpoint" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>チェックポイントを保存して再開する<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">run()</span></code> が返す <code class="docutils literal notranslate"><span class="pre">ctx</span></code> は、<code class="docutils literal notranslate"><span class="pre">ctx.save(path)</span></code> によって1つのnpzファイルに保存できます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span> <span class="o">=</span> <span class="n">build_optimizer</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 <span class="n">ctx</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;checkpoint.npz&quot;</span><span class="p">)</span>
@@ -660,8 +660,8 @@
 <p><code class="docutils literal notranslate"><span class="pre">ctx.data[&quot;resumed&quot;]</span></code> は、<code class="docutils literal notranslate"><span class="pre">run_from()</span></code> で再開したコンテキストだけで <code class="docutils literal notranslate"><span class="pre">True</span></code> になるフラグです。</p>
 <p><code class="docutils literal notranslate"><span class="pre">RunStartEvent</span></code> などのコールバックからは、<code class="docutils literal notranslate"><span class="pre">event.ctx.data[&quot;resumed&quot;]</span></code> として参照できます。</p>
 </section>
-<section id="save-checkpoints-automatically">
-<h2>チェックポイントを自動保存する<a class="headerlink" href="#save-checkpoints-automatically" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>チェックポイントを自動保存する<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">run()</span></code>/<code class="docutils literal notranslate"><span class="pre">iterate()</span></code> に <code class="docutils literal notranslate"><span class="pre">checkpoint_path</span></code> を渡すと、<code class="docutils literal notranslate"><span class="pre">checkpoint_interval</span></code> 世代ごとに自動保存します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">checkpoint_path</span></code> は単一ファイルではなくディレクトリとして扱われ、世代ごとに <code class="docutils literal notranslate"><span class="pre">checkpoint_{gen:06d}.npz</span></code> という名前のスナップショットが作成されます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span> <span class="o">=</span> <span class="n">build_optimizer</span><span class="p">(</span><span class="mi">300</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="o">=</span><span class="s2">&quot;checkpoints&quot;</span><span class="p">,</span> <span class="n">checkpoint_interval</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
@@ -683,8 +683,8 @@
 </pre></div>
 </div>
 </section>
-<section id="save-in-pickle-format">
-<h2>pickle形式で保存する<a class="headerlink" href="#save-in-pickle-format" title="Link to this heading">#</a></h2>
+<section id="pickle">
+<h2>pickle形式で保存する<a class="headerlink" href="#pickle" title="Link to this heading">#</a></h2>
 <p>npz形式では <code class="docutils literal notranslate"><span class="pre">ctx</span></code> だけを保存しますが、pickle形式では学習済みサロゲートのパラメータを含む <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> 全体を保存できます。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">build_optimizer</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
@@ -696,8 +696,8 @@
 <p>実行時にPythonまたはライブラリのバージョンについての <code class="docutils literal notranslate"><span class="pre">UserWarning</span></code> が表示されることがあります。</p>
 <p><code class="docutils literal notranslate"><span class="pre">Termination</span></code> で使うlambdaなど、標準の <code class="docutils literal notranslate"><span class="pre">pickle</span></code> でシリアライズできないオブジェクトを含む <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> はpickle形式で保存できません。</p>
 </section>
-<section id="use-checkpointcallback-directly">
-<h2>CheckpointCallbackを直接使う<a class="headerlink" href="#use-checkpointcallback-directly" title="Link to this heading">#</a></h2>
+<section id="checkpointcallback">
+<h2>CheckpointCallbackを直接使う<a class="headerlink" href="#checkpointcallback" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">run()</span></code> の <code class="docutils literal notranslate"><span class="pre">checkpoint_path</span></code> 引数は、内部で <code class="docutils literal notranslate"><span class="pre">CheckpointCallback</span></code> を登録するだけです。</p>
 <p>同じ動作を明示的に接続するには、<code class="docutils literal notranslate"><span class="pre">cbmanager</span></code> に <code class="docutils literal notranslate"><span class="pre">CheckpointCallback</span></code> を登録します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">CheckpointCallback</span>
@@ -711,8 +711,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">format=&quot;pickle&quot;</span></code> または <code class="docutils literal notranslate"><span class="pre">format=&quot;both&quot;</span></code> を指定する場合は、<code class="docutils literal notranslate"><span class="pre">optimizer</span></code> 引数が必要です。</p>
 </section>
-<section id="related-concepts-and-reference">
-<h2>関連するConceptとReference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
+<section id="conceptreference">
+<h2>関連するConceptとReference<a class="headerlink" href="#conceptreference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.Optimizer.html#saealib.Optimizer" title="saealib.Optimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Optimizer</span></code></a></p></li>
 <li><p><a class="reference internal" href="../api/_autosummary/saealib.CheckpointCallback.html#saealib.CheckpointCallback" title="saealib.CheckpointCallback"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.CheckpointCallback</span></code></a></p></li>
@@ -768,12 +768,12 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reproduce-runs-with-a-random-seed">乱数シードで実行を再現する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#save-and-resume-a-checkpoint">チェックポイントを保存して再開する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#save-checkpoints-automatically">チェックポイントを自動保存する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#save-in-pickle-format">pickle形式で保存する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-checkpointcallback-directly">CheckpointCallbackを直接使う</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">関連するConceptとReference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">乱数シードで実行を再現する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">チェックポイントを保存して再開する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">チェックポイントを自動保存する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pickle">pickle形式で保存する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#checkpointcallback">CheckpointCallbackを直接使う</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conceptreference">関連するConceptとReference</a></li>
 </ul>
   </nav></div>
 

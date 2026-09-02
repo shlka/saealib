@@ -6,16 +6,16 @@ page_type: entry
 
 # Framework
 
-The saealib framework places Component contracts in a ComponentGraph and provides the execution foundation for the Compiler to turn them into a verified ExecutablePlan.
-It treats contract structure and execution flow as separate relationships.
+saealibのフレームワークはComponentの契約をComponentGraphに配置し、Compilerが検証済みのExecutablePlanへ変換するための実行基盤を提供します。
+契約構造と実行フローは別の関係として扱います。
 
-## Concept pages
+## 概念ページ
 
-Components return their static contract through `contract()`.
-ComponentContract describes contract inclusion for the components a Component holds and the capabilities it requires, not a Component inheritance hierarchy.
-`PortSpec`, `DataSpec`, and `StateContract` are declarative values that compose a contract, not Component subclasses.
+Componentは`contract()`で静的な契約を返します。
+ComponentContractは、Componentが保持するコンポーネントの契約包含と必要な能力を記述するもので、Componentの継承階層を表すものではありません。
+`PortSpec`、`DataSpec`、`StateContract`は契約を構成する宣言的な値であり、Componentサブクラスではありません。
 
-The following pages explain the concepts needed for extensions by responsibility.
+次のページで、拡張時に必要な概念を分担して説明します。
 
 ::::{grid} 1 2 2 3
 :gutter: 3
@@ -23,71 +23,71 @@ The following pages explain the concepts needed for extensions by responsibility
 :::{grid-item-card} {fa}`puzzle-piece;sd-mr-1` Component
 :link: component
 :link-type: doc
-The Component Protocol, `contract()`, and PartSpec.
+Component Protocol、`contract()`、PartSpecの関係。
 :::
 
 :::{grid-item-card} {fa}`file-signature;sd-mr-1` ComponentContract
 :link: contract
 :link-type: doc
-Contract elements and invariants.
+契約の構成要素と不変条件。
 :::
 
 :::{grid-item-card} {fa}`plug;sd-mr-1` Specs
 :link: specs
 :link-type: doc
-Declarative values for ports, data, services, and compatibility.
+ポート、データ、サービス、互換性を表す宣言的な値
 :::
 
 :::{grid-item-card} {fa}`diagram-project;sd-mr-1` Graph
 :link: graph
 :link-type: doc
-Nodes, edges, state bindings, and structured regions.
+ノード、エッジ、状態バインディング、構造化領域。
 :::
 
 :::{grid-item-card} {fa}`gears;sd-mr-1` Compiler
 :link: compiler
 :link-type: doc
-Verification, resolution, diagnostics, and ExecutablePlan.
+検証、解決、診断、ExecutablePlan。
 :::
 
 :::{grid-item-card} {fa}`microchip;sd-mr-1` Runtime
 :link: runtime
 :link-type: doc
-ExecutablePlan execution, state application, resumption, and asynchronous waiting.
+ExecutablePlanの実行、状態適用、再開、非同期待機。
 :::
 
 :::{grid-item-card} {fa}`square-root-variable;sd-mr-1` SearchSpace
 :link: ../concepts/problem_and_ranking/search_space
 :link-type: doc
-Candidate representation, services, and the RepresentationSpec boundary.
+候補表現、サービス、RepresentationSpecの境界。
 :::
 
 :::{grid-item-card} {fa}`comment-dots;sd-mr-1` Feedback
 :link: ../concepts/observation_and_state/feedback
 :link-type: doc
-Candidate IDs and the correspondence between observations, true values, and predictions.
+候補ID、観測、真値と予測の対応。
 :::
 
 :::{grid-item-card} {fa}`database;sd-mr-1` OptimizationState
 :link: ../concepts/observation_and_state/optimization_state
 :link-type: doc
-The ownership boundary between Stage-compatible and graph-native state.
+Stage互換状態とgraph-native状態の所有境界。
 :::
 
 ::::
 
-## Execution flow
+## 実行フロー
 
-The runtime relationship is `Component → ComponentNode → ComponentGraph → Compiler → ExecutablePlan → ExecutionRuntime`.
-This flow is separate from the contract tree; ComponentContract does not directly represent execution order.
+Runtime上の関係は`Component → ComponentNode → ComponentGraph → Compiler → ExecutablePlan → ExecutionRuntime`です。
+この流れは契約ツリーとは別であり、ComponentContractが実行順序を直接表すことはありません。
 
-See [OptimizationState](../concepts/observation_and_state/optimization_state.md) and [Runtime](runtime.md) for detailed state boundaries, and [SearchSpace](../concepts/problem_and_ranking/search_space.md) and [Feedback](../concepts/observation_and_state/feedback.md) for candidate-representation and observation boundaries.
+詳細な状態境界は[OptimizationState](../concepts/observation_and_state/optimization_state.md)と[Runtime](runtime.md)で、候補表現と観測の境界は[SearchSpace](../concepts/problem_and_ranking/search_space.md)と[Feedback](../concepts/observation_and_state/feedback.md)で説明します。
 
-## Extension paths
+## 拡張経路
 
-When you only need to swap the behavior of a built-in component, choose the corresponding extension page.
-When you need a new contract, candidate representation, Graph connection, Compiler rule, or Runtime semantic, see [Framework extensions](extensions.md).
-See the [API reference](../api/index.md) for import paths for public types.
+既存のビルトインコンポーネントの振る舞いだけを差し替える場合は、対応する拡張ページを選びます。
+新しい契約、候補表現、Graph接続、Compilerルール、Runtimeの意味論が必要な場合は[フレームワーク拡張](extensions.md)を参照してください。
+公開型のimport経路は[APIリファレンス](../api/index.md)で確認します。
 
 ```{toctree}
 :hidden:

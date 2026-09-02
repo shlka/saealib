@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>NonDominatedSorter &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>NonDominatedSorter &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -182,7 +182,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -364,7 +364,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -487,11 +487,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="problem.html">Problem</a></li>
 <li class="toctree-l2"><a class="reference internal" href="search_space.html">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dominance.html">支配判定器</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="decomposition.html">Decomposition</a></li>
@@ -509,7 +509,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -522,7 +522,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -573,7 +573,7 @@
     <li class="breadcrumb-item"><a href="../index.html" class="nav-link">最適化の構成要素</a></li>
     
     
-    <li class="breadcrumb-item"><a href="../problem_and_ranking.html" class="nav-link">問題定義と順位付け</a></li>
+    <li class="breadcrumb-item"><a href="../problem_and_ranking.html" class="nav-link">問題定義とランキング</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">NonDominatedSorter</span></li>
   </ul>
@@ -594,14 +594,14 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="nondominatedsorter">
 <h1>NonDominatedSorter<a class="headerlink" href="#nondominatedsorter" title="Link to this heading">#</a></h1>
-<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p><a class="reference internal" href="comparators.html"><span class="std std-doc">ParetoComparator</span></a>系のComparator（<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>/<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>/<code class="docutils literal notranslate"><span class="pre">NSGA3Comparator</span></code>/<code class="docutils literal notranslate"><span class="pre">RNSGA2Comparator</span></code>/<code class="docutils literal notranslate"><span class="pre">EpsilonDominanceComparator</span></code>）は、個体群をフロントへ振り分ける処理を<code class="docutils literal notranslate"><span class="pre">sorter</span></code>という差し替え可能な引数に委ねています。 <a class="reference internal" href="dominance.html"><span class="std std-doc">Dominator</span></a>が「2点間の支配関係の定義」を担うのに対し、<code class="docutils literal notranslate"><span class="pre">sorter</span></code>は「その支配関係を使ってどうフロントに割り振るか」というもう1つの独立した差し替え軸です。</p>
-<section id="nondominatedsorter-s-role">
-<h2>NonDominatedSorterの役割<a class="headerlink" href="#nondominatedsorter-s-role" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">NonDominatedSorter</span></code>は、抽象基底クラスではなく<code class="docutils literal notranslate"><span class="pre">Protocol</span></code>（構造的部分型）として定義されています。 <code class="docutils literal notranslate"><span class="pre">__call__(f,</span> <span class="pre">direction=None,</span> <span class="pre">*,</span> <span class="pre">dominator=None)</span> <span class="pre">-&gt;</span> <span class="pre">tuple[ranks,</span> <span class="pre">fronts]</span></code>というシグネチャを満たす呼び出し可能オブジェクトであれば、クラスを継承しなくても<code class="docutils literal notranslate"><span class="pre">sorter</span></code>として渡せます。</p>
+<div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p><a class="reference internal" href="comparators.html"><span class="std std-doc">ParetoComparator</span></a>系のComparator（<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>/<code class="docutils literal notranslate"><span class="pre">HypervolumeComparator</span></code>/<code class="docutils literal notranslate"><span class="pre">NSGA3Comparator</span></code>/<code class="docutils literal notranslate"><span class="pre">RNSGA2Comparator</span></code>/<code class="docutils literal notranslate"><span class="pre">EpsilonDominanceComparator</span></code>）は、個体群をフロントへ振り分ける処理を<code class="docutils literal notranslate"><span class="pre">sorter</span></code>という差し替え可能な引数に委ねています。<a class="reference internal" href="dominance.html"><span class="std std-doc">Dominator</span></a>が「2点間の支配関係の定義」を担うのに対し、<code class="docutils literal notranslate"><span class="pre">sorter</span></code>は「その支配関係を使ってどうフロントに割り振るか」というもう1つの独立した差し替え軸です。</p>
+<section id="id1">
+<h2>NonDominatedSorterの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">NonDominatedSorter</span></code>は、抽象基底クラスではなく<code class="docutils literal notranslate"><span class="pre">Protocol</span></code>（構造的部分型）として定義されています。<code class="docutils literal notranslate"><span class="pre">__call__(f,</span> <span class="pre">direction=None,</span> <span class="pre">*,</span> <span class="pre">dominator=None)</span> <span class="pre">-&gt;</span> <span class="pre">tuple[ranks,</span> <span class="pre">fronts]</span></code>というシグネチャを満たす呼び出し可能オブジェクトであれば、クラスを継承しなくても<code class="docutils literal notranslate"><span class="pre">sorter</span></code>として渡せます。</p>
 <p><code class="docutils literal notranslate"><span class="pre">ranks</span></code>は各個体のフロント番号（<code class="docutils literal notranslate"><span class="pre">0</span></code>が最良）を表す配列、<code class="docutils literal notranslate"><span class="pre">fronts</span></code>は<code class="docutils literal notranslate"><span class="pre">fronts[i]</span></code>がフロント<code class="docutils literal notranslate"><span class="pre">i</span></code>に属する個体のインデックスリストであるという契約を満たします。</p>
 </section>
-<section id="built-in-nondominatedsorters">
-<h2>組み込みNonDominatedSorter<a class="headerlink" href="#built-in-nondominatedsorters" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>組み込みNonDominatedSorter<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code>/<code class="docutils literal notranslate"><span class="pre">dda_non_dominated_sort</span></code>はいずれも、上記の<code class="docutils literal notranslate"><span class="pre">(ranks,</span> <span class="pre">fronts)</span></code>契約を満たす関数です（クラスとしての階層は持たない）。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -611,7 +611,7 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code></p></td>
-<td><p><span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../references.html#id22" title="Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan. A fast and elitist multiobjective genetic algorithm: nsga-ii. IEEE Transactions on Evolutionary Computation, 6(2):182–197, 2002. doi:10.1109/4235.996017.">3</a>]</span>の非劣ソート。フロントを1つずつ取り除く方式</p></td>
+<td><p><span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../references.html#id23" title="Kalyanmoy Deb, Amrit Pratap, Sameer Agarwal, and T. Meyarivan. A fast and elitist multiobjective genetic algorithm: nsga-ii. IEEE Transactions on Evolutionary Computation, 6(2):182–197, 2002. doi:10.1109/4235.996017.">3</a>]</span>の非劣ソート。フロントを1つずつ取り除く方式</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dda_non_dominated_sort</span></code></p></td>
 <td><p>支配度アプローチ（Zhou et al., 2017が支配度行列を、Mishra &amp; Senwar, 2020がDDA-ENSのフロント割り当てを提案）</p></td>
@@ -619,24 +619,24 @@
 </tbody>
 </table>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code>の計算量はO(MN²)ですが、支配行列をNumPyでベクトル化して構築するため実測では高速に動作します。 <code class="docutils literal notranslate"><span class="pre">dda_non_dominated_sort</span></code>は、<code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code>と完全に同一の<code class="docutils literal notranslate"><span class="pre">(ranks,</span> <span class="pre">fronts)</span></code>を返すことが保証されているそのまま置き換え可能な代替関数であり、個体数<code class="docutils literal notranslate"><span class="pre">N</span></code>や目的数<code class="docutils literal notranslate"><span class="pre">M</span></code>が大きい場合（<code class="docutils literal notranslate"><span class="pre">M</span> <span class="pre">&gt;</span> <span class="pre">100</span></code>）のスケーラビリティ向けに用意されています。</p>
-<p>両者とも、NaNを含む行の扱いは共通しています。 NaNを含む行は、通常のフロント分割から除外され、最終フロントの後にセンチネルフロントとして1個体ずつ追加されます。</p>
-<p><code class="docutils literal notranslate"><span class="pre">sorter</span></code>と<code class="docutils literal notranslate"><span class="pre">dominator</span></code>は独立した差し替え軸です。 <code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code>/<code class="docutils literal notranslate"><span class="pre">dda_non_dominated_sort</span></code>はどちらも、内部で<code class="docutils literal notranslate"><span class="pre">dominator.dominance_matrix()</span></code>を呼ぶだけで、支配関係の定義自体には関与しません。 <code class="docutils literal notranslate"><span class="pre">dominator</span></code>を省略すると<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>が既定として使われます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code>の計算量はO(MN²)ですが、支配行列をNumPyでベクトル化して構築するため実測では高速に動作します。<code class="docutils literal notranslate"><span class="pre">dda_non_dominated_sort</span></code>は、<code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code>と完全に同一の<code class="docutils literal notranslate"><span class="pre">(ranks,</span> <span class="pre">fronts)</span></code>を返すことが保証されているそのまま置き換え可能な代替関数であり、個体数<code class="docutils literal notranslate"><span class="pre">N</span></code>や目的数<code class="docutils literal notranslate"><span class="pre">M</span></code>が大きい場合（<code class="docutils literal notranslate"><span class="pre">M</span> <span class="pre">&gt;</span> <span class="pre">100</span></code>）のスケーラビリティ向けに用意されています。</p>
+<p>両者とも、NaNを含む行の扱いは共通しています。NaNを含む行は、通常のフロント分割から除外され、最終フロントの後にセンチネルフロントとして1個体ずつ追加されます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">sorter</span></code>と<code class="docutils literal notranslate"><span class="pre">dominator</span></code>は独立した差し替え軸です。<code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code>/<code class="docutils literal notranslate"><span class="pre">dda_non_dominated_sort</span></code>はどちらも、内部で<code class="docutils literal notranslate"><span class="pre">dominator.dominance_matrix()</span></code>を呼ぶだけで、支配関係の定義自体には関与しません。<code class="docutils literal notranslate"><span class="pre">dominator</span></code>を省略すると<code class="docutils literal notranslate"><span class="pre">ParetoDominator</span></code>が既定として使われます。</p>
 </section>
-<section id="auxiliary-functions">
-<h2>補助関数<a class="headerlink" href="#auxiliary-functions" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>補助関数<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <p>Pareto系Comparatorの内部実装で使われる補助関数も、公開APIとして単体で利用できます。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">crowding_distance(f_front)</span></code></strong>：単一フロント内の混雑度距離を計算します。<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>が使います。 境界解（各目的の最小値と最大値を取る解）には<code class="docutils literal notranslate"><span class="pre">inf</span></code>が割り当てられます。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">crowding_distance(f_front)</span></code></strong>：単一フロント内の混雑度距離を計算します。<code class="docutils literal notranslate"><span class="pre">NSGA2Comparator</span></code>が使います。境界解（各目的の最小値と最大値を取る解）には<code class="docutils literal notranslate"><span class="pre">inf</span></code>が割り当てられます。</p>
 <p><strong><code class="docutils literal notranslate"><span class="pre">crowding_distance_all_fronts(f,</span> <span class="pre">fronts)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">non_dominated_sort</span></code>が返す全フロントに対して<code class="docutils literal notranslate"><span class="pre">crowding_distance</span></code>を適用します。</p>
-<p><strong><code class="docutils literal notranslate"><span class="pre">spea2_fitness(f,</span> <span class="pre">direction=None,</span> <span class="pre">dominator=None)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>が使う適応度計算<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../references.html#id23" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>。強度（支配する個体数）、生の適応度（それを支配する個体の強度の総和）、密度（<span class="math notranslate nohighlight">\(k\)</span>近傍距離の逆数）の3要素から算出します。</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">spea2_fitness(f,</span> <span class="pre">direction=None,</span> <span class="pre">dominator=None)</span></code></strong>：<code class="docutils literal notranslate"><span class="pre">SPEA2Comparator</span></code>が使う適応度計算<span class="bibtex-citation" id="id5">[<a class="reference internal" href="../../references.html#id24" title="Eckart Zitzler, Marco Laumanns, and Lothar Thiele. Spea2: improving the strength pareto evolutionary algorithm. Technical Report 103, Computer Engineering and Networks Laboratory (TIK), ETH Zurich, 2001.">4</a>]</span>。強度（支配する個体数）、生の適応度（それを支配する個体の強度の総和）、密度（<span class="math notranslate nohighlight">\(k\)</span>近傍距離の逆数）の3要素から算出します。</p>
 <div class="admonition warning">
 <p class="admonition-title">警告</p>
 <p><code class="docutils literal notranslate"><span class="pre">spea2_fitness</span></code>の戻り値は「低いほど良い」という規約であり、saealib全体の「高いほど良い」というスコア規約とは逆です。他のComparatorへそのまま渡さないよう注意してください。</p>
 </div>
 </section>
-<section id="extending-nondominatedsorter">
-<h2>NonDominatedSorterの拡張方法<a class="headerlink" href="#extending-nondominatedsorter" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">NonDominatedSorter</span></code>はProtocolであるため、<code class="docutils literal notranslate"><span class="pre">(ranks,</span> <span class="pre">fronts)</span></code>契約を満たす関数を1つ書くだけで独自実装として使えます。 基底クラスを継承する必要はありません。</p>
+<section id="id6">
+<h2>NonDominatedSorterの拡張方法<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">NonDominatedSorter</span></code>はProtocolであるため、<code class="docutils literal notranslate"><span class="pre">(ranks,</span> <span class="pre">fronts)</span></code>契約を満たす関数を1つ書くだけで独自実装として使えます。基底クラスを継承する必要はありません。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">non_dominated_sort</span>
 
@@ -649,15 +649,15 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">ParetoComparator(sorter=logged_non_dominated_sort,</span> <span class="pre">...)</span></code>のように渡せば、既存の<code class="docutils literal notranslate"><span class="pre">Comparator</span></code>実装を変更せずにソート方式を差し替えられます。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>関連コンポーネント<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="dominance.html"><span class="std std-doc">Dominator</span></a>：<code class="docutils literal notranslate"><span class="pre">sorter</span></code>と対になる、2点間の支配関係の定義</p></li>
 <li><p><a class="reference internal" href="comparators.html"><span class="std std-doc">Comparator</span></a>：<code class="docutils literal notranslate"><span class="pre">sorter</span></code>引数を持つ<code class="docutils literal notranslate"><span class="pre">ParetoComparator</span></code>系のComparator</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>参照<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.NonDominatedSorter.html#saealib.NonDominatedSorter" title="saealib.NonDominatedSorter"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.NonDominatedSorter</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/comparators.html#saealib.non_dominated_sort" title="saealib.non_dominated_sort"><code class="xref py py-func docutils literal notranslate"><span class="pre">saealib.non_dominated_sort()</span></code></a></p></li>
@@ -716,12 +716,12 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nondominatedsorter-s-role">NonDominatedSorterの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#built-in-nondominatedsorters">組み込みNonDominatedSorter</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#auxiliary-functions">補助関数</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-nondominatedsorter">NonDominatedSorterの拡張方法</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">NonDominatedSorterの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">組み込みNonDominatedSorter</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">補助関数</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">NonDominatedSorterの拡張方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">参照</a></li>
 </ul>
   </nav></div>
 

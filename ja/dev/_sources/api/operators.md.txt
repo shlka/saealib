@@ -3,7 +3,7 @@ primary_layer: layer2
 related_layers: [layer3]
 ---
 
-# Operators
+# 演算子
 
 ## Crossover
 
@@ -37,7 +37,7 @@ related_layers: [layer3]
    saealib.MutationCategorical
 ```
 
-## Selection
+## 選択
 
 ```{eval-rst}
 .. autosummary::
@@ -52,13 +52,13 @@ related_layers: [layer3]
    saealib.TruncationSelection
 ```
 
-## Repair
+## 修復
 
 ```{eval-rst}
 .. autofunction:: saealib.repair_clipping
 ```
 
-## Duplicate Elimination
+## 重複排除
 
 ```{eval-rst}
 .. autosummary::
@@ -68,7 +68,7 @@ related_layers: [layer3]
    saealib.DuplicateElimination
 ```
 
-## pymoo / External Library Adapters
+## pymoo / 外部ライブラリアダプター
 
 ```{eval-rst}
 .. autosummary::
@@ -78,3 +78,4 @@ related_layers: [layer3]
    saealib.PymooCrossover
    saealib.PymooMutation
 ```
+

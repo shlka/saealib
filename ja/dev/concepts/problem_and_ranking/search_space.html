@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>SearchSpace &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>SearchSpace &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -485,11 +485,11 @@
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義と順位付け</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="problem.html">Problem</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">SearchSpace</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">ConstraintHandler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="comparators.html">比較器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comparators.html">Comparator</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dominance.html">支配判定器</a></li>
 <li class="toctree-l2"><a class="reference internal" href="nondominated_sorting.html">NonDominatedSorter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="decomposition.html">Decomposition</a></li>
@@ -507,7 +507,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">獲得関数</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
 </ul>
 </details></li>
@@ -520,7 +520,7 @@
 </details></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">Diagnostics and observation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
@@ -571,7 +571,7 @@
     <li class="breadcrumb-item"><a href="../index.html" class="nav-link">最適化の構成要素</a></li>
     
     
-    <li class="breadcrumb-item"><a href="../problem_and_ranking.html" class="nav-link">問題定義と順位付け</a></li>
+    <li class="breadcrumb-item"><a href="../problem_and_ranking.html" class="nav-link">問題定義とランキング</a></li>
     
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">SearchSpace</span></li>
   </ul>
@@ -593,13 +593,13 @@
   <section class="tex2jax_ignore mathjax_ignore" id="searchspace">
 <h1>SearchSpace<a class="headerlink" href="#searchspace" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 4: Extend Framework</span></div><p><code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code> は候補の表現と、その表現を扱うためのサービスを定義します。 アルゴリズムや代理モデルは空間の内部表現を直接変更せず、空間が提供する <code class="docutils literal notranslate"><span class="pre">GenomeBatch</span></code> とサービスを利用します。</p>
-<section id="searchspace-s-role">
-<h2>SearchSpaceの役割<a class="headerlink" href="#searchspace-s-role" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h2>SearchSpaceの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code> は <code class="docutils literal notranslate"><span class="pre">representation</span></code>、<code class="docutils literal notranslate"><span class="pre">services</span></code>、<code class="docutils literal notranslate"><span class="pre">sample()</span></code>、<code class="docutils literal notranslate"><span class="pre">validate()</span></code> を提供します。 <code class="docutils literal notranslate"><span class="pre">GenomeBatch</span></code> は候補を行方向にまとめた値であり、候補IDや目的値を直接所有するデータ構造ではありません。 <code class="docutils literal notranslate"><span class="pre">validate()</span></code> は各行の妥当性とバッチ全体のエラーを <code class="docutils literal notranslate"><span class="pre">ValidationResult</span></code> で返します。</p>
 <p><code class="docutils literal notranslate"><span class="pre">ServiceRegistry</span></code> は空間が提供するサービスを名前で登録します。 サンプリング、検証、複製、同値性、距離、ゲノムのシリアライズなどはSearchSpace servicesとして、必要な空間が公開します。 <code class="docutils literal notranslate"><span class="pre">EvaluationAdapter</span></code> は<code class="docutils literal notranslate"><span class="pre">GenomeBatch</span></code>を評価Payloadへ変換する評価境界のAdapterです。 <code class="docutils literal notranslate"><span class="pre">FeatureEncoder</span></code> は <code class="docutils literal notranslate"><span class="pre">GenomeBatch</span> <span class="pre">→</span> <span class="pre">FeatureEncoder</span> <span class="pre">→</span> <span class="pre">FeatureBatch</span> <span class="pre">→</span> <span class="pre">Surrogate</span></code> の意味変換を担うAdapter subtypeです。<code class="docutils literal notranslate"><span class="pre">SamplingService</span></code>などの空間の能力とは性格が異なり、代理モデルが学習できる特徴を決めます。 公開importは <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">saealib.space</span> <span class="pre">import</span> <span class="pre">FeatureEncoder</span></code> です。</p>
 </section>
-<section id="what-searchspace-holds">
-<h2>SearchSpaceが保持するもの<a class="headerlink" href="#what-searchspace-holds" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>SearchSpaceが保持するもの<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p>組み込み空間は表現の制約に応じて次のように分かれます。</p>
 <ul class="simple">
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">VectorSpace</span></code></strong>：固定幅の密な数値ベクトルを扱います。</p></li>
@@ -609,35 +609,35 @@
 </ul>
 <p>各空間は共通の <code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code> 契約を満たしますが、サービスの集合と <code class="docutils literal notranslate"><span class="pre">RepresentationSpec</span></code> の内容は異なります。 たとえば <code class="docutils literal notranslate"><span class="pre">ObjectSpace</span></code> は既定のサービスを登録しないため、アルゴリズムが要求するサービスを別途提供できる構成にする必要があります。</p>
 </section>
-<section id="invariants">
-<h2>不変条件<a class="headerlink" href="#invariants" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>不変条件<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">RepresentationSpec</span></code> はパラメータの種類、形状、表現種別を記述します。 表現の記述は、候補をどのように保存するかを示すものであり、サンプリングや特徴量化の実装そのものではありません。</p>
 <p>サービスはこの差を埋める実行可能な境界です。 現在の実装ではSurrogateManagerの契約が<code class="docutils literal notranslate"><span class="pre">ServiceRequirement(&quot;FeatureEncoder&quot;)</span></code>を宣言し、<code class="docutils literal notranslate"><span class="pre">VectorSpace</span></code>は既定のエンコーダをサービスとして登録するため、数値ベクトル空間では追加設定なしに解決されます。<code class="docutils literal notranslate"><span class="pre">ObjectSpace</span></code>、<code class="docutils literal notranslate"><span class="pre">PermutationSpace</span></code>、<code class="docutils literal notranslate"><span class="pre">SequenceSpace</span></code>などでは、利用者が<code class="docutils literal notranslate"><span class="pre">FeatureEncoder</span></code>を用意しない限り解決されずエラーになります。代理モデルへ何を入力するかは利用者が決めます。</p>
 </section>
-<section id="extending-searchspace">
-<h2>SearchSpaceの拡張<a class="headerlink" href="#extending-searchspace" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code> owns candidate representation, candidate-generation services, and representation validity.
-It does not own candidate objective values, observation provenance, component state, or Graph execution order.
-The space owns the representation rules and services for <code class="docutils literal notranslate"><span class="pre">GenomeBatch</span></code> values, while <code class="docutils literal notranslate"><span class="pre">Population</span></code> owns the live genome storage.
-<code class="docutils literal notranslate"><span class="pre">Population.genomes</span></code> exposes that storage as a read-only view, not an immutable snapshot; subsequent Population updates may change its contents.
-It does not implicitly add candidate IDs or Feedback results.</p>
+<section id="id4">
+<h2>SearchSpaceの拡張<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code>は候補の表現、候補生成サービス、表現の妥当性を管理します。
+候補の目的関数値、観測の由来、コンポーネント状態、Graphの実行順序は管理しません。
+空間は<code class="docutils literal notranslate"><span class="pre">GenomeBatch</span></code>値の表現規則とサービスを管理し、<code class="docutils literal notranslate"><span class="pre">Population</span></code>は実行中のゲノム格納領域を管理します。
+<code class="docutils literal notranslate"><span class="pre">Population.genomes</span></code>はその格納領域を読み取り専用ビューとして公開しますが、不変スナップショットではありません。後続のPopulation更新で内容が変わることがあります。
+候補IDやFeedback結果を暗黙に追加することもありません。</p>
 <p>新しい候補表現を追加するときは、その<code class="docutils literal notranslate"><span class="pre">RepresentationSpec</span></code>、サンプリング、検証、必要なサービスを1つの<code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code>境界内で定義します。<code class="docutils literal notranslate"><span class="pre">RepresentationSpec</span></code>を<code class="docutils literal notranslate"><span class="pre">ComponentContract</span></code>へ移さず、ポートの<code class="docutils literal notranslate"><span class="pre">DataSpec</span></code>との接続と必要なサービスをCompilerで宣言します。</p>
 </section>
-<section id="common-failures">
-<h2>よくある失敗<a class="headerlink" href="#common-failures" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>よくある失敗<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">RepresentationSpec</span></code>とサービス集合は空間の構築時に固定され、Compilerはコンポーネントの<code class="docutils literal notranslate"><span class="pre">ServiceRequirement</span></code>と照合します。<code class="docutils literal notranslate"><span class="pre">sample()</span></code>が返す<code class="docutils literal notranslate"><span class="pre">GenomeBatch</span></code>は空間の<code class="docutils literal notranslate"><span class="pre">RepresentationSpec</span></code>に適合し、<code class="docutils literal notranslate"><span class="pre">validate()</span></code>は不一致を黙って修復せず<code class="docutils literal notranslate"><span class="pre">ValidationResult</span></code>で報告します。<code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code>はサービス実装の状態を所有し、コンポーネントは登録済みサービスを要求して使用します。種別や形状の不一致、必要なサービスの欠落、無効な<code class="docutils literal notranslate"><span class="pre">GenomeBatch</span></code>値は、Compilerまたは<code class="docutils literal notranslate"><span class="pre">ValidationResult</span></code>のDiagnosticsになります。</p>
 <p>候補表現の拡張は<a class="reference internal" href="../../framework/extensions.html"><span class="std std-doc">フレームワーク拡張</span></a>を、ポートと<code class="docutils literal notranslate"><span class="pre">DataSpec</span></code>の境界は<a class="reference internal" href="../../framework/specs.html"><span class="std std-doc">宣言要素（Specs）</span></a>を、候補に対する観測の対応は<a class="reference internal" href="../observation_and_state/feedback.html"><span class="std std-doc">Feedback</span></a>を参照してください。 公開型のimport経路は<a class="reference internal" href="../../api/index.html"><span class="std std-doc">APIリファレンス</span></a>で確認してください。</p>
 </section>
-<section id="related-components">
-<h2>関連コンポーネント<a class="headerlink" href="#related-components" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>関連コンポーネント<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="problem.html"><span class="std std-doc">Problem</span></a>：目的関数、制約、最適化方向とSearchSpaceを組み合わせます。</p></li>
 <li><p><a class="reference internal" href="../observation_and_state/population.html"><span class="std std-doc">Population</span></a>：<code class="docutils literal notranslate"><span class="pre">GenomeBatch</span></code>と個体の評価結果を扱います。</p></li>
 <li><p><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">FeatureEncoder</span></code>サービスを要求します。</p></li>
 </ul>
 </section>
-<section id="references">
-<h2>参照<a class="headerlink" href="#references" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>参照<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.space.SearchSpace.html#saealib.space.SearchSpace" title="saealib.space.SearchSpace"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.space.SearchSpace</span></code></a></p></li>
 <li><p><a class="reference internal" href="../../api/_autosummary/saealib.space.VectorSpace.html#saealib.space.VectorSpace" title="saealib.space.VectorSpace"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.space.VectorSpace</span></code></a></p></li>
@@ -696,13 +696,13 @@ It does not implicitly add candidate IDs or Feedback results.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#searchspace-s-role">SearchSpaceの役割</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-searchspace-holds">SearchSpaceが保持するもの</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#invariants">不変条件</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-searchspace">SearchSpaceの拡張</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-failures">よくある失敗</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-components">関連コンポーネント</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">参照</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">SearchSpaceの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">SearchSpaceが保持するもの</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">不変条件</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">SearchSpaceの拡張</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">よくある失敗</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">参照</a></li>
 </ul>
   </nav></div>
 

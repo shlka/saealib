@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ビルトインコンポーネントを選んで差し替える &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>ビルトインコンポーネントを選んで差し替える &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -66,7 +66,7 @@
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="検索" href="../search.html" />
     <link rel="next" title="Optimizerを低レベルAPIで組み立てる" href="lowlevel_api.html" />
-    <link rel="prev" title="外部ライブラリとの連携" href="external_libraries.html" />
+    <link rel="prev" title="外部ライブラリの統合" href="external_libraries.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="ja"/>
   <meta name="docsearch:version" content="" />
@@ -180,7 +180,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -362,7 +362,7 @@
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -491,7 +491,7 @@
 <li class="toctree-l1"><a class="reference internal" href="dynamic_optimization.html">サロゲート精度に応じた動的な切り替え</a></li>
 <li class="toctree-l1"><a class="reference internal" href="checkpoint.html">再現性とチェックポイント</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">進捗のログ記録</a></li>
-<li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリとの連携</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external_libraries.html">外部ライブラリの統合</a></li>
 </ul>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">ビルトインコンポーネントを選んで差し替える</a></li>
@@ -559,8 +559,8 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="choose-and-swap-built-in-components">
-<h1>ビルトインコンポーネントを選んで差し替える<a class="headerlink" href="#choose-and-swap-built-in-components" title="Link to this heading">#</a></h1>
+  <section class="tex2jax_ignore mathjax_ignore" id="id1">
+<h1>ビルトインコンポーネントを選んで差し替える<a class="headerlink" href="#id1" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>前提は、高レベルAPIまたは <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code> の実行経路を使うことです。</p>
 <div class="tip admonition">
 <p class="admonition-title">このページでできるようになること</p>
@@ -568,8 +568,8 @@
 </div>
 <p>構成要素の索引は <a class="reference internal" href="../concepts/index.html"><span class="std std-doc">最適化の構成要素</span></a> で、独自コンポーネントが必要な場合は <a class="reference internal" href="custom_components.html"><span class="std std-doc">独自Component</span></a> を参照します。</p>
 <p>importの方針は <a class="reference internal" href="../api/imports.html"><span class="std std-doc">Canonical Imports</span></a> にまとめています。</p>
-<section id="choose-by-responsibility">
-<h2>変更したい責務から選ぶ<a class="headerlink" href="#choose-by-responsibility" title="Link to this heading">#</a></h2>
+<section id="id2">
+<h2>変更したい責務から選ぶ<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <p>コンポーネントは、同じ処理の別実装を選ぶための差し替え点です。<code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code>と<code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code>は独立した差し替え点であり、一方が他方を内包することはありません。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
@@ -581,23 +581,23 @@
 <tbody>
 <tr class="row-even"><td><p>このページでできるようになること</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">Algorithm</span></code></p></td>
-<td><p>このページでできるようになること <a class="reference internal" href="../concepts/search_algorithms/algorithm.html"><span class="std std-doc">Algorithm concept</span></a> <a class="reference internal" href="../api/algorithms.html"><span class="std std-doc">Algorithm reference</span></a></p></td>
+<td><p><a class="reference internal" href="../concepts/search_algorithms/algorithm.html"><span class="std std-doc">Algorithm concept</span></a>、<a class="reference internal" href="../api/algorithms.html"><span class="std std-doc">Algorithm reference</span></a></p></td>
 </tr>
 <tr class="row-odd"><td><p>このページでできるようになること</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">Operator</span></code></p></td>
-<td><p>このページでできるようになること <a class="reference internal" href="../concepts/search_algorithms/crossover.html"><span class="std std-doc">交叉の概念</span></a> <a class="reference internal" href="../concepts/search_algorithms/mutation.html"><span class="std std-doc">突然変異の概念</span></a> <a class="reference internal" href="../api/operators.html"><span class="std std-doc">演算子リファレンス</span></a></p></td>
+<td><p><a class="reference internal" href="../concepts/search_algorithms/crossover.html"><span class="std std-doc">交叉の概念</span></a>、<a class="reference internal" href="../concepts/search_algorithms/mutation.html"><span class="std std-doc">突然変異の概念</span></a>、<a class="reference internal" href="../api/operators.html"><span class="std std-doc">演算子リファレンス</span></a></p></td>
 </tr>
 <tr class="row-even"><td><p>このページでできるようになること</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">Surrogate</span></code></p></td>
-<td><p>このページでできるようになること <a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">サロゲートモデルの概念</span></a> <a class="reference internal" href="../api/surrogate.html"><span class="std std-doc">サロゲートモデルの参照</span></a></p></td>
+<td><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate.html"><span class="std std-doc">サロゲートモデルの概念</span></a>、<a class="reference internal" href="../api/surrogate.html"><span class="std std-doc">サロゲートモデルの参照</span></a></p></td>
 </tr>
 <tr class="row-odd"><td><p>このページでできるようになること</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">SurrogateManager</span></code></p></td>
-<td><p>このページでできるようになること <a class="reference internal" href="../concepts/surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager concept</span></a> <a class="reference internal" href="../api/surrogate.html"><span class="std std-doc">Reference</span></a></p></td>
+<td><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager concept</span></a>、<a class="reference internal" href="../api/surrogate.html"><span class="std std-doc">Reference</span></a></p></td>
 </tr>
 <tr class="row-even"><td><p>このページでできるようになること</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></p></td>
-<td><p>このページでできるようになること <a class="reference internal" href="../concepts/surrogate_modeling/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction concept</span></a> <a class="reference internal" href="../api/acquisition.html"><span class="std std-doc">Reference</span></a></p></td>
+<td><p><a class="reference internal" href="../concepts/surrogate_modeling/acquisition_functions.html"><span class="std std-doc">AcquisitionFunction concept</span></a>、<a class="reference internal" href="../api/acquisition.html"><span class="std std-doc">Reference</span></a></p></td>
 </tr>
 <tr class="row-odd"><td><p>真の評価に送るサロゲート候補の割合または順序</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">Strategy</span></code></p></td>
@@ -611,8 +611,8 @@
 </table>
 </div>
 </section>
-<section id="swap-through-the-high-level-api">
-<h2>高レベルAPIで交換する<a class="headerlink" href="#swap-through-the-high-level-api" title="Link to this heading">#</a></h2>
+<section id="api">
+<h2>高レベルAPIで交換する<a class="headerlink" href="#api" title="Link to this heading">#</a></h2>
 <p>高レベルAPIでは、<code class="docutils literal notranslate"><span class="pre">algorithm</span></code>、<code class="docutils literal notranslate"><span class="pre">surrogate</span></code>、<code class="docutils literal notranslate"><span class="pre">strategy</span></code>に文字列またはインスタンスを渡します。利用できる文字列は、アルゴリズムが<code class="docutils literal notranslate"><span class="pre">&quot;GA&quot;</span></code>と<code class="docutils literal notranslate"><span class="pre">&quot;PSO&quot;</span></code>、Surrogateが<code class="docutils literal notranslate"><span class="pre">&quot;rbf&quot;</span></code>、Strategyが<code class="docutils literal notranslate"><span class="pre">&quot;ib&quot;</span></code>、<code class="docutils literal notranslate"><span class="pre">&quot;gb&quot;</span></code>、<code class="docutils literal notranslate"><span class="pre">&quot;ps&quot;</span></code>です。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
@@ -637,8 +637,8 @@
 </div>
 <p>Surrogate単体のインスタンスは内部で<code class="docutils literal notranslate"><span class="pre">LocalSurrogateManager</span></code>にラップされます。ManagerやAcquisitionFunctionを個別に構成する場合は<code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>を使います。</p>
 </section>
-<section id="configure-independent-swap-points-with-optimizer">
-<h2>Optimizerで独立した差し替え点を構成する<a class="headerlink" href="#configure-independent-swap-points-with-optimizer" title="Link to this heading">#</a></h2>
+<section id="optimizer">
+<h2>Optimizerで独立した差し替え点を構成する<a class="headerlink" href="#optimizer" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">Optimizer.set_*()</span></code>はコンポーネントを独立して構成するためのビルダーです。たとえば<code class="docutils literal notranslate"><span class="pre">set_surrogate_manager()</span></code>と<code class="docutils literal notranslate"><span class="pre">set_acquisition()</span></code>は別々に呼び出します。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanPrediction</span><span class="p">,</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">Problem</span>
@@ -668,8 +668,8 @@
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>に必要な他のコンポーネントは既定値から解決できます。<code class="docutils literal notranslate"><span class="pre">set_*()</span></code>で構成したコンポーネントと省略したコンポーネントは、<code class="docutils literal notranslate"><span class="pre">run()</span></code>または<code class="docutils literal notranslate"><span class="pre">iterate()</span></code>が既定値を解決した後に検証されます。必要なコンポーネントをすべて明示した場合は、実行前に<code class="docutils literal notranslate"><span class="pre">validate()</span></code>を直接呼び出すこともできます。ビルトインコンポーネントで責務を満たせない場合に限り、<a class="reference internal" href="custom_components.html"><span class="std std-doc">独自コンポーネントの実装</span></a>へ進みます。</p>
 </section>
-<section id="related-concepts-and-reference">
-<h2>関連するConceptとReference<a class="headerlink" href="#related-concepts-and-reference" title="Link to this heading">#</a></h2>
+<section id="conceptreference">
+<h2>関連するConceptとReference<a class="headerlink" href="#conceptreference" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../concepts/index.html"><span class="std std-doc">構成要素の概要</span></a></p></li>
 <li><p><a class="reference internal" href="../api/optimizer.html"><span class="std std-doc">Optimizerリファレンス</span></a></p></li>
@@ -694,7 +694,7 @@
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">前へ</p>
-        <p class="prev-next-title">外部ライブラリとの連携</p>
+        <p class="prev-next-title">外部ライブラリの統合</p>
       </div>
     </a>
     <a class="right-next"
@@ -725,10 +725,10 @@
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#choose-by-responsibility">変更したい責務から選ぶ</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#swap-through-the-high-level-api">高レベルAPIで交換する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configure-independent-swap-points-with-optimizer">Optimizerで独立した差し替え点を構成する</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-concepts-and-reference">関連するConceptとReference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">変更したい責務から選ぶ</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api">高レベルAPIで交換する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optimizer">Optimizerで独立した差し替え点を構成する</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conceptreference">関連するConceptとReference</a></li>
 </ul>
   </nav></div>
 

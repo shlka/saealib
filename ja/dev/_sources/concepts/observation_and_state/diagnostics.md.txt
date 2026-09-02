@@ -4,44 +4,44 @@ related_layers: [layer2, layer3, layer4]
 page_type: concept
 ---
 
-# Diagnostics and observation
+# 診断と観測
 
-Different kinds of problems and runtime information belong to different reporting mechanisms.
-The following boundaries keep programming errors, user-actionable notices, runtime messages, structured data, and compiler results distinct.
+問題や実行時情報の種類ごとに、異なる報告機構を使います。
+次の境界により、プログラミングエラー、ユーザーが対処できる通知、実行時メッセージ、構造化データ、コンパイラ結果を区別します。
 
-| Purpose | Owner |
+| 目的 | 担当 |
 |---|---|
-| Incorrect usage or an invalid configuration that indicates the developer should fix the code | Exception |
-| Notice of a problem that the user should fix in code or configuration | `warnings.warn` |
-| Diagnosis, progress, and numerical anomalies during execution | Standard `logging` with `saealib.*` loggers |
-| Structured per-generation numerical records for analysis and visualization | History channels |
-| Execution observation and extension points | `CallbackManager` |
-| One-way handoff of Compiler analysis results | `Diagnostic` / `DiagnosticBag` |
+| 開発者がコードを修正すべき誤用または不正な設定 | 例外 |
+| ユーザーがコードまたは設定で修正すべき問題の通知 | `warnings.warn` |
+| 実行中の診断、進捗、数値異常 | `saealib.*`ロガーによる標準の`logging` |
+| 解析と可視化のための世代ごとの構造化された数値記録 | Historyチャンネル |
+| 実行の観測と拡張ポイント | `CallbackManager` |
+| Compilerの解析結果の一方向の引き渡し | `Diagnostic` / `DiagnosticBag` |
 
-## Runtime logging
+## 実行時のロギング
 
-saealib does not configure logging output handlers. It installs only a `NullHandler`.
-Whether log messages are displayed therefore depends on the user's `logging` configuration.
-See [Logging Progress](../../tutorials/logging.md) for examples of enabling levels and adding handlers.
+saealibはロギング出力ハンドラーを設定せず、`NullHandler`だけを登録します。
+したがって、ログメッセージを表示するかどうかはユーザーの`logging`設定に依存します。
+レベルを有効にしてハンドラーを追加する例は[進捗のログ記録](../../tutorials/logging.md)を参照してください。
 
-`verbose=False` only prevents the progress callback handler from being registered.
-It is independent of logging output configuration and does not install, remove, or reconfigure logging handlers.
+`verbose=False`は進捗コールバックハンドラーの登録を防ぐだけです。
+これはロギング出力の設定とは独立しており、ロギングハンドラーの登録解除や再設定は行いません。
 
-Typical runtime messages include INFO entries for run start and finish, DEBUG entries for the resolved configuration and runtime activity, and WARNING entries from scheduler recovery or numerical issues.
-The wording of logging messages and their fields is not guaranteed as a stable API; consumers should configure levels and logger namespaces rather than parse individual messages.
+代表的な実行時メッセージには、実行の開始と終了を示すINFO、解決済み設定と実行時の動作を示すDEBUG、スケジューラーの復旧や数値問題を示すWARNINGがあります。
+ロギングメッセージの文言とフィールドは安定したAPIとして保証されません。利用側は個々のメッセージを解析せず、レベルとロガー名前空間を設定してください。
 
-## Structured history and callbacks
+## 構造化された履歴とコールバック
 
-Use History channels for structured numerical records collected across generations and intended as input to analysis or visualization.
-This keeps data consumers from depending on human-readable log messages.
+世代をまたいで収集し、解析や可視化への入力とする構造化された数値記録には、Historyチャンネルを使います。
+これにより、データ利用側が人間可読なログメッセージに依存せずに済みます。
 
-`CallbackManager` is the observation and extension boundary for execution events.
-It can drive progress handlers, custom logging, and history collection, but it is not a substitute for exceptions or user-facing warnings.
-See [CallbackManager](callbacks.md) for event registration and observation details.
+`CallbackManager`は実行イベントの観測と拡張の境界です。
+進捗ハンドラー、カスタムロギング、履歴収集を駆動できますが、例外やユーザー向け警告の代替ではありません。
+イベントの登録と観測の詳細は[CallbackManager](callbacks.md)を参照してください。
 
-## Compiler diagnostics
+## Compilerの診断
 
-Compiler rules pass analysis results in one direction: they produce `Diagnostic` values, which are collected in a `DiagnosticBag` and returned with the compilation result.
-The caller can then decide how to render or act on those diagnostics.
-Compiler diagnostics are not runtime log messages and should not be routed through `logging`.
-See [Compiler](../../framework/compiler.md) for the compilation and verification boundary.
+Compilerの規則は解析結果を一方向に渡します。規則は`Diagnostic`値を生成し、それらを`DiagnosticBag`に収集してコンパイル結果とともに返します。
+呼び出し側は、それらの診断をどのように表示または処理するかを決められます。
+Compilerの診断は実行時ログメッセージではないため、`logging`経由で送ってはいけません。
+コンパイルと検証の境界は[Compiler](../../framework/compiler.md)を参照してください。

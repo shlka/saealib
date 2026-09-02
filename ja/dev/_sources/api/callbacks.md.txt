@@ -2,9 +2,9 @@
 primary_layer: layer2
 ---
 
-# Callbacks
+# コールバック
 
-## Events
+## イベント
 
 ```{eval-rst}
 .. autosummary::
@@ -29,7 +29,7 @@ primary_layer: layer2
    saealib.PostEvaluationEvent
 ```
 
-## Callback Manager
+## コールバックマネージャー
 
 ```{eval-rst}
 .. autosummary::
@@ -39,7 +39,7 @@ primary_layer: layer2
    saealib.CallbackManager
 ```
 
-## Built-in Handlers
+## 組み込みハンドラー
 
 ```{eval-rst}
 .. autofunction:: saealib.logging_generation
@@ -49,7 +49,7 @@ primary_layer: layer2
 .. autofunction:: saealib.logging_generation_hv
 ```
 
-## Checkpointing
+## チェックポイント保存
 
 ```{eval-rst}
 .. autosummary::
@@ -58,3 +58,4 @@ primary_layer: layer2
 
    saealib.CheckpointCallback
 ```
+

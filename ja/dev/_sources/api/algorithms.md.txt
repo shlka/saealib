@@ -3,9 +3,9 @@ primary_layer: layer2
 related_layers: [layer3]
 ---
 
-# Algorithms
+# アルゴリズム
 
-## Base
+## 基底
 
 ```{eval-rst}
 .. autosummary::
@@ -15,7 +15,7 @@ related_layers: [layer3]
    saealib.Algorithm
 ```
 
-## Genetic Algorithm (GA)
+## 遺伝的アルゴリズム（GA）
 
 ```{eval-rst}
 .. autosummary::
@@ -25,7 +25,7 @@ related_layers: [layer3]
    saealib.GA
 ```
 
-## Genome-native Genetic Algorithm
+## Genome-native遺伝的アルゴリズム
 
 ```{eval-rst}
 .. autosummary::
@@ -35,7 +35,7 @@ related_layers: [layer3]
    saealib.GenomeGA
 ```
 
-## Particle Swarm Optimization (PSO)
+## 粒子群最適化（PSO）
 
 ```{eval-rst}
 .. autosummary::
@@ -45,7 +45,7 @@ related_layers: [layer3]
    saealib.PSO
 ```
 
-## pymoo / External Library Adapters
+## pymoo / 外部ライブラリアダプター
 
 ```{eval-rst}
 .. autosummary::

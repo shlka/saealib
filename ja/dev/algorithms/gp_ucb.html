@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>GP-UCB（ガウス過程上側信頼限界） &#8212; saealib 0.1.0b5.dev107+g977f81ed9 ドキュメント</title>
+    <title>GP-UCB (Gaussian Process Upper Confidence Bound) &#8212; saealib 0.1.0b5.dev108+gbbc1a733e ドキュメント</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=34512bbb"></script>
+    <script src="../_static/documentation_options.js?v=12ac8d12"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -618,7 +618,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -800,7 +800,7 @@ window.runMermaid = runMermaid;</script>
 
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../framework/index.html">
-    フレームワーク
+    Framework
   </a>
 </li>
 
@@ -923,12 +923,12 @@ window.runMermaid = runMermaid;</script>
   <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="ego.html">EGO（Efficient Global Optimization）</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">GP-UCB（ガウス過程上側信頼限界）</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">GP-UCB (Gaussian Process Upper Confidence Bound)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maxunc.html">MaxUnc（不確実性サンプリング）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="rbf_cors.html">CORS-RBF（Constrained Optimization using Response Surfaces）</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nsga2.html">NSGA-II（Nondominated Sorting Genetic Algorithm II）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2（Strength Pareto Evolutionary Algorithm 2）</a></li>
-<li class="toctree-l1"><a class="reference internal" href="nsga3.html">式: NSGA-III</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spea2.html">SPEA2 (Strength Pareto Evolutionary Algorithm 2)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nsga3.html">NSGA-III</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sms_emoa.html">SMS-EMOA（S metric selection EMOA）</a></li>
 </ul>
 </div>
@@ -973,7 +973,7 @@ window.runMermaid = runMermaid;</script>
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">アルゴリズム</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">GP-UCB（ガウス過程上側信頼限界）</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">GP-UCB (Gaussian Process Upper Confidence Bound)</span></li>
   </ul>
 </nav>
 </div>
@@ -991,31 +991,35 @@ window.runMermaid = runMermaid;</script>
                 <article class="bd-article">
                   
   <section class="tex2jax_ignore mathjax_ignore" id="gp-ucb-gaussian-process-upper-confidence-bound">
-<h1>GP-UCB（ガウス過程上側信頼限界）<a class="headerlink" href="#gp-ucb-gaussian-process-upper-confidence-bound" title="Link to this heading">#</a></h1>
+<h1>GP-UCB (Gaussian Process Upper Confidence Bound)<a class="headerlink" href="#gp-ucb-gaussian-process-upper-confidence-bound" title="Link to this heading">#</a></h1>
 <div class="layer-badges"><span class="layer-badge">Layer 2: Compose</span></div><p>GP-UCBは、評価コストの高い目的関数を対象に、ガウス過程（GP）回帰によるサロゲートモデルと、予測平均と予測標準偏差の線形結合である<strong>上側信頼限界</strong>（UCB）という獲得関数を組み合わせた逐次最適化手法です。</p>
-<section id="overview">
-<h2>概要<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
-<p>GP-UCBは、多腕バンディット問題における<strong>UCB方策</strong>をGP最適化に拡張したものです。 バンディット問題では、各腕の報酬の信頼区間上限が最も高い腕を選び続けることで、探索と活用のバランスを自動的に取ることが知られています。</p>
-<p>GP-UCBはこの発想を連続空間上のGP回帰に適用し、候補点 <span class="math notranslate nohighlight">\(x\)</span> の<strong>信頼上限</strong> <span class="math notranslate nohighlight">\(\mu(x) + \sqrt{\beta_t}\,\sigma(x)\)</span> を最大化する点を次に評価します。 予測平均 <span class="math notranslate nohighlight">\(\mu(x)\)</span> が高い点は活用、予測標準偏差 <span class="math notranslate nohighlight">\(\sigma(x)\)</span> が大きい点は探索に対応し、<span class="math notranslate nohighlight">\(\beta_t\)</span> がこの二項の相対的な重みを制御します。</p>
-<p>この手法の理論的核心は、<span class="math notranslate nohighlight">\(\beta_t\)</span>を固定値ではなく反復回数<span class="math notranslate nohighlight">\(t\)</span>の関数として選ぶことです。情報利得の上界から導いた特定の対数スケジュールに従って<span class="math notranslate nohighlight">\(\beta_t\)</span>を増加させると、累積リグレットに対する劣線形の上界が得られます。具体的な手順を次の擬似コードに示します。<span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id43" title="Niranjan Srinivas, Andreas Krause, Sham M. Kakade, and Matthias W. Seeger. Information-theoretic regret bounds for gaussian process optimization in the bandit setting. IEEE Transactions on Information Theory, 58(5):3250–3265, 2012. doi:10.1109/TIT.2011.2182033.">25</a>]</span></p>
+<section id="id1">
+<h2>概要<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>GP-UCBは、多腕バンディット問題における<strong>UCB方策</strong>をGP最適化に拡張したものです。
+バンディット問題では、各腕の報酬の信頼区間上限が最も高い腕を選び続けることで、探索と活用のバランスを自動的に取ることが知られています。</p>
+<p>GP-UCBはこの発想を連続空間上のGP回帰に適用し、候補点 <span class="math notranslate nohighlight">\(x\)</span> の<strong>信頼上限</strong> <span class="math notranslate nohighlight">\(\mu(x) + \sqrt{\beta_t}\,\sigma(x)\)</span> を最大化する点を次に評価します。
+予測平均 <span class="math notranslate nohighlight">\(\mu(x)\)</span> が高い点は活用、予測標準偏差 <span class="math notranslate nohighlight">\(\sigma(x)\)</span> が大きい点は探索に対応し、<span class="math notranslate nohighlight">\(\beta_t\)</span> がこの二項の相対的な重みを制御します。</p>
+<p>この手法の理論的核心は、<span class="math notranslate nohighlight">\(\beta_t\)</span>を固定値ではなく反復回数<span class="math notranslate nohighlight">\(t\)</span>の関数として選ぶことです。
+情報利得の上界から導いた特定の対数スケジュールに従って<span class="math notranslate nohighlight">\(\beta_t\)</span>を増加させると、累積リグレットに対する劣線形の上界が得られます。具体的な手順を次の擬似コードに示します。<span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id44" title="Niranjan Srinivas, Andreas Krause, Sham M. Kakade, and Matthias W. Seeger. Information-theoretic regret bounds for gaussian process optimization in the bandit setting. IEEE Transactions on Information Theory, 58(5):3250–3265, 2012. doi:10.1109/TIT.2011.2182033.">25</a>]</span></p>
 </section>
-<section id="pseudocode">
-<h2>擬似コード<a class="headerlink" href="#pseudocode" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>擬似コード<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <div class="proof algorithm admonition" id="alg-gp-ucb">
-<p class="admonition-title"><span class="caption-number">アルゴリズム 2 </span>式: (GP-UCB)</p>
+<p class="admonition-title"><span class="caption-number">アルゴリズム 2 </span> (GP-UCB)</p>
 <section class="algorithm-content" id="proof-content">
-<p><strong>Inputs</strong> 目的関数 <span class="math notranslate nohighlight">\(f\)</span>（報酬として最大化）、探索範囲 <span class="math notranslate nohighlight">\(D\)</span>、GP事前分布 <span class="math notranslate nohighlight">\(\mu_0=0,\sigma_0,k\)</span>、信頼度パラメータ列 <span class="math notranslate nohighlight">\(\beta_t\)</span> <strong>Output</strong> 最良解 <span class="math notranslate nohighlight">\(x^*\)</span></p>
+<p><strong>Inputs</strong> objective function <span class="math notranslate nohighlight">\(f\)</span> (maximized as a reward), search domain <span class="math notranslate nohighlight">\(D\)</span>, GP prior <span class="math notranslate nohighlight">\(\mu_0=0,\sigma_0,k\)</span>, confidence parameter sequence <span class="math notranslate nohighlight">\(\beta_t\)</span>
+<strong>Output</strong> best solution <span class="math notranslate nohighlight">\(x^*\)</span></p>
 <ol class="arabic simple">
-<li><p><span class="math notranslate nohighlight">\(t=1\)</span> とする</p></li>
-<li><p>信頼上限 <span class="math notranslate nohighlight">\(x_t = \arg\max_{x \in D} \mu_{t-1}(x) + \sqrt{\beta_t}\,\sigma_{t-1}(x)\)</span> を最大化する点を選ぶ</p></li>
-<li><p><span class="math notranslate nohighlight">\(y_t = f(x_t) + \epsilon_t\)</span> を観測する</p></li>
-<li><p>観測 <span class="math notranslate nohighlight">\(y_t\)</span> でベイズ更新を行い、事後平均 <span class="math notranslate nohighlight">\(\mu_t(x)\)</span> と事後標準偏差 <span class="math notranslate nohighlight">\(\sigma_t(x)\)</span> を得る</p></li>
-<li><p><span class="math notranslate nohighlight">\(t\)</span> を1増やし、評価予算に達するまで2へ戻る</p></li>
+<li><p>Set <span class="math notranslate nohighlight">\(t=1\)</span></p></li>
+<li><p>Choose the point <span class="math notranslate nohighlight">\(x_t = \arg\max_{x \in D} \mu_{t-1}(x) + \sqrt{\beta_t}\,\sigma_{t-1}(x)\)</span> that maximizes the upper confidence bound</p></li>
+<li><p>Observe <span class="math notranslate nohighlight">\(y_t = f(x_t) + \epsilon_t\)</span></p></li>
+<li><p>Perform a Bayesian update with the observation <span class="math notranslate nohighlight">\(y_t\)</span>, obtaining the posterior mean <span class="math notranslate nohighlight">\(\mu_t(x)\)</span> and posterior standard deviation <span class="math notranslate nohighlight">\(\sigma_t(x)\)</span></p></li>
+<li><p>Increment <span class="math notranslate nohighlight">\(t\)</span> by 1 and return to step 2 until the evaluation budget is reached</p></li>
 </ol>
 </section>
 </div></section>
-<section id="flowchart">
-<h2>フローチャート<a class="headerlink" href="#flowchart" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>フローチャート<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <pre  class="mermaid">
         flowchart TD
     INIT[&quot;Initializer&lt;br/&gt;Sample initial population&lt;br/&gt;via LHS etc. → true evaluation&quot;] --&gt; ASK
@@ -1030,10 +1034,11 @@ window.runMermaid = runMermaid;</script>
     TERM -- &quot;Not yet (L5)&quot; --&gt; ASK
     TERM -- &quot;Reached&quot; --&gt; RESULT([&quot;Best solution x*&quot;])
     </pre></section>
-<section id="configuration-in-saealib">
-<h2>saealibでの構成<a class="headerlink" href="#configuration-in-saealib" title="Link to this heading">#</a></h2>
+<section id="saealib">
+<h2>saealibでの構成<a class="headerlink" href="#saealib" title="Link to this heading">#</a></h2>
 <p>引用文献のGP-UCBは報酬の<strong>最大化</strong>として定式化されているのに対し、<code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code>は最小化を前提とし、<span class="math notranslate nohighlight">\(\mathrm{LCB}(x) = \mu(x) - \kappa\sigma(x)\)</span>を計算します。スコアの比較を他の獲得関数と揃えるため、符号を反転して返します（saealib全体の「スコアは高いほど良い」という規約に合わせるためです）。</p>
-<p><span class="math notranslate nohighlight">\(\mu(x)\)</span> を最小化空間に変換したうえで符号反転すると <span class="math notranslate nohighlight">\(-(\mu(x) - \kappa\sigma(x)) = -\mu(x) + \kappa\sigma(x)\)</span> となり、これは最大化空間での信頼上限 <span class="math notranslate nohighlight">\(\mu(x) + \kappa\sigma(x)\)</span> と符号の向きが揃います。 したがって<code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code>の<code class="docutils literal notranslate"><span class="pre">kappa</span></code>は、論文の <span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span> に対応します。</p>
+<p><span class="math notranslate nohighlight">\(\mu(x)\)</span> を最小化空間に変換したうえで符号反転すると <span class="math notranslate nohighlight">\(-(\mu(x) - \kappa\sigma(x)) = -\mu(x) + \kappa\sigma(x)\)</span> となり、これは最大化空間での信頼上限 <span class="math notranslate nohighlight">\(\mu(x) + \kappa\sigma(x)\)</span> と符号の向きが揃います。
+したがって<code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code>の<code class="docutils literal notranslate"><span class="pre">kappa</span></code>は、論文の <span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span> に対応します。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>役割</p></th>
@@ -1052,7 +1057,7 @@ window.runMermaid = runMermaid;</script>
 </tr>
 <tr class="row-even"><td><p>獲得関数</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound</span></code>（<code class="docutils literal notranslate"><span class="pre">kappa</span></code>が論文の <span class="math notranslate nohighlight">\(\sqrt{\beta_t}\)</span> に対応、詳細は次節）</p></td>
-<td><p>手順 L2</p></td>
+<td><p>L2</p></td>
 </tr>
 <tr class="row-odd"><td><p>サロゲート管理</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>（アーカイブ全体でGPをフィットする）</p></td>
@@ -1108,18 +1113,25 @@ window.runMermaid = runMermaid;</script>
 </pre></div>
 </div>
 </section>
-<section id="differences-from-the-source">
-<h2>文献との差分<a class="headerlink" href="#differences-from-the-source" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>文献との差分<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <p>GP-UCBの原法は反復ごとにUCB最大点を求めます。saealibは<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成した候補プールからUCB上位候補を選ぶことで、この<code class="docutils literal notranslate"><span class="pre">argmax</span> <span class="pre">UCB</span></code>を近似します。<code class="docutils literal notranslate"><span class="pre">IndividualBasedStrategy.evaluation_ratio</span></code>は、選ばれた候補の複数個をまとめて真の評価に回します。</p>
 <p>有限集合<span class="math notranslate nohighlight">\(D\)</span>の場合、原法は累積リグレットの理論的上限を得るために、反復回数<span class="math notranslate nohighlight">\(t\)</span>に対して対数的に増加する次の<span class="math notranslate nohighlight">\(\beta_t\)</span>を選びます。</p>
 <div class="math notranslate nohighlight">
-\[::\]</div>
-<p>原論文は、理論どおりのスケジュールをそのまま使うと探索的すぎる場合があるとして、係数を交差検証で1/5に縮小した方がよい結果を報告しています。saealibの既定値（<code class="docutils literal notranslate"><span class="pre">kappa=2.0</span></code>、<span class="math notranslate nohighlight">\(t\)</span>によらず固定）はこのスケジュールに従わず、この保証を持ちません。</p>
+\[\beta_t = 2 \log\left(\frac{|D|\, t^2 \pi^2}{6\delta}\right)\]</div>
+<p>原論文は、理論どおりのスケジュールをそのまま使うと探索的すぎる場合があるとして、係数を交差検証で1/5に縮小した方がよい結果を報告しています。
+saealibの既定値（<code class="docutils literal notranslate"><span class="pre">kappa=2.0</span></code>、<span class="math notranslate nohighlight">\(t\)</span>によらず固定）はこのスケジュールに従わず、この保証を持ちません。</p>
 </section>
-<section id="parameters-and-variants">
-<h2>パラメータと変種<a class="headerlink" href="#parameters-and-variants" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>パラメータと変種<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <p><strong>κ（探索と活用のトレードオフ）</strong>：<code class="docutils literal notranslate"><span class="pre">LowerConfidenceBound(kappa=...)</span></code>で調整します。既定値は<code class="docutils literal notranslate"><span class="pre">2.0</span></code>。</p>
-<p><strong>β_tスケジュール</strong>：固定<code class="docutils literal notranslate"><span class="pre">kappa</span></code>の代わりに<code class="docutils literal notranslate"><span class="pre">beta_schedule=gp_ucb_beta_schedule(domain_size,</span> <span class="pre">delta)</span></code>を渡すと、「文献との差分」節の<span class="math notranslate nohighlight">\(\beta_t\)</span>の式を再現します。<code class="docutils literal notranslate"><span class="pre">domain_size</span></code>は有限の意思決定集合の要素数<span class="math notranslate nohighlight">\(|D|\)</span>であり、saealibの連続探索空間に対する離散化点数の代理値ではありません（以下を参照）。<code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">ctx.decision_count</span> <span class="pre">+</span> <span class="pre">1</span></code>で、これはランタイムがこれまでに（同期または非同期で）確定した新規の評価計画の数に、これから下す決定の分の1を加えた値です。確定した評価計画1件が何個の候補を評価するかによらず1決定として数えるため、この例の<code class="docutils literal notranslate"><span class="pre">GA</span></code>＋<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>構成では、<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>が1世代につき複数候補を選ぶ場合に<code class="docutils literal notranslate"><span class="pre">t</span></code>は論文の観測ごとの反復回数と一致しません。<code class="docutils literal notranslate"><span class="pre">t</span></code>が論文の反復回数と一致するのは、確定した評価計画がすべて1候補だけを評価する場合（同期実行、1決定につき1回の真の評価）に限られますが、<code class="docutils literal notranslate"><span class="pre">t</span></code>が一致するだけでは引用文献のリグレット上限は再現されません。定理1は、実際の有限集合<span class="math notranslate nohighlight">\(D\)</span>上で<span class="math notranslate nohighlight">\(\mu_{t-1}(x) + \sqrt{\beta_t}\,\sigma_{t-1}(x)\)</span>を網羅的に最適化することを仮定しています。saealibの<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成する候補プールは、各世代で再サンプリングされた部分集合上でこのargmaxを近似するだけであり、<code class="docutils literal notranslate"><span class="pre">gp_ucb_beta_schedule(domain_size=...)</span></code>に整数を渡しても連続探索空間がその有限集合<span class="math notranslate nohighlight">\(D\)</span>になるわけではなく、式に数値を代入するだけです。定理の保証を再現するには、文字どおりの有限集合<span class="math notranslate nohighlight">\(D\)</span>上で網羅的に最適化するコンポーネント（saealib組み込みの<code class="docutils literal notranslate"><span class="pre">GA</span></code>/<code class="docutils literal notranslate"><span class="pre">PSO</span></code>アルゴリズムには含まれません）に加え、論文のノイズとカーネルの仮定に一致するGPモデルが必要です。saealibはそのようなコンポーネントを提供していません。したがって、以下の表は各設定における<code class="docutils literal notranslate"><span class="pre">t</span></code>と<code class="docutils literal notranslate"><span class="pre">kappa</span></code>の挙動だけを示すものであり、引用文献のリグレット上限が成り立つかどうかを示すものではありません。</p>
+<p><strong>β_tスケジュール</strong>：固定<code class="docutils literal notranslate"><span class="pre">kappa</span></code>の代わりに<code class="docutils literal notranslate"><span class="pre">beta_schedule=gp_ucb_beta_schedule(domain_size,</span> <span class="pre">delta)</span></code>を渡すと、「文献との差分」節の<span class="math notranslate nohighlight">\(β_t\)</span>の式を再現します。<code class="docutils literal notranslate"><span class="pre">domain_size</span></code>は有限の意思決定集合の要素数<span class="math notranslate nohighlight">\(|D|\)</span>であり、saealibの連続探索空間に対する離散化点数の代理値ではありません（以下を参照）。
+<code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">ctx.decision_count</span> <span class="pre">+</span> <span class="pre">1</span></code>は、ランタイムがこれまでに（同期または非同期で）確定した新規の評価計画の数に、これから下す決定の分の1を加えた値です。
+確定した評価計画1件は、それが評価する候補数によらず1決定として数えます。そのため、このページの例にある<code class="docutils literal notranslate"><span class="pre">GA</span></code>＋<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>構成では、<code class="docutils literal notranslate"><span class="pre">evaluation_ratio</span></code>が世代ごとに複数候補を選ぶ場合、<code class="docutils literal notranslate"><span class="pre">t</span></code>は論文の観測ごとの反復回数とは一致しません。
+<code class="docutils literal notranslate"><span class="pre">t</span></code>が論文の反復回数と一致するのは、確定した評価計画がすべて1候補だけを評価する場合（同期実行、1決定につき1回の真の評価）に限られますが、<code class="docutils literal notranslate"><span class="pre">t</span></code>が一致するだけでは引用文献のリグレット上限は再現されません。
+定理1は、実際の有限集合<span class="math notranslate nohighlight">\(D\)</span>上で<span class="math notranslate nohighlight">\(\mu_{t-1}(x) + \sqrt{\beta_t}\,\sigma_{t-1}(x)\)</span>を網羅的に最適化することを仮定しています。saealibの<code class="docutils literal notranslate"><span class="pre">GA</span></code>が生成する候補プールは、各世代で再サンプリングされた部分集合上でこのargmaxを近似するだけです。また、<code class="docutils literal notranslate"><span class="pre">gp_ucb_beta_schedule(domain_size=...)</span></code>に整数を渡しても連続探索空間がその有限集合<span class="math notranslate nohighlight">\(D\)</span>になるわけではなく、式に数値を代入するだけです。
+定理の保証を再現するには、文字どおりの有限集合<span class="math notranslate nohighlight">\(D\)</span>上で網羅的に最適化するコンポーネント（saealib組み込みの<code class="docutils literal notranslate"><span class="pre">GA</span></code>/<code class="docutils literal notranslate"><span class="pre">PSO</span></code>アルゴリズムには含まれません）と、論文のノイズおよびカーネルの仮定に一致するGPモデルが必要です。saealibはそのようなコンポーネントを提供していません。
+したがって、以下の表は各設定における<code class="docutils literal notranslate"><span class="pre">t</span></code>と<code class="docutils literal notranslate"><span class="pre">kappa</span></code>の挙動だけを示すものであり、引用文献のリグレット上限が成り立つかどうかは示しません。</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>設定</p></th>
@@ -1144,8 +1156,8 @@ window.runMermaid = runMermaid;</script>
 </table>
 </div>
 </section>
-<section id="related">
-<h2>関連<a class="headerlink" href="#related" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>関連<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="../references.html"><span class="std std-doc">文献リファレンス</span></a>：出典の完全な書誌情報とLCB以外の獲得関数の出典一覧</p></li>
 <li><p><a class="reference internal" href="../concepts/surrogate_modeling/surrogate_manager.html"><span class="std std-doc">SurrogateManager</span></a>：<code class="docutils literal notranslate"><span class="pre">GlobalSurrogateManager</span></code>の詳しい使い方</p></li>
@@ -1204,13 +1216,13 @@ window.runMermaid = runMermaid;</script>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">概要</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pseudocode">擬似コード</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flowchart">フローチャート</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-in-saealib">saealibでの構成</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#differences-from-the-source">文献との差分</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-and-variants">パラメータと変種</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related">関連</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">概要</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">擬似コード</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">フローチャート</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#saealib">saealibでの構成</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">文献との差分</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">パラメータと変種</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">関連</a></li>
 </ul>
   </nav></div>
 
