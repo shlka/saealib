@@ -1,0 +1,55 @@
+﻿saealib.WeightedSumComparator
+=============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: WeightedSumComparator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~WeightedSumComparator.__init__
+   ~WeightedSumComparator.compare
+   ~WeightedSumComparator.compare_population
+   ~WeightedSumComparator.get_required_attrs
+   ~WeightedSumComparator.prepare_population
+   ~WeightedSumComparator.rank_population
+   ~WeightedSumComparator.sort_population
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.WeightedSumComparator.__init__
+
+
+.. automethod:: saealib.WeightedSumComparator.compare
+
+
+.. automethod:: saealib.WeightedSumComparator.compare_population
+
+
+.. automethod:: saealib.WeightedSumComparator.get_required_attrs
+
+
+.. automethod:: saealib.WeightedSumComparator.prepare_population
+
+
+.. automethod:: saealib.WeightedSumComparator.rank_population
+
+
+.. automethod:: saealib.WeightedSumComparator.sort_population
+
+
+

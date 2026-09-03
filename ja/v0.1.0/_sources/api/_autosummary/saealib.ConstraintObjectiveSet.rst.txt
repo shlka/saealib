@@ -1,0 +1,39 @@
+﻿saealib.ConstraintObjectiveSet
+==============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ConstraintObjectiveSet
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ConstraintObjectiveSet.__init__
+   ~ConstraintObjectiveSet.build
+   ~ConstraintObjectiveSet.contract
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ConstraintObjectiveSet.__init__
+
+
+.. automethod:: saealib.ConstraintObjectiveSet.build
+
+
+.. automethod:: saealib.ConstraintObjectiveSet.contract
+
+
+

@@ -1,0 +1,142 @@
+---
+primary_layer: layer2
+related_layers: [layer3]
+---
+
+# Surrogate Models
+
+## Base
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.Surrogate
+   saealib.RegressionSurrogate
+   saealib.ComparisonSurrogate
+   saealib.SurrogatePrediction
+```
+
+## Surrogate Managers
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.SurrogateManager
+   saealib.GlobalSurrogateManager
+   saealib.LocalSurrogateManager
+   saealib.CompositeSurrogateManager
+   saealib.PairwiseSurrogateManager
+   saealib.product_combine
+   saealib.rank_weighted_combine
+```
+
+## RBF Surrogate
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.RBFSurrogate
+```
+
+## RBF Kernels
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.RBFKernel
+   saealib.GaussianKernel
+   saealib.ThinPlateSplineKernel
+   saealib.LinearKernel
+   saealib.CubicKernel
+   saealib.MultiquadricKernel
+   saealib.MaternKernel
+```
+
+## scikit-learn / 外部ライブラリアダプター
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.SklearnSurrogate
+   saealib.SklearnGPRSurrogate
+   saealib.SklearnRFRSurrogate
+   saealib.SklearnSVMSurrogate
+   saealib.SklearnNNSurrogate
+   saealib.SklearnXGBSurrogate
+   saealib.SklearnLGBMSurrogate
+   saealib.SklearnClassificationSurrogate
+   saealib.SklearnRFCClassificationSurrogate
+   saealib.SklearnSVCClassificationSurrogate
+   saealib.TorchSurrogate
+```
+
+## 目的ごとのサロゲート
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.PerObjectiveSurrogate
+```
+
+## Training Sets
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.TrainingData
+   saealib.TrainingSet
+   saealib.ArchiveObjectiveSet
+   saealib.ConstraintObjectiveSet
+   saealib.FeasibilityClassificationSet
+   saealib.KNNObjectiveSet
+   saealib.KNNConstraintObjectiveSet
+   saealib.LevelBasedSet
+   saealib.PairwiseComparisonSet
+   saealib.ReferencePointComparisonSet
+   saealib.TopKBipartitionSet
+```
+
+## Surrogate Switching
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.AccuracyBasedSurrogateSwitcher
+   saealib.GenCtrlSwitcher
+   saealib.ManagerSwitcher
+   saealib.StrategySwitcher
+```
+
+## Accuracy Evaluation
+
+```{eval-rst}
+.. autosummary::
+   :toctree: _autosummary
+   :nosignatures:
+
+   saealib.AccuracyEvaluator
+   saealib.HeldOutAccuracyEvaluator
+   saealib.KFoldAccuracyEvaluator
+   saealib.LOOAccuracyEvaluator
+   saealib.SurrogateAccuracy
+   saealib.SurrogateAccuracyMetric
+   saealib.RMSE
+   saealib.R2Score
+   saealib.SpearmanCorrelation
+```

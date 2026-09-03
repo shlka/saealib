@@ -1,0 +1,35 @@
+﻿saealib.space.SamplingService
+=============================
+
+.. currentmodule:: saealib.space
+
+.. autoclass:: SamplingService
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SamplingService.__init__
+   ~SamplingService.sample
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.space.SamplingService.__init__
+
+
+.. automethod:: saealib.space.SamplingService.sample
+
+
+

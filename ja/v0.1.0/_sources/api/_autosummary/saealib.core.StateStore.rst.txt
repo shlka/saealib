@@ -1,0 +1,47 @@
+﻿saealib.core.StateStore
+=======================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: StateStore
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~StateStore.__init__
+   ~StateStore.apply_patch
+   ~StateStore.contains
+   ~StateStore.get
+   ~StateStore.view
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.StateStore.__init__
+
+
+.. automethod:: saealib.core.StateStore.apply_patch
+
+
+.. automethod:: saealib.core.StateStore.contains
+
+
+.. automethod:: saealib.core.StateStore.get
+
+
+.. automethod:: saealib.core.StateStore.view
+
+
+

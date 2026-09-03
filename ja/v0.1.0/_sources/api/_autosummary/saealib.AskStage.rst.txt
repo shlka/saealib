@@ -1,0 +1,47 @@
+﻿saealib.AskStage
+================
+
+.. currentmodule:: saealib
+
+.. autoclass:: AskStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~AskStage.__init__
+   ~AskStage.contract
+   ~AskStage.execute
+   ~AskStage.to_pseudocode
+   ~AskStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.AskStage.__init__
+
+
+.. automethod:: saealib.AskStage.contract
+
+
+.. automethod:: saealib.AskStage.execute
+
+
+.. automethod:: saealib.AskStage.to_pseudocode
+
+
+.. automethod:: saealib.AskStage.to_text
+
+
+

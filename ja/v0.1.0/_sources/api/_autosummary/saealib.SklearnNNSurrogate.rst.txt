@@ -1,0 +1,51 @@
+﻿saealib.SklearnNNSurrogate
+==========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SklearnNNSurrogate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SklearnNNSurrogate.__init__
+   ~SklearnNNSurrogate.contract
+   ~SklearnNNSurrogate.fit
+   ~SklearnNNSurrogate.post_fit
+   ~SklearnNNSurrogate.predict
+   ~SklearnNNSurrogate.with_post_fit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SklearnNNSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnNNSurrogate.contract
+
+
+.. automethod:: saealib.SklearnNNSurrogate.fit
+
+
+.. automethod:: saealib.SklearnNNSurrogate.post_fit
+
+
+.. automethod:: saealib.SklearnNNSurrogate.predict
+
+
+.. automethod:: saealib.SklearnNNSurrogate.with_post_fit
+
+
+

@@ -1,0 +1,39 @@
+﻿saealib.DuplicateElimination
+============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: DuplicateElimination
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~DuplicateElimination.__init__
+   ~DuplicateElimination.contract
+   ~DuplicateElimination.find_duplicates
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.DuplicateElimination.__init__
+
+
+.. automethod:: saealib.DuplicateElimination.contract
+
+
+.. automethod:: saealib.DuplicateElimination.find_duplicates
+
+
+

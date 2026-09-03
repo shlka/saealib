@@ -1,0 +1,47 @@
+﻿saealib.EvaluationCollectStage
+==============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationCollectStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationCollectStage.__init__
+   ~EvaluationCollectStage.contract
+   ~EvaluationCollectStage.execute
+   ~EvaluationCollectStage.to_pseudocode
+   ~EvaluationCollectStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationCollectStage.__init__
+
+
+.. automethod:: saealib.EvaluationCollectStage.contract
+
+
+.. automethod:: saealib.EvaluationCollectStage.execute
+
+
+.. automethod:: saealib.EvaluationCollectStage.to_pseudocode
+
+
+.. automethod:: saealib.EvaluationCollectStage.to_text
+
+
+

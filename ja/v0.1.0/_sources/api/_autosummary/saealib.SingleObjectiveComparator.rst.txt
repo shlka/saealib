@@ -1,0 +1,55 @@
+﻿saealib.SingleObjectiveComparator
+=================================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SingleObjectiveComparator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SingleObjectiveComparator.__init__
+   ~SingleObjectiveComparator.compare
+   ~SingleObjectiveComparator.compare_population
+   ~SingleObjectiveComparator.get_required_attrs
+   ~SingleObjectiveComparator.prepare_population
+   ~SingleObjectiveComparator.rank_population
+   ~SingleObjectiveComparator.sort_population
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SingleObjectiveComparator.__init__
+
+
+.. automethod:: saealib.SingleObjectiveComparator.compare
+
+
+.. automethod:: saealib.SingleObjectiveComparator.compare_population
+
+
+.. automethod:: saealib.SingleObjectiveComparator.get_required_attrs
+
+
+.. automethod:: saealib.SingleObjectiveComparator.prepare_population
+
+
+.. automethod:: saealib.SingleObjectiveComparator.rank_population
+
+
+.. automethod:: saealib.SingleObjectiveComparator.sort_population
+
+
+

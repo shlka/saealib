@@ -1,0 +1,6 @@
+﻿saealib.ConfigurationError
+==========================
+
+.. currentmodule:: saealib
+
+.. autoexception:: ConfigurationError

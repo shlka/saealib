@@ -1,0 +1,39 @@
+﻿saealib.space.PermutationSpace
+==============================
+
+.. currentmodule:: saealib.space
+
+.. autoclass:: PermutationSpace
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PermutationSpace.__init__
+   ~PermutationSpace.sample
+   ~PermutationSpace.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.space.PermutationSpace.__init__
+
+
+.. automethod:: saealib.space.PermutationSpace.sample
+
+
+.. automethod:: saealib.space.PermutationSpace.validate
+
+
+

@@ -1,0 +1,31 @@
+﻿saealib.core.ExecutionContract
+==============================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: ExecutionContract
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ExecutionContract.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.ExecutionContract.__init__
+
+
+

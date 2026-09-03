@@ -1,0 +1,39 @@
+﻿saealib.RandomInitializer
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: RandomInitializer
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~RandomInitializer.__init__
+   ~RandomInitializer.contract
+   ~RandomInitializer.initialize
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.RandomInitializer.__init__
+
+
+.. automethod:: saealib.RandomInitializer.contract
+
+
+.. automethod:: saealib.RandomInitializer.initialize
+
+
+

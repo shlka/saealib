@@ -1,0 +1,35 @@
+﻿saealib.EvaluationAdapter
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationAdapter
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationAdapter.__init__
+   ~EvaluationAdapter.transform
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationAdapter.__init__
+
+
+.. automethod:: saealib.EvaluationAdapter.transform
+
+
+

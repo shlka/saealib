@@ -1,0 +1,47 @@
+﻿saealib.AcquisitionStage
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: AcquisitionStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~AcquisitionStage.__init__
+   ~AcquisitionStage.contract
+   ~AcquisitionStage.execute
+   ~AcquisitionStage.to_pseudocode
+   ~AcquisitionStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.AcquisitionStage.__init__
+
+
+.. automethod:: saealib.AcquisitionStage.contract
+
+
+.. automethod:: saealib.AcquisitionStage.execute
+
+
+.. automethod:: saealib.AcquisitionStage.to_pseudocode
+
+
+.. automethod:: saealib.AcquisitionStage.to_text
+
+
+

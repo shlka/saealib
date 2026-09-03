@@ -1,0 +1,51 @@
+﻿saealib.ParEGOAcquisition
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ParEGOAcquisition
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ParEGOAcquisition.__init__
+   ~ParEGOAcquisition.compute_reference
+   ~ParEGOAcquisition.contract
+   ~ParEGOAcquisition.evaluate
+   ~ParEGOAcquisition.prepare
+   ~ParEGOAcquisition.score
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ParEGOAcquisition.__init__
+
+
+.. automethod:: saealib.ParEGOAcquisition.compute_reference
+
+
+.. automethod:: saealib.ParEGOAcquisition.contract
+
+
+.. automethod:: saealib.ParEGOAcquisition.evaluate
+
+
+.. automethod:: saealib.ParEGOAcquisition.prepare
+
+
+.. automethod:: saealib.ParEGOAcquisition.score
+
+
+

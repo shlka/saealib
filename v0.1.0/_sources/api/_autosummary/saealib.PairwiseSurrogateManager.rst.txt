@@ -1,0 +1,51 @@
+﻿saealib.PairwiseSurrogateManager
+================================
+
+.. currentmodule:: saealib
+
+.. autoclass:: PairwiseSurrogateManager
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PairwiseSurrogateManager.__init__
+   ~PairwiseSurrogateManager.contract
+   ~PairwiseSurrogateManager.fit
+   ~PairwiseSurrogateManager.on_generation_end
+   ~PairwiseSurrogateManager.predict
+   ~PairwiseSurrogateManager.with_on_generation_end
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.PairwiseSurrogateManager.__init__
+
+
+.. automethod:: saealib.PairwiseSurrogateManager.contract
+
+
+.. automethod:: saealib.PairwiseSurrogateManager.fit
+
+
+.. automethod:: saealib.PairwiseSurrogateManager.on_generation_end
+
+
+.. automethod:: saealib.PairwiseSurrogateManager.predict
+
+
+.. automethod:: saealib.PairwiseSurrogateManager.with_on_generation_end
+
+
+

@@ -1,0 +1,51 @@
+﻿saealib.SklearnSVMSurrogate
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SklearnSVMSurrogate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SklearnSVMSurrogate.__init__
+   ~SklearnSVMSurrogate.contract
+   ~SklearnSVMSurrogate.fit
+   ~SklearnSVMSurrogate.post_fit
+   ~SklearnSVMSurrogate.predict
+   ~SklearnSVMSurrogate.with_post_fit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SklearnSVMSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnSVMSurrogate.contract
+
+
+.. automethod:: saealib.SklearnSVMSurrogate.fit
+
+
+.. automethod:: saealib.SklearnSVMSurrogate.post_fit
+
+
+.. automethod:: saealib.SklearnSVMSurrogate.predict
+
+
+.. automethod:: saealib.SklearnSVMSurrogate.with_post_fit
+
+
+

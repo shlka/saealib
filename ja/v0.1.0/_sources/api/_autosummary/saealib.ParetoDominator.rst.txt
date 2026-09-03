@@ -1,0 +1,43 @@
+﻿saealib.ParetoDominator
+=======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ParetoDominator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ParetoDominator.__init__
+   ~ParetoDominator.dominance_matrix
+   ~ParetoDominator.dominates
+   ~ParetoDominator.dominates_many
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ParetoDominator.__init__
+
+
+.. automethod:: saealib.ParetoDominator.dominance_matrix
+
+
+.. automethod:: saealib.ParetoDominator.dominates
+
+
+.. automethod:: saealib.ParetoDominator.dominates_many
+
+
+

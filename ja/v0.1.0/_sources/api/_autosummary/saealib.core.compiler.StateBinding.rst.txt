@@ -1,0 +1,31 @@
+﻿saealib.core.compiler.StateBinding
+==================================
+
+.. currentmodule:: saealib.core.compiler
+
+.. autoclass:: StateBinding
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~StateBinding.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.compiler.StateBinding.__init__
+
+
+

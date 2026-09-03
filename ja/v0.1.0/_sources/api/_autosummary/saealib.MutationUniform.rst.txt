@@ -1,0 +1,55 @@
+﻿saealib.MutationUniform
+=======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: MutationUniform
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~MutationUniform.__init__
+   ~MutationUniform.contract
+   ~MutationUniform.mutate
+   ~MutationUniform.mutate_batch
+   ~MutationUniform.post_mutation
+   ~MutationUniform.post_mutation_batch
+   ~MutationUniform.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.MutationUniform.__init__
+
+
+.. automethod:: saealib.MutationUniform.contract
+
+
+.. automethod:: saealib.MutationUniform.mutate
+
+
+.. automethod:: saealib.MutationUniform.mutate_batch
+
+
+.. automethod:: saealib.MutationUniform.post_mutation
+
+
+.. automethod:: saealib.MutationUniform.post_mutation_batch
+
+
+.. automethod:: saealib.MutationUniform.with_post
+
+
+

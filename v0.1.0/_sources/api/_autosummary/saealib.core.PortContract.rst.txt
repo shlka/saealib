@@ -1,0 +1,31 @@
+﻿saealib.core.PortContract
+=========================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: PortContract
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PortContract.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.PortContract.__init__
+
+
+

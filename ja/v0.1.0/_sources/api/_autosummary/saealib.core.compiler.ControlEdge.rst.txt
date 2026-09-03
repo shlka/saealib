@@ -1,0 +1,31 @@
+﻿saealib.core.compiler.ControlEdge
+=================================
+
+.. currentmodule:: saealib.core.compiler
+
+.. autoclass:: ControlEdge
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ControlEdge.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.compiler.ControlEdge.__init__
+
+
+

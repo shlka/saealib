@@ -1,0 +1,39 @@
+﻿saealib.TrainingSet
+===================
+
+.. currentmodule:: saealib
+
+.. autoclass:: TrainingSet
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~TrainingSet.__init__
+   ~TrainingSet.build
+   ~TrainingSet.contract
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.TrainingSet.__init__
+
+
+.. automethod:: saealib.TrainingSet.build
+
+
+.. automethod:: saealib.TrainingSet.contract
+
+
+

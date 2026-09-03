@@ -1,0 +1,31 @@
+﻿saealib.core.DataSpec
+=====================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: DataSpec
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~DataSpec.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.DataSpec.__init__
+
+
+

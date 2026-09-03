@@ -1,0 +1,39 @@
+﻿saealib.Result
+==============
+
+.. currentmodule:: saealib
+
+.. autoclass:: Result
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Result.__init__
+   ~Result.from_state
+   ~Result.history_series
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.Result.__init__
+
+
+.. automethod:: saealib.Result.from_state
+
+
+.. automethod:: saealib.Result.history_series
+
+
+

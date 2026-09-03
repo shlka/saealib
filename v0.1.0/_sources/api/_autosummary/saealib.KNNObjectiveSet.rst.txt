@@ -1,0 +1,39 @@
+﻿saealib.KNNObjectiveSet
+=======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: KNNObjectiveSet
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~KNNObjectiveSet.__init__
+   ~KNNObjectiveSet.build
+   ~KNNObjectiveSet.contract
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.KNNObjectiveSet.__init__
+
+
+.. automethod:: saealib.KNNObjectiveSet.build
+
+
+.. automethod:: saealib.KNNObjectiveSet.contract
+
+
+

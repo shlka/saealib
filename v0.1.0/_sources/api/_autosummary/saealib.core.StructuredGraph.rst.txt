@@ -1,0 +1,47 @@
+﻿saealib.core.StructuredGraph
+============================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: StructuredGraph
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~StructuredGraph.__init__
+   ~StructuredGraph.from_graph
+   ~StructuredGraph.node_by_id
+   ~StructuredGraph.validate
+   ~StructuredGraph.well_formedness
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.StructuredGraph.__init__
+
+
+.. automethod:: saealib.core.StructuredGraph.from_graph
+
+
+.. automethod:: saealib.core.StructuredGraph.node_by_id
+
+
+.. automethod:: saealib.core.StructuredGraph.validate
+
+
+.. automethod:: saealib.core.StructuredGraph.well_formedness
+
+
+

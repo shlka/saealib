@@ -1,0 +1,51 @@
+﻿saealib.SklearnRFRSurrogate
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SklearnRFRSurrogate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SklearnRFRSurrogate.__init__
+   ~SklearnRFRSurrogate.contract
+   ~SklearnRFRSurrogate.fit
+   ~SklearnRFRSurrogate.post_fit
+   ~SklearnRFRSurrogate.predict
+   ~SklearnRFRSurrogate.with_post_fit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SklearnRFRSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnRFRSurrogate.contract
+
+
+.. automethod:: saealib.SklearnRFRSurrogate.fit
+
+
+.. automethod:: saealib.SklearnRFRSurrogate.post_fit
+
+
+.. automethod:: saealib.SklearnRFRSurrogate.predict
+
+
+.. automethod:: saealib.SklearnRFRSurrogate.with_post_fit
+
+
+

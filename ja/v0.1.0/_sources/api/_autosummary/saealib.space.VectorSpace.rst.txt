@@ -1,0 +1,39 @@
+﻿saealib.space.VectorSpace
+=========================
+
+.. currentmodule:: saealib.space
+
+.. autoclass:: VectorSpace
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~VectorSpace.__init__
+   ~VectorSpace.sample
+   ~VectorSpace.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.space.VectorSpace.__init__
+
+
+.. automethod:: saealib.space.VectorSpace.sample
+
+
+.. automethod:: saealib.space.VectorSpace.validate
+
+
+

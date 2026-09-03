@@ -1,0 +1,47 @@
+﻿saealib.SurrogateOnlyLoopStage
+==============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SurrogateOnlyLoopStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SurrogateOnlyLoopStage.__init__
+   ~SurrogateOnlyLoopStage.contract
+   ~SurrogateOnlyLoopStage.execute
+   ~SurrogateOnlyLoopStage.to_pseudocode
+   ~SurrogateOnlyLoopStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SurrogateOnlyLoopStage.__init__
+
+
+.. automethod:: saealib.SurrogateOnlyLoopStage.contract
+
+
+.. automethod:: saealib.SurrogateOnlyLoopStage.execute
+
+
+.. automethod:: saealib.SurrogateOnlyLoopStage.to_pseudocode
+
+
+.. automethod:: saealib.SurrogateOnlyLoopStage.to_text
+
+
+

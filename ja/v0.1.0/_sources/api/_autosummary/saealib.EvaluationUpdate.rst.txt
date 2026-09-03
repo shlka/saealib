@@ -1,0 +1,31 @@
+﻿saealib.EvaluationUpdate
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationUpdate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationUpdate.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationUpdate.__init__
+
+
+

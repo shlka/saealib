@@ -1,0 +1,55 @@
+﻿saealib.MutationPolynomial
+==========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: MutationPolynomial
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~MutationPolynomial.__init__
+   ~MutationPolynomial.contract
+   ~MutationPolynomial.mutate
+   ~MutationPolynomial.mutate_batch
+   ~MutationPolynomial.post_mutation
+   ~MutationPolynomial.post_mutation_batch
+   ~MutationPolynomial.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.MutationPolynomial.__init__
+
+
+.. automethod:: saealib.MutationPolynomial.contract
+
+
+.. automethod:: saealib.MutationPolynomial.mutate
+
+
+.. automethod:: saealib.MutationPolynomial.mutate_batch
+
+
+.. automethod:: saealib.MutationPolynomial.post_mutation
+
+
+.. automethod:: saealib.MutationPolynomial.post_mutation_batch
+
+
+.. automethod:: saealib.MutationPolynomial.with_post
+
+
+

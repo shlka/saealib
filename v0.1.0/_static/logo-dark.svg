@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 90">
+  <polygon points="45,15 75,32 75,66 45,83 15,66 15,32" fill="#e8eaed"/>
+  <path d="M29 39 L44 39 L44 50 L59 50 L59 61" stroke="#6b7280" stroke-width="5.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="29" cy="39" r="4" fill="#23262b"/>
+  <circle cx="44" cy="50" r="4" fill="#23262b"/>
+  <circle cx="59" cy="61" r="4" fill="#2dd4bf"/>
+  <text x="95" y="60" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="34" fill="#e8eaed">saealib</text>
+</svg>

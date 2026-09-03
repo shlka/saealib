@@ -1,0 +1,51 @@
+﻿saealib.EHVIAcquisition
+=======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EHVIAcquisition
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EHVIAcquisition.__init__
+   ~EHVIAcquisition.compute_reference
+   ~EHVIAcquisition.contract
+   ~EHVIAcquisition.evaluate
+   ~EHVIAcquisition.prepare
+   ~EHVIAcquisition.score
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EHVIAcquisition.__init__
+
+
+.. automethod:: saealib.EHVIAcquisition.compute_reference
+
+
+.. automethod:: saealib.EHVIAcquisition.contract
+
+
+.. automethod:: saealib.EHVIAcquisition.evaluate
+
+
+.. automethod:: saealib.EHVIAcquisition.prepare
+
+
+.. automethod:: saealib.EHVIAcquisition.score
+
+
+

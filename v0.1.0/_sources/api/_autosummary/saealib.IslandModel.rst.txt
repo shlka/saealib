@@ -1,0 +1,35 @@
+﻿saealib.IslandModel
+===================
+
+.. currentmodule:: saealib
+
+.. autoclass:: IslandModel
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~IslandModel.__init__
+   ~IslandModel.run
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.IslandModel.__init__
+
+
+.. automethod:: saealib.IslandModel.run
+
+
+

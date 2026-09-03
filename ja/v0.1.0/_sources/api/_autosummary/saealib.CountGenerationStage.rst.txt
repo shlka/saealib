@@ -1,0 +1,47 @@
+﻿saealib.CountGenerationStage
+============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CountGenerationStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CountGenerationStage.__init__
+   ~CountGenerationStage.contract
+   ~CountGenerationStage.execute
+   ~CountGenerationStage.to_pseudocode
+   ~CountGenerationStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CountGenerationStage.__init__
+
+
+.. automethod:: saealib.CountGenerationStage.contract
+
+
+.. automethod:: saealib.CountGenerationStage.execute
+
+
+.. automethod:: saealib.CountGenerationStage.to_pseudocode
+
+
+.. automethod:: saealib.CountGenerationStage.to_text
+
+
+

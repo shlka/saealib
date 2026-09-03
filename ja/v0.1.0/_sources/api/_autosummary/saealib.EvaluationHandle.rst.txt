@@ -1,0 +1,31 @@
+﻿saealib.EvaluationHandle
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationHandle
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationHandle.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationHandle.__init__
+
+
+

@@ -1,0 +1,39 @@
+﻿saealib.FeedbackBuilder
+=======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: FeedbackBuilder
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~FeedbackBuilder.__init__
+   ~FeedbackBuilder.build
+   ~FeedbackBuilder.contract
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.FeedbackBuilder.__init__
+
+
+.. automethod:: saealib.FeedbackBuilder.build
+
+
+.. automethod:: saealib.FeedbackBuilder.contract
+
+
+

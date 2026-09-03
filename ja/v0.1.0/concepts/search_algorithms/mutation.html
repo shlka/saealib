@@ -1,0 +1,848 @@
+
+<!DOCTYPE html>
+
+
+<html lang="ja" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Mutation &#8212; saealib 0.1.0 ドキュメント</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=431400f5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../_static/documentation_options.js?v=98e9f989"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/translations.js?v=4755f45a"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'concepts/search_algorithms/mutation';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://saealib.github.io/saealib/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v0.1.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="../../_static/js/lang-switch.js?v=6860dbcf"></script>
+    <script src="../../_static/js/sidebar-dialog-fix.js?v=decd8175"></script>
+    <script src="../../_static/js/mermaid-scale.js?v=e063b89f"></script>
+    <link rel="canonical" href="https://saealib.github.io/saealib/ja/v0.1.0/concepts/search_algorithms/mutation.html" />
+    <link rel="icon" href="../../_static/icon.svg"/>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="検索" href="../../search.html" />
+    <link rel="next" title="ParentSelection" href="parent_selection.html" />
+    <link rel="prev" title="Crossover" href="crossover.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="ja"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../_static/searchtools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">本文へスキップ</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>トップに戻る</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="バージョン警告"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="サイトナビゲーション">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo-light.svg" class="logo__image only-light" alt="saealib"/>
+    <img src="../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="saealib"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../getting_started/index.html">
+    はじめに
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    チュートリアル
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../framework/index.html">
+    Framework
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../algorithms/index.html">
+    アルゴリズム
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../references.html">
+    参照
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    APIリファレンス
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="検索" aria-label="検索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">検索</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-2"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-2"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-2"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-2">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="ライト"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="ダーク"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>ライト</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>ダーク</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/saealib/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="検索" aria-label="検索" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">検索</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="このページでは">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../getting_started/index.html">
+    はじめに
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    チュートリアル
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../index.html">
+    最適化の構成要素
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../framework/index.html">
+    Framework
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../algorithms/index.html">
+    アルゴリズム
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../references.html">
+    参照
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/index.html">
+    APIリファレンス
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-3"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-3"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-3"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-3">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="ライト"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="ダーク"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>ライト</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>ダーク</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/saealib/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="セクションナビゲーション">
+  <p class="bd-links__title" role="heading" aria-level="1">セクションナビゲーション</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../extension_guidelines.html">拡張ガイドライン</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../problem_and_ranking.html">問題定義とランキング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/problem.html">Problem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/search_space.html">SearchSpace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/constraints.html">ConstraintHandler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/comparators.html">Comparator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/dominance.html">支配判定器</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/nondominated_sorting.html">NonDominatedSorter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../problem_and_ranking/decomposition.html">Decomposition</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../search_algorithms.html">探索アルゴリズム</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="algorithm.html">探索アルゴリズム</a></li>
+<li class="toctree-l2"><a class="reference internal" href="crossover.html">Crossover</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Mutation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parent_selection.html">ParentSelection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="survivor_selection.html">SurvivorSelection</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../surrogate_modeling.html">サロゲートモデリング</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate.html">Surrogate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_manager.html">サロゲート管理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/training_set.html">学習データ集合</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/acquisition_functions.html">AcquisitionFunction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../surrogate_modeling/surrogate_switching.html">AccuracyBasedSurrogateSwitcher</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../execution_and_evaluation.html">実行と評価</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../execution_and_evaluation/initialization.html">Initializer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../execution_and_evaluation/evaluation.html">Evaluator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../execution_and_evaluation/strategies.html">OptimizationStrategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../execution_and_evaluation/termination.html">Termination</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../observation_and_state.html">観測と状態</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/callbacks.html">CallbackManager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/diagnostics.html">診断と観測</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/feedback.html">フィードバック</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/stage.html">Stage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/optimization_state.html">OptimizationState</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../observation_and_state/population.html">Population</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="パンくずリスト" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="ホーム">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">最適化の構成要素</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../search_algorithms.html" class="nav-link">探索アルゴリズム</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Mutation</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="mutation">
+<h1>Mutation<a class="headerlink" href="#mutation" title="Link to this heading">#</a></h1>
+<div class="layer-badges"><span class="layer-badge">Layer 3: Extend Components</span></div><p><code class="docutils literal notranslate"><span class="pre">GA</span></code>(<code class="docutils literal notranslate"><span class="pre">saealib.GA</span></code>)は、交叉で生成した子個体に摂動を加える処理を、<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>という差し替え可能な演算子に委ねています。 突然変異の方式を変えたいときは、<code class="docutils literal notranslate"><span class="pre">GA</span></code>本体ではなくこの<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>だけを差し替えればよいです。</p>
+<section id="id1">
+<h2>Mutationの役割<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Mutation</span></code>が実装する必要があるメソッドは<code class="docutils literal notranslate"><span class="pre">mutate_batch(candidates_batch,</span> <span class="pre">mutate_range,</span> <span class="pre">rng=...)</span></code>の1つだけです。形状<code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">dim)</span></code>の候補個体を受け取り、同じ形状の変異後個体を返します。<code class="docutils literal notranslate"><span class="pre">mutate_range</span></code>には設計変数の下限と上限が<code class="docutils literal notranslate"><span class="pre">(lb,</span> <span class="pre">ub)</span></code>タプルとして渡されます。基底クラスは<code class="docutils literal notranslate"><span class="pre">mutate_batch()</span></code>を1行で呼び出すことで、便利メソッド<code class="docutils literal notranslate"><span class="pre">mutate(p,</span> <span class="pre">mutate_range,</span> <span class="pre">rng=...)</span></code>を導出します。<code class="docutils literal notranslate"><span class="pre">GA</span></code>は<code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;sequential&quot;</span></code>のときこのメソッドを使います。<code class="docutils literal notranslate"><span class="pre">mutate()</span></code>だけを上書きしても既定のバッチモードには影響しません。<code class="docutils literal notranslate"><span class="pre">variation_execution</span></code>については<a class="reference internal" href="algorithm.html"><span class="std std-doc">Algorithm</span></a>と<code class="docutils literal notranslate"><span class="pre">GA</span></code>のAPIリファレンスを参照してください。</p>
+<p>個体レベルの変異確率はクラス属性<code class="docutils literal notranslate"><span class="pre">prob</span></code>が保持します。<code class="docutils literal notranslate"><span class="pre">Crossover</span></code>では交叉を実行するかどうかを<code class="docutils literal notranslate"><span class="pre">GA</span></code>が判定しますが、各<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>実装は変異の判定を自ら行います。すべての<code class="docutils literal notranslate"><span class="pre">mutate_batch()</span></code>実装は行ごとに1つのゲートを抽選し、通過しなかった行を変更せずに残す必要があります。これが、継承した1行用の<code class="docutils literal notranslate"><span class="pre">mutate()</span></code>に対する自己ゲートにもなります。そのため<code class="docutils literal notranslate"><span class="pre">GA</span></code>は候補を事前に絞らず、選択された変異メソッドを無条件に呼びます。独自の<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>でも、この<code class="docutils literal notranslate"><span class="pre">prob</span></code>ゲートを実装する必要があります。</p>
+<p>もう1つのクラス属性<code class="docutils literal notranslate"><span class="pre">prob_var</span></code>は変数レベルの変異確率です。<code class="docutils literal notranslate"><span class="pre">None</span></code>の場合、組み込みMutationは<code class="docutils literal notranslate"><span class="pre">mutate_batch()</span></code>の呼び出し時に<code class="docutils literal notranslate"><span class="pre">min(0.5,</span> <span class="pre">1/dim)</span></code>へ解決します。</p>
+</section>
+<section id="id2">
+<h2>組み込みMutation<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>クラス</p></th>
+<th class="head"><p>パラメータ</p></th>
+<th class="head"><p>特徴</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MutationUniform</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">prob,</span> <span class="pre">*,</span> <span class="pre">prob_var=None</span></code></p></td>
+<td><p>選ばれた次元を<code class="docutils literal notranslate"><span class="pre">[lb,</span> <span class="pre">ub]</span></code>の一様乱数で置き換える</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MutationGaussian</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">prob,</span> <span class="pre">*,</span> <span class="pre">sigma,</span> <span class="pre">prob_var=None</span></code></p></td>
+<td><p>選ばれた次元に<code class="docutils literal notranslate"><span class="pre">N(0,</span> <span class="pre">sigma)</span></code>のガウス摂動を加える<span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../references.html#id18" title="Ingo Rechenberg. Evolutionsstrategie: Optimierung technischer Systeme nach Prinzipien der biologischen Evolution. Frommann-Holzboog, 1973.">12</a>]</span></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">prob,</span> <span class="pre">*,</span> <span class="pre">eta,</span> <span class="pre">prob_var=None</span></code></p></td>
+<td><p>多項式変異<span class="bibtex-citation" id="id4">[<a class="reference internal" href="../../references.html#id17" title="Kalyanmoy Deb. Multi-Objective Optimization Using Evolutionary Algorithms. John Wiley &amp; Sons, 2001.">13</a>]</span>。<code class="docutils literal notranslate"><span class="pre">eta</span></code>が大きいほど摂動が小さくなる</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MutationIntegerUniform</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">prob,</span> <span class="pre">*,</span> <span class="pre">prob_var=None</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">[lb[i],</span> <span class="pre">ub[i]]</span></code>（両端含む）の一様整数乱数で置き換える。整数変数向け</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MutationCategorical</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">prob,</span> <span class="pre">*,</span> <span class="pre">prob_var=None</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{0,</span> <span class="pre">...,</span> <span class="pre">n_categories-1}</span></code>の一様整数乱数でカテゴリインデックスを置き換える。カテゴリ変数向け</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>連続変数だけの問題であれば、この中から1つを選んで<code class="docutils literal notranslate"><span class="pre">GA(mutation=...,</span> <span class="pre">...)</span></code>に渡せばよいです。 探索の荒さを変数の値域そのものに合わせたいなら<code class="docutils literal notranslate"><span class="pre">MutationUniform</span></code>、既存の値の近傍だけを摂動したいなら<code class="docutils literal notranslate"><span class="pre">MutationGaussian</span></code>か<code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code>を選ぶ、という判断が基本になります。 <code class="docutils literal notranslate"><span class="pre">MutationGaussian</span></code>は<code class="docutils literal notranslate"><span class="pre">sigma</span></code>で摂動の大きさを直接指定するのに対し、<code class="docutils literal notranslate"><span class="pre">MutationPolynomial</span></code>は<code class="docutils literal notranslate"><span class="pre">eta</span></code>（分布指数）で摂動の集中度を指定し、値域からの相対的な摂動幅が自動的に決まります。 <code class="docutils literal notranslate"><span class="pre">MutationIntegerUniform</span></code>と<code class="docutils literal notranslate"><span class="pre">MutationCategorical</span></code>は、乱数の生成方法（値域内の一様整数乱数への置き換え）を共通の非公開実装で共有しているだけで、公開APIとしては別クラスとして扱います。</p>
+<p>設計変数に整数変数とカテゴリ変数が混在する問題では、<code class="docutils literal notranslate"><span class="pre">GA</span></code> は変数型ごとに異なる <code class="docutils literal notranslate"><span class="pre">Mutation</span></code> インスタンスを使います。<code class="docutils literal notranslate"><span class="pre">GA</span></code> コンストラクタの <code class="docutils literal notranslate"><span class="pre">integer_mutation</span></code>/<code class="docutils literal notranslate"><span class="pre">categorical_mutation</span></code> 引数を省略すると、<code class="docutils literal notranslate"><span class="pre">MutationIntegerUniform</span></code>/<code class="docutils literal notranslate"><span class="pre">MutationCategorical</span></code> が自動的に指定されます（<code class="docutils literal notranslate"><span class="pre">prob_var</span></code> は連続変数用 <code class="docutils literal notranslate"><span class="pre">mutation</span></code> から継承します）。<code class="docutils literal notranslate"><span class="pre">GA.ask()</span></code> は変数型ごとに個体を列へ分け、対応する列だけに各 <code class="docutils literal notranslate"><span class="pre">Mutation</span></code> を適用して結果を再構成します。既定のバッチモードは各型の列で <code class="docutils literal notranslate"><span class="pre">mutate_batch()</span></code> を呼び、逐次モードは各型の <code class="docutils literal notranslate"><span class="pre">mutate()</span></code> を呼んで、個体ごとの従来の振り分けと乱数列を保持します。変数型と <code class="docutils literal notranslate"><span class="pre">Mutation</span></code> の対応は <a class="reference internal" href="../problem_and_ranking/problem.html"><span class="std std-doc">Problem</span></a> の <code class="docutils literal notranslate"><span class="pre">variables</span></code> 引数で決まります。</p>
+<div class="admonition note">
+<p class="admonition-title">注釈</p>
+<p><code class="docutils literal notranslate"><span class="pre">MutationUniform</span></code>のみ<code class="docutils literal notranslate"><span class="pre">&#64;register()</span></code>済みで、他の4クラスは現状Registry未登録です。Registry経由でクラスを文字列から解決する場合はこの違いに注意してください。</p>
+</div>
+<section id="id5">
+<h3>外部ライブラリアダプタ<a class="headerlink" href="#id5" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">PymooMutation(operator,</span> <span class="pre">*,</span> <span class="pre">prob=1.0)</span></code>は、構築済みの<a class="reference external" href="https://pymoo.org/">pymoo</a>突然変異演算子（例：<code class="docutils literal notranslate"><span class="pre">PM()</span></code>）をラップし、既存のpymooベースの研究コードを<code class="docutils literal notranslate"><span class="pre">GA</span></code>内でそのまま再利用できるようにします。</p>
+<p><code class="docutils literal notranslate"><span class="pre">PymooCrossover</span></code>と異なり、<code class="docutils literal notranslate"><span class="pre">prob</span></code>は<code class="docutils literal notranslate"><span class="pre">PymooMutation</span></code>自身が適用します。これは、すべての組み込み<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>で個体レベルの確率判定を<code class="docutils literal notranslate"><span class="pre">mutate_batch()</span></code>内で行う規約に沿ったものです。<code class="docutils literal notranslate"><span class="pre">prob_var</span></code>はラップしたpymoo演算子から意図的に引き継がず、ここでは<code class="docutils literal notranslate"><span class="pre">None</span></code>のままです。そのため、<code class="docutils literal notranslate"><span class="pre">GA</span></code>の混合変数ルーティングは外部の<code class="docutils literal notranslate"><span class="pre">float</span></code>とは限らない値ではなく、独自の既定値にフォールバックします。<code class="docutils literal notranslate"><span class="pre">GA</span></code>の既定バッチモードでは、<code class="docutils literal notranslate"><span class="pre">PymooMutation.mutate_batch()</span></code>はゲート済み部分集合に対してラップした演算子の<code class="docutils literal notranslate"><span class="pre">_do()</span></code>を最大1回呼びます。<code class="docutils literal notranslate"><span class="pre">variation_execution=&quot;sequential&quot;</span></code>では、継承した<code class="docutils literal notranslate"><span class="pre">mutate()</span></code>が1個体をそのバッチ実装に渡すため、直接<code class="docutils literal notranslate"><span class="pre">mutate()</span></code>を呼ぶ場合と同様に、ゲートを通過した個体ごとに<code class="docutils literal notranslate"><span class="pre">_do()</span></code>が1回呼ばれます。<code class="docutils literal notranslate"><span class="pre">rng</span></code>はpymooの<code class="docutils literal notranslate"><span class="pre">random_state</span></code>引数を介して渡されます。</p>
+<p><code class="docutils literal notranslate"><span class="pre">pymoo</span></code> extraのインストールについては<a class="reference internal" href="../../getting_started/installation.html"><span class="std std-doc">インストール</span></a>を参照してください。</p>
+</section>
+</section>
+<section id="id6">
+<h2>拡張フック<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<p>境界外に出た値を丸めるといった後処理だけを足したい場合、サブクラスを新設せずに<code class="docutils literal notranslate"><span class="pre">with_post(fn)</span></code>で既存の<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>インスタンスへ処理を追加できます。 <code class="docutils literal notranslate"><span class="pre">with_post</span></code>は元のインスタンスを変更せず、<code class="docutils literal notranslate"><span class="pre">fn</span></code>を追加したコピーを返します。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutationUniform</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">clip_offspring</span><span class="p">(</span><span class="n">offspring</span><span class="p">,</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">mutate_range</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">offspring</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
+
+
+<span class="n">base</span> <span class="o">=</span> <span class="n">MutationUniform</span><span class="p">(</span><span class="n">prob</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">clipped</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">with_post</span><span class="p">(</span><span class="n">clip_offspring</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">fn</span></code>のシグネチャは<code class="docutils literal notranslate"><span class="pre">fn(offspring,</span> <span class="pre">mutate_range,</span> <span class="pre">rng,</span> <span class="pre">ctx)</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code>で、既存のフック（既定では何もしない恒等関数）の結果を受け取って追加の変換を返します。 複数回<code class="docutils literal notranslate"><span class="pre">with_post</span></code>を呼べば、フックは呼び出した順に連結されます。</p>
+<p>バッチモードでは、<code class="docutils literal notranslate"><span class="pre">GA</span></code>が<code class="docutils literal notranslate"><span class="pre">post_mutation_batch(offspring_batch,</span> <span class="pre">mutate_range,</span> <span class="pre">rng,</span> <span class="pre">ctx)</span></code>を呼びます。既定の実装は個体ごとに<code class="docutils literal notranslate"><span class="pre">post_mutation()</span></code>を呼ぶため、<code class="docutils literal notranslate"><span class="pre">with_post()</span></code>で追加したフックも引き続き動作します。後処理自体をベクトル化する場合は<code class="docutils literal notranslate"><span class="pre">post_mutation_batch()</span></code>を上書きします。この上書きでは、維持したい<code class="docutils literal notranslate"><span class="pre">with_post()</span></code>フックも自ら合成する必要があります。</p>
+</section>
+<section id="id7">
+<h2>独自Mutationの実装方法<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<p>独自の変異方式が必要な場合は、<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>を継承して<code class="docutils literal notranslate"><span class="pre">mutate_batch()</span></code>を実装します。次の例は、選ばれた次元を値域の中点へ置き換えます。</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mutation</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MidpointMutation</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">prob_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">prob</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates_batch</span><span class="p">,</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()):</span>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">p_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">dim</span><span class="p">)</span>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="n">selected</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+        <span class="n">var_gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">selected</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">p_var</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">mutate_range</span>
+        <span class="n">midpoint</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lb</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ub</span><span class="p">))</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">selected</span><span class="p">[</span><span class="n">var_gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">midpoint</span><span class="p">,</span> <span class="n">selected</span><span class="o">.</span><span class="n">shape</span><span class="p">)[</span><span class="n">var_gate</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">selected</span>
+        <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+</div>
+<p>個体レベルのゲートでは行ごとに1つの値を抽選し、通過しなかったすべての行を維持する必要があります。変数レベルの<code class="docutils literal notranslate"><span class="pre">prob_var</span></code>ゲートは演算子ごとに異なりますが、ここでは組み込みクラスと同じ規約に従います。これらの判定を省略すると、常に全次元が変異する実装になります。</p>
+</section>
+<section id="id8">
+<h2>関連コンポーネント<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="algorithm.html"><span class="std std-doc">Algorithm</span></a>：<code class="docutils literal notranslate"><span class="pre">GA</span></code>が<code class="docutils literal notranslate"><span class="pre">Mutation</span></code>をどう組み合わせるか</p></li>
+<li><p><a class="reference internal" href="crossover.html"><span class="std std-doc">Crossover</span></a>：変異の前に呼ばれる、対になる演算子</p></li>
+<li><p><a class="reference internal" href="../problem_and_ranking/problem.html"><span class="std std-doc">Problem</span></a>：整数変数とカテゴリ変数、および混合変数Mutationとの対応の定義</p></li>
+<li><p><a class="reference internal" href="../extension_guidelines.html"><span class="std std-doc">拡張ガイドライン</span></a>：<code class="docutils literal notranslate"><span class="pre">with_post</span></code> 型フックの一般的な設計思想</p></li>
+</ul>
+</section>
+<section id="id9">
+<h2>参照<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.Mutation.html#saealib.Mutation" title="saealib.Mutation"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.Mutation</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform" title="saealib.MutationUniform"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationUniform</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian" title="saealib.MutationGaussian"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationGaussian</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial" title="saealib.MutationPolynomial"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationPolynomial</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform" title="saealib.MutationIntegerUniform"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationIntegerUniform</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical" title="saealib.MutationCategorical"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.MutationCategorical</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../api/_autosummary/saealib.PymooMutation.html#saealib.PymooMutation" title="saealib.PymooMutation"><code class="xref py py-class docutils literal notranslate"><span class="pre">saealib.PymooMutation</span></code></a></p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="crossover.html"
+       title="前のページ">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">前へ</p>
+        <p class="prev-next-title">Crossover</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="parent_selection.html"
+       title="次ページ">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">次へ</p>
+        <p class="prev-next-title">ParentSelection</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> このページでは
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Mutationの役割</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">組み込みMutation</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">外部ライブラリアダプタ</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">拡張フック</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">独自Mutationの実装方法</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">関連コンポーネント</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">参照</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/concepts/search_algorithms/mutation.md.txt">
+      <i class="fa-solid fa-file-lines"></i> ソースコードを表示
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, shlka.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3 を使用して作成されました。
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0 で構築されています。
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

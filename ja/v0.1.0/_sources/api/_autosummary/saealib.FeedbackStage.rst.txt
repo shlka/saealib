@@ -1,0 +1,47 @@
+﻿saealib.FeedbackStage
+=====================
+
+.. currentmodule:: saealib
+
+.. autoclass:: FeedbackStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~FeedbackStage.__init__
+   ~FeedbackStage.contract
+   ~FeedbackStage.execute
+   ~FeedbackStage.to_pseudocode
+   ~FeedbackStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.FeedbackStage.__init__
+
+
+.. automethod:: saealib.FeedbackStage.contract
+
+
+.. automethod:: saealib.FeedbackStage.execute
+
+
+.. automethod:: saealib.FeedbackStage.to_pseudocode
+
+
+.. automethod:: saealib.FeedbackStage.to_text
+
+
+

@@ -1,0 +1,47 @@
+﻿saealib.Pipeline
+================
+
+.. currentmodule:: saealib
+
+.. autoclass:: Pipeline
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Pipeline.__init__
+   ~Pipeline.find
+   ~Pipeline.replace
+   ~Pipeline.to_pseudocode
+   ~Pipeline.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.Pipeline.__init__
+
+
+.. automethod:: saealib.Pipeline.find
+
+
+.. automethod:: saealib.Pipeline.replace
+
+
+.. automethod:: saealib.Pipeline.to_pseudocode
+
+
+.. automethod:: saealib.Pipeline.to_text
+
+
+

@@ -1,0 +1,35 @@
+﻿saealib.execution.RuntimeRegistration
+=====================================
+
+.. currentmodule:: saealib.execution
+
+.. autoclass:: RuntimeRegistration
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~RuntimeRegistration.__init__
+   ~RuntimeRegistration.offered_capabilities
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.execution.RuntimeRegistration.__init__
+
+
+.. automethod:: saealib.execution.RuntimeRegistration.offered_capabilities
+
+
+

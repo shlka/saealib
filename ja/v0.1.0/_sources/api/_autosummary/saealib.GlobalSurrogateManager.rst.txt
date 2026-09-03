@@ -1,0 +1,51 @@
+﻿saealib.GlobalSurrogateManager
+==============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: GlobalSurrogateManager
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~GlobalSurrogateManager.__init__
+   ~GlobalSurrogateManager.contract
+   ~GlobalSurrogateManager.fit
+   ~GlobalSurrogateManager.on_generation_end
+   ~GlobalSurrogateManager.predict
+   ~GlobalSurrogateManager.with_on_generation_end
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.GlobalSurrogateManager.__init__
+
+
+.. automethod:: saealib.GlobalSurrogateManager.contract
+
+
+.. automethod:: saealib.GlobalSurrogateManager.fit
+
+
+.. automethod:: saealib.GlobalSurrogateManager.on_generation_end
+
+
+.. automethod:: saealib.GlobalSurrogateManager.predict
+
+
+.. automethod:: saealib.GlobalSurrogateManager.with_on_generation_end
+
+
+

@@ -1,0 +1,43 @@
+﻿saealib.AcquisitionFunction
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: AcquisitionFunction
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~AcquisitionFunction.__init__
+   ~AcquisitionFunction.contract
+   ~AcquisitionFunction.evaluate
+   ~AcquisitionFunction.prepare
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.AcquisitionFunction.__init__
+
+
+.. automethod:: saealib.AcquisitionFunction.contract
+
+
+.. automethod:: saealib.AcquisitionFunction.evaluate
+
+
+.. automethod:: saealib.AcquisitionFunction.prepare
+
+
+

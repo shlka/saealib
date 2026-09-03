@@ -1,0 +1,39 @@
+﻿saealib.SobolInitializer
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SobolInitializer
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SobolInitializer.__init__
+   ~SobolInitializer.contract
+   ~SobolInitializer.initialize
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SobolInitializer.__init__
+
+
+.. automethod:: saealib.SobolInitializer.contract
+
+
+.. automethod:: saealib.SobolInitializer.initialize
+
+
+

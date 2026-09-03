@@ -1,0 +1,55 @@
+﻿saealib.EvaluationPlanStage
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationPlanStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationPlanStage.__init__
+   ~EvaluationPlanStage.contract
+   ~EvaluationPlanStage.execute
+   ~EvaluationPlanStage.execute_async
+   ~EvaluationPlanStage.has_async_work
+   ~EvaluationPlanStage.to_pseudocode
+   ~EvaluationPlanStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationPlanStage.__init__
+
+
+.. automethod:: saealib.EvaluationPlanStage.contract
+
+
+.. automethod:: saealib.EvaluationPlanStage.execute
+
+
+.. automethod:: saealib.EvaluationPlanStage.execute_async
+
+
+.. automethod:: saealib.EvaluationPlanStage.has_async_work
+
+
+.. automethod:: saealib.EvaluationPlanStage.to_pseudocode
+
+
+.. automethod:: saealib.EvaluationPlanStage.to_text
+
+
+

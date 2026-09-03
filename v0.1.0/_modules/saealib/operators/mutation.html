@@ -1,0 +1,2050 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>saealib.operators.mutation &#8212; saealib 0.1.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=431400f5" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+
+    <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/saealib/operators/mutation';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.20.0';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://saealib.github.io/saealib/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'v0.1.0';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <script src="../../../_static/js/lang-switch.js?v=6860dbcf"></script>
+    <script src="../../../_static/js/sidebar-dialog-fix.js?v=decd8175"></script>
+    <script src="../../../_static/js/mermaid-scale.js?v=e063b89f"></script>
+    <link rel="canonical" href="https://saealib.github.io/saealib/v0.1.0/_modules/saealib/operators/mutation.html" />
+    <link rel="icon" href="../../../_static/icon.svg"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  
+    
+    <script src="../../../_static/searchtools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script src="../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo-light.svg" class="logo__image only-light" alt="saealib"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="saealib"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    Framework
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../algorithms/index.html">
+    Algorithms
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../references.html">
+    References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api/index.html">
+    API reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-2"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-2"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-2"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-2">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/saealib/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../getting_started/index.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../concepts/index.html">
+    Optimization components
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../framework/index.html">
+    Framework
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../algorithms/index.html">
+    Algorithms
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../references.html">
+    References
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api/index.html">
+    API reference
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item"><div class="lang-switcher__container dropdown pst-js-only">
+  <button id="pst-lang-switcher-button-3"
+    type="button"
+    class="lang-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-lang-switcher-list-3"
+    aria-label="Language switcher list"
+  >
+    Language  <!-- this text is replaced by lang-switch.js on page load -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-lang-switcher-list-3"
+    class="lang-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-lang-switcher-button-3">
+    <!-- dropdown will be populated by lang-switch.js on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/saealib/saealib" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">saealib.operators.mutation</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for saealib.operators.mutation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Mutation operators for evolutionary algorithms.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MANY</span><span class="p">,</span>
+    <span class="n">ComponentContract</span><span class="p">,</span>
+    <span class="n">DataSpec</span><span class="p">,</span>
+    <span class="n">Fixed</span><span class="p">,</span>
+    <span class="n">PortContract</span><span class="p">,</span>
+    <span class="n">PortDirection</span><span class="p">,</span>
+    <span class="n">PortSpec</span><span class="p">,</span>
+    <span class="n">ServiceRequirement</span><span class="p">,</span>
+    <span class="n">Var</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saealib.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">saealib.core.state</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExecutionContext</span>
+
+
+<div class="viewcode-block" id="Mutation">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Mutation</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for mutation operators.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prob : float</span>
+<span class="sd">        Individual-level mutation probability. Rows whose gate draw is</span>
+<span class="sd">        greater than or equal to ``prob`` are returned unchanged.</span>
+<span class="sd">    prob_var : float or None</span>
+<span class="sd">        Per-variable mutation probability. ``None`` means the effective value</span>
+<span class="sd">        is resolved at call time as ``min(0.5, 1 / dim)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">prob_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Mutation.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the mutation contract; mutate_range is required for every mutation.&quot;&quot;&quot;</span>
+        <span class="n">representation</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;R&quot;</span><span class="p">)</span>
+        <span class="n">candidate_count</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;N&quot;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">DataSpec</span><span class="p">(</span>
+            <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;GenomeBatch&quot;</span><span class="p">,</span>
+            <span class="n">bindings</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;representation&quot;</span><span class="p">:</span> <span class="n">representation</span><span class="p">,</span>
+                <span class="s2">&quot;candidate_count&quot;</span><span class="p">:</span> <span class="n">candidate_count</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="n">ServiceRequirement</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;BoundsService&quot;</span><span class="p">),)</span>
+        <span class="k">return</span> <span class="n">ComponentContract</span><span class="p">(</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;mutation&quot;</span><span class="p">:</span> <span class="n">PortContract</span><span class="p">(</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;candidates&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">INPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                            <span class="n">required_services</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">PortSpec</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;mutants&quot;</span><span class="p">,</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">PortDirection</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">,</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                            <span class="n">cardinality</span><span class="o">=</span><span class="n">MANY</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Mutation.mutate">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation.mutate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">p</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute mutation for one candidate.</span>
+
+<span class="sd">        This method is derived from :meth:`mutate_batch` by passing a</span>
+<span class="sd">        single-row batch.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Overriding only this method (not :meth:`mutate_batch`) has no effect</span>
+<span class="sd">        under GA&#39;s default ``variation_execution=&quot;batch&quot;``: the batch path</span>
+<span class="sd">        calls :meth:`mutate_batch` directly and never calls ``mutate()``.</span>
+<span class="sd">        Such an override only takes effect under</span>
+<span class="sd">        ``variation_execution=&quot;sequential&quot;``. To customize behavior under</span>
+<span class="sd">        both modes, override :meth:`mutate_batch`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        p : np.ndarray</span>
+<span class="sd">            Parent individual. shape = (dim,)</span>
+<span class="sd">        mutate_range : tuple</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound) for mutation.</span>
+<span class="sd">        rng : np.random.Generator, optional</span>
+<span class="sd">            Random number generator, by default np.random.default_rng()</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Mutated individual. shape = (dim,). The result is always</span>
+<span class="sd">            ``float64`` because :meth:`mutate_batch` casts its input</span>
+<span class="sd">            internally; the result does not preserve the input&#39;s dtype.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutate_batch</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:],</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Mutation.mutate_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation.mutate_batch">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute mutation on a batch of candidates at once.</span>
+
+<span class="sd">        This is the required primitive that every concrete mutation class</span>
+<span class="sd">        must implement directly. Each implementation self-gates ``prob``</span>
+<span class="sd">        internally; see Notes for why this differs from</span>
+<span class="sd">        ``Crossover.crossover_batch``.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
+<span class="sd">        mutate_range : tuple</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound) for mutation.</span>
+<span class="sd">        rng : np.random.Generator, optional</span>
+<span class="sd">            Random number generator, by default np.random.default_rng()</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Unlike ``Crossover.crossover_batch``, ``prob`` gating is NOT the</span>
+<span class="sd">        caller&#39;s responsibility here — it must be applied by the overriding</span>
+<span class="sd">        implementation itself, per row. Implementations must draw one gate</span>
+<span class="sd">        value per row and leave ungated rows unchanged, rather than expecting</span>
+<span class="sd">        the caller to pre-filter ``candidates_batch``. This is a deliberate</span>
+<span class="sd">        asymmetry with ``Crossover.crossover_batch``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Mutation.post_mutation">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation.post_mutation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post_mutation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">offspring</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">ExecutionContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Post-mutation lifecycle hook; override to inject custom processing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        offspring : np.ndarray</span>
+<span class="sd">            Individual after mutation. shape = (dim,)</span>
+<span class="sd">        mutate_range : tuple</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound) used for mutation.</span>
+<span class="sd">        rng : np.random.Generator</span>
+<span class="sd">            Random number generator.</span>
+<span class="sd">        ctx : ExecutionContext or None, optional</span>
+<span class="sd">            Current optimization context.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Processed individual. shape = (dim,)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">offspring</span></div>
+
+
+<div class="viewcode-block" id="Mutation.post_mutation_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation.post_mutation_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">post_mutation_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">offspring_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">ExecutionContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the post-mutation lifecycle hook for a batch.</span>
+
+<span class="sd">        The default implementation calls :meth:`post_mutation` once per</span>
+<span class="sd">        individual, in order. Override this method to provide genuinely</span>
+<span class="sd">        vectorized post-processing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        offspring_batch : np.ndarray</span>
+<span class="sd">            Offspring produced by mutation. shape = (n, dim)</span>
+<span class="sd">        mutate_range : tuple</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound) used for mutation.</span>
+<span class="sd">        rng : np.random.Generator</span>
+<span class="sd">            Random number generator.</span>
+<span class="sd">        ctx : ExecutionContext or None, optional</span>
+<span class="sd">            Current optimization context.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Processed offspring. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        :meth:`with_post` reassigns only the instance&#39;s</span>
+<span class="sd">        :meth:`post_mutation` hook. A subclass override of this method is</span>
+<span class="sd">        responsible for composing that hook itself. If the override does not</span>
+<span class="sd">        call ``self.post_mutation``, a hook installed with :meth:`with_post`</span>
+<span class="sd">        will not run in GA batch mode. It still runs in GA sequential mode,</span>
+<span class="sd">        which calls :meth:`post_mutation` directly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">offspring_batch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">offspring_batch</span><span class="p">)):</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_mutation</span><span class="p">(</span><span class="n">offspring_batch</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="Mutation.with_post">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.Mutation.html#saealib.Mutation.with_post">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_post</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
+            <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">,</span> <span class="n">ExecutionContext</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy of this operator with ``fn`` appended to the hook.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fn : callable</span>
+<span class="sd">            ``fn(offspring, mutate_range, rng, ctx) -&gt; np.ndarray``</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Mutation</span>
+<span class="sd">            Shallow copy with the hook registered.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_mutation</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">post_mutation</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">offspring</span><span class="p">,</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">:</span> <span class="n">fn</span><span class="p">(</span>  <span class="c1"># type: ignore  # lambda hook; slot type stricter than inferred lambda signature</span>
+            <span class="n">prev</span><span class="p">(</span><span class="n">offspring</span><span class="p">,</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span><span class="p">),</span> <span class="n">mutate_range</span><span class="p">,</span> <span class="n">rng</span><span class="p">,</span> <span class="n">ctx</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">new</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MutationUniform">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform">[docs]</a>
+<span class="nd">@register</span><span class="p">()</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MutationUniform</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uniform mutation operator.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prob : float</span>
+<span class="sd">        Individual-level mutation probability.</span>
+<span class="sd">    prob_var : float or None</span>
+<span class="sd">        Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``</span>
+<span class="sd">        when ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MutationUniform.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">prob_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize uniform mutation operator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        prob : float, optional</span>
+<span class="sd">            Individual-level mutation probability, by default 1.0.</span>
+<span class="sd">        prob_var : float or None, optional</span>
+<span class="sd">            Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">prob</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span></div>
+
+
+<div class="viewcode-block" id="MutationUniform.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the real-valued uniform mutation contract.&quot;&quot;&quot;</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;mutation&quot;</span><span class="p">]</span>
+        <span class="n">input_data</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">output_data</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">input_bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span>
+        <span class="n">output_bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">output_data</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span>
+        <span class="n">input_bindings</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fixed</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;real&quot;</span><span class="p">)</span>
+        <span class="n">output_bindings</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fixed</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;real&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">base</span><span class="p">,</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;mutation&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">bindings</span><span class="o">=</span><span class="n">input_bindings</span><span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">output_data</span><span class="p">,</span> <span class="n">bindings</span><span class="o">=</span><span class="n">output_bindings</span><span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MutationUniform.mutate_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationUniform.html#saealib.MutationUniform.mutate_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute uniform mutation on a batch of candidates at once.</span>
+
+<span class="sd">        This is the primary uniform mutation implementation. An</span>
+<span class="sd">        individual-level ``prob`` gate (one Bernoulli draw per row via</span>
+<span class="sd">        ``rng.random(n) &lt; self.prob``) selects which rows are touched at all;</span>
+<span class="sd">        a per-dimension ``prob_var`` gate is then drawn only for the selected</span>
+<span class="sd">        rows, and only dimensions passing that gate are</span>
+<span class="sd">        replaced with a value drawn ``Uniform(lb[i], ub[i])``. The</span>
+<span class="sd">        replacement is drawn only for the positions ``var_gate`` actually</span>
+<span class="sd">        selects (via boolean fancy-indexing into the broadcast ``lb``/``ub``</span>
+<span class="sd">        arrays, then ``Generator.uniform``&#39;s array-valued ``low``/``high``</span>
+<span class="sd">        form with no explicit ``size``), rather than for every ``(row, dim)``</span>
+<span class="sd">        position unconditionally -- this avoids drawing (and validating the</span>
+<span class="sd">        range of) a replacement for a dimension that ``var_gate`` will</span>
+<span class="sd">        discard anyway, which matters when that dimension is unbounded (see</span>
+<span class="sd">        Notes). Rows that fail the individual-level gate are returned</span>
+<span class="sd">        byte-identical to the input; dimensions failing the per-dimension</span>
+<span class="sd">        gate on a selected row keep their original value exactly. If no row</span>
+<span class="sd">        passes the individual-level gate (``gate.sum() == 0``), no further</span>
+<span class="sd">        random draws happen at all and the input is returned unchanged,</span>
+<span class="sd">        mirroring ``PymooMutation.mutate_batch``&#39;s empty-gate skip.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
+<span class="sd">        mutate_range : tuple</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound) for mutation.</span>
+<span class="sd">        rng : np.random.Generator, optional</span>
+<span class="sd">            Random number generator, by default np.random.default_rng()</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        For multiple rows, a loop of separate single-row ``mutate_batch``</span>
+<span class="sd">        calls (equivalently, separate :meth:`mutate` calls) does not</span>
+<span class="sd">        reproduce the same per-row results as one batched call with the same</span>
+<span class="sd">        seeded ``rng``. Separate calls interleave each row&#39;s individual</span>
+<span class="sd">        gate, full per-dimension gate array, and replacement draws before</span>
+<span class="sd">        moving to the next row. The number of replacements is</span>
+<span class="sd">        data-dependent (``dim + m`` post-individual-gate draws, where ``m``</span>
+<span class="sd">        dimensions pass the variable gate). One batched call instead draws</span>
+<span class="sd">        all individual gates, then a full ``(k, dim)`` variable-gate array</span>
+<span class="sd">        for the ``k`` selected rows, followed by one replacement draw sized</span>
+<span class="sd">        to all selected positions. NumPy vectorized calls cannot</span>
+<span class="sd">        conditionally skip drawing per element within a single call, so the</span>
+<span class="sd">        draw count and interleaving generally diverge. Only the statistical</span>
+<span class="sd">        and distributional semantics are guaranteed to match.</span>
+
+<span class="sd">        The output is always ``float64`` (via the internal ``dtype=float``</span>
+<span class="sd">        cast), regardless of the input array&#39;s dtype.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">p_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">dim</span><span class="p">)</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">mutate_range</span>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">var_gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">p_var</span>
+        <span class="n">mutated</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">var_gate</span><span class="p">):</span>
+            <span class="c1"># Draw a replacement only for the positions var_gate actually</span>
+            <span class="c1"># selects, rather than for every (row, dim) position</span>
+            <span class="c1"># unconditionally: rng.uniform validates the range of every</span>
+            <span class="c1"># position it draws for, even ones that would be discarded by</span>
+            <span class="c1"># np.where afterwards, so an unfiltered draw raises OverflowError</span>
+            <span class="c1"># as soon as any unbounded (lb=-inf/ub=inf) dimension is present</span>
+            <span class="c1"># anywhere in the batch -- regardless of whether that dimension</span>
+            <span class="c1"># is ever actually gated in.</span>
+            <span class="n">lb_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+            <span class="n">ub_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+            <span class="n">mutated</span><span class="p">[</span><span class="n">var_gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">lb_b</span><span class="p">[</span><span class="n">var_gate</span><span class="p">],</span> <span class="n">ub_b</span><span class="p">[</span><span class="n">var_gate</span><span class="p">])</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">mutated</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MutationPolynomial">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MutationPolynomial</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Polynomial mutation operator.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prob : float</span>
+<span class="sd">        Individual-level mutation probability.</span>
+<span class="sd">    eta : float</span>
+<span class="sd">        Distribution index. Larger values produce smaller perturbations.</span>
+<span class="sd">    prob_var : float or None</span>
+<span class="sd">        Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``</span>
+<span class="sd">        when ``None``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Originates from Deb &amp; Goyal (1996); the primary paper has not been</span>
+<span class="sd">    obtained (it is credited here by name only). The asymmetric</span>
+<span class="sd">    delta1/delta2 perturbation formula implemented in</span>
+<span class="sd">    :meth:`mutate_batch` has been verified against Deb&#39;s own official</span>
+<span class="sd">    NSGA-II reference implementation</span>
+<span class="sd">    (``nsga2-gnuplot-v1.1.6/mutation.c``, function ``real_mutate_ind``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MutationPolynomial.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">prob_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize polynomial mutation operator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        prob : float, optional</span>
+<span class="sd">            Individual-level mutation probability, by default 1.0.</span>
+<span class="sd">        eta : float</span>
+<span class="sd">            Distribution index.</span>
+<span class="sd">        prob_var : float or None, optional</span>
+<span class="sd">            Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">prob</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">=</span> <span class="n">eta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span></div>
+
+
+<div class="viewcode-block" id="MutationPolynomial.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the real-valued polynomial mutation contract.&quot;&quot;&quot;</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;mutation&quot;</span><span class="p">]</span>
+        <span class="n">input_data</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">output_data</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">input_bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span>
+        <span class="n">output_bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">output_data</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span>
+        <span class="n">input_bindings</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fixed</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;real&quot;</span><span class="p">)</span>
+        <span class="n">output_bindings</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fixed</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;real&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">base</span><span class="p">,</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;mutation&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">bindings</span><span class="o">=</span><span class="n">input_bindings</span><span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">output_data</span><span class="p">,</span> <span class="n">bindings</span><span class="o">=</span><span class="n">output_bindings</span><span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MutationPolynomial.mutate_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationPolynomial.html#saealib.MutationPolynomial.mutate_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute polynomial mutation on a batch of candidates at once.</span>
+
+<span class="sd">        This is the primary polynomial mutation implementation. An</span>
+<span class="sd">        individual-level ``prob`` gate (one Bernoulli draw per row via</span>
+<span class="sd">        ``rng.random(n) &lt; self.prob``) selects which rows are touched at all;</span>
+<span class="sd">        a per-dimension ``prob_var`` gate is then drawn only for the selected</span>
+<span class="sd">        rows, and only dimensions passing that gate are</span>
+<span class="sd">        replaced. Unlike :meth:`~MutationUniform.mutate_batch`, the</span>
+<span class="sd">        replacement value is not a plain uniform draw: it is the asymmetric</span>
+<span class="sd">        ``delta1``/``delta2`` polynomial perturbation formula (Deb &amp; Goyal,</span>
+<span class="sd">        1996), which itself branches on a second per-dimension draw ``u``</span>
+<span class="sd">        (``u &lt;= 0.5`` vs. ``u &gt; 0.5``). That inner branch is vectorized by</span>
+<span class="sd">        computing both branches (``delta_q_lo``, ``delta_q_hi``) over the</span>
+<span class="sd">        full ``(k, dim)`` array unconditionally and selecting between them</span>
+<span class="sd">        with ``np.where(u &lt;= 0.5, delta_q_lo, delta_q_hi)`` -- the same</span>
+<span class="sd">        &quot;compute both sides, select after&quot; pattern already used by</span>
+<span class="sd">        :meth:`CrossoverSBX.crossover_batch`&#39;s ``_beta_q`` helper. Rows that</span>
+<span class="sd">        fail the individual-level gate are returned byte-identical to the</span>
+<span class="sd">        input; dimensions failing the per-dimension gate on a selected row</span>
+<span class="sd">        keep their original value exactly (``np.where`` copies rather than</span>
+<span class="sd">        recomputes them). If no row passes the individual-level gate</span>
+<span class="sd">        (``gate.sum() == 0``), no further random draws happen at all and the</span>
+<span class="sd">        input is returned unchanged, mirroring</span>
+<span class="sd">        ``MutationUniform.mutate_batch``&#39;s empty-gate skip.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
+<span class="sd">        mutate_range : tuple</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound) for mutation.</span>
+<span class="sd">        rng : np.random.Generator, optional</span>
+<span class="sd">            Random number generator, by default np.random.default_rng()</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        For multiple rows, a loop of separate single-row ``mutate_batch``</span>
+<span class="sd">        calls (equivalently, separate :meth:`mutate` calls) does not</span>
+<span class="sd">        reproduce the same per-row results as one batched call with the same</span>
+<span class="sd">        seeded ``rng``. Separate calls interleave each row&#39;s individual</span>
+<span class="sd">        gate, full per-dimension gate array, and full ``u`` array before</span>
+<span class="sd">        moving to the next row. One batched call instead draws all</span>
+<span class="sd">        individual gates, then the variable-gate arrays for all gated rows,</span>
+<span class="sd">        then the ``u`` arrays for all of them. These phases therefore have a</span>
+<span class="sd">        different draw order whenever more than one row is involved. Only</span>
+<span class="sd">        the statistical and distributional semantics are guaranteed to</span>
+<span class="sd">        match.</span>
+
+<span class="sd">        The output is always ``float64`` (via the internal ``dtype=float``</span>
+<span class="sd">        cast), regardless of the input array&#39;s dtype.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">p_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">dim</span><span class="p">)</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">mutate_range</span>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">var_gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">p_var</span>
+        <span class="n">delta1</span> <span class="o">=</span> <span class="p">(</span><span class="n">sub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span>
+        <span class="n">delta2</span> <span class="o">=</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">sub</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+        <span class="n">delta_q_lo</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">u</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">u</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">delta1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">**</span> <span class="p">(</span>
+            <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">delta_q_hi</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span>
+            <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">u</span><span class="p">)</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">u</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">delta2</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">delta_q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">u</span> <span class="o">&lt;=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">delta_q_lo</span><span class="p">,</span> <span class="n">delta_q_hi</span><span class="p">)</span>
+        <span class="n">mutated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">sub</span> <span class="o">+</span> <span class="n">delta_q</span> <span class="o">*</span> <span class="p">(</span><span class="n">ub</span> <span class="o">-</span> <span class="n">lb</span><span class="p">),</span> <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
+        <span class="n">result_sub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">var_gate</span><span class="p">,</span> <span class="n">mutated</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_sub</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MutationGaussian">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MutationGaussian</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gaussian mutation operator.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prob : float</span>
+<span class="sd">        Individual-level mutation probability.</span>
+<span class="sd">    sigma : float</span>
+<span class="sd">        Standard deviation of the Gaussian perturbation.</span>
+<span class="sd">    prob_var : float or None</span>
+<span class="sd">        Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``</span>
+<span class="sd">        when ``None``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Originates from Rechenberg (1973); the original (German-language)</span>
+<span class="sd">    monograph has not been obtained and is credited here by name only.</span>
+<span class="sd">    The survey below summarizes Rechenberg&#39;s (1+1)-ES with</span>
+<span class="sd">    Gaussian mutation and its mutation-strength (standard deviation)</span>
+<span class="sd">    parameterization, consistent with this operator.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    :cite:`beyer2002essurvey`: Beyer, H.-G., &amp; Schwefel, H.-P. (2002).</span>
+<span class="sd">    Evolution strategies -- A comprehensive introduction. *Natural</span>
+<span class="sd">    Computing*, 1, 3-52.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MutationGaussian.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">prob_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize Gaussian mutation operator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        prob : float, optional</span>
+<span class="sd">            Individual-level mutation probability, by default 1.0.</span>
+<span class="sd">        sigma : float</span>
+<span class="sd">            Standard deviation of the Gaussian perturbation.</span>
+<span class="sd">        prob_var : float or None, optional</span>
+<span class="sd">            Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">prob</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span></div>
+
+
+<div class="viewcode-block" id="MutationGaussian.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the real-valued Gaussian mutation contract.&quot;&quot;&quot;</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;mutation&quot;</span><span class="p">]</span>
+        <span class="n">input_data</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">output_data</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">input_bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span>
+        <span class="n">output_bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">output_data</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span>
+        <span class="n">input_bindings</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fixed</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;real&quot;</span><span class="p">)</span>
+        <span class="n">output_bindings</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fixed</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;real&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">base</span><span class="p">,</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;mutation&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">bindings</span><span class="o">=</span><span class="n">input_bindings</span><span class="p">),</span>
+                            <span class="n">required_services</span><span class="o">=</span><span class="p">(),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">output_data</span><span class="p">,</span> <span class="n">bindings</span><span class="o">=</span><span class="n">output_bindings</span><span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MutationGaussian.mutate_batch">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationGaussian.html#saealib.MutationGaussian.mutate_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute Gaussian mutation on a batch of candidates at once.</span>
+
+<span class="sd">        This is the primary Gaussian mutation implementation. An</span>
+<span class="sd">        individual-level ``prob`` gate (one Bernoulli draw per row via</span>
+<span class="sd">        ``rng.random(n) &lt; self.prob``) selects which rows are touched at all;</span>
+<span class="sd">        a per-dimension ``prob_var`` gate is then drawn only for the selected</span>
+<span class="sd">        rows, and only dimensions passing that gate are</span>
+<span class="sd">        replaced by adding ``Normal(0.0, self.sigma)`` noise. Unlike</span>
+<span class="sd">        :meth:`~MutationUniform.mutate_batch` and</span>
+<span class="sd">        :meth:`~MutationPolynomial.mutate_batch`, the replacement value has</span>
+<span class="sd">        no branching formula -- it is simply ``sub + noise`` -- so this is</span>
+<span class="sd">        the simplest of the three ``mutate_batch`` overrides. Rows that fail</span>
+<span class="sd">        the individual-level gate are returned byte-identical to the input;</span>
+<span class="sd">        dimensions failing the per-dimension gate on a selected row keep</span>
+<span class="sd">        their original value exactly (``np.where`` copies rather than</span>
+<span class="sd">        recomputes them). If no row passes the individual-level gate</span>
+<span class="sd">        (``gate.sum() == 0``), no further random draws happen at all and the</span>
+<span class="sd">        input is returned unchanged, mirroring</span>
+<span class="sd">        ``MutationUniform.mutate_batch``&#39;s empty-gate skip.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
+<span class="sd">        mutate_range : tuple</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound). Accepted for interface</span>
+<span class="sd">            uniformity with the ``Mutation`` ABC and the other</span>
+<span class="sd">            ``mutate_batch`` overrides, but **unused**. This operator adds</span>
+<span class="sd">            unbounded Gaussian noise with no clipping to ``[lb, ub]``.</span>
+<span class="sd">        rng : np.random.Generator, optional</span>
+<span class="sd">            Random number generator, by default np.random.default_rng()</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        For multiple rows, a loop of separate single-row ``mutate_batch``</span>
+<span class="sd">        calls (equivalently, separate :meth:`mutate` calls) does not</span>
+<span class="sd">        reproduce the same per-row results as one batched call with the same</span>
+<span class="sd">        seeded ``rng``. Separate calls interleave each row&#39;s individual</span>
+<span class="sd">        gate, full per-dimension gate array, and full noise array before</span>
+<span class="sd">        moving to the next row. One batched call instead draws all</span>
+<span class="sd">        individual gates, then the variable-gate arrays for all gated rows,</span>
+<span class="sd">        then the noise arrays for all of them. These phases therefore have a</span>
+<span class="sd">        different draw order whenever more than one row is involved. Only</span>
+<span class="sd">        the statistical and distributional semantics are guaranteed to</span>
+<span class="sd">        match.</span>
+
+<span class="sd">        The output is always ``float64`` (via the internal ``dtype=float``</span>
+<span class="sd">        cast), regardless of the input array&#39;s dtype.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">p_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">dim</span><span class="p">)</span>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">var_gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">p_var</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span>
+        <span class="n">mutated</span> <span class="o">=</span> <span class="n">sub</span> <span class="o">+</span> <span class="n">noise</span>
+        <span class="n">result_sub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">var_gate</span><span class="p">,</span> <span class="n">mutated</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_sub</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+</div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_MutationDiscreteUniform</span><span class="p">(</span><span class="n">Mutation</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shared implementation for discrete uniform mutation.</span>
+
+<span class="sd">    Replaces each dimension&#39;s value with a uniform random integer draw</span>
+<span class="sd">    from ``[lb[i], ub[i]]`` (both inclusive).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">prob_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob</span> <span class="o">=</span> <span class="n">prob</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="o">=</span> <span class="n">prob_var</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">mutate_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates_batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mutate_range</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
+        <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute discrete uniform mutation on a batch of candidates at once.</span>
+
+<span class="sd">        This is the primary discrete uniform mutation implementation. An</span>
+<span class="sd">        individual-level ``prob`` gate (one Bernoulli draw per row via</span>
+<span class="sd">        ``rng.random(n) &lt; self.prob``) selects which rows are touched at all;</span>
+<span class="sd">        a per-dimension ``prob_var`` gate is then drawn only for the selected</span>
+<span class="sd">        rows, and only dimensions passing that gate are</span>
+<span class="sd">        replaced with a value drawn as a uniform random integer from</span>
+<span class="sd">        ``[lb[i], ub[i]]`` (both inclusive) via</span>
+<span class="sd">        ``rng.integers(lb, ub + 1, size=(k, dim))`` -- ``rng.integers``&#39;s</span>
+<span class="sd">        ``high`` argument is exclusive by default, so ``ub + 1`` makes the</span>
+<span class="sd">        upper bound inclusive. The integer draw is cast to ``float`` via</span>
+<span class="sd">        ``.astype(float)`` because the whole codebase represents integer and</span>
+<span class="sd">        categorical dimensions as floats internally. Rows that fail the</span>
+<span class="sd">        individual-level gate are returned byte-identical to the input;</span>
+<span class="sd">        dimensions failing the per-dimension gate on a selected row keep</span>
+<span class="sd">        their original value exactly (``np.where`` copies rather than</span>
+<span class="sd">        recomputes them). If no row passes the individual-level gate</span>
+<span class="sd">        (``gate.sum() == 0``), no further random draws happen at all and the</span>
+<span class="sd">        input is returned unchanged, mirroring</span>
+<span class="sd">        ``MutationUniform.mutate_batch``&#39;s empty-gate skip.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        candidates_batch : np.ndarray</span>
+<span class="sd">            Batch of candidate individuals. shape = (n, dim)</span>
+<span class="sd">        mutate_range : tuple</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound) arrays.</span>
+<span class="sd">        rng : np.random.Generator, optional</span>
+<span class="sd">            Random number generator, by default np.random.default_rng()</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Mutated individuals. shape = (n, dim)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        For multiple rows, a loop of separate single-row ``mutate_batch``</span>
+<span class="sd">        calls (equivalently, separate :meth:`mutate` calls) does not</span>
+<span class="sd">        reproduce the same per-row results as one batched call with the same</span>
+<span class="sd">        seeded ``rng``. Separate calls interleave each row&#39;s individual</span>
+<span class="sd">        gate, full per-dimension gate array, and full replacement array</span>
+<span class="sd">        before moving to the next row. One batched call instead draws all</span>
+<span class="sd">        individual gates, then the variable-gate arrays for all gated rows,</span>
+<span class="sd">        then the replacement arrays for all of them. These phases therefore</span>
+<span class="sd">        have a different draw order whenever more than one row is involved.</span>
+<span class="sd">        Only the statistical and distributional semantics are guaranteed to</span>
+<span class="sd">        match.</span>
+
+<span class="sd">        The output is always ``float64`` (via the internal ``dtype=float``</span>
+<span class="sd">        cast), regardless of the input array&#39;s dtype.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">candidates_batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">candidates_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">p_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">dim</span><span class="p">)</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">mutate_range</span>
+        <span class="n">gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">prob</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">candidates_batch</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">var_gate</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">p_var</span>
+        <span class="n">lb_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">ub_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">replacement</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="n">lb_int</span><span class="p">,</span> <span class="n">ub_int</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dim</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">mutated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">var_gate</span><span class="p">,</span> <span class="n">replacement</span><span class="p">,</span> <span class="n">sub</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">gate</span><span class="p">]</span> <span class="o">=</span> <span class="n">mutated</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+
+<div class="viewcode-block" id="MutationIntegerUniform">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MutationIntegerUniform</span><span class="p">(</span><span class="n">_MutationDiscreteUniform</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uniform integer mutation.</span>
+
+<span class="sd">    Replaces each dimension&#39;s value with a uniform random integer draw</span>
+<span class="sd">    from ``[lb[i], ub[i]]`` (both inclusive).</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prob : float</span>
+<span class="sd">        Individual-level mutation probability.</span>
+<span class="sd">    prob_var : float or None</span>
+<span class="sd">        Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``</span>
+<span class="sd">        when ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MutationIntegerUniform.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">prob_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize integer uniform mutation operator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        prob : float, optional</span>
+<span class="sd">            Individual-level mutation probability, by default 1.0.</span>
+<span class="sd">        prob_var : float or None, optional</span>
+<span class="sd">            Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">prob_var</span><span class="o">=</span><span class="n">prob_var</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MutationIntegerUniform.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationIntegerUniform.html#saealib.MutationIntegerUniform.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the integer mutation contract.&quot;&quot;&quot;</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;mutation&quot;</span><span class="p">]</span>
+        <span class="n">input_data</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">output_data</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">input_bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span>
+        <span class="n">output_bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">output_data</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span>
+        <span class="n">input_bindings</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fixed</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;integer&quot;</span><span class="p">)</span>
+        <span class="n">output_bindings</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fixed</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;integer&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">base</span><span class="p">,</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;mutation&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">bindings</span><span class="o">=</span><span class="n">input_bindings</span><span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">output_data</span><span class="p">,</span> <span class="n">bindings</span><span class="o">=</span><span class="n">output_bindings</span><span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MutationCategorical">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MutationCategorical</span><span class="p">(</span><span class="n">_MutationDiscreteUniform</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uniform categorical mutation.</span>
+
+<span class="sd">    Replaces each dimension&#39;s category index with a uniform random draw</span>
+<span class="sd">    from ``{0, 1, ..., n_categories - 1}``.  The valid range is inferred</span>
+<span class="sd">    from ``mutate_range``, where ``ub[i] == n_categories - 1``.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    prob : float</span>
+<span class="sd">        Individual-level mutation probability.</span>
+<span class="sd">    prob_var : float or None</span>
+<span class="sd">        Per-variable mutation probability. Defaults to ``min(0.5, 1/dim)``</span>
+<span class="sd">        when ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MutationCategorical.__init__">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">prob_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize categorical mutation operator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        prob : float, optional</span>
+<span class="sd">            Individual-level mutation probability, by default 1.0.</span>
+<span class="sd">        prob_var : float or None, optional</span>
+<span class="sd">            Per-variable mutation probability. ``None`` uses ``min(0.5, 1/dim)``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">prob_var</span><span class="o">=</span><span class="n">prob_var</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MutationCategorical.contract">
+<a class="viewcode-back" href="../../../api/_autosummary/saealib.MutationCategorical.html#saealib.MutationCategorical.contract">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contract</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComponentContract</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the categorical mutation contract.&quot;&quot;&quot;</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">contract</span><span class="p">()</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="s2">&quot;mutation&quot;</span><span class="p">]</span>
+        <span class="n">input_data</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">output_data</span> <span class="o">=</span> <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">input_bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">input_data</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span>
+        <span class="n">output_bindings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">output_data</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span>
+        <span class="n">input_bindings</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fixed</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;categorical&quot;</span><span class="p">)</span>
+        <span class="n">output_bindings</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Fixed</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s2">&quot;categorical&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">base</span><span class="p">,</span>
+            <span class="n">ports</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;mutation&quot;</span><span class="p">:</span> <span class="n">replace</span><span class="p">(</span>
+                    <span class="n">role</span><span class="p">,</span>
+                    <span class="n">inputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">bindings</span><span class="o">=</span><span class="n">input_bindings</span><span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">outputs</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">replace</span><span class="p">(</span>
+                            <span class="n">role</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">data</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">output_data</span><span class="p">,</span> <span class="n">bindings</span><span class="o">=</span><span class="n">output_bindings</span><span class="p">),</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2026, shlka.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

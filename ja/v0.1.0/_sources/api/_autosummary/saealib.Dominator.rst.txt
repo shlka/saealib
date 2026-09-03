@@ -1,0 +1,43 @@
+﻿saealib.Dominator
+=================
+
+.. currentmodule:: saealib
+
+.. autoclass:: Dominator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Dominator.__init__
+   ~Dominator.dominance_matrix
+   ~Dominator.dominates
+   ~Dominator.dominates_many
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.Dominator.__init__
+
+
+.. automethod:: saealib.Dominator.dominance_matrix
+
+
+.. automethod:: saealib.Dominator.dominates
+
+
+.. automethod:: saealib.Dominator.dominates_many
+
+
+

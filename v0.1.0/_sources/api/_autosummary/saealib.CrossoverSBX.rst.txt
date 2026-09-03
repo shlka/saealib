@@ -1,0 +1,55 @@
+﻿saealib.CrossoverSBX
+====================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CrossoverSBX
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CrossoverSBX.__init__
+   ~CrossoverSBX.contract
+   ~CrossoverSBX.crossover
+   ~CrossoverSBX.crossover_batch
+   ~CrossoverSBX.post_crossover
+   ~CrossoverSBX.post_crossover_batch
+   ~CrossoverSBX.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CrossoverSBX.__init__
+
+
+.. automethod:: saealib.CrossoverSBX.contract
+
+
+.. automethod:: saealib.CrossoverSBX.crossover
+
+
+.. automethod:: saealib.CrossoverSBX.crossover_batch
+
+
+.. automethod:: saealib.CrossoverSBX.post_crossover
+
+
+.. automethod:: saealib.CrossoverSBX.post_crossover_batch
+
+
+.. automethod:: saealib.CrossoverSBX.with_post
+
+
+

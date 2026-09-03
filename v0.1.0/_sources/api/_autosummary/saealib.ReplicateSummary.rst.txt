@@ -1,0 +1,31 @@
+﻿saealib.ReplicateSummary
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ReplicateSummary
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ReplicateSummary.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ReplicateSummary.__init__
+
+
+

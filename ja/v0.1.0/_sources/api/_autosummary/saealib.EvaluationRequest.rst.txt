@@ -1,0 +1,31 @@
+﻿saealib.EvaluationRequest
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationRequest
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationRequest.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationRequest.__init__
+
+
+

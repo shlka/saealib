@@ -1,0 +1,51 @@
+﻿saealib.ProductOfFeasibility
+============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ProductOfFeasibility
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ProductOfFeasibility.__init__
+   ~ProductOfFeasibility.compute_reference
+   ~ProductOfFeasibility.contract
+   ~ProductOfFeasibility.evaluate
+   ~ProductOfFeasibility.prepare
+   ~ProductOfFeasibility.score
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ProductOfFeasibility.__init__
+
+
+.. automethod:: saealib.ProductOfFeasibility.compute_reference
+
+
+.. automethod:: saealib.ProductOfFeasibility.contract
+
+
+.. automethod:: saealib.ProductOfFeasibility.evaluate
+
+
+.. automethod:: saealib.ProductOfFeasibility.prepare
+
+
+.. automethod:: saealib.ProductOfFeasibility.score
+
+
+

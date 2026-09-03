@@ -1,0 +1,83 @@
+﻿saealib.ThreadPoolEvaluator
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: ThreadPoolEvaluator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ThreadPoolEvaluator.__init__
+   ~ThreadPoolEvaluator.acknowledge
+   ~ThreadPoolEvaluator.can_reattach
+   ~ThreadPoolEvaluator.cancel
+   ~ThreadPoolEvaluator.close
+   ~ThreadPoolEvaluator.collect
+   ~ThreadPoolEvaluator.contract
+   ~ThreadPoolEvaluator.detach
+   ~ThreadPoolEvaluator.evaluate_batch
+   ~ThreadPoolEvaluator.evaluate_request
+   ~ThreadPoolEvaluator.has_partial_lifecycle_override
+   ~ThreadPoolEvaluator.reattach
+   ~ThreadPoolEvaluator.submit
+   ~ThreadPoolEvaluator.supports_batch_rollback
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.__init__
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.acknowledge
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.can_reattach
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.cancel
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.close
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.collect
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.contract
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.detach
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.evaluate_batch
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.evaluate_request
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.has_partial_lifecycle_override
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.reattach
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.submit
+
+
+.. automethod:: saealib.ThreadPoolEvaluator.supports_batch_rollback
+
+
+

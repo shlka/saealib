@@ -1,0 +1,47 @@
+﻿saealib.SurrogatePredictStage
+=============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SurrogatePredictStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SurrogatePredictStage.__init__
+   ~SurrogatePredictStage.contract
+   ~SurrogatePredictStage.execute
+   ~SurrogatePredictStage.to_pseudocode
+   ~SurrogatePredictStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SurrogatePredictStage.__init__
+
+
+.. automethod:: saealib.SurrogatePredictStage.contract
+
+
+.. automethod:: saealib.SurrogatePredictStage.execute
+
+
+.. automethod:: saealib.SurrogatePredictStage.to_pseudocode
+
+
+.. automethod:: saealib.SurrogatePredictStage.to_text
+
+
+

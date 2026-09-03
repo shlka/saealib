@@ -1,0 +1,39 @@
+﻿saealib.core.ComponentGraph
+===========================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: ComponentGraph
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ComponentGraph.__init__
+   ~ComponentGraph.node_by_id
+   ~ComponentGraph.well_formedness
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.ComponentGraph.__init__
+
+
+.. automethod:: saealib.core.ComponentGraph.node_by_id
+
+
+.. automethod:: saealib.core.ComponentGraph.well_formedness
+
+
+

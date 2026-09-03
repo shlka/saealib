@@ -1,0 +1,47 @@
+﻿saealib.SurrogateFitStage
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SurrogateFitStage
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SurrogateFitStage.__init__
+   ~SurrogateFitStage.contract
+   ~SurrogateFitStage.execute
+   ~SurrogateFitStage.to_pseudocode
+   ~SurrogateFitStage.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SurrogateFitStage.__init__
+
+
+.. automethod:: saealib.SurrogateFitStage.contract
+
+
+.. automethod:: saealib.SurrogateFitStage.execute
+
+
+.. automethod:: saealib.SurrogateFitStage.to_pseudocode
+
+
+.. automethod:: saealib.SurrogateFitStage.to_text
+
+
+

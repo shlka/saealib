@@ -1,0 +1,39 @@
+﻿saealib.SurvivorSelection
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SurvivorSelection
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SurvivorSelection.__init__
+   ~SurvivorSelection.contract
+   ~SurvivorSelection.select
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SurvivorSelection.__init__
+
+
+.. automethod:: saealib.SurvivorSelection.contract
+
+
+.. automethod:: saealib.SurvivorSelection.select
+
+
+

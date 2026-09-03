@@ -1,0 +1,143 @@
+﻿saealib.Optimizer
+=================
+
+.. currentmodule:: saealib
+
+.. autoclass:: Optimizer
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Optimizer.__init__
+   ~Optimizer.contract_diagnostics
+   ~Optimizer.describe
+   ~Optimizer.dispatch
+   ~Optimizer.from_problem_file
+   ~Optimizer.iterate
+   ~Optimizer.iterate_from
+   ~Optimizer.load_pickle
+   ~Optimizer.resolve_defaults
+   ~Optimizer.run
+   ~Optimizer.run_from
+   ~Optimizer.save_pickle
+   ~Optimizer.save_preset
+   ~Optimizer.set_acquisition
+   ~Optimizer.set_algorithm
+   ~Optimizer.set_async_evaluation_scheduler
+   ~Optimizer.set_evaluation_planner
+   ~Optimizer.set_evaluator
+   ~Optimizer.set_feedback_builder
+   ~Optimizer.set_history
+   ~Optimizer.set_initializer
+   ~Optimizer.set_instance_name
+   ~Optimizer.set_preset
+   ~Optimizer.set_seed
+   ~Optimizer.set_strategy
+   ~Optimizer.set_surrogate
+   ~Optimizer.set_surrogate_manager
+   ~Optimizer.set_termination
+   ~Optimizer.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.Optimizer.__init__
+
+
+.. automethod:: saealib.Optimizer.contract_diagnostics
+
+
+.. automethod:: saealib.Optimizer.describe
+
+
+.. automethod:: saealib.Optimizer.dispatch
+
+
+.. automethod:: saealib.Optimizer.from_problem_file
+
+
+.. automethod:: saealib.Optimizer.iterate
+
+
+.. automethod:: saealib.Optimizer.iterate_from
+
+
+.. automethod:: saealib.Optimizer.load_pickle
+
+
+.. automethod:: saealib.Optimizer.resolve_defaults
+
+
+.. automethod:: saealib.Optimizer.run
+
+
+.. automethod:: saealib.Optimizer.run_from
+
+
+.. automethod:: saealib.Optimizer.save_pickle
+
+
+.. automethod:: saealib.Optimizer.save_preset
+
+
+.. automethod:: saealib.Optimizer.set_acquisition
+
+
+.. automethod:: saealib.Optimizer.set_algorithm
+
+
+.. automethod:: saealib.Optimizer.set_async_evaluation_scheduler
+
+
+.. automethod:: saealib.Optimizer.set_evaluation_planner
+
+
+.. automethod:: saealib.Optimizer.set_evaluator
+
+
+.. automethod:: saealib.Optimizer.set_feedback_builder
+
+
+.. automethod:: saealib.Optimizer.set_history
+
+
+.. automethod:: saealib.Optimizer.set_initializer
+
+
+.. automethod:: saealib.Optimizer.set_instance_name
+
+
+.. automethod:: saealib.Optimizer.set_preset
+
+
+.. automethod:: saealib.Optimizer.set_seed
+
+
+.. automethod:: saealib.Optimizer.set_strategy
+
+
+.. automethod:: saealib.Optimizer.set_surrogate
+
+
+.. automethod:: saealib.Optimizer.set_surrogate_manager
+
+
+.. automethod:: saealib.Optimizer.set_termination
+
+
+.. automethod:: saealib.Optimizer.validate
+
+
+

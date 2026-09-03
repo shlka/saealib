@@ -1,0 +1,39 @@
+﻿saealib.KNNConstraintObjectiveSet
+=================================
+
+.. currentmodule:: saealib
+
+.. autoclass:: KNNConstraintObjectiveSet
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~KNNConstraintObjectiveSet.__init__
+   ~KNNConstraintObjectiveSet.build
+   ~KNNConstraintObjectiveSet.contract
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.KNNConstraintObjectiveSet.__init__
+
+
+.. automethod:: saealib.KNNConstraintObjectiveSet.build
+
+
+.. automethod:: saealib.KNNConstraintObjectiveSet.contract
+
+
+

@@ -1,0 +1,31 @@
+﻿saealib.core.PartSpec
+=====================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: PartSpec
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PartSpec.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.PartSpec.__init__
+
+
+

@@ -1,0 +1,51 @@
+﻿saealib.core.AssumptionSet
+==========================
+
+.. currentmodule:: saealib.core
+
+.. autoclass:: AssumptionSet
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~AssumptionSet.__init__
+   ~AssumptionSet.empty
+   ~AssumptionSet.get
+   ~AssumptionSet.items
+   ~AssumptionSet.keys
+   ~AssumptionSet.values
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.AssumptionSet.__init__
+
+
+.. automethod:: saealib.core.AssumptionSet.empty
+
+
+.. automethod:: saealib.core.AssumptionSet.get
+
+
+.. automethod:: saealib.core.AssumptionSet.items
+
+
+.. automethod:: saealib.core.AssumptionSet.keys
+
+
+.. automethod:: saealib.core.AssumptionSet.values
+
+
+

@@ -1,0 +1,55 @@
+﻿saealib.CrossoverBLXAlpha
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CrossoverBLXAlpha
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CrossoverBLXAlpha.__init__
+   ~CrossoverBLXAlpha.contract
+   ~CrossoverBLXAlpha.crossover
+   ~CrossoverBLXAlpha.crossover_batch
+   ~CrossoverBLXAlpha.post_crossover
+   ~CrossoverBLXAlpha.post_crossover_batch
+   ~CrossoverBLXAlpha.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CrossoverBLXAlpha.__init__
+
+
+.. automethod:: saealib.CrossoverBLXAlpha.contract
+
+
+.. automethod:: saealib.CrossoverBLXAlpha.crossover
+
+
+.. automethod:: saealib.CrossoverBLXAlpha.crossover_batch
+
+
+.. automethod:: saealib.CrossoverBLXAlpha.post_crossover
+
+
+.. automethod:: saealib.CrossoverBLXAlpha.post_crossover_batch
+
+
+.. automethod:: saealib.CrossoverBLXAlpha.with_post
+
+
+

@@ -1,0 +1,51 @@
+﻿saealib.LocalSurrogateManager
+=============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: LocalSurrogateManager
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~LocalSurrogateManager.__init__
+   ~LocalSurrogateManager.contract
+   ~LocalSurrogateManager.fit
+   ~LocalSurrogateManager.on_generation_end
+   ~LocalSurrogateManager.predict
+   ~LocalSurrogateManager.with_on_generation_end
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.LocalSurrogateManager.__init__
+
+
+.. automethod:: saealib.LocalSurrogateManager.contract
+
+
+.. automethod:: saealib.LocalSurrogateManager.fit
+
+
+.. automethod:: saealib.LocalSurrogateManager.on_generation_end
+
+
+.. automethod:: saealib.LocalSurrogateManager.predict
+
+
+.. automethod:: saealib.LocalSurrogateManager.with_on_generation_end
+
+
+

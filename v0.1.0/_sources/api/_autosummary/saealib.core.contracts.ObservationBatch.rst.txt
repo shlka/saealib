@@ -1,0 +1,35 @@
+﻿saealib.core.contracts.ObservationBatch
+=======================================
+
+.. currentmodule:: saealib.core.contracts
+
+.. autoclass:: ObservationBatch
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~ObservationBatch.__init__
+   ~ObservationBatch.from_dense
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.core.contracts.ObservationBatch.__init__
+
+
+.. automethod:: saealib.core.contracts.ObservationBatch.from_dense
+
+
+

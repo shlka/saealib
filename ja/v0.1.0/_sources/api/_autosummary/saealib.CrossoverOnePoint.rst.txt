@@ -1,0 +1,55 @@
+﻿saealib.CrossoverOnePoint
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CrossoverOnePoint
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CrossoverOnePoint.__init__
+   ~CrossoverOnePoint.contract
+   ~CrossoverOnePoint.crossover
+   ~CrossoverOnePoint.crossover_batch
+   ~CrossoverOnePoint.post_crossover
+   ~CrossoverOnePoint.post_crossover_batch
+   ~CrossoverOnePoint.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CrossoverOnePoint.__init__
+
+
+.. automethod:: saealib.CrossoverOnePoint.contract
+
+
+.. automethod:: saealib.CrossoverOnePoint.crossover
+
+
+.. automethod:: saealib.CrossoverOnePoint.crossover_batch
+
+
+.. automethod:: saealib.CrossoverOnePoint.post_crossover
+
+
+.. automethod:: saealib.CrossoverOnePoint.post_crossover_batch
+
+
+.. automethod:: saealib.CrossoverOnePoint.with_post
+
+
+

@@ -1,0 +1,47 @@
+﻿saealib.CubicKernel
+===================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CubicKernel
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CubicKernel.__init__
+   ~CubicKernel.evaluate
+   ~CubicKernel.pairwise
+   ~CubicKernel.resolve
+   ~CubicKernel.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CubicKernel.__init__
+
+
+.. automethod:: saealib.CubicKernel.evaluate
+
+
+.. automethod:: saealib.CubicKernel.pairwise
+
+
+.. automethod:: saealib.CubicKernel.resolve
+
+
+.. automethod:: saealib.CubicKernel.validate
+
+
+

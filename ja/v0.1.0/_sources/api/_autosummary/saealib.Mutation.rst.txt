@@ -1,0 +1,55 @@
+﻿saealib.Mutation
+================
+
+.. currentmodule:: saealib
+
+.. autoclass:: Mutation
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Mutation.__init__
+   ~Mutation.contract
+   ~Mutation.mutate
+   ~Mutation.mutate_batch
+   ~Mutation.post_mutation
+   ~Mutation.post_mutation_batch
+   ~Mutation.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.Mutation.__init__
+
+
+.. automethod:: saealib.Mutation.contract
+
+
+.. automethod:: saealib.Mutation.mutate
+
+
+.. automethod:: saealib.Mutation.mutate_batch
+
+
+.. automethod:: saealib.Mutation.post_mutation
+
+
+.. automethod:: saealib.Mutation.post_mutation_batch
+
+
+.. automethod:: saealib.Mutation.with_post
+
+
+

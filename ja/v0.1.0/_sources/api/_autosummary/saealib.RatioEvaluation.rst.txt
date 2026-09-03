@@ -1,0 +1,39 @@
+﻿saealib.RatioEvaluation
+=======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: RatioEvaluation
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~RatioEvaluation.__init__
+   ~RatioEvaluation.contract
+   ~RatioEvaluation.plan
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.RatioEvaluation.__init__
+
+
+.. automethod:: saealib.RatioEvaluation.contract
+
+
+.. automethod:: saealib.RatioEvaluation.plan
+
+
+

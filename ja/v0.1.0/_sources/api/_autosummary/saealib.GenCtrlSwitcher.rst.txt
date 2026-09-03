@@ -1,0 +1,35 @@
+﻿saealib.GenCtrlSwitcher
+=======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: GenCtrlSwitcher
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~GenCtrlSwitcher.__init__
+   ~GenCtrlSwitcher.switch
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.GenCtrlSwitcher.__init__
+
+
+.. automethod:: saealib.GenCtrlSwitcher.switch
+
+
+

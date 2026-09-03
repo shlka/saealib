@@ -1,0 +1,31 @@
+﻿saealib.EvaluationPlan
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationPlan
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationPlan.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationPlan.__init__
+
+
+

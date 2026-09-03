@@ -1,0 +1,39 @@
+﻿saealib.PairwiseComparisonSet
+=============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: PairwiseComparisonSet
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PairwiseComparisonSet.__init__
+   ~PairwiseComparisonSet.build
+   ~PairwiseComparisonSet.contract
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.PairwiseComparisonSet.__init__
+
+
+.. automethod:: saealib.PairwiseComparisonSet.build
+
+
+.. automethod:: saealib.PairwiseComparisonSet.contract
+
+
+

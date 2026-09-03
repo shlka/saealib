@@ -1,0 +1,6 @@
+﻿saealib.ValidationError
+=======================
+
+.. currentmodule:: saealib
+
+.. autoexception:: ValidationError

@@ -1,0 +1,47 @@
+﻿saealib.DirectStrategy
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: DirectStrategy
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~DirectStrategy.__init__
+   ~DirectStrategy.build_graph
+   ~DirectStrategy.build_pipeline
+   ~DirectStrategy.contract
+   ~DirectStrategy.step
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.DirectStrategy.__init__
+
+
+.. automethod:: saealib.DirectStrategy.build_graph
+
+
+.. automethod:: saealib.DirectStrategy.build_pipeline
+
+
+.. automethod:: saealib.DirectStrategy.contract
+
+
+.. automethod:: saealib.DirectStrategy.step
+
+
+

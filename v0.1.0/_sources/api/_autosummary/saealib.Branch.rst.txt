@@ -1,0 +1,39 @@
+﻿saealib.Branch
+==============
+
+.. currentmodule:: saealib
+
+.. autoclass:: Branch
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~Branch.__init__
+   ~Branch.to_pseudocode
+   ~Branch.to_text
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.Branch.__init__
+
+
+.. automethod:: saealib.Branch.to_pseudocode
+
+
+.. automethod:: saealib.Branch.to_text
+
+
+

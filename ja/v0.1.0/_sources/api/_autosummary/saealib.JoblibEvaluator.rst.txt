@@ -1,0 +1,79 @@
+﻿saealib.JoblibEvaluator
+=======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: JoblibEvaluator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~JoblibEvaluator.__init__
+   ~JoblibEvaluator.acknowledge
+   ~JoblibEvaluator.can_reattach
+   ~JoblibEvaluator.cancel
+   ~JoblibEvaluator.collect
+   ~JoblibEvaluator.contract
+   ~JoblibEvaluator.detach
+   ~JoblibEvaluator.evaluate_batch
+   ~JoblibEvaluator.evaluate_request
+   ~JoblibEvaluator.has_partial_lifecycle_override
+   ~JoblibEvaluator.reattach
+   ~JoblibEvaluator.submit
+   ~JoblibEvaluator.supports_batch_rollback
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.JoblibEvaluator.__init__
+
+
+.. automethod:: saealib.JoblibEvaluator.acknowledge
+
+
+.. automethod:: saealib.JoblibEvaluator.can_reattach
+
+
+.. automethod:: saealib.JoblibEvaluator.cancel
+
+
+.. automethod:: saealib.JoblibEvaluator.collect
+
+
+.. automethod:: saealib.JoblibEvaluator.contract
+
+
+.. automethod:: saealib.JoblibEvaluator.detach
+
+
+.. automethod:: saealib.JoblibEvaluator.evaluate_batch
+
+
+.. automethod:: saealib.JoblibEvaluator.evaluate_request
+
+
+.. automethod:: saealib.JoblibEvaluator.has_partial_lifecycle_override
+
+
+.. automethod:: saealib.JoblibEvaluator.reattach
+
+
+.. automethod:: saealib.JoblibEvaluator.submit
+
+
+.. automethod:: saealib.JoblibEvaluator.supports_batch_rollback
+
+
+

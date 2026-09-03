@@ -1,0 +1,55 @@
+﻿saealib.CrossoverUniform
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CrossoverUniform
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CrossoverUniform.__init__
+   ~CrossoverUniform.contract
+   ~CrossoverUniform.crossover
+   ~CrossoverUniform.crossover_batch
+   ~CrossoverUniform.post_crossover
+   ~CrossoverUniform.post_crossover_batch
+   ~CrossoverUniform.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CrossoverUniform.__init__
+
+
+.. automethod:: saealib.CrossoverUniform.contract
+
+
+.. automethod:: saealib.CrossoverUniform.crossover
+
+
+.. automethod:: saealib.CrossoverUniform.crossover_batch
+
+
+.. automethod:: saealib.CrossoverUniform.post_crossover
+
+
+.. automethod:: saealib.CrossoverUniform.post_crossover_batch
+
+
+.. automethod:: saealib.CrossoverUniform.with_post
+
+
+

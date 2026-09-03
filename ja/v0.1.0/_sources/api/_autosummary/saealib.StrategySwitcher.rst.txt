@@ -1,0 +1,39 @@
+﻿saealib.StrategySwitcher
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: StrategySwitcher
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~StrategySwitcher.__init__
+   ~StrategySwitcher.contract
+   ~StrategySwitcher.switch
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.StrategySwitcher.__init__
+
+
+.. automethod:: saealib.StrategySwitcher.contract
+
+
+.. automethod:: saealib.StrategySwitcher.switch
+
+
+

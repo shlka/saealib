@@ -1,0 +1,51 @@
+﻿saealib.MaxUncertainty
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: MaxUncertainty
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~MaxUncertainty.__init__
+   ~MaxUncertainty.compute_reference
+   ~MaxUncertainty.contract
+   ~MaxUncertainty.evaluate
+   ~MaxUncertainty.prepare
+   ~MaxUncertainty.score
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.MaxUncertainty.__init__
+
+
+.. automethod:: saealib.MaxUncertainty.compute_reference
+
+
+.. automethod:: saealib.MaxUncertainty.contract
+
+
+.. automethod:: saealib.MaxUncertainty.evaluate
+
+
+.. automethod:: saealib.MaxUncertainty.prepare
+
+
+.. automethod:: saealib.MaxUncertainty.score
+
+
+

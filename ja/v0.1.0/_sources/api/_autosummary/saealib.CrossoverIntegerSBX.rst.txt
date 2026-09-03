@@ -1,0 +1,55 @@
+﻿saealib.CrossoverIntegerSBX
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: CrossoverIntegerSBX
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~CrossoverIntegerSBX.__init__
+   ~CrossoverIntegerSBX.contract
+   ~CrossoverIntegerSBX.crossover
+   ~CrossoverIntegerSBX.crossover_batch
+   ~CrossoverIntegerSBX.post_crossover
+   ~CrossoverIntegerSBX.post_crossover_batch
+   ~CrossoverIntegerSBX.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.CrossoverIntegerSBX.__init__
+
+
+.. automethod:: saealib.CrossoverIntegerSBX.contract
+
+
+.. automethod:: saealib.CrossoverIntegerSBX.crossover
+
+
+.. automethod:: saealib.CrossoverIntegerSBX.crossover_batch
+
+
+.. automethod:: saealib.CrossoverIntegerSBX.post_crossover
+
+
+.. automethod:: saealib.CrossoverIntegerSBX.post_crossover_batch
+
+
+.. automethod:: saealib.CrossoverIntegerSBX.with_post
+
+
+

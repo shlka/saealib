@@ -1,0 +1,47 @@
+﻿saealib.GaussianKernel
+======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: GaussianKernel
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~GaussianKernel.__init__
+   ~GaussianKernel.evaluate
+   ~GaussianKernel.pairwise
+   ~GaussianKernel.resolve
+   ~GaussianKernel.validate
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.GaussianKernel.__init__
+
+
+.. automethod:: saealib.GaussianKernel.evaluate
+
+
+.. automethod:: saealib.GaussianKernel.pairwise
+
+
+.. automethod:: saealib.GaussianKernel.resolve
+
+
+.. automethod:: saealib.GaussianKernel.validate
+
+
+

@@ -1,0 +1,55 @@
+﻿saealib.MutationCategorical
+===========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: MutationCategorical
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~MutationCategorical.__init__
+   ~MutationCategorical.contract
+   ~MutationCategorical.mutate
+   ~MutationCategorical.mutate_batch
+   ~MutationCategorical.post_mutation
+   ~MutationCategorical.post_mutation_batch
+   ~MutationCategorical.with_post
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.MutationCategorical.__init__
+
+
+.. automethod:: saealib.MutationCategorical.contract
+
+
+.. automethod:: saealib.MutationCategorical.mutate
+
+
+.. automethod:: saealib.MutationCategorical.mutate_batch
+
+
+.. automethod:: saealib.MutationCategorical.post_mutation
+
+
+.. automethod:: saealib.MutationCategorical.post_mutation_batch
+
+
+.. automethod:: saealib.MutationCategorical.with_post
+
+
+

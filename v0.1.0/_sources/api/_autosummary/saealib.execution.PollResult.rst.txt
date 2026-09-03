@@ -1,0 +1,31 @@
+﻿saealib.execution.PollResult
+============================
+
+.. currentmodule:: saealib.execution
+
+.. autoclass:: PollResult
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PollResult.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.execution.PollResult.__init__
+
+
+

@@ -1,0 +1,31 @@
+﻿saealib.EvaluationQuery
+=======================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EvaluationQuery
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EvaluationQuery.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EvaluationQuery.__init__
+
+
+

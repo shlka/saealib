@@ -1,0 +1,51 @@
+﻿saealib.PerObjectiveSurrogate
+=============================
+
+.. currentmodule:: saealib
+
+.. autoclass:: PerObjectiveSurrogate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PerObjectiveSurrogate.__init__
+   ~PerObjectiveSurrogate.contract
+   ~PerObjectiveSurrogate.fit
+   ~PerObjectiveSurrogate.post_fit
+   ~PerObjectiveSurrogate.predict
+   ~PerObjectiveSurrogate.with_post_fit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.PerObjectiveSurrogate.__init__
+
+
+.. automethod:: saealib.PerObjectiveSurrogate.contract
+
+
+.. automethod:: saealib.PerObjectiveSurrogate.fit
+
+
+.. automethod:: saealib.PerObjectiveSurrogate.post_fit
+
+
+.. automethod:: saealib.PerObjectiveSurrogate.predict
+
+
+.. automethod:: saealib.PerObjectiveSurrogate.with_post_fit
+
+
+

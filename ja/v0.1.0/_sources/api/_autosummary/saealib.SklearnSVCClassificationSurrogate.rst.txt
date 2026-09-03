@@ -1,0 +1,55 @@
+﻿saealib.SklearnSVCClassificationSurrogate
+=========================================
+
+.. currentmodule:: saealib
+
+.. autoclass:: SklearnSVCClassificationSurrogate
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~SklearnSVCClassificationSurrogate.__init__
+   ~SklearnSVCClassificationSurrogate.contract
+   ~SklearnSVCClassificationSurrogate.fit
+   ~SklearnSVCClassificationSurrogate.post_fit
+   ~SklearnSVCClassificationSurrogate.predict
+   ~SklearnSVCClassificationSurrogate.predict_proba
+   ~SklearnSVCClassificationSurrogate.with_post_fit
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.SklearnSVCClassificationSurrogate.__init__
+
+
+.. automethod:: saealib.SklearnSVCClassificationSurrogate.contract
+
+
+.. automethod:: saealib.SklearnSVCClassificationSurrogate.fit
+
+
+.. automethod:: saealib.SklearnSVCClassificationSurrogate.post_fit
+
+
+.. automethod:: saealib.SklearnSVCClassificationSurrogate.predict
+
+
+.. automethod:: saealib.SklearnSVCClassificationSurrogate.predict_proba
+
+
+.. automethod:: saealib.SklearnSVCClassificationSurrogate.with_post_fit
+
+
+

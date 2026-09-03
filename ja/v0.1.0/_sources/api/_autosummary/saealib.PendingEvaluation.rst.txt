@@ -1,0 +1,31 @@
+﻿saealib.PendingEvaluation
+=========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: PendingEvaluation
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~PendingEvaluation.__init__
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.PendingEvaluation.__init__
+
+
+

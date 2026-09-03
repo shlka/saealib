@@ -1,0 +1,43 @@
+﻿saealib.EpsilonDominator
+========================
+
+.. currentmodule:: saealib
+
+.. autoclass:: EpsilonDominator
+   :show-inheritance:
+   :no-members:
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+   :nosignatures:
+
+
+   ~EpsilonDominator.__init__
+   ~EpsilonDominator.dominance_matrix
+   ~EpsilonDominator.dominates
+   ~EpsilonDominator.dominates_many
+
+
+
+
+
+
+.. rubric:: Method Details
+
+
+.. automethod:: saealib.EpsilonDominator.__init__
+
+
+.. automethod:: saealib.EpsilonDominator.dominance_matrix
+
+
+.. automethod:: saealib.EpsilonDominator.dominates
+
+
+.. automethod:: saealib.EpsilonDominator.dominates_many
+
+
+
